@@ -25,6 +25,17 @@ ThemeData buildTheme() {
       bodyColor: ColorPalette.neutral800,
       displayColor: ColorPalette.neutral800,
     ),
+    tabBarTheme: TabBarTheme(
+      labelColor: ColorPalette.violet500,
+      labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      unselectedLabelColor: ColorPalette.neutral500,
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      indicatorColor: ColorPalette.violet500,
+      indicatorSize: TabBarIndicatorSize.tab,
+    ),
     scaffoldBackgroundColor: backgroundColor,
   );
 }

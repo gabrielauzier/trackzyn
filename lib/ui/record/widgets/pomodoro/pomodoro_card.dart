@@ -3,18 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/record_state.dart';
-import 'package:trackzyn/ui/record/widgets/record_timer.dart';
+import 'package:trackzyn/ui/record/widgets/pomodoro/pomodoro_timer.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/shared/sleek_card.dart';
 
-class RecordCard extends StatefulWidget {
-  const RecordCard({super.key});
+class PomodoroCard extends StatefulWidget {
+  const PomodoroCard({super.key});
 
   @override
-  State<RecordCard> createState() => _RecordCardState();
+  State<PomodoroCard> createState() => _PomodoroCardState();
 }
 
-class _RecordCardState extends State<RecordCard> {
+class _PomodoroCardState extends State<PomodoroCard> {
   Widget _buildHeader() {
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -29,7 +29,7 @@ class _RecordCardState extends State<RecordCard> {
           children: [
             const Text(
               'No project assignee',
-              style: TextStyle(fontSize: 16, color: ColorPalette.neutral700),
+              style: TextStyle(fontSize: 16, color: ColorPalette.neutral500),
             ),
             const Text(
               'What are you working on?',
@@ -45,8 +45,78 @@ class _RecordCardState extends State<RecordCard> {
     );
   }
 
+  ButtonStyle _buttonStyle({bool active = false}) {
+    return ButtonStyle(
+      backgroundColor:
+          active
+              ? WidgetStateProperty.all<Color>(Colors.white)
+              : WidgetStateProperty.all<Color>(Colors.transparent),
+      foregroundColor: WidgetStateProperty.all<Color>(ColorPalette.neutral500),
+      surfaceTintColor: WidgetStateProperty.all<Color>(Colors.white),
+      overlayColor: WidgetStateProperty.all<Color>(Colors.white),
+      // overlayColor: WidgetStateProperty.all<Color>(ColorPalette.violet100),
+      // shadowColor: WidgetStateProperty.all<Color>(Colors.black),
+    );
+  }
+
+  void _onPomodoroTypeChanged(PomodoroType type) {
+    var cubit = BlocProvider.of<RecordCubit>(context);
+    cubit.changePomodoroType(type);
+  }
+
+  Widget _buildPomodoroTypeTabs() {
+    return FittedBox(
+      child: Container(
+        // width: MediaQuery.of(context).size.width,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: ColorPalette.stone100,
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: BlocBuilder<RecordCubit, RecordState>(
+          builder: (context, state) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    _onPomodoroTypeChanged(PomodoroType.focus);
+                  },
+                  style: _buttonStyle(
+                    active: state.pomodoroType == PomodoroType.focus,
+                  ),
+                  child: const Text('Focus'),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () {
+                    _onPomodoroTypeChanged(PomodoroType.shortBreak);
+                  },
+                  style: _buttonStyle(
+                    active: state.pomodoroType == PomodoroType.shortBreak,
+                  ),
+                  child: const Text('Short Break'),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () {
+                    _onPomodoroTypeChanged(PomodoroType.longBreak);
+                  },
+                  style: _buttonStyle(
+                    active: state.pomodoroType == PomodoroType.longBreak,
+                  ),
+                  child: const Text('Long Break'),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildTimer() {
-    return RecordTimer(diameter: 280);
+    return PomodoroTimer(diameter: 280);
   }
 
   Widget _buildActionButtonsList() {
@@ -73,7 +143,9 @@ class _RecordCardState extends State<RecordCard> {
                 onPressed: () {
                   switch (state.status) {
                     case RecordingStatus.notStarted:
-                      context.read<RecordCubit>().startRecording();
+                      context.read<RecordCubit>().startRecording(
+                        RecordingType.pomodoro,
+                      );
                       break;
                     case RecordingStatus.recording:
                       context.read<RecordCubit>().pauseRecording();
@@ -184,6 +256,8 @@ class _RecordCardState extends State<RecordCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(),
+          const SizedBox(height: 20),
+          _buildPomodoroTypeTabs(),
           const SizedBox(height: 20),
           _buildTimer(),
           const SizedBox(height: 20),

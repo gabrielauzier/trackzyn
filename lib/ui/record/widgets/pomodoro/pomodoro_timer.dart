@@ -6,16 +6,16 @@ import 'package:trackzyn/ui/record/record_state.dart';
 import 'package:trackzyn/ui/record/widgets/arc.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 
-class RecordTimer extends StatefulWidget {
+class PomodoroTimer extends StatefulWidget {
   final double diameter;
 
-  const RecordTimer({super.key, this.diameter = 220});
+  const PomodoroTimer({super.key, this.diameter = 220});
 
   @override
-  State<RecordTimer> createState() => _RecordTimerState();
+  State<PomodoroTimer> createState() => _PomodoroTimerState();
 }
 
-class _RecordTimerState extends State<RecordTimer> {
+class _PomodoroTimerState extends State<PomodoroTimer> {
   Widget _buildButton() {
     var cubit = BlocProvider.of<RecordCubit>(context);
 
@@ -120,9 +120,9 @@ class _RecordTimerState extends State<RecordTimer> {
             style: TextStyle(
               fontSize: 40,
               color: switch (cubit.status) {
-                RecordingStatus.notStarted => ColorPalette.neutral900,
-                // RecordingStatus.recording => ColorPalette.violet500,
-                // RecordingStatus.paused => ColorPalette.amber500,
+                RecordingStatus.notStarted => ColorPalette.neutral400,
+                RecordingStatus.paused => ColorPalette.neutral500,
+                RecordingStatus.recording => ColorPalette.neutral900,
                 RecordingStatus.finished => ColorPalette.green500,
                 _ => Colors.black,
               },
@@ -181,7 +181,7 @@ class _RecordTimerState extends State<RecordTimer> {
                 ),
                 Arc(
                   diameter: widget.diameter,
-                  progress: state.progress,
+                  progress: state.pomodoroProgress,
                   color: switch (state.status) {
                     RecordingStatus.notStarted => ColorPalette.neutral200,
                     RecordingStatus.recording => ColorPalette.violet500,

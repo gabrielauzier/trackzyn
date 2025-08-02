@@ -3,13 +3,29 @@ part 'record_state.g.dart';
 
 enum RecordingStatus { notStarted, recording, paused, stopped, finished }
 
+enum RecordingType { pomodoro, activity }
+
+enum PomodoroType { focus, shortBreak, longBreak }
+
 @CopyWith()
 class RecordState {
+  final RecordingType type;
   final RecordingStatus status;
-  final double progress;
+
+  // Pomodoro
+  final double pomodoroProgress;
+  final PomodoroType pomodoroType;
+  final double finalTimeInSec;
+
+  // Activities
+  final double activityProgress;
 
   const RecordState({
     this.status = RecordingStatus.notStarted,
-    this.progress = 0.0,
+    this.type = RecordingType.pomodoro,
+    this.pomodoroType = PomodoroType.focus,
+    this.activityProgress = 0.0,
+    this.finalTimeInSec = 60 * 5, // Default to 5 minutes
+    this.pomodoroProgress = 0.0,
   });
 }
