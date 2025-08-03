@@ -31,7 +31,7 @@ class RecordCubit extends Cubit<RecordState> {
   late DateTime _startedAt;
 
   void _startTimer(RecordingType type) {
-    double timeStep = 250; // Render every 250 milliseconds
+    double timeStep = 200; // Render every 250 milliseconds
     _timer = Timer.periodic(Duration(milliseconds: timeStep.floor()), (timer) {
       switch (type) {
         case RecordingType.pomodoro:

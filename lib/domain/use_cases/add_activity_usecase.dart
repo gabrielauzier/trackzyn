@@ -16,7 +16,7 @@ class AddActivityUseCase {
         Task? foundTask = await _tasksRepository.getById(task.id);
 
         if (foundTask == null) {
-          int createdTaskId = await _tasksRepository.add(task);
+          int? createdTaskId = await _tasksRepository.add(task);
           activity.taskId = createdTaskId;
         }
       }

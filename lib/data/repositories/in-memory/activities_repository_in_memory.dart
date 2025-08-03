@@ -20,7 +20,7 @@ class ActivitiesRepositoryInMemory implements ActivitiesRepository {
   Future<List<Activity>> fetchMany({
     int? projectId,
     int? taskId,
-    String? activityName,
+    String? taskName,
     DateTime? startDate,
     DateTime? endDate,
   }) async {

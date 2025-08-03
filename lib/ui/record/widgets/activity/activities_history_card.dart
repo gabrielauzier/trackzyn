@@ -37,8 +37,8 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
               children:
                   state.activities.map((activity) {
                     return ActivityHistory(
-                      // taskName: activity.taskName,
-                      // projectName: activity.projectName,
+                      taskName: activity.taskName,
+                      projectName: activity.projectName,
                       // sessionsCount: activity.sessionsCount,
                       spentTimeInSec: activity.durationInSeconds,
                       date: activity.startedAt,

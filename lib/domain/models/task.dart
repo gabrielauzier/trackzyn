@@ -17,4 +17,26 @@ class Task {
        updatedAt = updatedAt ?? DateTime.now();
 
   // Additional methods like toJson, fromJson, etc. can be added here.
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'project_id': projectId,
+      'name': name,
+      'description': description,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  factory Task.fromMap(Map<String, dynamic> map) {
+    return Task(
+      id: map['id'] as int,
+      projectId: map['project_id'] as int?,
+      name: map['name'] as String,
+      description: map['description'] as String?,
+      createdAt: DateTime.parse(map['created_at'] as String),
+      updatedAt: DateTime.parse(map['updated_at'] as String),
+    );
+  }
 }

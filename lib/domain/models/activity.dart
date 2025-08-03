@@ -5,12 +5,17 @@ class Activity {
   final DateTime startedAt;
   final int durationInSeconds;
 
+  final String? taskName;
+  final String? projectName;
+
   Activity({
     int? id,
     int? taskId,
     this.note,
     DateTime? startedAt,
     this.durationInSeconds = 0,
+    this.taskName,
+    this.projectName,
   }) : _id = id,
        _taskId = taskId,
        startedAt = startedAt ?? DateTime.now();
@@ -27,11 +32,13 @@ class Activity {
 
   factory Activity.fromMap(Map<String, dynamic> map) {
     return Activity(
-      id: map['id'] as int,
+      id: map['id'] ?? 0,
       taskId: map['task_id'] as int?,
       note: map['note'] as String?,
       startedAt: DateTime.parse(map['started_at'] as String),
-      durationInSeconds: map['duration_in_seconds'] as int,
+      durationInSeconds: map['duration_in_seconds'] ?? 0,
+      taskName: map['task_name'] as String?,
+      projectName: map['project_name'] as String?,
     );
   }
 

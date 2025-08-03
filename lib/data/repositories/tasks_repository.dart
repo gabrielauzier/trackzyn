@@ -10,7 +10,7 @@ abstract class TasksRepository {
 
   Future<Task?> getById(int taskId);
 
-  Future<int> add(Task task);
+  Future<int?> add(Task task);
 
   Future<void> update(Task task);
 
