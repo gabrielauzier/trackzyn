@@ -4,5 +4,6 @@ import 'package:trackzyn/app/app_widget.dart';
 import 'package:trackzyn/app/dependencies/local.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MultiProvider(providers: providersLocal, child: const AppWidget()));
 }

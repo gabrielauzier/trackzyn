@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import 'package:trackzyn/data/repositories/activities_repository.dart';
@@ -7,6 +8,7 @@ import 'package:trackzyn/data/repositories/in-memory/projects_repository_in_memo
 import 'package:trackzyn/data/repositories/in-memory/tasks_repository_in_memory.dart';
 import 'package:trackzyn/data/repositories/projects_repository.dart';
 import 'package:trackzyn/data/repositories/tasks_repository.dart';
+import 'package:trackzyn/data/services/local_database_service.dart';
 import 'package:trackzyn/domain/use_cases/add_activity_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_activities_usecase.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
@@ -41,5 +43,6 @@ List<SingleChildWidget> get providersLocal {
             context.read<GetActivitiesUseCase>(),
           ),
     ),
+    Provider<LocalDatabaseService>(create: (context) => LocalDatabaseService()),
   ];
 }
