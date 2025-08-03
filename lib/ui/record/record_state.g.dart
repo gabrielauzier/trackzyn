@@ -19,6 +19,8 @@ abstract class _$RecordStateCWProxy {
 
   RecordState pomodoroProgress(double pomodoroProgress);
 
+  RecordState activities(List<Activity> activities);
+
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `RecordState(...).copyWith.fieldName(value)`.
   ///
@@ -33,6 +35,7 @@ abstract class _$RecordStateCWProxy {
     double activityProgress,
     double finalTimeInSec,
     double pomodoroProgress,
+    List<Activity> activities,
   });
 }
 
@@ -66,6 +69,10 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
       this(pomodoroProgress: pomodoroProgress);
 
   @override
+  RecordState activities(List<Activity> activities) =>
+      this(activities: activities);
+
+  @override
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `RecordState(...).copyWith.fieldName(value)`.
   ///
@@ -80,6 +87,7 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
     Object? activityProgress = const $CopyWithPlaceholder(),
     Object? finalTimeInSec = const $CopyWithPlaceholder(),
     Object? pomodoroProgress = const $CopyWithPlaceholder(),
+    Object? activities = const $CopyWithPlaceholder(),
   }) {
     return RecordState(
       status:
@@ -112,6 +120,11 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
               ? _value.pomodoroProgress
               // ignore: cast_nullable_to_non_nullable
               : pomodoroProgress as double,
+      activities:
+          activities == const $CopyWithPlaceholder()
+              ? _value.activities
+              // ignore: cast_nullable_to_non_nullable
+              : activities as List<Activity>,
     );
   }
 }

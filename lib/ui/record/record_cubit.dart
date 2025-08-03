@@ -1,10 +1,23 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackzyn/domain/models/activity.dart';
+
+import 'package:trackzyn/domain/use_cases/add_activity_usecase.dart';
+import 'package:trackzyn/domain/use_cases/get_activities_usecase.dart';
 
 import 'package:trackzyn/ui/record/record_state.dart';
 
 class RecordCubit extends Cubit<RecordState> {
-  RecordCubit() : super(RecordState());
+  RecordCubit(
+    AddActivityUseCase addActivityUseCase,
+    GetActivitiesUseCase getActivitiesUseCase,
+  ) : _addActivityUseCase = addActivityUseCase,
+      _getActivitiesUseCase = getActivitiesUseCase,
+      super(RecordState());
+
+  final AddActivityUseCase _addActivityUseCase;
+  final GetActivitiesUseCase _getActivitiesUseCase;
 
   static const double FOCUS_DURATION = 25 * 60; // 25 minutes in seconds
   static const double SHORT_BREAK_DURATION = 5 * 60; // 5 minutes in seconds
@@ -15,8 +28,9 @@ class RecordCubit extends Cubit<RecordState> {
   // final double _finalTimeInSec = 60 * 60 * 1 + 60 * 3 + 50; // 1h + 3min + 50sec
   double _finalTimeInSec = FOCUS_DURATION; // 5min
   double _currentTimeInSec = 0;
+  late DateTime _startedAt;
 
-  void startRecording(RecordingType type) {
+  void _startTimer(RecordingType type) {
     double timeStep = 250; // Render every 250 milliseconds
     _timer = Timer.periodic(Duration(milliseconds: timeStep.floor()), (timer) {
       switch (type) {
@@ -40,6 +54,11 @@ class RecordCubit extends Cubit<RecordState> {
           break;
       }
     });
+  }
+
+  void startRecording(RecordingType type) {
+    _startTimer(type);
+    _startedAt = DateTime.now();
 
     emit(
       state.copyWith(
@@ -56,14 +75,18 @@ class RecordCubit extends Cubit<RecordState> {
   }
 
   void resumeRecording() {
-    startRecording(state.type);
+    _startTimer(state.type);
     emit(state.copyWith(status: RecordingStatus.recording));
   }
 
-  void stopRecording({bool completed = false}) {
-    _timer.cancel();
-    _currentTimeInSec = 0;
-    _progress = 0;
+  void stopRecording({bool completed = false}) async {
+    await _addActivityUseCase.execute(
+      Activity(
+        startedAt: _startedAt,
+        durationInSeconds: _currentTimeInSec.toInt(),
+      ),
+    );
+
     emit(
       state.copyWith(
         status: RecordingStatus.notStarted,
@@ -71,6 +94,12 @@ class RecordCubit extends Cubit<RecordState> {
         activityProgress: 0.0,
       ),
     );
+
+    _timer.cancel();
+    _currentTimeInSec = 0;
+    _progress = 0;
+
+    getActivities();
   }
 
   void changePomodoroType(PomodoroType type) {
@@ -101,6 +130,16 @@ class RecordCubit extends Cubit<RecordState> {
         pomodoroProgress: 0.0,
       ),
     );
+  }
+
+  void getActivities() async {
+    try {
+      final activities = await _getActivitiesUseCase.execute();
+      emit(state.copyWith(activities: activities));
+    } catch (e) {
+      debugPrint('Erro ao buscar atividades: $e');
+      emit(state.copyWith(activities: []));
+    }
   }
 
   double get progress => _progress;

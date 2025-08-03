@@ -74,21 +74,12 @@ class _ActivitySessionCardState extends State<ActivitySessionCard> {
   }
 
   _buildStopButton() {
-    return ElevatedButton(
+    return OutlinedButton(
       onPressed: () {
         context.read<RecordCubit>().stopRecording(completed: true);
       },
-      style: ElevatedButton.styleFrom(
+      style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        backgroundColor: Colors.white,
-        shadowColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: ColorPalette.neutral200, width: 2),
-        ),
-        overlayColor: Colors.black,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: ColorPalette.neutral800,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

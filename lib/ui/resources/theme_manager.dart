@@ -36,6 +36,17 @@ ThemeData buildTheme() {
       indicatorColor: ColorPalette.violet500,
       indicatorSize: TabBarIndicatorSize.tab,
     ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+        backgroundColor: Colors.white,
+        side: BorderSide(width: 1.0, color: ColorPalette.neutral300),
+        foregroundColor: ColorPalette.neutral900,
+        shadowColor: ColorPalette.neutral900.withValues(alpha: 0.1),
+        overlayColor: Colors.black,
+        elevation: 1,
+      ),
+    ),
     scaffoldBackgroundColor: backgroundColor,
   );
 }

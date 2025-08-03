@@ -1,4 +1,5 @@
 import 'package:copy_with_extension/copy_with_extension.dart';
+import 'package:trackzyn/domain/models/activity.dart';
 part 'record_state.g.dart';
 
 enum RecordingStatus { notStarted, recording, paused, stopped, finished }
@@ -19,6 +20,7 @@ class RecordState {
 
   // Activities
   final double activityProgress;
+  final List<Activity> activities;
 
   const RecordState({
     this.status = RecordingStatus.notStarted,
@@ -27,5 +29,6 @@ class RecordState {
     this.activityProgress = 0.0,
     this.finalTimeInSec = 60 * 5, // Default to 5 minutes
     this.pomodoroProgress = 0.0,
+    this.activities = const [],
   });
 }

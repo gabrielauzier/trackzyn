@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
+import 'package:trackzyn/ui/record/widgets/activity/activities_history_card.dart';
 import 'package:trackzyn/ui/record/widgets/activity/activity_session_card.dart';
 import 'package:trackzyn/ui/record/widgets/pomodoro/pomodoro_card.dart';
 
@@ -13,14 +15,14 @@ class RecordView extends StatefulWidget {
 }
 
 class _RecordViewState extends State<RecordView> {
-  final cubit = RecordCubit();
+  late final cubit = Provider.of<RecordCubit>(context, listen: false);
 
   _buildPomodoroContent() {
     return SafeArea(
       child: Container(
         // width: MediaQuery.of(context).size.width,
         // height: MediaQuery.of(context).size.height,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -31,15 +33,18 @@ class _RecordViewState extends State<RecordView> {
   }
 
   _buildActivitiesContent() {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [const SizedBox(height: 20), ActivitySessionCard()],
+    return ListView(
+      // mainAxisAlignment: MainAxisAlignment.start,
+      // crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          margin: const EdgeInsets.only(bottom: 24),
+          child: ActivitySessionCard(),
         ),
-      ),
+        ActivitiesHistoryCard(),
+      ],
     );
   }
 

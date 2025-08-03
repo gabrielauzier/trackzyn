@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/record_state.dart';
@@ -15,6 +16,8 @@ class PomodoroCard extends StatefulWidget {
 }
 
 class _PomodoroCardState extends State<PomodoroCard> {
+  late final cubit = Provider.of<RecordCubit>(context, listen: false);
+
   Widget _buildHeader() {
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -60,7 +63,6 @@ class _PomodoroCardState extends State<PomodoroCard> {
   }
 
   void _onPomodoroTypeChanged(PomodoroType type) {
-    var cubit = BlocProvider.of<RecordCubit>(context);
     cubit.changePomodoroType(type);
   }
 
@@ -120,8 +122,6 @@ class _PomodoroCardState extends State<PomodoroCard> {
   }
 
   Widget _buildActionButtonsList() {
-    var cubit = context.read<RecordCubit>();
-
     return BlocBuilder<RecordCubit, RecordState>(
       builder: (context, state) {
         var recordingStatus = cubit.statusByType(RecordingType.pomodoro);
