@@ -12,8 +12,8 @@ class AddActivityUseCase {
 
   Future<void> execute(Activity activity, {Task? task}) async {
     try {
-      if (task != null) {
-        Task? foundTask = await _tasksRepository.getById(task.id);
+      if (task != null && task.id != null) {
+        Task? foundTask = await _tasksRepository.getById(task.id!);
 
         if (foundTask == null) {
           int? createdTaskId = await _tasksRepository.add(task);

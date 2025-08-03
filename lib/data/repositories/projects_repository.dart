@@ -9,7 +9,7 @@ abstract class ProjectsRepository {
 
   Future<Project> getById(String projectId);
 
-  Future<void> add(Project project);
+  Future<int?> add(Project project);
 
   Future<void> update(Project project);
 

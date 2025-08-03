@@ -41,8 +41,9 @@ class LocalActivitiesRepository implements ActivitiesRepository {
 
     final List<Map<String, Object?>> activityMaps = await _service.database!
         .rawQuery('''
-          SELECT activity.*, task.name as task_name FROM activity
+          SELECT activity.*, task.name as task_name, project.name as project_name FROM activity
           LEFT JOIN task ON activity.task_id IS NOT NULL AND activity.task_id = task.id 
+          LEFT JOIN project ON task.project_id IS NOT NULL AND task.project_id = project.id
           ORDER BY id DESC
           ''');
 

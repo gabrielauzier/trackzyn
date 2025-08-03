@@ -2,7 +2,7 @@ import 'package:trackzyn/domain/models/task.dart';
 
 abstract class TasksRepository {
   Future<List<Task>> fetchMany({
-    String? projectId,
+    int? projectId,
     String? taskName,
     DateTime? startDate,
     DateTime? endDate,

@@ -47,6 +47,64 @@ ThemeData buildTheme() {
         elevation: 1,
       ),
     ),
+    // menuTheme: MenuThemeData(
+    //   style: MenuStyle(
+    //     padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.zero),
+    //     backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+    //     shadowColor: WidgetStateProperty.all<Color>(
+    //       ColorPalette.neutral900.withValues(alpha: 0.1),
+    //     ),
+    //     surfaceTintColor: WidgetStateProperty.all<Color>(Colors.white),
+    //     shape: WidgetStateProperty.all<OutlinedBorder>(
+    //       RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+    //     ),
+    //     mouseCursor: WidgetStateProperty.all<MouseCursor>(
+    //       SystemMouseCursors.click,
+    //     ),
+    //   ),
+    // ),
+    // menuButtonTheme: MenuButtonThemeData(
+    //   style: ButtonStyle(
+    //     padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.zero),
+    //     backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+    //     shadowColor: WidgetStateProperty.all<Color>(
+    //       ColorPalette.neutral900.withValues(alpha: 0.1),
+    //     ),
+    //     surfaceTintColor: WidgetStateProperty.all<Color>(Colors.white),
+    //     shape: WidgetStateProperty.all<OutlinedBorder>(
+    //       RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+    //     ),
+    //     mouseCursor: WidgetStateProperty.all<MouseCursor>(
+    //       SystemMouseCursors.click,
+    //     ),
+    //   ),
+    // ),
+    dropdownMenuTheme: DropdownMenuThemeData(
+      inputDecorationTheme: InputDecorationTheme(
+        isDense: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      ),
+      menuStyle: MenuStyle(
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      ),
+    ),
+
+    dialogTheme: DialogTheme(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      titleTextStyle: baseTheme.textTheme.titleLarge?.copyWith(
+        color: ColorPalette.neutral900,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+      ),
+      contentTextStyle: baseTheme.textTheme.bodyMedium?.copyWith(
+        color: ColorPalette.neutral800,
+      ),
+      insetPadding: EdgeInsets.zero,
+    ),
     scaffoldBackgroundColor: backgroundColor,
   );
 }

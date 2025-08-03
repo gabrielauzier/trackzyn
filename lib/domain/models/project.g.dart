@@ -7,7 +7,7 @@ part of 'project.dart';
 // **************************************************************************
 
 abstract class _$ProjectCWProxy {
-  Project id(int id);
+  Project id(int? id);
 
   Project name(String name);
 
@@ -27,7 +27,7 @@ abstract class _$ProjectCWProxy {
   /// Project(...).copyWith(id: 12, name: "My name")
   /// ```
   Project call({
-    int id,
+    int? id,
     String name,
     String? description,
     DateTime? dueDate,
@@ -44,7 +44,7 @@ class _$ProjectCWProxyImpl implements _$ProjectCWProxy {
   final Project _value;
 
   @override
-  Project id(int id) => this(id: id);
+  Project id(int? id) => this(id: id);
 
   @override
   Project name(String name) => this(name: name);
@@ -82,7 +82,7 @@ class _$ProjectCWProxyImpl implements _$ProjectCWProxy {
           id == const $CopyWithPlaceholder()
               ? _value.id
               // ignore: cast_nullable_to_non_nullable
-              : id as int,
+              : id as int?,
       name:
           name == const $CopyWithPlaceholder()
               ? _value.name

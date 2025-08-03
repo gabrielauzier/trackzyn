@@ -1,5 +1,7 @@
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:trackzyn/domain/models/activity.dart';
+import 'package:trackzyn/domain/models/project.dart';
+import 'package:trackzyn/domain/models/task.dart';
 part 'record_state.g.dart';
 
 enum RecordingStatus { notStarted, recording, paused, stopped, finished }
@@ -21,6 +23,16 @@ class RecordState {
   // Activities
   final double activityProgress;
   final List<Activity> activities;
+  final List<Project> projects;
+  final List<Task> tasks;
+
+  final String? taskName;
+  final int? taskId;
+  get tasksCount => tasks.length;
+
+  final String? projectName;
+  final int? projectId;
+  get projectsCount => projects.length;
 
   const RecordState({
     this.status = RecordingStatus.notStarted,
@@ -30,5 +42,11 @@ class RecordState {
     this.finalTimeInSec = 60 * 5, // Default to 5 minutes
     this.pomodoroProgress = 0.0,
     this.activities = const [],
+    this.projects = const [],
+    this.tasks = const [],
+    this.taskId,
+    this.taskName,
+    this.projectName,
+    this.projectId,
   });
 }

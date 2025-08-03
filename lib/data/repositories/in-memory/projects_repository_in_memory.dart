@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:trackzyn/data/repositories/projects_repository.dart';
 import 'package:trackzyn/domain/models/project.dart';
 
@@ -6,6 +8,7 @@ class ProjectsRepositoryInMemory implements ProjectsRepository {
 
   @override
   Future<List<Project>> fetchMany({
+    Int? projectId,
     String? projectName,
     DateTime? startDate,
     DateTime? endDate,
@@ -26,8 +29,9 @@ class ProjectsRepositoryInMemory implements ProjectsRepository {
   }
 
   @override
-  Future<void> add(Project project) async {
+  Future<int?> add(Project project) async {
     _projects.add(project);
+    return project.id; // Assuming project.id is set when the project is created
   }
 
   @override

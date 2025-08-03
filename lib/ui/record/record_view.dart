@@ -6,6 +6,7 @@ import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/widgets/activity/activities_history_card.dart';
 import 'package:trackzyn/ui/record/widgets/activity/activity_session_card.dart';
 import 'package:trackzyn/ui/record/widgets/pomodoro/pomodoro_card.dart';
+import 'package:trackzyn/ui/record/widgets/sheets/associate_working_on.dart';
 
 class RecordView extends StatefulWidget {
   const RecordView({super.key});

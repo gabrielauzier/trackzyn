@@ -1,5 +1,5 @@
 class Task {
-  final int id;
+  final int? id;
   final int? projectId;
   final String name;
   final String? description;
@@ -7,7 +7,7 @@ class Task {
   final DateTime updatedAt;
 
   Task({
-    this.id = 0,
+    this.id,
     this.projectId,
     required this.name,
     this.description,
@@ -24,8 +24,8 @@ class Task {
       'project_id': projectId,
       'name': name,
       'description': description,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      // 'created_at': createdAt.toIso8601String(),
+      // 'updated_at': updatedAt.toIso8601String(),
     };
   }
 
@@ -35,8 +35,8 @@ class Task {
       projectId: map['project_id'] as int?,
       name: map['name'] as String,
       description: map['description'] as String?,
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: DateTime.parse(map['updated_at'] as String),
+      // createdAt: DateTime.parse(map['created_at'] as String),
+      // updatedAt: DateTime.parse(map['updated_at'] as String),
     );
   }
 }

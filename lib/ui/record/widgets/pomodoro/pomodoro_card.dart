@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/record_state.dart';
 import 'package:trackzyn/ui/record/widgets/pomodoro/pomodoro_timer.dart';
+import 'package:trackzyn/ui/record/widgets/working/what_are_you_working_on.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/shared/sleek_card.dart';
 
@@ -19,33 +20,7 @@ class _PomodoroCardState extends State<PomodoroCard> {
   late final cubit = Provider.of<RecordCubit>(context, listen: false);
 
   Widget _buildHeader() {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      decoration: BoxDecoration(
-        color: ColorPalette.stone100,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'No project assignee',
-              style: TextStyle(fontSize: 16, color: ColorPalette.neutral500),
-            ),
-            const Text(
-              'What are you working on?',
-              style: TextStyle(
-                fontSize: 18,
-                color: ColorPalette.neutral800,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return WhatAreYouWorkingOn();
   }
 
   ButtonStyle _buttonStyle({bool active = false}) {

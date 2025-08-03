@@ -25,13 +25,33 @@ class LocalTasksRepository implements TasksRepository {
 
   @override
   Future<List<Task>> fetchMany({
-    String? projectId,
+    int? projectId,
     String? taskName,
     DateTime? startDate,
     DateTime? endDate,
-  }) {
-    // TODO: implement fetchMany
-    throw UnimplementedError();
+  }) async {
+    final List<Map<String, Object?>> taskMaps = await _service.database!
+        .rawQuery(
+          '''
+          SELECT * FROM task
+          WHERE project_id = ?
+          ORDER BY id DESC
+          ''',
+          [projectId],
+        );
+
+    return taskMaps
+        .map((activityMap) {
+          try {
+            return Task.fromMap(activityMap);
+          } catch (e) {
+            debugPrint('Error mapping task: $e');
+            return null;
+          }
+        })
+        .where((activity) => activity != null)
+        .cast<Task>()
+        .toList();
   }
 
   @override

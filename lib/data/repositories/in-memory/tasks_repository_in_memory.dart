@@ -6,7 +6,7 @@ class TasksRepositoryInMemory implements TasksRepository {
 
   @override
   Future<List<Task>> fetchMany({
-    String? projectId,
+    int? projectId,
     String? taskName,
     DateTime? startDate,
     DateTime? endDate,
@@ -29,7 +29,7 @@ class TasksRepositoryInMemory implements TasksRepository {
   @override
   Future<int> add(Task task) async {
     _tasks.add(task);
-    return task.id; // Assuming task.id is set when the task is created
+    return task.id ?? 0; // Assuming task.id is set when the task is created
   }
 
   @override
