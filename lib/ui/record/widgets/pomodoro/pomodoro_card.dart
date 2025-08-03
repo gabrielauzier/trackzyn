@@ -120,8 +120,11 @@ class _PomodoroCardState extends State<PomodoroCard> {
   }
 
   Widget _buildActionButtonsList() {
+    var cubit = context.read<RecordCubit>();
+
     return BlocBuilder<RecordCubit, RecordState>(
       builder: (context, state) {
+        var recordingStatus = cubit.statusByType(RecordingType.pomodoro);
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Row(
@@ -141,26 +144,24 @@ class _PomodoroCardState extends State<PomodoroCard> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  switch (state.status) {
+                  switch (recordingStatus) {
                     case RecordingStatus.notStarted:
-                      context.read<RecordCubit>().startRecording(
-                        RecordingType.pomodoro,
-                      );
+                      cubit.startRecording(RecordingType.pomodoro);
                       break;
                     case RecordingStatus.recording:
-                      context.read<RecordCubit>().pauseRecording();
+                      cubit.pauseRecording();
                       break;
                     case RecordingStatus.paused:
-                      context.read<RecordCubit>().resumeRecording();
+                      cubit.resumeRecording();
                       break;
                     case RecordingStatus.stopped:
                     case RecordingStatus.finished:
-                      context.read<RecordCubit>().stopRecording();
+                      cubit.stopRecording();
                       break;
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: switch (state.status) {
+                  backgroundColor: switch (recordingStatus) {
                     RecordingStatus.notStarted => ColorPalette.violet500,
                     RecordingStatus.paused => ColorPalette.amber500,
                     _ => Colors.black,
@@ -178,7 +179,7 @@ class _PomodoroCardState extends State<PomodoroCard> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      switch (state.status) {
+                      switch (recordingStatus) {
                         RecordingStatus.notStarted => const Icon(
                           Icons.play_arrow,
                           color: Colors.white,
@@ -206,7 +207,7 @@ class _PomodoroCardState extends State<PomodoroCard> {
                         ),
                       },
                       const SizedBox(width: 8),
-                      switch (state.status) {
+                      switch (recordingStatus) {
                         RecordingStatus.notStarted => const Text(
                           'Start',
                           style: TextStyle(fontSize: 16),
@@ -248,22 +249,83 @@ class _PomodoroCardState extends State<PomodoroCard> {
     );
   }
 
+  Widget _buildOverlayBackground() {
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          color: ColorPalette.neutral600.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverlayText() {
+    return Positioned.fill(
+      child: Center(
+        child: BlocBuilder<RecordCubit, RecordState>(
+          builder: (context, state) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: ColorPalette.neutral50,
+                borderRadius: BorderRadius.circular(99),
+              ),
+              child: Text(
+                'Activity in progress',
+                style: const TextStyle(
+                  fontSize: 24,
+                  color: ColorPalette.red600,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SleekCard(
-      width: MediaQuery.of(context).size.width,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 20),
-          _buildPomodoroTypeTabs(),
-          const SizedBox(height: 20),
-          _buildTimer(),
-          const SizedBox(height: 20),
-          _buildActionButtonsList(),
-        ],
-      ),
+    return Stack(
+      children: [
+        SleekCard(
+          width: MediaQuery.of(context).size.width,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 20),
+              _buildPomodoroTypeTabs(),
+              const SizedBox(height: 20),
+              _buildTimer(),
+              const SizedBox(height: 20),
+              _buildActionButtonsList(),
+            ],
+          ),
+        ),
+        BlocBuilder<RecordCubit, RecordState>(
+          builder: (context, state) {
+            if ((state.status == RecordingStatus.recording ||
+                    state.status == RecordingStatus.paused) &&
+                state.type != RecordingType.pomodoro) {
+              return _buildOverlayBackground();
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+        BlocBuilder<RecordCubit, RecordState>(
+          builder: (context, state) {
+            if ((state.status == RecordingStatus.recording ||
+                    state.status == RecordingStatus.paused) &&
+                state.type != RecordingType.pomodoro) {
+              return _buildOverlayText();
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
     );
   }
 }

@@ -21,7 +21,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
 
     return GestureDetector(
       onTap: () {
-        switch (cubit.status) {
+        switch (cubit.statusByType(RecordingType.pomodoro)) {
           // Custom
           case RecordingStatus.notStarted:
             break;
@@ -40,7 +40,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            switch (cubit.status) {
+            switch (cubit.statusByType(RecordingType.pomodoro)) {
               // Custom
               RecordingStatus.notStarted => const Icon(Icons.edit),
               // Stop
@@ -55,7 +55,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
               ),
             },
             const SizedBox(width: 10),
-            switch (cubit.status) {
+            switch (cubit.statusByType(RecordingType.pomodoro)) {
               // Custom
               RecordingStatus.notStarted => const Text(
                 'Custom',
@@ -76,7 +76,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
   Widget _buildTimerInfo() {
     var cubit = BlocProvider.of<RecordCubit>(context);
 
-    var completedSeconds = cubit.currentTimeInSec.toInt();
+    var completedSeconds = cubit.pomodoroCurrentTimeInSec.toInt();
     var completedMinutes = (completedSeconds / 60).floor();
     var completedHours = (completedMinutes / 60).floor();
 
@@ -119,7 +119,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
             '${completedHours.toString().padLeft(2, '0')}:${(completedMinutes % 60).toString().padLeft(2, '0')}:${(completedSeconds % 60).toString().padLeft(2, '0')}',
             style: TextStyle(
               fontSize: 40,
-              color: switch (cubit.status) {
+              color: switch (cubit.statusByType(RecordingType.pomodoro)) {
                 RecordingStatus.notStarted => ColorPalette.neutral400,
                 RecordingStatus.paused => ColorPalette.neutral500,
                 RecordingStatus.recording => ColorPalette.neutral900,
@@ -130,7 +130,8 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
             ),
           ),
           const SizedBox(height: 14),
-          if (!(cubit.status == RecordingStatus.finished))
+          if (!(cubit.statusByType(RecordingType.pomodoro) ==
+              RecordingStatus.finished))
             _buildButton()
           else
             Text(

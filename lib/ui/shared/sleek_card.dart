@@ -22,7 +22,13 @@ class SleekCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: ColorPalette.neutral200, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: ColorPalette.neutral200,
+              blurRadius: 10,
+              offset: const Offset(0, 2), // changes position of shadow
+            ),
+          ],
         ),
         child: Padding(padding: const EdgeInsets.all(10.0), child: child),
       ),

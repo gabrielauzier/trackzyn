@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
+import 'package:trackzyn/ui/record/widgets/activity/activity_session_card.dart';
 import 'package:trackzyn/ui/record/widgets/pomodoro/pomodoro_card.dart';
 
 class RecordView extends StatefulWidget {
@@ -33,7 +34,11 @@ class _RecordViewState extends State<RecordView> {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-        child: Center(child: Text('Activities Tab')),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [const SizedBox(height: 20), ActivitySessionCard()],
+        ),
       ),
     );
   }

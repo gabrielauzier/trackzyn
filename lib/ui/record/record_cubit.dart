@@ -60,7 +60,7 @@ class RecordCubit extends Cubit<RecordState> {
     emit(state.copyWith(status: RecordingStatus.recording));
   }
 
-  void stopRecording() {
+  void stopRecording({bool completed = false}) {
     _timer.cancel();
     _currentTimeInSec = 0;
     _progress = 0;
@@ -105,9 +105,28 @@ class RecordCubit extends Cubit<RecordState> {
 
   double get progress => _progress;
 
-  double get currentTimeInSec => _currentTimeInSec;
+  double get pomodoroCurrentTimeInSec {
+    if (state.type != RecordingType.pomodoro) {
+      return 0;
+    }
+    return _currentTimeInSec;
+  }
+
+  double get activityCurrentTimeInSec {
+    if (state.type != RecordingType.activity) {
+      return 0;
+    }
+    return _currentTimeInSec;
+  }
 
   double get finalTimeInSec => _finalTimeInSec;
 
   RecordingStatus get status => state.status;
+
+  RecordingStatus statusByType(RecordingType type) {
+    if (state.type != type) {
+      return RecordingStatus.notStarted;
+    }
+    return state.status;
+  }
 }
