@@ -46,15 +46,16 @@ class ActivitiesRepositoryInMemory implements ActivitiesRepository {
   }
 
   @override
-  Future<void> add(Activity activity) async {
+  Future<int?> add(Activity activity) async {
     var maxId =
         _activities.isEmpty
             ? 0
-            : _activities.map((a) => a.id).reduce((a, b) => a > b ? a : b);
+            : _activities.map((a) => a.id ?? 0).reduce((a, b) => a > b ? a : b);
 
-    activity.id = maxId + 1; // Ensure unique ID for the new activity
+    activity.id = (maxId + 1); // Ensure unique ID for the new activity
 
     _activities.add(activity);
+    return activity.id;
   }
 
   @override

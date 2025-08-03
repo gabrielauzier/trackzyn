@@ -6,6 +6,7 @@ import 'package:trackzyn/data/repositories/activities_repository.dart';
 import 'package:trackzyn/data/repositories/in-memory/activities_repository_in_memory.dart';
 import 'package:trackzyn/data/repositories/in-memory/projects_repository_in_memory.dart';
 import 'package:trackzyn/data/repositories/in-memory/tasks_repository_in_memory.dart';
+import 'package:trackzyn/data/repositories/local/local_activities_repository.dart';
 import 'package:trackzyn/data/repositories/projects_repository.dart';
 import 'package:trackzyn/data/repositories/tasks_repository.dart';
 import 'package:trackzyn/data/services/local_database_service.dart';
@@ -15,8 +16,12 @@ import 'package:trackzyn/ui/record/record_cubit.dart';
 
 List<SingleChildWidget> get providersLocal {
   return [
+    Provider<LocalDatabaseService>(create: (context) => LocalDatabaseService()),
     RepositoryProvider<ActivitiesRepository>(
-      create: (context) => ActivitiesRepositoryInMemory(),
+      create:
+          (context) => LocalActivitiesRepository(
+            localDatabaseService: context.read<LocalDatabaseService>(),
+          ),
     ),
     RepositoryProvider<TasksRepository>(
       create: (context) => TasksRepositoryInMemory(),

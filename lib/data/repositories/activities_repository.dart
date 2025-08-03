@@ -11,7 +11,7 @@ abstract class ActivitiesRepository {
 
   Future<Activity> getById(int activityId);
 
-  Future<void> add(Activity activity);
+  Future<int?> add(Activity activity);
 
   Future<void> update(Activity activity);
 

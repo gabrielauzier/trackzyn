@@ -21,7 +21,7 @@ class LocalDatabaseService {
     final path = await getDatabasesPath();
     final dbPath = join(path, AppConstants.localDatabase);
 
-    final createTablesSQL = """
+    final taskTable = """
       CREATE TABLE IF NOT EXISTS "task" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
         "project_id" INTEGER NOT NULL,
@@ -30,14 +30,18 @@ class LocalDatabaseService {
         FOREIGN KEY ("project_id") REFERENCES "project"("id")
         ON UPDATE NO ACTION ON DELETE NO ACTION
       );
+    """;
 
+    final projectTable = """
       CREATE TABLE IF NOT EXISTS "project" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
         "due_date" DATETIME,
         "name" VARCHAR NOT NULL,
         "description" VARCHAR
       );
+    """;
 
+    final activityTable = """
       CREATE TABLE IF NOT EXISTS "activity" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
         "task_id" INTEGER,
@@ -55,7 +59,9 @@ class LocalDatabaseService {
       onCreate: (db, version) async {
         // Define your table creation logic here
         debugPrint('Banco de dados criado: $dbPath ✅');
-        await db.execute(createTablesSQL);
+        await db.execute(taskTable);
+        await db.execute(projectTable);
+        await db.execute(activityTable);
         debugPrint('Tabelas criadas com sucesso ✅');
       },
     );
