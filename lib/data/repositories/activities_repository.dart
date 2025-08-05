@@ -18,5 +18,5 @@ abstract class ActivitiesRepository {
 
   Future<void> delete(int activityId);
 
-  Future<List<TaskActivityGroup>> groupByTaskAndDate();
+  Future<List<TaskActivityGroup>> groupByTaskAndDate({String? taskName});
 }

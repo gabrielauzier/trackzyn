@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
+import 'package:trackzyn/ui/shared/sleek_input.dart';
 import 'package:trackzyn/ui/shared/sleek_label.dart';
 
 class CreateProjectDialog extends StatefulWidget {
@@ -32,24 +33,9 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SleekLabel(text: 'Project name'),
-          TextField(
+          SleekInput(
             controller: _projectNameController,
-            decoration: const InputDecoration(
-              hintText: 'My New Project',
-              hintStyle: TextStyle(color: ColorPalette.neutral500),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                borderSide: BorderSide(color: ColorPalette.neutral300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                borderSide: BorderSide(color: ColorPalette.neutral300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                borderSide: BorderSide(color: ColorPalette.neutral300),
-              ),
-            ),
+            hintText: 'My New Project',
           ),
         ],
       ),

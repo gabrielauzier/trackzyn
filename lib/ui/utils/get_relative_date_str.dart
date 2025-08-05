@@ -14,7 +14,24 @@ String getRelativeDate(String dateString) {
     } else if (difference == -1) {
       return 'Tomorrow';
     } else if (difference > 1 && difference <= 7) {
-      return '$difference days ago';
+      switch (date.weekday) {
+        case DateTime.monday:
+          return 'Monday';
+        case DateTime.tuesday:
+          return 'Tuesday';
+        case DateTime.wednesday:
+          return 'Wednesday';
+        case DateTime.thursday:
+          return 'Thursday';
+        case DateTime.friday:
+          return 'Friday';
+        case DateTime.saturday:
+          return 'Saturday';
+        case DateTime.sunday:
+          return 'Sunday';
+        default:
+          return '';
+      }
     } else if (difference < -1 && difference >= -7) {
       return 'In ${-difference} days';
     } else {

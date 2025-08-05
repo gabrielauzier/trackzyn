@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/utils/get_relative_date_str.dart';
+import 'package:trackzyn/ui/utils/get_time_by_date.dart';
+import 'package:trackzyn/ui/utils/get_total_time_str.dart';
 
 class ActivityHistory extends StatefulWidget {
   final String? taskName;
@@ -10,6 +12,7 @@ class ActivityHistory extends StatefulWidget {
   final DateTime? date;
   final DateTime? startedAt;
   final bool showDate;
+  final int tasksDoneThisDate;
 
   const ActivityHistory({
     super.key,
@@ -20,6 +23,7 @@ class ActivityHistory extends StatefulWidget {
     this.date,
     this.startedAt,
     this.showDate = false,
+    this.tasksDoneThisDate = 0,
   });
 
   @override
@@ -27,7 +31,49 @@ class ActivityHistory extends StatefulWidget {
 }
 
 class _ActivityHistoryState extends State<ActivityHistory> {
-  _buildHeader() {
+  Widget _buildDate() {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            textAlign: TextAlign.left,
+            widget.date != null
+                ? getRelativeDate(widget.date!.toIso8601String())
+                : '',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: ColorPalette.neutral900,
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (widget.tasksDoneThisDate > 0)
+            Container(
+              // padding: const EdgeInsets.symmetric(horizontal: 20),
+              width: 20,
+              height: 20,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: ColorPalette.neutral200,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '${widget.tasksDoneThisDate}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ColorPalette.neutral700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,10 +153,6 @@ class _ActivityHistoryState extends State<ActivityHistory> {
   }
 
   Widget _buildFooter() {
-    final hours = (widget.spentTimeInSec / 3600).floor();
-    final minutes = ((widget.spentTimeInSec % 3600) / 60).floor();
-    final seconds = widget.spentTimeInSec % 60;
-
     return Row(
       children: [
         Column(
@@ -132,7 +174,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                  getTotalTimeStr(widget.spentTimeInSec),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -164,9 +206,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  widget.startedAt != null
-                      ? '${widget.startedAt!.hour.toString().padLeft(2, '0')}:${widget.startedAt!.minute.toString().padLeft(2, '0')}'
-                      : '--:--',
+                  getTimeByDate(widget.startedAt),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -196,22 +236,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (widget.showDate)
-          Container(
-            width: MediaQuery.of(context).size.width,
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              textAlign: TextAlign.left,
-              widget.date != null
-                  ? getRelativeDate(widget.date!.toIso8601String())
-                  : '',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: ColorPalette.neutral900,
-              ),
-            ),
-          ),
+        if (widget.showDate) _buildDate(),
         Container(
           width: MediaQuery.of(context).size.width,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),

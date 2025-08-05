@@ -73,29 +73,35 @@ class LocalActivitiesRepository implements ActivitiesRepository {
   }
 
   @override
-  Future<List<TaskActivityGroup>> groupByTaskAndDate() async {
+  Future<List<TaskActivityGroup>> groupByTaskAndDate({String? taskName}) async {
     if (_service.database == null) {
       debugPrint('Database is not initialized');
       return [];
     }
 
+    final query = '''
+        SELECT
+          t.name as task_name,
+          p.name as project_name,
+          DATE(started_at) as activity_date,
+          MAX(a.started_at) as started_at,
+          COUNT(a.id) as activity_count,
+          GROUP_CONCAT(a.id) as activity_ids,
+          SUM(duration_in_seconds) as total_duration_seconds,
+          TIME(SUM(duration_in_seconds), 'unixepoch') as total_time
+        FROM activity a
+          LEFT JOIN task t ON t.Id = a.task_id
+          LEFT JOIN project p ON p.Id = t.project_id
+        ${taskName != null && taskName.isNotEmpty ? 'WHERE t.name LIKE ? OR p.name LIKE ?' : ''} 
+        GROUP BY t.name, p.name, DATE(started_at)
+        ORDER BY started_at DESC;
+      ''';
+
     final List<Map<String, Object?>> maps = await _service.database!.rawQuery(
-      '''
-          SELECT
-              t.name as task_name,
-              p.name as project_name,
-              DATE(started_at) as activity_date,
-              MAX(a.started_at) as started_at,
-              COUNT(a.id) as activity_count,
-              GROUP_CONCAT(a.id) as activity_ids,
-              SUM(duration_in_seconds) as total_duration_seconds,
-              TIME(SUM(duration_in_seconds), 'unixepoch') as total_time
-          FROM activity a
-              LEFT JOIN task t ON t.Id = a.task_id
-              LEFT JOIN project p ON p.Id = t.project_id
-          GROUP BY t.name, p.name, DATE(started_at)
-          ORDER BY started_at DESC;
-      ''',
+      query,
+      taskName != null && taskName.isNotEmpty
+          ? ['%$taskName%', '%$taskName%']
+          : null,
     );
 
     return maps

@@ -191,10 +191,12 @@ class RecordCubit extends Cubit<RecordState> {
     );
   }
 
-  void getActivities() async {
+  void getActivities({String? taskName}) async {
     try {
       // final activities = await _getActivitiesUseCase.execute();
-      final taskActivityGroups = await _getTaskActivityGroupUseCase.execute();
+      final taskActivityGroups = await _getTaskActivityGroupUseCase.execute(
+        taskName: taskName,
+      );
 
       emit(state.copyWith(taskActivityGroups: taskActivityGroups));
     } catch (e) {

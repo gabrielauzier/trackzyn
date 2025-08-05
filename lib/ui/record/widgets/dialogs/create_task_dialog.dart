@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
+import 'package:trackzyn/ui/shared/sleek_input.dart';
 import 'package:trackzyn/ui/shared/sleek_label.dart';
 
 class CreateTaskDialog extends StatefulWidget {
@@ -14,11 +15,11 @@ class CreateTaskDialog extends StatefulWidget {
 class _CreateTaskDialogState extends State<CreateTaskDialog> {
   late final viewModel = Provider.of<RecordCubit>(context, listen: false);
 
-  final TextEditingController _projectNameController = TextEditingController();
+  final TextEditingController _taskNameController = TextEditingController();
 
   void createTask() {
     Future.microtask(() async {
-      viewModel.addTask(_projectNameController.text);
+      viewModel.addTask(_taskNameController.text);
     });
     Navigator.of(context).pop(); // Close the dialog after creation
   }
@@ -32,25 +33,7 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SleekLabel(text: 'Task name'),
-          TextField(
-            controller: _projectNameController,
-            decoration: const InputDecoration(
-              hintText: 'My New Task',
-              hintStyle: TextStyle(color: ColorPalette.neutral500),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                borderSide: BorderSide(color: ColorPalette.neutral300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                borderSide: BorderSide(color: ColorPalette.neutral300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                borderSide: BorderSide(color: ColorPalette.neutral300),
-              ),
-            ),
-          ),
+          SleekInput(controller: _taskNameController, hintText: 'My New Task'),
         ],
       ),
       actions: [
@@ -63,7 +46,7 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
-              if (_projectNameController.text.isNotEmpty) {
+              if (_taskNameController.text.isNotEmpty) {
                 createTask();
               }
             },

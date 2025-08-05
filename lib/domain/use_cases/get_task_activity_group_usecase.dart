@@ -9,9 +9,9 @@ class GetTaskActivityGroupUseCase {
   GetTaskActivityGroupUseCase(ActivitiesRepository activitiesRepository)
     : _activitiesRepository = activitiesRepository;
 
-  Future<List<TaskActivityGroup>> execute() async {
+  Future<List<TaskActivityGroup>> execute({String? taskName}) async {
     try {
-      return await _activitiesRepository.groupByTaskAndDate();
+      return await _activitiesRepository.groupByTaskAndDate(taskName: taskName);
     } catch (e) {
       debugPrint('Erro ao buscar atividades: $e');
       return [];
