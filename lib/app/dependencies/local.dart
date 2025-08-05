@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
+import 'package:trackzyn/app/dependencies/providers/activities_usecases_providers.dart';
+import 'package:trackzyn/app/dependencies/providers/projects_usecases_providers.dart';
+import 'package:trackzyn/app/dependencies/providers/tasks_usecases_providers.dart';
 
 import 'package:trackzyn/data/repositories/activities_repository.dart';
 import 'package:trackzyn/data/repositories/local/local_activities_repository.dart';
@@ -14,10 +17,11 @@ import 'package:trackzyn/domain/use_cases/add_project_usecase.dart';
 import 'package:trackzyn/domain/use_cases/add_task_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_activities_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_projects_usecase.dart';
+import 'package:trackzyn/domain/use_cases/get_task_activity_group_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_tasks_usecase.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
 
-List<SingleChildWidget> get providersLocal {
+List<SingleChildWidget> get servicesProviders {
   return [
     Provider<LocalDatabaseService>(create: (context) => LocalDatabaseService()),
     RepositoryProvider<ActivitiesRepository>(
@@ -38,34 +42,21 @@ List<SingleChildWidget> get providersLocal {
             localDatabaseService: context.read<LocalDatabaseService>(),
           ),
     ),
-    RepositoryProvider<AddActivityUseCase>(
-      create:
-          (context) => AddActivityUseCase(
-            context.read<ActivitiesRepository>(),
-            context.read<TasksRepository>(),
-          ),
-    ),
-    RepositoryProvider<AddProjectUseCase>(
-      create:
-          (context) => AddProjectUseCase(
-            projectsRepository: context.read<ProjectsRepository>(),
-          ),
-    ),
-    RepositoryProvider<GetActivitiesUseCase>(
-      create:
-          (context) =>
-              GetActivitiesUseCase(context.read<ActivitiesRepository>()),
-    ),
-    RepositoryProvider<GetProjectsUseCase>(
-      create:
-          (context) => GetProjectsUseCase(context.read<ProjectsRepository>()),
-    ),
-    RepositoryProvider<GetTasksUseCase>(
-      create: (context) => GetTasksUseCase(context.read<TasksRepository>()),
-    ),
-    RepositoryProvider<AddTaskUseCase>(
-      create: (context) => AddTaskUseCase(context.read<TasksRepository>()),
-    ),
+  ];
+}
+
+List<SingleChildWidget> get useCasesProviders {
+  return [
+    ...activitiesUseCasesProviders,
+    ...projectsUseCasesProviders,
+    ...tasksUseCasesProviders,
+  ];
+}
+
+List<SingleChildWidget> get providersLocal {
+  return [
+    ...servicesProviders,
+    ...useCasesProviders,
     BlocProvider<RecordCubit>(
       create:
           (context) => RecordCubit(
@@ -75,8 +66,8 @@ List<SingleChildWidget> get providersLocal {
             context.read<GetProjectsUseCase>(),
             context.read<GetTasksUseCase>(),
             context.read<AddTaskUseCase>(),
+            context.read<GetTaskActivityGroupUseCase>(),
           ),
     ),
-    Provider<LocalDatabaseService>(create: (context) => LocalDatabaseService()),
   ];
 }

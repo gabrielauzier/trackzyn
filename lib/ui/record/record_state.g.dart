@@ -25,6 +25,8 @@ abstract class _$RecordStateCWProxy {
 
   RecordState tasks(List<Task> tasks);
 
+  RecordState taskActivityGroups(List<TaskActivityGroup> taskActivityGroups);
+
   RecordState taskId(int? taskId);
 
   RecordState taskName(String? taskName);
@@ -50,6 +52,7 @@ abstract class _$RecordStateCWProxy {
     List<Activity> activities,
     List<Project> projects,
     List<Task> tasks,
+    List<TaskActivityGroup> taskActivityGroups,
     int? taskId,
     String? taskName,
     String? projectName,
@@ -97,6 +100,10 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
   RecordState tasks(List<Task> tasks) => this(tasks: tasks);
 
   @override
+  RecordState taskActivityGroups(List<TaskActivityGroup> taskActivityGroups) =>
+      this(taskActivityGroups: taskActivityGroups);
+
+  @override
   RecordState taskId(int? taskId) => this(taskId: taskId);
 
   @override
@@ -127,6 +134,7 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
     Object? activities = const $CopyWithPlaceholder(),
     Object? projects = const $CopyWithPlaceholder(),
     Object? tasks = const $CopyWithPlaceholder(),
+    Object? taskActivityGroups = const $CopyWithPlaceholder(),
     Object? taskId = const $CopyWithPlaceholder(),
     Object? taskName = const $CopyWithPlaceholder(),
     Object? projectName = const $CopyWithPlaceholder(),
@@ -178,6 +186,11 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
               ? _value.tasks
               // ignore: cast_nullable_to_non_nullable
               : tasks as List<Task>,
+      taskActivityGroups:
+          taskActivityGroups == const $CopyWithPlaceholder()
+              ? _value.taskActivityGroups
+              // ignore: cast_nullable_to_non_nullable
+              : taskActivityGroups as List<TaskActivityGroup>,
       taskId:
           taskId == const $CopyWithPlaceholder()
               ? _value.taskId

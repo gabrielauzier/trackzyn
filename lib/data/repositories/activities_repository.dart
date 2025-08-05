@@ -1,4 +1,5 @@
 import 'package:trackzyn/domain/models/activity.dart';
+import 'package:trackzyn/domain/models/task_activity_group.dart';
 
 abstract class ActivitiesRepository {
   Future<List<Activity>> fetchMany({
@@ -16,4 +17,6 @@ abstract class ActivitiesRepository {
   Future<void> update(Activity activity);
 
   Future<void> delete(int activityId);
+
+  Future<List<TaskActivityGroup>> groupByTaskAndDate();
 }

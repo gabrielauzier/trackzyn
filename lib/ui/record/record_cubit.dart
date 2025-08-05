@@ -10,6 +10,7 @@ import 'package:trackzyn/domain/use_cases/add_project_usecase.dart';
 import 'package:trackzyn/domain/use_cases/add_task_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_activities_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_projects_usecase.dart';
+import 'package:trackzyn/domain/use_cases/get_task_activity_group_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_tasks_usecase.dart';
 
 import 'package:trackzyn/ui/record/record_state.dart';
@@ -22,12 +23,14 @@ class RecordCubit extends Cubit<RecordState> {
     GetProjectsUseCase getProjectsUseCase,
     GetTasksUseCase getTasksUseCase,
     AddTaskUseCase addTaskUseCase,
+    GetTaskActivityGroupUseCase getTaskActivityGroupUseCase,
   ) : _addActivityUseCase = addActivityUseCase,
       _getActivitiesUseCase = getActivitiesUseCase,
       _addProjectUseCase = addProjectUseCase,
       _getProjectsUseCase = getProjectsUseCase,
       _getTasksUseCase = getTasksUseCase,
       _addTaskUseCase = addTaskUseCase,
+      _getTaskActivityGroupUseCase = getTaskActivityGroupUseCase,
       super(RecordState());
 
   final AddActivityUseCase _addActivityUseCase;
@@ -36,6 +39,7 @@ class RecordCubit extends Cubit<RecordState> {
   final GetProjectsUseCase _getProjectsUseCase;
   final GetTasksUseCase _getTasksUseCase;
   final AddTaskUseCase _addTaskUseCase;
+  final GetTaskActivityGroupUseCase _getTaskActivityGroupUseCase;
 
   static const double FOCUS_DURATION = 25 * 60; // 25 minutes in seconds
   static const double SHORT_BREAK_DURATION = 5 * 60; // 5 minutes in seconds
@@ -189,8 +193,10 @@ class RecordCubit extends Cubit<RecordState> {
 
   void getActivities() async {
     try {
-      final activities = await _getActivitiesUseCase.execute();
-      emit(state.copyWith(activities: activities));
+      // final activities = await _getActivitiesUseCase.execute();
+      final taskActivityGroups = await _getTaskActivityGroupUseCase.execute();
+
+      emit(state.copyWith(taskActivityGroups: taskActivityGroups));
     } catch (e) {
       debugPrint('Erro ao buscar atividades: $e');
       emit(state.copyWith(activities: []));

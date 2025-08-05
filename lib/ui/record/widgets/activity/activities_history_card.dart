@@ -28,20 +28,31 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
       builder: (context, state) {
         return SleekCard(
           width: MediaQuery.of(context).size.width,
-          // height: MediaQuery.of(context).size.height,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children:
-                  state.activities.map((activity) {
+                  state.taskActivityGroups.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final taskActivityGroup = entry.value;
                     return ActivityHistory(
-                      taskName: activity.taskName,
-                      projectName: activity.projectName,
-                      // sessionsCount: activity.sessionsCount,
-                      spentTimeInSec: activity.durationInSeconds,
-                      date: activity.startedAt,
+                      taskName: taskActivityGroup.taskName,
+                      projectName: taskActivityGroup.projectName,
+                      sessionsCount: taskActivityGroup.activityCount,
+                      spentTimeInSec: taskActivityGroup.totalDurationInSeconds,
+                      date: DateTime.parse(taskActivityGroup.activityDate),
+                      startedAt:
+                          taskActivityGroup.startedAt != null
+                              ? DateTime.parse(taskActivityGroup.startedAt!)
+                              : null,
+                      showDate:
+                          index == 0 ||
+                          taskActivityGroup.activityDate !=
+                              state
+                                  .taskActivityGroups[index - 1]
+                                  .activityDate, // Show date only for the first item or when the date changes
                     );
                   }).toList(),
             ),

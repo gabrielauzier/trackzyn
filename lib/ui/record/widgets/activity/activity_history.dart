@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
+import 'package:trackzyn/ui/utils/get_relative_date_str.dart';
 
 class ActivityHistory extends StatefulWidget {
   final String? taskName;
@@ -7,6 +8,8 @@ class ActivityHistory extends StatefulWidget {
   final int sessionsCount;
   final int spentTimeInSec;
   final DateTime? date;
+  final DateTime? startedAt;
+  final bool showDate;
 
   const ActivityHistory({
     super.key,
@@ -15,6 +18,8 @@ class ActivityHistory extends StatefulWidget {
     this.sessionsCount = 0,
     this.spentTimeInSec = 0,
     this.date,
+    this.startedAt,
+    this.showDate = false,
   });
 
   @override
@@ -22,17 +27,63 @@ class ActivityHistory extends StatefulWidget {
 }
 
 class _ActivityHistoryState extends State<ActivityHistory> {
-  List<Widget> _buildHeader() {
-    return [
-      Text(
-        widget.taskName ?? 'No Task',
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      ),
-      Text(
-        widget.projectName ?? 'No Project',
-        style: const TextStyle(fontSize: 14, color: ColorPalette.neutral600),
-      ),
-    ];
+  _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: Text(
+                widget.taskName ?? 'No Task',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.visible,
+                // softWrap: true,
+              ),
+            ),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: Text(
+                widget.projectName ?? 'No Project',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: ColorPalette.neutral600,
+                ),
+                overflow: TextOverflow.visible,
+                // softWrap: true,
+              ),
+            ),
+            // Text(
+            //   widget.projectName ?? 'No Project lorem ipsum dolor sit amet',
+            //   style: const TextStyle(
+            //     fontSize: 14,
+            //     color: ColorPalette.neutral600,
+            //   ),
+            // ),
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: ColorPalette.neutral100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            '${widget.sessionsCount}x sessions',
+            style: const TextStyle(
+              fontSize: 14,
+              color: ColorPalette.neutral500,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildDashedLine() {
@@ -93,6 +144,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
           ],
         ),
         const SizedBox(width: 16),
+
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -112,8 +164,8 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  widget.date != null
-                      ? '${widget.date!.hour.toString().padLeft(2, '0')}:${widget.date!.minute.toString().padLeft(2, '0')}'
+                  widget.startedAt != null
+                      ? '${widget.startedAt!.hour.toString().padLeft(2, '0')}:${widget.startedAt!.minute.toString().padLeft(2, '0')}'
                       : '--:--',
                   style: const TextStyle(
                     fontSize: 14,
@@ -142,27 +194,47 @@ class _ActivityHistoryState extends State<ActivityHistory> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ColorPalette.neutral200, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: ColorPalette.neutral100.withValues(alpha: 0.5),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return Column(
+      children: [
+        if (widget.showDate)
+          Container(
+            width: MediaQuery.of(context).size.width,
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              textAlign: TextAlign.left,
+              widget.date != null
+                  ? getRelativeDate(widget.date!.toIso8601String())
+                  : '',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: ColorPalette.neutral900,
+              ),
+            ),
           ),
-        ],
-      ),
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [..._buildHeader(), _buildDashedLine(), _buildFooter()],
-      ),
+        Container(
+          width: MediaQuery.of(context).size.width,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: ColorPalette.neutral200, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: ColorPalette.neutral100.withValues(alpha: 0.5),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [_buildHeader(), _buildDashedLine(), _buildFooter()],
+          ),
+        ),
+      ],
     );
   }
 }
