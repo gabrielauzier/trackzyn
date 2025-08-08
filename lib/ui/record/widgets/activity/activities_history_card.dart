@@ -5,6 +5,8 @@ import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/record_state.dart';
 import 'package:trackzyn/ui/record/widgets/activity/activity_history.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
+import 'package:trackzyn/ui/resources/icons_library.dart';
+import 'package:trackzyn/ui/shared/icon_svg.dart';
 import 'package:trackzyn/ui/shared/sleek_card.dart';
 import 'package:trackzyn/ui/shared/sleek_input.dart';
 
@@ -38,6 +40,14 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
               return map;
             });
 
+        Map<String, int> totalDurationByDate = state.taskActivityGroups
+            .fold<Map<String, int>>({}, (map, taskActivityGroup) {
+              map[taskActivityGroup.activityDate] =
+                  (map[taskActivityGroup.activityDate] ?? 0) +
+                  taskActivityGroup.totalDurationInSeconds;
+              return map;
+            });
+
         return SleekCard(
           width: MediaQuery.of(context).size.width,
           child: Padding(
@@ -48,13 +58,21 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
               children: [
                 SleekInput(
                   controller: _searchActivityController,
-                  hintText: 'Search a activity',
+                  hintText: 'Search activity',
                   onSubmitted: (value) {
                     viewModel.getActivities(taskName: value);
                   },
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: ColorPalette.neutral800,
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(
+                      left: 12.0,
+                      top: 16,
+                      bottom: 16,
+                    ),
+                    child: IconSvg(
+                      IconsLibrary.search_normal_linear,
+                      color: ColorPalette.neutral800,
+                      size: 20,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -66,9 +84,13 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
                     projectName: taskActivityGroup.projectName,
                     sessionsCount: taskActivityGroup.activityCount,
                     spentTimeInSec: taskActivityGroup.totalDurationInSeconds,
+
                     date: DateTime.parse(taskActivityGroup.activityDate),
                     tasksDoneThisDate:
                         tasksQtdByDate[taskActivityGroup.activityDate] ?? 0,
+                    totalDurationThisDate:
+                        totalDurationByDate[taskActivityGroup.activityDate] ??
+                        0,
                     startedAt:
                         taskActivityGroup.startedAt != null
                             ? DateTime.parse(taskActivityGroup.startedAt!)

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:trackzyn/app/constants.dart';
@@ -51,6 +52,8 @@ class LocalDatabaseService {
       );
     """;
 
+    debugPrint('Abrindo banco de dados: $dbPath');
+
     _database = await openDatabase(
       dbPath,
       version: AppConstants.localDatabaseVersion,
@@ -63,6 +66,8 @@ class LocalDatabaseService {
         debugPrint('Tabelas criadas com sucesso ✅');
       },
     );
+
+    // await dbExportToDownloadFolder();
   }
 
   // Add getter for database instance
@@ -72,5 +77,43 @@ class LocalDatabaseService {
   Future<void> close() async {
     await _database?.close();
     _database = null;
+  }
+
+  dbToCopy() async {
+    debugPrint('✅ Tentando exportar banco de dados...');
+
+    if (_database == null) {
+      throw Exception('Database is not initialized');
+    }
+
+    final dbPath = await getDatabasesPath();
+    final dbFile = File(join(dbPath, AppConstants.localDatabase));
+
+    if (!await dbFile.exists()) {
+      throw Exception('Database file does not exist');
+    }
+
+    return dbFile;
+  }
+
+  dbExportToDownloadFolder() async {
+    File localDatabasePath = await dbToCopy();
+    Directory documentsDirectory = Directory("storage/emulated/0/Download/");
+    String newPath = join(
+      documentsDirectory.absolute.path + AppConstants.localDatabase,
+    );
+
+    Map<Permission, PermissionStatus> statuses =
+        await [Permission.manageExternalStorage].request();
+
+    bool hasPermission =
+        statuses[Permission.manageExternalStorage] == PermissionStatus.granted;
+
+    if (hasPermission) {
+      File a = await localDatabasePath.copy(newPath);
+      debugPrint('Banco de dados copiado para: ${a.absolute.path} ✅');
+    } else {
+      print("Permissões não concedidas para acessar o armazenamento externo.");
+    }
   }
 }

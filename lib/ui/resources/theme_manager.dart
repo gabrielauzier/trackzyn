@@ -13,10 +13,10 @@ ThemeData buildTheme() {
     appBarTheme: AppBarTheme(
       backgroundColor: backgroundColor,
       elevation: 0,
-      toolbarHeight: 0,
+      toolbarHeight: 56,
     ),
     cardColor: Colors.white,
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: backgroundColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       elevation: 1,
@@ -25,7 +25,7 @@ ThemeData buildTheme() {
       bodyColor: ColorPalette.neutral800,
       displayColor: ColorPalette.neutral800,
     ),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: ColorPalette.violet500,
       labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       unselectedLabelColor: ColorPalette.neutral500,
@@ -91,8 +91,7 @@ ThemeData buildTheme() {
         ),
       ),
     ),
-
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       titleTextStyle: baseTheme.textTheme.titleLarge?.copyWith(
@@ -104,6 +103,15 @@ ThemeData buildTheme() {
         color: ColorPalette.neutral800,
       ),
       insetPadding: EdgeInsets.zero,
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        padding: EdgeInsets.all(0),
+        maximumSize: const Size(40, 40),
+        splashFactory: NoSplash.splashFactory,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     ),
     scaffoldBackgroundColor: backgroundColor,
   );

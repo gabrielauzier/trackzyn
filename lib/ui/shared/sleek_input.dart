@@ -12,7 +12,7 @@ class SleekInput extends StatelessWidget {
 
   final TextEditingController _controller;
   final String? hintText;
-  final Icon? prefixIcon;
+  final Widget? prefixIcon;
   final void Function(String)? onSubmitted;
 
   @override
@@ -25,15 +25,15 @@ class SleekInput extends StatelessWidget {
         hintStyle: TextStyle(color: ColorPalette.neutral400),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12.0)),
-          borderSide: BorderSide(color: ColorPalette.neutral300),
+          borderSide: BorderSide(color: ColorPalette.neutral200),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12.0)),
-          borderSide: BorderSide(color: ColorPalette.neutral300),
+          borderSide: BorderSide(color: ColorPalette.neutral200),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12.0)),
-          borderSide: BorderSide(color: ColorPalette.neutral300),
+          borderSide: BorderSide(color: ColorPalette.neutral200),
         ),
         prefixIcon: prefixIcon,
       ),

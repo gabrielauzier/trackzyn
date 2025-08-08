@@ -7,6 +7,8 @@ import 'package:trackzyn/ui/record/widgets/sheets/associate_working_on.dart';
 import 'package:trackzyn/ui/record/widgets/working/what_are_you_working_on.dart';
 
 import 'package:trackzyn/ui/resources/color_palette.dart';
+import 'package:trackzyn/ui/resources/icons_library.dart';
+import 'package:trackzyn/ui/shared/icon_svg.dart';
 import 'package:trackzyn/ui/shared/sleek_card.dart';
 
 class ActivitySessionCard extends StatefulWidget {
@@ -40,7 +42,11 @@ class _ActivitySessionCardState extends State<ActivitySessionCard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.play_arrow, color: Colors.white, size: 24),
+            const IconSvg(
+              IconsLibrary.play_linear,
+              size: 24,
+              color: Colors.white,
+            ),
             const SizedBox(width: 8),
             const Text('Start session', style: TextStyle(fontSize: 16)),
           ],

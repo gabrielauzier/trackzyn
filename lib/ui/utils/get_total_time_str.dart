@@ -1,4 +1,4 @@
-String getTotalTimeStr(int totalSeconds) {
+String getTotalTimeStr(int totalSeconds, {bool showSeconds = true}) {
   final hours = (totalSeconds / 3600).floor();
   final minutes = ((totalSeconds % 3600) / 60).floor();
   final seconds = totalSeconds % 60;
@@ -10,8 +10,11 @@ String getTotalTimeStr(int totalSeconds) {
   if (minutes > 0) {
     totalTimeStr += '${minutes}m ';
   }
-  if (seconds > 0 || totalTimeStr.isEmpty) {
-    totalTimeStr += '${seconds}s';
+  if (showSeconds) {
+    if (seconds > 0 || totalTimeStr.isEmpty) {
+      totalTimeStr += '${seconds}s';
+    }
   }
+
   return totalTimeStr.trim();
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
+import 'package:trackzyn/ui/resources/icons_library.dart';
+import 'package:trackzyn/ui/shared/icon_svg.dart';
 import 'package:trackzyn/ui/utils/get_relative_date_str.dart';
 import 'package:trackzyn/ui/utils/get_time_by_date.dart';
 import 'package:trackzyn/ui/utils/get_total_time_str.dart';
@@ -13,6 +15,7 @@ class ActivityHistory extends StatefulWidget {
   final DateTime? startedAt;
   final bool showDate;
   final int tasksDoneThisDate;
+  final int totalDurationThisDate;
 
   const ActivityHistory({
     super.key,
@@ -24,6 +27,7 @@ class ActivityHistory extends StatefulWidget {
     this.startedAt,
     this.showDate = false,
     this.tasksDoneThisDate = 0,
+    this.totalDurationThisDate = 0,
   });
 
   @override
@@ -34,7 +38,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
   Widget _buildDate() {
     return Container(
       width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Text(
@@ -65,6 +69,21 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                   fontSize: 12,
                   color: ColorPalette.neutral700,
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          Spacer(),
+          if (widget.totalDurationThisDate > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                getTotalTimeStr(
+                  widget.totalDurationThisDate,
+                  showSeconds: false,
+                ),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: ColorPalette.neutral500,
                 ),
               ),
             ),
@@ -174,7 +193,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  getTotalTimeStr(widget.spentTimeInSec),
+                  getTotalTimeStr(widget.spentTimeInSec, showSeconds: false),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -186,7 +205,6 @@ class _ActivityHistoryState extends State<ActivityHistory> {
           ],
         ),
         const SizedBox(width: 16),
-
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -222,7 +240,8 @@ class _ActivityHistoryState extends State<ActivityHistory> {
           onPressed: () {},
           child: Row(
             children: const [
-              Icon(Icons.play_arrow_outlined, size: 24),
+              SizedBox(width: 8),
+              IconSvg(IconsLibrary.play_linear, size: 20),
               SizedBox(width: 8),
               Text('Start again'),
             ],

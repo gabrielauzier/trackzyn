@@ -7,6 +7,8 @@ import 'package:trackzyn/ui/record/record_state.dart';
 import 'package:trackzyn/ui/record/widgets/pomodoro/pomodoro_timer.dart';
 import 'package:trackzyn/ui/record/widgets/working/what_are_you_working_on.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
+import 'package:trackzyn/ui/resources/icons_library.dart';
+import 'package:trackzyn/ui/shared/icon_svg.dart';
 import 'package:trackzyn/ui/shared/sleek_card.dart';
 
 class PomodoroCard extends StatefulWidget {
@@ -113,8 +115,13 @@ class _PomodoroCardState extends State<PomodoroCard> {
                 ),
                 child: IconButton(
                   padding: EdgeInsets.zero,
+                  style: IconButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
                   onPressed: () {},
-                  icon: const Icon(Icons.music_note),
+                  icon: const IconSvg(IconsLibrary.music_linear),
                 ),
               ),
               ElevatedButton(
@@ -155,20 +162,17 @@ class _PomodoroCardState extends State<PomodoroCard> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       switch (recordingStatus) {
-                        RecordingStatus.notStarted => const Icon(
-                          Icons.play_arrow,
+                        RecordingStatus.notStarted => IconSvg(
+                          IconsLibrary.play_linear,
                           color: Colors.white,
-                          size: 24,
                         ),
-                        RecordingStatus.recording => const Icon(
-                          Icons.pause,
+                        RecordingStatus.recording => IconSvg(
+                          IconsLibrary.pause_linear,
                           color: Colors.white,
-                          size: 24,
                         ),
-                        RecordingStatus.paused => const Icon(
-                          Icons.play_arrow,
+                        RecordingStatus.paused => IconSvg(
+                          IconsLibrary.play_linear,
                           color: Colors.white,
-                          size: 24,
                         ),
                         RecordingStatus.finished => const Icon(
                           Icons.refresh,
@@ -212,9 +216,13 @@ class _PomodoroCardState extends State<PomodoroCard> {
                   border: Border.all(color: ColorPalette.neutral200, width: 2),
                 ),
                 child: IconButton(
-                  padding: EdgeInsets.zero,
+                  style: IconButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
                   onPressed: () {},
-                  icon: const Icon(Icons.zoom_out_map),
+                  icon: const IconSvg(IconsLibrary.maximize_3_linear),
                 ),
               ),
             ],
