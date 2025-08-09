@@ -72,16 +72,14 @@ class _RecordViewState extends State<RecordView> with WidgetsBindingObserver {
   }
 
   _buildPomodoroContent() {
-    return SafeArea(
-      child: Container(
-        // width: MediaQuery.of(context).size.width,
-        // height: MediaQuery.of(context).size.height,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [const SizedBox(height: 20), PomodoroCard()],
-        ),
+    return Container(
+      // width: MediaQuery.of(context).size.width,
+      // height: MediaQuery.of(context).size.height,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [const SizedBox(height: 20), PomodoroCard()],
       ),
     );
   }
@@ -105,40 +103,38 @@ class _RecordViewState extends State<RecordView> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     WakelockPlus.enable();
-    return BlocProvider(
-      create: (context) => cubit,
-      child: DefaultTabController(
-        length: 2,
-        child: Scaffold(
-          appBar: AppBar(
-            title: Row(
-              children: [
-                const Text(
-                  'Record',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-                ),
-                Spacer(),
-                IconButton(
-                  icon: IconSvg(IconsLibrary.add_square_linear, size: 28),
-                  onPressed: () {
-                    debugPrint('Add button pressed');
-                  },
-                ),
-                IconButton(
-                  icon: IconSvg(IconsLibrary.setting_2_linear, size: 28),
-                  onPressed: () {
-                    debugPrint('Settings button pressed');
-                  },
-                ),
-              ],
-            ),
-            bottom: TabBar(
-              tabs: [Tab(text: 'Pomodoro'), Tab(text: 'Activities')],
-            ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: ColorPalette.neutral50,
+        appBar: AppBar(
+          title: Row(
+            children: [
+              const Text(
+                'Record',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+              ),
+              Spacer(),
+              IconButton(
+                icon: IconSvg(IconsLibrary.add_square_linear, size: 28),
+                onPressed: () {
+                  debugPrint('Add button pressed');
+                },
+              ),
+              IconButton(
+                icon: IconSvg(IconsLibrary.setting_2_linear, size: 28),
+                onPressed: () {
+                  debugPrint('Settings button pressed');
+                },
+              ),
+            ],
           ),
-          body: TabBarView(
-            children: [_buildPomodoroContent(), _buildActivitiesContent()],
+          bottom: TabBar(
+            tabs: [Tab(text: 'Pomodoro'), Tab(text: 'Activities')],
           ),
+        ),
+        body: TabBarView(
+          children: [_buildPomodoroContent(), _buildActivitiesContent()],
         ),
       ),
     );

@@ -113,6 +113,48 @@ ThemeData buildTheme() {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: ColorPalette.violet500,
+      unselectedItemColor: ColorPalette.neutral500,
+      selectedLabelStyle: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: Colors.transparent,
+      iconTheme: WidgetStateProperty.all(
+        IconThemeData(color: ColorPalette.neutral500, size: 24),
+      ),
+      indicatorColor: Colors.transparent,
+      labelTextStyle: WidgetStateProperty.all(
+        const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: ColorPalette.neutral500,
+        ),
+      ),
+
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      height: 80,
+    ),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: Colors.transparent,
+      selectedIconTheme: IconThemeData(color: ColorPalette.violet500, size: 24),
+      unselectedIconTheme: IconThemeData(
+        color: ColorPalette.neutral500,
+        size: 24,
+      ),
+      selectedLabelTextStyle: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
     scaffoldBackgroundColor: backgroundColor,
   );
 }

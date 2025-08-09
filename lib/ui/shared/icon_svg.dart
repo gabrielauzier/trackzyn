@@ -3,16 +3,11 @@ import 'package:flutter_svg/svg.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 
 class IconSvg extends StatelessWidget {
-  const IconSvg(
-    this.iconPath, {
-    super.key,
-    this.size = 24,
-    this.color = ColorPalette.neutral900,
-  });
+  const IconSvg(this.iconPath, {super.key, this.size = 24, this.color});
 
   final String iconPath;
   final double? size;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +15,8 @@ class IconSvg extends StatelessWidget {
       iconPath,
       width: size,
       height: size,
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      colorFilter:
+          color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
     );
   }
 }
