@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:trackzyn/ui/record/record_view.dart';
+import 'package:trackzyn/ui/reports/reports_view.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/resources/icons_library.dart';
 import 'package:trackzyn/ui/shared/icon_svg.dart';
@@ -34,7 +35,7 @@ class _AppNavigationBarState extends State<AppNavigationBar> {
     NavigationDestinationCustomItem(
       icon: IconsLibrary.graph_bold,
       label: 'Reports',
-      view: const Text('Reports'),
+      view: const ReportsView(),
     ),
     NavigationDestinationCustomItem(
       icon: IconsLibrary.user_bold,

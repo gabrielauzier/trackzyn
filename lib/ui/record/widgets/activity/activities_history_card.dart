@@ -20,6 +20,9 @@ class ActivitiesHistoryCard extends StatefulWidget {
 class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
   late final viewModel = Provider.of<RecordCubit>(context, listen: false);
 
+  final TextEditingController _searchActivityController =
+      TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -28,9 +31,6 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController _searchActivityController =
-        TextEditingController();
-
     return BlocBuilder<RecordCubit, RecordState>(
       builder: (context, state) {
         Map<String, int> tasksQtdByDate = state.taskActivityGroups
@@ -80,6 +80,7 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
                   final index = entry.key;
                   final taskActivityGroup = entry.value;
                   return ActivityHistory(
+                    taskId: taskActivityGroup.taskId,
                     taskName: taskActivityGroup.taskName,
                     projectName: taskActivityGroup.projectName,
                     sessionsCount: taskActivityGroup.activityCount,

@@ -14,5 +14,5 @@ abstract class TasksRepository {
 
   Future<void> update(Task task);
 
-  Future<void> delete(String taskId);
+  Future<void> delete(int taskId);
 }

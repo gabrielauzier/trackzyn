@@ -6,8 +6,9 @@ abstract class ActivitiesRepository {
     int? projectId,
     int? taskId,
     String? taskName,
-    DateTime? startDate,
-    DateTime? endDate,
+    String? startDate,
+    String? endDate,
+    bool? enableSearchTaskNull = false,
   });
 
   Future<Activity> getById(int activityId);

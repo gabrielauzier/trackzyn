@@ -113,7 +113,9 @@ class LocalDatabaseService {
       File a = await localDatabasePath.copy(newPath);
       debugPrint('Banco de dados copiado para: ${a.absolute.path} ✅');
     } else {
-      print("Permissões não concedidas para acessar o armazenamento externo.");
+      debugPrint(
+        "Permissões não concedidas para acessar o armazenamento externo.",
+      );
     }
   }
 }

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:trackzyn/ui/record/widgets/activity/sessions/activity_sessions_view.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/resources/icons_library.dart';
+import 'package:trackzyn/ui/shared/dashed_line.dart';
 import 'package:trackzyn/ui/shared/icon_svg.dart';
+import 'package:trackzyn/ui/shared/styles/shared_activity_card_box_decoration.dart';
+import 'package:trackzyn/ui/shared/styles/shared_floating_title_text_style.dart';
+import 'package:trackzyn/ui/utils/get_date_truncate.dart';
 import 'package:trackzyn/ui/utils/get_relative_date_str.dart';
 import 'package:trackzyn/ui/utils/get_time_by_date.dart';
 import 'package:trackzyn/ui/utils/get_total_time_str.dart';
 
 class ActivityHistory extends StatefulWidget {
+  final int? taskId;
   final String? taskName;
   final String? projectName;
   final int sessionsCount;
@@ -19,6 +25,7 @@ class ActivityHistory extends StatefulWidget {
 
   const ActivityHistory({
     super.key,
+    this.taskId,
     this.taskName,
     this.projectName,
     this.sessionsCount = 0,
@@ -46,11 +53,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
             widget.date != null
                 ? getRelativeDate(widget.date!.toIso8601String())
                 : '',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: ColorPalette.neutral900,
-            ),
+            style: sharedFloatingTitleTextStyle(),
           ),
           const SizedBox(width: 8),
           if (widget.tasksDoneThisDate > 0)
@@ -124,50 +127,33 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                 // softWrap: true,
               ),
             ),
-            // Text(
-            //   widget.projectName ?? 'No Project lorem ipsum dolor sit amet',
-            //   style: const TextStyle(
-            //     fontSize: 14,
-            //     color: ColorPalette.neutral600,
-            //   ),
-            // ),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: ColorPalette.neutral100,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            '${widget.sessionsCount}x sessions',
-            style: const TextStyle(
-              fontSize: 14,
-              color: ColorPalette.neutral500,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDashedLine() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(
-              (constraints.maxWidth / 10).floor(),
-              (index) => const SizedBox(
-                width: 5,
-                child: Divider(color: ColorPalette.neutral300, thickness: 1),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: ColorPalette.neutral100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${widget.sessionsCount}x session${widget.sessionsCount > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: ColorPalette.neutral500,
+                ),
               ),
             ),
-          );
-        },
-      ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: ColorPalette.neutral400,
+              size: 20,
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -209,7 +195,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Started at',
+              'Last at',
               style: const TextStyle(
                 fontSize: 14,
                 color: ColorPalette.neutral500,
@@ -251,6 +237,25 @@ class _ActivityHistoryState extends State<ActivityHistory> {
     );
   }
 
+  void handleHistoryTapped() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder:
+            (context) => ActivitySessionsView(
+              taskName: widget.taskName,
+              projectName: widget.projectName,
+              sessionsCount: widget.sessionsCount,
+              spentTimeInSec: widget.spentTimeInSec,
+              taskId: widget.taskId,
+              date:
+                  widget.startedAt != null
+                      ? getDateTruncate(widget.startedAt)
+                      : getDateTruncate(DateTime.now()),
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -258,24 +263,34 @@ class _ActivityHistoryState extends State<ActivityHistory> {
         if (widget.showDate) _buildDate(),
         Container(
           width: MediaQuery.of(context).size.width,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: ColorPalette.neutral200, width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: ColorPalette.neutral100.withValues(alpha: 0.5),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+          decoration: sharedActivityCardBoxDecoration(),
           margin: const EdgeInsets.only(bottom: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [_buildHeader(), _buildDashedLine(), _buildFooter()],
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              overlayColor: WidgetStateProperty.all<Color>(
+                ColorPalette.neutral200.withValues(alpha: 0.75),
+              ),
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                handleHistoryTapped();
+              },
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [_buildHeader(), DashedLine(), _buildFooter()],
+                ),
+              ),
+            ),
           ),
         ),
       ],

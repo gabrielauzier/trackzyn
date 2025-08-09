@@ -1,13 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/resources/icons_library.dart';
 import 'package:trackzyn/ui/shared/icon_svg.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
-
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/widgets/activity/activities_history_card.dart';
 import 'package:trackzyn/ui/record/widgets/activity/activity_session_card.dart';

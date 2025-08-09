@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_getters_setters
+
 class Activity {
   int? _id;
   int? _taskId;

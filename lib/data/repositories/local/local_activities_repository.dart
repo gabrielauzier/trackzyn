@@ -29,8 +29,9 @@ class LocalActivitiesRepository implements ActivitiesRepository {
     int? projectId,
     int? taskId,
     String? taskName,
-    DateTime? startDate,
-    DateTime? endDate,
+    String? startDate,
+    String? endDate,
+    bool? enableSearchTaskNull = false,
   }) async {
     if (_service.database == null) {
       debugPrint('Database is not initialized');
@@ -39,9 +40,16 @@ class LocalActivitiesRepository implements ActivitiesRepository {
 
     final List<Map<String, Object?>> maps = await _service.database!.rawQuery(
       '''
-          SELECT activity.*, task.name as task_name, project.name as project_name FROM activity
-          LEFT JOIN task ON activity.task_id IS NOT NULL AND activity.task_id = task.id 
-          LEFT JOIN project ON task.project_id IS NOT NULL AND task.project_id = project.id
+          SELECT a.*, t.name as task_name, p.name as project_name FROM activity a
+          LEFT JOIN task t ON a.task_id = t.id 
+          LEFT JOIN project p ON t.project_id = p.id
+          WHERE 1 = 1
+            ${taskName != null && taskName.isNotEmpty ? "AND t.name LIKE '$taskName' OR p.name LIKE '$taskName'" : ''} 
+            ${taskId != null ? 'AND t.id = $taskId AND t.id IS NOT NULL' : ''} 
+            ${taskId == null && enableSearchTaskNull == true ? 'AND t.id IS NULL' : ''}
+            ${projectId != null ? 'AND p.id = $projectId' : ''}
+            ${startDate != null ? "AND a.started_at >= '$startDate'" : ''}
+            ${endDate != null ? "AND a.started_at < '$endDate'" : ''}
           ORDER BY id DESC
           ''',
     );
@@ -81,6 +89,7 @@ class LocalActivitiesRepository implements ActivitiesRepository {
 
     final query = '''
         SELECT
+          t.id as task_id,
           t.name as task_name,
           p.name as project_name,
           DATE(started_at) as activity_date,

@@ -2,6 +2,7 @@ import 'package:trackzyn/domain/models/activity.dart';
 
 class TaskActivityGroup {
   // mapped fields
+  final int? taskId;
   final String? taskName;
   final String? projectName;
   final String activityDate; // formatted as 'YYYY-MM-DD'
@@ -14,6 +15,7 @@ class TaskActivityGroup {
   final List<Activity> activities;
 
   TaskActivityGroup({
+    this.taskId,
     this.taskName,
     this.projectName,
     required this.activityDate,
@@ -26,6 +28,7 @@ class TaskActivityGroup {
 
   factory TaskActivityGroup.fromMap(Map<String, dynamic> map) {
     return TaskActivityGroup(
+      taskId: map['task_id'],
       taskName: map['task_name'],
       projectName: map['project_name'],
       activityDate: map['activity_date'],
@@ -38,6 +41,7 @@ class TaskActivityGroup {
 
   Map<String, dynamic> toMap() {
     return {
+      'task_id': taskId,
       'task_name': taskName,
       'project_name': projectName,
       'activity_date': activityDate,

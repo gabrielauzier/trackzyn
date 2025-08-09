@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -193,7 +195,6 @@ class RecordCubit extends Cubit<RecordState> {
 
   void getActivities({String? taskName}) async {
     try {
-      // final activities = await _getActivitiesUseCase.execute();
       final taskActivityGroups = await _getTaskActivityGroupUseCase.execute(
         taskName: taskName,
       );
@@ -201,6 +202,21 @@ class RecordCubit extends Cubit<RecordState> {
       emit(state.copyWith(taskActivityGroups: taskActivityGroups));
     } catch (e) {
       debugPrint('Erro ao buscar atividades: $e');
+      emit(state.copyWith(taskActivityGroups: []));
+    }
+  }
+
+  Future<void> getActivitiesByTaskAndDate({String? date, int? taskId}) async {
+    try {
+      emit(state.copyWith(activities: []));
+
+      final activities = await _getActivitiesUseCase.execute(
+        taskId: taskId,
+        date: date,
+      );
+      emit(state.copyWith(activities: activities));
+    } catch (e) {
+      debugPrint('Erro ao buscar atividades por tarefa e data: $e');
       emit(state.copyWith(activities: []));
     }
   }

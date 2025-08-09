@@ -18,7 +18,7 @@ class LocalTasksRepository implements TasksRepository {
   }
 
   @override
-  Future<void> delete(String taskId) {
+  Future<void> delete(int taskId) {
     // TODO: implement delete
     throw UnimplementedError();
   }

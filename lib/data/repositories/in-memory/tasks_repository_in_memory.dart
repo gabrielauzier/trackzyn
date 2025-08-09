@@ -41,7 +41,7 @@ class TasksRepositoryInMemory implements TasksRepository {
   }
 
   @override
-  Future<void> delete(String taskId) async {
+  Future<void> delete(int taskId) async {
     _tasks.removeWhere((task) => task.id == taskId);
   }
 }

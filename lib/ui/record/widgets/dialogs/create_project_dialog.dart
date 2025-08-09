@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:trackzyn/ui/record/record_cubit.dart';
-import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/shared/sleek_input.dart';
 import 'package:trackzyn/ui/shared/sleek_label.dart';
 

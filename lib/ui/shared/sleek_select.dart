@@ -18,15 +18,9 @@ class SleekSelect extends StatefulWidget {
 }
 
 class _SleekSelectState extends State<SleekSelect> {
-  String? _selectedValue;
-
   @override
   void initState() {
     super.initState();
-    // Initialize the selected value with the first item's value if items are not empty
-    if (widget.items?.isNotEmpty == true) {
-      _selectedValue = widget.items!.first.value;
-    }
   }
 
   @override

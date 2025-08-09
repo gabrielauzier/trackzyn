@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:trackzyn/ui/resources/color_palette.dart';
 
 class IconSvg extends StatelessWidget {
   const IconSvg(this.iconPath, {super.key, this.size = 24, this.color});
