@@ -10,12 +10,14 @@ import 'package:trackzyn/domain/models/task.dart';
 import 'package:trackzyn/domain/use_cases/add_activity_usecase.dart';
 import 'package:trackzyn/domain/use_cases/add_project_usecase.dart';
 import 'package:trackzyn/domain/use_cases/add_task_usecase.dart';
+import 'package:trackzyn/domain/use_cases/export_activities_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_activities_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_projects_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_task_activity_group_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_tasks_usecase.dart';
 
 import 'package:trackzyn/ui/record/record_state.dart';
+import 'package:trackzyn/ui/record/widgets/sheets/export_report_sheet.dart';
 
 class RecordCubit extends Cubit<RecordState> {
   RecordCubit(
@@ -26,6 +28,7 @@ class RecordCubit extends Cubit<RecordState> {
     GetTasksUseCase getTasksUseCase,
     AddTaskUseCase addTaskUseCase,
     GetTaskActivityGroupUseCase getTaskActivityGroupUseCase,
+    ExportActivitiesUseCase exportActivitiesUseCase,
   ) : _addActivityUseCase = addActivityUseCase,
       _getActivitiesUseCase = getActivitiesUseCase,
       _addProjectUseCase = addProjectUseCase,
@@ -33,6 +36,7 @@ class RecordCubit extends Cubit<RecordState> {
       _getTasksUseCase = getTasksUseCase,
       _addTaskUseCase = addTaskUseCase,
       _getTaskActivityGroupUseCase = getTaskActivityGroupUseCase,
+      _exportActivitiesUseCase = exportActivitiesUseCase,
       super(RecordState());
 
   final AddActivityUseCase _addActivityUseCase;
@@ -42,6 +46,7 @@ class RecordCubit extends Cubit<RecordState> {
   final GetTasksUseCase _getTasksUseCase;
   final AddTaskUseCase _addTaskUseCase;
   final GetTaskActivityGroupUseCase _getTaskActivityGroupUseCase;
+  final ExportActivitiesUseCase _exportActivitiesUseCase;
 
   static const double FOCUS_DURATION = 25 * 60; // 25 minutes in seconds
   static const double SHORT_BREAK_DURATION = 5 * 60; // 5 minutes in seconds
@@ -221,6 +226,21 @@ class RecordCubit extends Cubit<RecordState> {
     }
   }
 
+  Future<void> getActivitiesByDateOnly({String? date}) async {
+    try {
+      emit(state.copyWith(activities: []));
+
+      final activities = await _getActivitiesUseCase.execute(
+        date: date,
+        searchAll: true,
+      );
+      emit(state.copyWith(activities: activities));
+    } catch (e) {
+      debugPrint('Erro ao buscar atividades por data: $e');
+      emit(state.copyWith(activities: []));
+    }
+  }
+
   void addProject(String projectName) async {
     try {
       final project = Project(name: projectName);
@@ -266,6 +286,40 @@ class RecordCubit extends Cubit<RecordState> {
       emit(state.copyWith(tasks: tasks));
     } catch (e) {
       debugPrint('Erro ao buscar tarefas: $e');
+    }
+  }
+
+  Future<String?> exportActivities(FileExtension ext) async {
+    try {
+      final activities = state.activities;
+      if (activities.isEmpty) {
+        debugPrint('Nenhuma atividade para exportar.');
+        return null;
+      }
+
+      final filePath = await _exportActivitiesUseCase.execute(activities, ext);
+      if (filePath != null) {
+        debugPrint('Atividades exportadas com sucesso.');
+        return filePath;
+      } else {
+        debugPrint('Falha ao exportar atividades.');
+      }
+    } catch (e) {
+      debugPrint('Erro ao exportar atividades: $e');
+    }
+
+    return null;
+  }
+
+  openExportedFile(String filePath) async {
+    if (filePath.isNotEmpty) {
+      try {
+        await _exportActivitiesUseCase.open(filePath);
+      } catch (e) {
+        debugPrint('Erro ao abrir arquivo exportado: $e');
+      }
+    } else {
+      debugPrint('Caminho do arquivo vazio. Não é possível abrir.');
     }
   }
 

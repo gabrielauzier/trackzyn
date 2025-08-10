@@ -8,7 +8,7 @@ abstract class ActivitiesRepository {
     String? taskName,
     String? startDate,
     String? endDate,
-    bool? enableSearchTaskNull = false,
+    bool? searchAll,
   });
 
   Future<Activity> getById(int activityId);

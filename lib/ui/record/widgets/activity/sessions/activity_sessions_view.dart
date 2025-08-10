@@ -11,6 +11,7 @@ import 'package:trackzyn/ui/shared/dashed_line.dart';
 import 'package:trackzyn/ui/shared/icon_svg.dart';
 import 'package:trackzyn/ui/shared/styles/shared_activity_card_box_decoration.dart';
 import 'package:trackzyn/ui/shared/styles/shared_floating_title_text_style.dart';
+import 'package:trackzyn/ui/shared/widgets/assigned_folder_icon.dart';
 import 'package:trackzyn/ui/utils/get_relative_date_str.dart';
 import 'package:trackzyn/ui/utils/get_total_time_str.dart';
 
@@ -47,16 +48,33 @@ class _ActivitySessionsViewState extends State<ActivitySessionsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.projectName ?? 'No project assigned',
-            style: TextStyle(color: ColorPalette.neutral600),
+          Row(
+            children: [
+              AssignedFolderIcon(
+                widget.projectName != null && widget.projectName != '',
+              ),
+              const SizedBox(width: 6),
+              Text(
+                widget.projectName ?? 'No project assigned',
+                style: TextStyle(color: ColorPalette.neutral600),
+              ),
+            ],
           ),
+          const SizedBox(height: 6),
           Text(
             widget.taskName ?? 'No task assigned',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: ColorPalette.neutral900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            getRelativeDate(widget.date),
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              color: ColorPalette.neutral600,
             ),
           ),
           DashedLine(),
@@ -67,14 +85,6 @@ class _ActivitySessionsViewState extends State<ActivitySessionsView> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    getRelativeDate(widget.date),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      color: ColorPalette.neutral600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   Text(
                     'TIME SPENT',
                     style: TextStyle(
@@ -118,7 +128,7 @@ class _ActivitySessionsViewState extends State<ActivitySessionsView> {
               ),
             ],
           ),
-          DashedLine(),
+          const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () {},
             child: Row(

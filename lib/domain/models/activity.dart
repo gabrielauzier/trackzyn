@@ -1,8 +1,11 @@
 // ignore_for_file: unnecessary_getters_setters
 
+import 'package:trackzyn/ui/utils/get_total_time_str.dart';
+
 class Activity {
   int? _id;
   int? _taskId;
+  int? _projectId;
   final String? note;
   final DateTime startedAt;
   final int durationInSeconds;
@@ -13,6 +16,7 @@ class Activity {
   Activity({
     int? id,
     int? taskId,
+    int? projectId,
     this.note,
     DateTime? startedAt,
     this.durationInSeconds = 0,
@@ -20,6 +24,7 @@ class Activity {
     this.projectName,
   }) : _id = id,
        _taskId = taskId,
+       _projectId = projectId,
        startedAt = startedAt ?? DateTime.now();
 
   int? get taskId => _taskId;
@@ -32,10 +37,18 @@ class Activity {
     _id = value;
   }
 
+  int? get projectId => _projectId;
+  set projectId(int? value) {
+    _projectId = value;
+  }
+
+  get timeStr => getTotalTimeStr(durationInSeconds, showSeconds: true);
+
   factory Activity.fromMap(Map<String, dynamic> map) {
     return Activity(
       id: map['id'] ?? 0,
       taskId: map['task_id'] as int?,
+      projectId: map['project_id'] as int?,
       note: map['note'] as String?,
       startedAt: DateTime.parse(map['started_at'] as String),
       durationInSeconds: map['duration_in_seconds'] ?? 0,
@@ -48,6 +61,7 @@ class Activity {
     return {
       'id': _id,
       'task_id': _taskId,
+      'project_id': _projectId,
       'note': note,
       'started_at': startedAt.toIso8601String(),
       'duration_in_seconds': durationInSeconds,

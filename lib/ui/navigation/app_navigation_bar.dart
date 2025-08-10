@@ -14,7 +14,7 @@ class AppNavigationBar extends StatefulWidget {
 }
 
 class _AppNavigationBarState extends State<AppNavigationBar> {
-  int currentPageIndex = 0;
+  int currentPageIndex = 2; // Default to RecordView
 
   final destinations = [
     NavigationDestinationCustomItem(

@@ -16,7 +16,7 @@ class DashedLine extends StatelessWidget {
               (constraints.maxWidth / 10).floor(),
               (index) => const SizedBox(
                 width: 5,
-                child: Divider(color: ColorPalette.neutral300, thickness: 1),
+                child: Divider(color: ColorPalette.neutral200, thickness: 1),
               ),
             ),
           );

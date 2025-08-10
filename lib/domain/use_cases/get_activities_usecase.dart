@@ -9,7 +9,11 @@ class GetActivitiesUseCase {
   GetActivitiesUseCase(ActivitiesRepository activitiesRepository)
     : _activitiesRepository = activitiesRepository;
 
-  Future<List<Activity>> execute({int? taskId, String? date}) async {
+  Future<List<Activity>> execute({
+    int? taskId,
+    String? date,
+    bool searchAll = false,
+  }) async {
     try {
       // Format YYYY-MM-DD
       final startDate = date;
@@ -26,7 +30,7 @@ class GetActivitiesUseCase {
         taskId: taskId,
         startDate: startDate,
         endDate: endDate,
-        enableSearchTaskNull: true,
+        searchAll: searchAll,
       );
     } catch (e) {
       debugPrint('Erro ao buscar atividades por tarefa e data: $e');
