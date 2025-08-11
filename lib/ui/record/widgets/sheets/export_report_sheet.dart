@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:open_file/open_file.dart';
 import 'package:provider/provider.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
@@ -29,8 +28,8 @@ class ExportReportSheet extends StatefulWidget {
     super.key,
     this.allowedExtensions = const [
       FileExtension.csv,
+      FileExtension.json,
       // FileExtension.txt,
-      // FileExtension.json,
     ],
   });
 
@@ -86,22 +85,11 @@ class _ExportReportSheetState extends State<ExportReportSheet> {
   }
 
   void handleViewInStorage() {
-    // Implement logic to view the exported file in storage
-    // This could involve opening the file or navigating to its location
-    OpenFile.open(_filePath)
-        .then((result) {
-          if (result.type != ResultType.done) {
-            debugPrint('Error opening file: ${result.message}');
-          }
-        })
-        .catchError((error) {
-          debugPrint('Error opening file: $error');
-        });
+    viewModel.openDownloadFolder();
   }
 
   _buildExportContent() {
     return [
-      // SizedBox(height: 24),
       Text(
         'Export reports to',
         style: TextStyle(
@@ -110,9 +98,7 @@ class _ExportReportSheetState extends State<ExportReportSheet> {
           color: ColorPalette.neutral900,
         ),
       ),
-
       SizedBox(height: 24),
-
       Wrap(
         spacing: 12.0,
         runSpacing: 12.0,
@@ -165,9 +151,7 @@ class _ExportReportSheetState extends State<ExportReportSheet> {
             ),
         ],
       ),
-
       const SizedBox(height: 48.0),
-
       SizedBox(
         width: MediaQuery.of(context).size.width,
         child: ElevatedButton(
@@ -193,6 +177,8 @@ class _ExportReportSheetState extends State<ExportReportSheet> {
   }
 
   _buildExportSuccess() {
+    final fileName = _filePath.split('/').last;
+
     return [
       const SizedBox(height: 24),
       IconSvg(IllustrationsLibrary.success, size: 128),
@@ -209,6 +195,12 @@ class _ExportReportSheetState extends State<ExportReportSheet> {
       Text(
         'The total used time document has\n been successfully exported, now you\n can check it in your storage.',
         style: TextStyle(fontSize: 14, color: ColorPalette.neutral700),
+        textAlign: TextAlign.center,
+      ),
+      const SizedBox(height: 24),
+      Text(
+        fileName,
+        style: TextStyle(fontSize: 12, color: ColorPalette.neutral500),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 36),

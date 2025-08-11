@@ -23,6 +23,23 @@ class CsvService {
     }
   }
 
+  Future<String?> createJson({
+    required String filePath,
+    required List<Map<String, dynamic>> data,
+  }) async {
+    try {
+      final jsonData = data.map((e) => e.toString()).join('\n');
+      final file = File(filePath);
+      await file.parent.create(recursive: true);
+      await file.writeAsString(jsonData);
+      debugPrint('JSON file created at $filePath');
+      return filePath;
+    } catch (e) {
+      debugPrint('Error creating JSON file: $e');
+      return null;
+    }
+  }
+
   Future<void> openSpecificFile(String filePath) async {
     // final directory = await getApplicationDocumentsDirectory();
     // final filePath = '${directory.path}/my_document.pdf';

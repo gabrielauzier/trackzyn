@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
@@ -8,7 +9,6 @@ import 'package:trackzyn/ui/record/widgets/activity/sessions/activity_basic.dart
 import 'package:trackzyn/ui/record/widgets/sheets/export_report_sheet.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/resources/icons_library.dart';
-import 'package:trackzyn/ui/resources/illustrations_library.dart';
 import 'package:trackzyn/ui/shared/dashed_line.dart';
 import 'package:trackzyn/ui/shared/icon_svg.dart';
 import 'package:trackzyn/ui/shared/styles/shared_activity_card_box_decoration.dart';
@@ -207,19 +207,33 @@ class _AllActivitySessionsByDayViewState
     );
   }
 
+  void showStoragePermissionDeniedSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Storage permission is required to export reports.'),
+      ),
+    );
+  }
+
   void handleExportTapped() {
+    Future.microtask(() async {
+      final status = await Permission.manageExternalStorage.request();
+      final isPermanentlyDenied =
+          await Permission.manageExternalStorage.isPermanentlyDenied;
+      if (!status.isGranted) {
+        showStoragePermissionDeniedSnackBar();
+        if (isPermanentlyDenied) {
+          openAppSettings();
+        }
+        return;
+      }
+    });
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => ExportReportSheet(
-            // date: widget.date,
-            // totalTimeInSec: widget.spentTimeInSec,
-            // sessionsCount: widget.sessionsCount,
-            // taskName: widget.taskName,
-            // projectName: widget.projectName,
-          ),
+      builder: (context) => ExportReportSheet(),
     );
   }
 

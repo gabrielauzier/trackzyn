@@ -311,15 +311,11 @@ class RecordCubit extends Cubit<RecordState> {
     return null;
   }
 
-  openExportedFile(String filePath) async {
-    if (filePath.isNotEmpty) {
-      try {
-        await _exportActivitiesUseCase.open(filePath);
-      } catch (e) {
-        debugPrint('Erro ao abrir arquivo exportado: $e');
-      }
-    } else {
-      debugPrint('Caminho do arquivo vazio. Não é possível abrir.');
+  openDownloadFolder() async {
+    try {
+      await _exportActivitiesUseCase.open();
+    } catch (e) {
+      debugPrint('Erro ao abrir arquivo exportado: $e');
     }
   }
 

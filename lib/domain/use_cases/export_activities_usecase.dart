@@ -4,6 +4,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:trackzyn/data/services/csv_service.dart';
 import 'package:trackzyn/domain/models/activity.dart';
 import 'package:trackzyn/ui/record/widgets/sheets/export_report_sheet.dart';
+import 'package:downloadsfolder/downloadsfolder.dart';
+import 'package:trackzyn/ui/utils/get_date_truncate.dart';
 
 class ExportActivitiesUseCase {
   final CsvService _csvService;
@@ -12,23 +14,25 @@ class ExportActivitiesUseCase {
 
   Future<String?> execute(List<Activity> activities, FileExtension ext) async {
     try {
-      final downloadsDirectory = await getDownloadsDirectory();
-      if (downloadsDirectory == null) {
-        throw Exception('Unable to access the downloads directory');
-      }
+      final downloadsDirectory = await getApplicationDocumentsDirectory();
 
-      final now = DateTime.now().toIso8601String();
+      final now = DateTime.now()
+          .toIso8601String()
+          .split('.')
+          .first
+          // .replaceAll('-', ' ')
+          .replaceAll(':', '-');
 
-      final downloadPath =
-          '${downloadsDirectory.path}/activities_export_$now.csv';
+      final fileName = 'Activities Report $now${ext.extStr}';
 
-      var result;
+      final filePath = join(downloadsDirectory.absolute.path, fileName);
+
+      late final String? result;
 
       switch (ext) {
         case FileExtension.csv:
-          // CSV is the default format, no need to change the file extension
           result = await _csvService.createCsv(
-            filePath: downloadPath,
+            filePath: filePath,
             data: [
               [
                 'Activity ID',
@@ -53,7 +57,10 @@ class ExportActivitiesUseCase {
           // Handle DOC export if needed
           break;
         case FileExtension.json:
-          // Handle JSON export if needed
+          result = await _csvService.createJson(
+            filePath: filePath,
+            data: activities.map((activity) => activity.toMap()).toList(),
+          );
           break;
         case FileExtension.pdf:
           // Handle PDF export if needed
@@ -66,6 +73,15 @@ class ExportActivitiesUseCase {
           break;
       }
 
+      // Copy file to device's Downloads folder
+      bool? success = await copyFileIntoDownloadFolder(filePath, fileName);
+      if (success == true) {
+        debugPrint('File copied successfully.');
+        // openDownloadFolder();
+      } else {
+        debugPrint('Failed to copy file.');
+      }
+
       return result;
     } catch (e) {
       debugPrint('Erro ao buscar exportar: $e');
@@ -74,9 +90,9 @@ class ExportActivitiesUseCase {
     }
   }
 
-  Future<void> open(String filePath) async {
+  Future<void> open() async {
     try {
-      _csvService.openPath(filePath);
+      openDownloadFolder();
     } catch (e) {
       debugPrint('Erro ao abrir o arquivo: $e');
     }
