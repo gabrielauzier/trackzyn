@@ -47,7 +47,17 @@ class _AgendaState extends State<Agenda> {
     Future.microtask(() {
       viewModel.loadActivities();
     });
+
+    var hoursNow = DateTime.now().hour;
+
+    scrollController = ScrollController(
+      initialScrollOffset:
+          _itemHeight * hoursNow, // or whatever offset you wish
+      keepScrollOffset: true,
+    );
   }
+
+  late ScrollController scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +101,7 @@ class _AgendaState extends State<Agenda> {
       ),
 
       body: SingleChildScrollView(
+        controller: scrollController,
         child: BlocBuilder<AgendaViewModel, AgendaState>(
           builder: (context, state) {
             return Stack(
