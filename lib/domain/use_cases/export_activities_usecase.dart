@@ -5,7 +5,6 @@ import 'package:trackzyn/data/services/csv_service.dart';
 import 'package:trackzyn/domain/models/activity.dart';
 import 'package:trackzyn/ui/record/widgets/sheets/export_report_sheet.dart';
 import 'package:downloadsfolder/downloadsfolder.dart';
-import 'package:trackzyn/ui/utils/get_date_truncate.dart';
 
 class ExportActivitiesUseCase {
   final CsvService _csvService;

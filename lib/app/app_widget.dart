@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import 'package:trackzyn/app/constants.dart';
 import 'package:trackzyn/data/services/local_database_service.dart';
 import 'package:trackzyn/ui/navigation/app_navigation_bar.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
+import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/resources/theme_manager.dart';
 
 class AppWidget extends StatefulWidget {
@@ -36,17 +38,31 @@ class _AppWidgetState extends State<AppWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: AppConstants.appName,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', 'US'), Locale('pt', 'BR')],
-      theme: buildTheme(),
-      home: BlocProvider(create: (context) => cubit, child: AppNavigationBar()),
+    // Enable edge-to-edge display
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    return AnnotatedRegion(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor:
+            ColorPalette.neutral100, // Make nav bar transparent
+        systemNavigationBarIconBrightness:
+            Brightness.dark, // Adjust icon brightness
+      ),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: AppConstants.appName,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en', 'US'), Locale('pt', 'BR')],
+        theme: buildTheme(),
+        home: BlocProvider(
+          create: (context) => cubit,
+          child: AppNavigationBar(),
+        ),
+      ),
     );
   }
 }

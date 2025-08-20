@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackzyn/ui/agenda/agenda.dart';
 
 import 'package:trackzyn/ui/record/record_view.dart';
 import 'package:trackzyn/ui/reports/reports_view.dart';
@@ -14,7 +15,7 @@ class AppNavigationBar extends StatefulWidget {
 }
 
 class _AppNavigationBarState extends State<AppNavigationBar> {
-  int currentPageIndex = 2; // Default to RecordView
+  int currentPageIndex = 1; // Default to RecordView
 
   final destinations = [
     NavigationDestinationCustomItem(
@@ -23,9 +24,9 @@ class _AppNavigationBarState extends State<AppNavigationBar> {
       view: const Text('Home'),
     ),
     NavigationDestinationCustomItem(
-      icon: IconsLibrary.task_square_bold,
-      label: 'My Task',
-      view: const Text('My Task'),
+      icon: IconsLibrary.calendar_2_bold,
+      label: 'Agenda',
+      view: const Agenda(),
     ),
     NavigationDestinationCustomItem(
       icon: IconsLibrary.record_circle_bold,

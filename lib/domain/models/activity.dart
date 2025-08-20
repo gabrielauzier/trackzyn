@@ -61,7 +61,7 @@ class Activity {
     return {
       'id': _id,
       'task_id': _taskId,
-      'project_id': _projectId,
+      // 'project_id': _projectId,
       'note': note,
       'started_at': startedAt.toIso8601String(),
       'duration_in_seconds': durationInSeconds,

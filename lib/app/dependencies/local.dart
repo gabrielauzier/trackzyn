@@ -21,6 +21,7 @@ import 'package:trackzyn/domain/use_cases/get_activities_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_projects_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_task_activity_group_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_tasks_usecase.dart';
+import 'package:trackzyn/ui/agenda/agenda_viewmodel.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
 
 List<SingleChildWidget> get servicesProviders {
@@ -72,6 +73,10 @@ List<SingleChildWidget> get providersLocal {
             context.read<GetTaskActivityGroupUseCase>(),
             context.read<ExportActivitiesUseCase>(),
           ),
+    ),
+    BlocProvider<AgendaViewModel>(
+      create:
+          (context) => AgendaViewModel(context.read<GetActivitiesUseCase>()),
     ),
   ];
 }

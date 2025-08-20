@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'package:trackzyn/ui/resources/color_palette.dart';
 
-BoxDecoration sharedActivityCardBoxDecoration() {
+BoxDecoration sharedActivityCardBoxDecoration({
+  Color? backgroundColor = Colors.white,
+}) {
   return BoxDecoration(
-    color: Colors.white,
+    color: backgroundColor,
     borderRadius: BorderRadius.circular(20),
     border: Border.all(color: ColorPalette.neutral200, width: 1),
     boxShadow: [

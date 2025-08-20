@@ -146,8 +146,16 @@ class _ActivityHistoryState extends State<ActivityHistory> {
             ),
           ],
         ),
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Icon(
+              Icons.chevron_right_rounded,
+              color: ColorPalette.neutral400,
+              size: 20,
+            ),
+            const SizedBox(width: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
@@ -161,12 +169,6 @@ class _ActivityHistoryState extends State<ActivityHistory> {
                   color: ColorPalette.neutral500,
                 ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: ColorPalette.neutral400,
-              size: 20,
             ),
           ],
         ),
