@@ -64,7 +64,16 @@ class _PomodoroCardState extends State<PomodoroCard> {
                   style: _buttonStyle(
                     active: state.pomodoroType == PomodoroType.focus,
                   ),
-                  child: const Text('Focus'),
+                  child: Text(
+                    'Focus',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color:
+                          state.pomodoroType == PomodoroType.focus
+                              ? ColorPalette.neutral800
+                              : ColorPalette.neutral500,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 TextButton(
@@ -74,7 +83,16 @@ class _PomodoroCardState extends State<PomodoroCard> {
                   style: _buttonStyle(
                     active: state.pomodoroType == PomodoroType.shortBreak,
                   ),
-                  child: const Text('Short Break'),
+                  child: Text(
+                    'Short Break',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color:
+                          state.pomodoroType == PomodoroType.shortBreak
+                              ? ColorPalette.neutral800
+                              : ColorPalette.neutral500,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 TextButton(
@@ -84,7 +102,16 @@ class _PomodoroCardState extends State<PomodoroCard> {
                   style: _buttonStyle(
                     active: state.pomodoroType == PomodoroType.longBreak,
                   ),
-                  child: const Text('Long Break'),
+                  child: Text(
+                    'Long Break',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color:
+                          state.pomodoroType == PomodoroType.longBreak
+                              ? ColorPalette.neutral800
+                              : ColorPalette.neutral500,
+                    ),
+                  ),
                 ),
               ],
             );

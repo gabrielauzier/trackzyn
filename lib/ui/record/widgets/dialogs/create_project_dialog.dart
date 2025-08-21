@@ -36,6 +36,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
           SleekInput(
             controller: _projectNameController,
             hintText: 'My New Project',
+            autofocus: true,
           ),
         ],
       ),

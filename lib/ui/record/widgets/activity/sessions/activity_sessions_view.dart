@@ -129,17 +129,17 @@ class _ActivitySessionsViewState extends State<ActivitySessionsView> {
             ],
           ),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () {},
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconSvg(IconsLibrary.export_square_linear, size: 20),
-                const SizedBox(width: 8),
-                Text('Export report'),
-              ],
-            ),
-          ),
+          // OutlinedButton(
+          //   onPressed: () {},
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.center,
+          //     children: [
+          //       IconSvg(IconsLibrary.export_square_linear, size: 20),
+          //       const SizedBox(width: 8),
+          //       Text('Export report'),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );

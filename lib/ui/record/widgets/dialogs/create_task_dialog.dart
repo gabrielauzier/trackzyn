@@ -33,7 +33,11 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           SleekLabel(text: 'Task name'),
-          SleekInput(controller: _taskNameController, hintText: 'My New Task'),
+          SleekInput(
+            controller: _taskNameController,
+            hintText: 'My New Task',
+            autofocus: true,
+          ),
         ],
       ),
       actions: [

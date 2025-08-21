@@ -8,17 +8,20 @@ class SleekInput extends StatelessWidget {
     this.hintText,
     this.prefixIcon,
     this.onSubmitted,
+    this.autofocus = false,
   }) : _controller = controller;
 
   final TextEditingController _controller;
   final String? hintText;
   final Widget? prefixIcon;
   final void Function(String)? onSubmitted;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: _controller,
+      autofocus: autofocus,
       onSubmitted: onSubmitted,
       decoration: InputDecoration(
         hintText: hintText,
