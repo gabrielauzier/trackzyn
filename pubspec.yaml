@@ -53,6 +53,7 @@ dependencies:
   open_file: ^3.5.10
   downloadsfolder: ^1.2.0
   freezed: ^3.2.0
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
   flutter_test:
