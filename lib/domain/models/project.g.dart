@@ -19,6 +19,8 @@ abstract class _$ProjectCWProxy {
 
   Project updatedAt(DateTime? updatedAt);
 
+  Project taskCount(int? taskCount);
+
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `Project(...).copyWith.fieldName(value)`.
   ///
@@ -33,6 +35,7 @@ abstract class _$ProjectCWProxy {
     DateTime? dueDate,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? taskCount,
   });
 }
 
@@ -62,6 +65,9 @@ class _$ProjectCWProxyImpl implements _$ProjectCWProxy {
   Project updatedAt(DateTime? updatedAt) => this(updatedAt: updatedAt);
 
   @override
+  Project taskCount(int? taskCount) => this(taskCount: taskCount);
+
+  @override
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `Project(...).copyWith.fieldName(value)`.
   ///
@@ -76,6 +82,7 @@ class _$ProjectCWProxyImpl implements _$ProjectCWProxy {
     Object? dueDate = const $CopyWithPlaceholder(),
     Object? createdAt = const $CopyWithPlaceholder(),
     Object? updatedAt = const $CopyWithPlaceholder(),
+    Object? taskCount = const $CopyWithPlaceholder(),
   }) {
     return Project(
       id:
@@ -108,6 +115,11 @@ class _$ProjectCWProxyImpl implements _$ProjectCWProxy {
               ? _value.updatedAt
               // ignore: cast_nullable_to_non_nullable
               : updatedAt as DateTime?,
+      taskCount:
+          taskCount == const $CopyWithPlaceholder()
+              ? _value.taskCount
+              // ignore: cast_nullable_to_non_nullable
+              : taskCount as int?,
     );
   }
 }

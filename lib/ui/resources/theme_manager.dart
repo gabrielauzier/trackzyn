@@ -156,5 +156,10 @@ ThemeData buildTheme() {
       ),
     ),
     scaffoldBackgroundColor: backgroundColor,
+    scrollbarTheme: ScrollbarThemeData(
+      thumbVisibility: WidgetStateProperty.all<bool>(true),
+      thumbColor: WidgetStateProperty.all<Color>(ColorPalette.red500),
+      trackColor: WidgetStateProperty.all<Color>(ColorPalette.neutral200),
+    ),
   );
 }

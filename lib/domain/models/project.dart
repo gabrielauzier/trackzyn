@@ -11,6 +11,8 @@ class Project {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  final int? taskCount;
+
   Project({
     this.id,
     required this.name,
@@ -18,6 +20,7 @@ class Project {
     this.dueDate,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.taskCount,
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 

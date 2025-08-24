@@ -28,6 +28,15 @@ class LocalProjectsRepository implements ProjectsRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    if (_service.database == null) {
+      debugPrint('LocalProjectsRepository - Database is not initialized');
+
+      while (_service.database == null) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        debugPrint('Waiting for database to be initialized...');
+      }
+    }
+
     final List<Map<String, Object?>> results = await _service.database!.query(
       'project',
       where: projectName != null ? 'name LIKE ?' : null,

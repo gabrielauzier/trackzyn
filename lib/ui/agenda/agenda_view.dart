@@ -11,14 +11,14 @@ import 'package:trackzyn/ui/shared/icon_svg.dart';
 import 'package:trackzyn/ui/utils/get_full_date_str.dart';
 import 'package:trackzyn/ui/utils/get_hour_formatted.dart';
 
-class Agenda extends StatefulWidget {
-  const Agenda({super.key});
+class AgendaView extends StatefulWidget {
+  const AgendaView({super.key});
 
   @override
-  State<Agenda> createState() => _AgendaState();
+  State<AgendaView> createState() => _AgendaViewState();
 }
 
-class _AgendaState extends State<Agenda> {
+class _AgendaViewState extends State<AgendaView> {
   late final viewModel = Provider.of<AgendaViewModel>(context, listen: false);
 
   final List<int> _hours = List.generate(24, (index) => index);
