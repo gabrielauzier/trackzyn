@@ -46,9 +46,11 @@ class _AssociateWorkingOnState extends State<AssociateWorkingOn> {
         return SleekBottomSheet(
           height: MediaQuery.of(context).size.height * 0.6,
           children: [
-            Text(
-              'Associate Working On',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Center(
+              child: Text(
+                'Associate Working On',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 16.0),
             SleekLabel(text: 'Project associated', count: state.projectsCount),

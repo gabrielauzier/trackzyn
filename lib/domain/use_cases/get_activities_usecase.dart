@@ -11,6 +11,7 @@ class GetActivitiesUseCase {
 
   Future<List<Activity>> execute({
     int? taskId,
+    int? projectId,
     String? date,
     bool searchAll = false,
   }) async {
@@ -28,6 +29,7 @@ class GetActivitiesUseCase {
 
       return await _activitiesRepository.fetchMany(
         taskId: taskId,
+        projectId: projectId,
         startDate: startDate,
         endDate: endDate,
         searchAll: searchAll,

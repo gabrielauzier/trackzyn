@@ -10,7 +10,7 @@ class AddActivityUseCase {
 
   AddActivityUseCase(this._activitiesRepository, this._tasksRepository);
 
-  Future<void> execute(Activity activity, {Task? task}) async {
+  Future<int?> execute(Activity activity, {Task? task}) async {
     try {
       if (task != null && task.id != null) {
         Task? foundTask = await _tasksRepository.getById(task.id!);
@@ -21,9 +21,11 @@ class AddActivityUseCase {
         }
       }
 
-      await _activitiesRepository.add(activity);
+      return await _activitiesRepository.add(activity);
     } catch (e) {
       debugPrint('Erro ao adicionar atividade: $e');
     }
+
+    return null;
   }
 }

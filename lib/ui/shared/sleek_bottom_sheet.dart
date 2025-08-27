@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 class SleekBottomSheet extends StatefulWidget {
   final double? height;
   final List<Widget>? children;
+  final List<Widget>? bottom;
 
-  const SleekBottomSheet({super.key, this.height, this.children});
+  const SleekBottomSheet({super.key, this.height, this.children, this.bottom});
 
   @override
   State<SleekBottomSheet> createState() => _SleekBottomSheetState();
@@ -14,7 +15,7 @@ class _SleekBottomSheetState extends State<SleekBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: widget.height,
+      height: widget.height ?? MediaQuery.of(context).size.height * 0.5,
       width: MediaQuery.of(context).size.width,
       padding: const EdgeInsets.only(
         left: 16.0,
@@ -36,21 +37,52 @@ class _SleekBottomSheetState extends State<SleekBottomSheet> {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
         children: [
-          Container(
-            width: 64,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 16.0),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2.0),
+          Positioned.fill(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ListView(
+              primary: false,
+              shrinkWrap: true,
+              physics: const ClampingScrollPhysics(),
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.2,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2.0),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Your bottom sheet content comes here
+                ...(widget.children ?? []),
+
+                if (widget.bottom != null)
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+              ],
             ),
           ),
-
-          // Your bottom sheet content comes here
-          ...(widget.children ?? []),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(color: Colors.white),
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Column(spacing: 12.0, children: widget.bottom ?? []),
+            ),
+          ),
         ],
       ),
     );

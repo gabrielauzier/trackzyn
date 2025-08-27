@@ -16,6 +16,7 @@ import 'package:trackzyn/ui/utils/get_total_time_str.dart';
 
 class ActivityHistory extends StatefulWidget {
   final int? taskId;
+  final int? projectId;
   final String? taskName;
   final String? projectName;
   final int sessionsCount;
@@ -29,6 +30,7 @@ class ActivityHistory extends StatefulWidget {
   const ActivityHistory({
     super.key,
     this.taskId,
+    this.projectId,
     this.taskName,
     this.projectName,
     this.sessionsCount = 0,
@@ -287,6 +289,7 @@ class _ActivityHistoryState extends State<ActivityHistory> {
               sessionsCount: widget.sessionsCount,
               spentTimeInSec: widget.spentTimeInSec,
               taskId: widget.taskId,
+              projectId: widget.projectId,
               date:
                   widget.startedAt != null
                       ? getDateTruncate(widget.startedAt)

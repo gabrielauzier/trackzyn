@@ -4,6 +4,7 @@ class TaskActivityGroup {
   // mapped fields
   final int? taskId;
   final String? taskName;
+  final int? projectId;
   final String? projectName;
   final String activityDate; // formatted as 'YYYY-MM-DD'
   final int activityCount;
@@ -17,6 +18,7 @@ class TaskActivityGroup {
   TaskActivityGroup({
     this.taskId,
     this.taskName,
+    this.projectId,
     this.projectName,
     required this.activityDate,
     required this.activityCount,
@@ -30,6 +32,7 @@ class TaskActivityGroup {
     return TaskActivityGroup(
       taskId: map['task_id'],
       taskName: map['task_name'],
+      projectId: map['project_id'],
       projectName: map['project_name'],
       activityDate: map['activity_date'],
       activityCount: map['activity_count'],
@@ -43,6 +46,7 @@ class TaskActivityGroup {
     return {
       'task_id': taskId,
       'task_name': taskName,
+      'project_id': projectId,
       'project_name': projectName,
       'activity_date': activityDate,
       'activity_count': activityCount,

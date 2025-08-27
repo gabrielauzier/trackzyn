@@ -3,10 +3,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:trackzyn/domain/models/activity.dart';
 import 'package:trackzyn/domain/models/project.dart';
 import 'package:trackzyn/domain/models/task.dart';
-
 import 'package:trackzyn/domain/use_cases/add_activity_usecase.dart';
 import 'package:trackzyn/domain/use_cases/add_project_usecase.dart';
 import 'package:trackzyn/domain/use_cases/add_task_usecase.dart';
@@ -15,7 +15,6 @@ import 'package:trackzyn/domain/use_cases/get_activities_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_projects_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_task_activity_group_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_tasks_usecase.dart';
-
 import 'package:trackzyn/ui/record/record_state.dart';
 import 'package:trackzyn/ui/record/widgets/sheets/export_report_sheet.dart';
 
@@ -116,6 +115,8 @@ class RecordCubit extends Cubit<RecordState> {
         taskId: state.taskId,
         taskName: state.taskName,
         projectName: state.projectName,
+        projectId: state.projectId,
+        finishedAt: DateTime.now(),
       ),
     );
 
@@ -198,6 +199,36 @@ class RecordCubit extends Cubit<RecordState> {
     );
   }
 
+  Future<int?> addActivity({
+    required DateTime startedAt,
+    required DateTime finishedAt,
+    required int durationInSeconds,
+    String? note,
+    int? taskId,
+    int? projectId,
+  }) async {
+    try {
+      final newActivityId = await _addActivityUseCase.execute(
+        Activity(
+          startedAt: startedAt,
+          finishedAt: finishedAt,
+          durationInSeconds: durationInSeconds,
+          note: note,
+          taskId: taskId,
+          projectId: projectId,
+        ),
+      );
+
+      getActivities();
+
+      return newActivityId;
+    } catch (e) {
+      debugPrint('Erro ao adicionar atividade: $e');
+    }
+
+    return null;
+  }
+
   void getActivities({String? taskName}) async {
     try {
       final taskActivityGroups = await _getTaskActivityGroupUseCase.execute(
@@ -211,12 +242,17 @@ class RecordCubit extends Cubit<RecordState> {
     }
   }
 
-  Future<void> getActivitiesByTaskAndDate({String? date, int? taskId}) async {
+  Future<void> getActivitiesByTaskAndDate({
+    String? date,
+    int? taskId,
+    int? projectId,
+  }) async {
     try {
       emit(state.copyWith(activities: []));
 
       final activities = await _getActivitiesUseCase.execute(
         taskId: taskId,
+        projectId: projectId,
         date: date,
       );
       emit(state.copyWith(activities: activities));
@@ -286,6 +322,16 @@ class RecordCubit extends Cubit<RecordState> {
       emit(state.copyWith(tasks: tasks));
     } catch (e) {
       debugPrint('Erro ao buscar tarefas: $e');
+    }
+  }
+
+  Future<List<Task>> getProjectTasks(int projectId) async {
+    try {
+      final tasks = await _getTasksUseCase.execute(projectId);
+      return tasks;
+    } catch (e) {
+      debugPrint('Erro ao buscar tarefas do projeto: $e');
+      return [];
     }
   }
 

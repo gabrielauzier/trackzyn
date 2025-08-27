@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'package:trackzyn/ui/record/widgets/sheets/create_activity_record_sheet.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/resources/icons_library.dart';
 import 'package:trackzyn/ui/shared/icon_svg.dart';
@@ -115,9 +116,21 @@ class _RecordViewState extends State<RecordView> with WidgetsBindingObserver {
               ),
               Spacer(),
               IconButton(
+                icon: IconSvg(IconsLibrary.export_outline, size: 28),
+                onPressed: () {
+                  debugPrint('Export button pressed');
+                },
+              ),
+              IconButton(
                 icon: IconSvg(IconsLibrary.add_square_linear, size: 28),
                 onPressed: () {
-                  debugPrint('Add button pressed');
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) {
+                      return const CreateActivityRecordSheet();
+                    },
+                  );
                 },
               ),
               IconButton(

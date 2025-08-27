@@ -82,6 +82,7 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
                   return ActivityHistory(
                     taskId: taskActivityGroup.taskId,
                     taskName: taskActivityGroup.taskName,
+                    projectId: taskActivityGroup.projectId,
                     projectName: taskActivityGroup.projectName,
                     sessionsCount: taskActivityGroup.activityCount,
                     spentTimeInSec: taskActivityGroup.totalDurationInSeconds,

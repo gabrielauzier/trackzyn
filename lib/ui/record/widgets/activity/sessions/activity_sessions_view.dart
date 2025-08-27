@@ -21,11 +21,13 @@ class ActivitySessionsView extends StatefulWidget {
   final int sessionsCount;
   final int spentTimeInSec;
   final int? taskId;
+  final int? projectId;
   final String date;
 
   const ActivitySessionsView({
     super.key,
     this.taskId,
+    this.projectId,
     required this.date,
     this.taskName,
     this.projectName,
@@ -152,6 +154,7 @@ class _ActivitySessionsViewState extends State<ActivitySessionsView> {
       await viewModel.getActivitiesByTaskAndDate(
         date: widget.date,
         taskId: widget.taskId,
+        projectId: widget.projectId,
       );
     });
   }

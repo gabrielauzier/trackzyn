@@ -8,6 +8,7 @@ class Activity {
   int? _projectId;
   final String? note;
   final DateTime startedAt;
+  final DateTime? finishedAt;
   final int durationInSeconds;
 
   final String? taskName;
@@ -19,6 +20,7 @@ class Activity {
     int? projectId,
     this.note,
     DateTime? startedAt,
+    this.finishedAt,
     this.durationInSeconds = 0,
     this.taskName,
     this.projectName,
@@ -51,6 +53,10 @@ class Activity {
       projectId: map['project_id'] as int?,
       note: map['note'] as String?,
       startedAt: DateTime.parse(map['started_at'] as String),
+      finishedAt:
+          map['finished_at'] != null
+              ? DateTime.parse(map['finished_at'] as String)
+              : null,
       durationInSeconds: map['duration_in_seconds'] ?? 0,
       taskName: map['task_name'] as String?,
       projectName: map['project_name'] as String?,
@@ -61,9 +67,10 @@ class Activity {
     return {
       'id': _id,
       'task_id': _taskId,
-      // 'project_id': _projectId,
+      'project_id': _projectId,
       'note': note,
       'started_at': startedAt.toIso8601String(),
+      'finished_at': finishedAt?.toIso8601String(),
       'duration_in_seconds': durationInSeconds,
     };
   }

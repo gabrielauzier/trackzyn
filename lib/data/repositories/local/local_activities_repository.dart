@@ -40,14 +40,15 @@ class LocalActivitiesRepository implements ActivitiesRepository {
 
     final List<Map<String, Object?>> maps = await _service.database!.rawQuery(
       '''
-          SELECT a.*, t.name as task_name, t.project_id as project_id, p.name as project_name FROM activity a
+          SELECT a.*, t.name as task_name, p.name as project_name FROM activity a
           LEFT JOIN task t ON a.task_id = t.id 
-          LEFT JOIN project p ON t.project_id = p.id
+          LEFT JOIN project p ON a.project_id = p.id
           WHERE 1 = 1
             ${taskName != null && taskName.isNotEmpty ? "AND t.name LIKE '$taskName' OR p.name LIKE '$taskName'" : ''} 
             ${(taskId != null && !(searchAll!)) ? 'AND t.id = $taskId AND t.id IS NOT NULL' : ''} 
             ${(taskId == null && !(searchAll!)) ? 'AND t.id IS NULL' : ''}
-            ${projectId != null ? 'AND p.id = $projectId' : ''}
+            ${(projectId != null && !(searchAll!)) ? 'AND p.id = $projectId AND p.id IS NOT NULL' : ''} 
+            ${(projectId == null && !(searchAll!)) ? 'AND p.id IS NULL' : ''}
             ${startDate != null ? "AND a.started_at >= '$startDate'" : ''}
             ${endDate != null ? "AND a.started_at < '$endDate'" : ''}
           ORDER BY id DESC
@@ -101,7 +102,7 @@ class LocalActivitiesRepository implements ActivitiesRepository {
           TIME(SUM(duration_in_seconds), 'unixepoch') as total_time
         FROM activity a
           LEFT JOIN task t ON t.Id = a.task_id
-          LEFT JOIN project p ON p.Id = t.project_id
+          LEFT JOIN project p ON p.Id = a.project_id
         ${taskName != null && taskName.isNotEmpty ? 'WHERE t.name LIKE ? OR p.name LIKE ?' : ''} 
         GROUP BY t.name, p.name, DATE(started_at)
         ORDER BY started_at DESC;

@@ -1,9 +1,13 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:trackzyn/app/constants.dart';
 import 'dart:io';
+
+import 'package:trackzyn/data/services/database_scripts.dart';
 
 class LocalDatabaseService {
   static Database? _database;
@@ -20,50 +24,51 @@ class LocalDatabaseService {
     final path = await getDatabasesPath();
     final dbPath = join(path, AppConstants.localDatabase);
 
-    final taskTable = """
-      CREATE TABLE IF NOT EXISTS "task" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-        "project_id" INTEGER NOT NULL,
-        "name" VARCHAR NOT NULL,
-        "description" VARCHAR,
-        FOREIGN KEY ("project_id") REFERENCES "project"("id")
-        ON UPDATE NO ACTION ON DELETE NO ACTION
-      );
-    """;
-
-    final projectTable = """
-      CREATE TABLE IF NOT EXISTS "project" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-        "due_date" DATETIME,
-        "name" VARCHAR NOT NULL,
-        "description" VARCHAR
-      );
-    """;
-
-    final activityTable = """
-      CREATE TABLE IF NOT EXISTS "activity" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-        "task_id" INTEGER,
-        "note" VARCHAR,
-        "started_at" DATETIME NOT NULL,
-        "duration_in_seconds" INTEGER NOT NULL,
-        FOREIGN KEY ("task_id") REFERENCES "task"("id")
-        ON UPDATE NO ACTION ON DELETE NO ACTION
-      );
-    """;
-
     debugPrint('Abrindo banco de dados: $dbPath');
 
     _database = await openDatabase(
       dbPath,
       version: AppConstants.localDatabaseVersion,
       onCreate: (db, version) async {
-        // Define your table creation logic here
         debugPrint('Banco de dados criado: $dbPath ✅');
-        await db.execute(taskTable);
-        await db.execute(projectTable);
-        await db.execute(activityTable);
-        debugPrint('Tabelas criadas com sucesso ✅');
+
+        for (var script in DatabaseScripts.scripts_v1_2025_08_01) {
+          await db.execute(script);
+        }
+
+        for (var script in DatabaseScripts.scripts_v2_2025_08_23) {
+          await db.execute(script);
+        }
+
+        // Verify if tables were created
+        final tables = await db.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='table';",
+        );
+
+        debugPrint('Tabelas criadas: ${tables.map((e) => e['name']).toList()}');
+
+        // Verify columns of each table
+        for (var table in tables) {
+          final tableName = table['name'] as String;
+          final columns = await db.rawQuery("PRAGMA table_info($tableName);");
+          debugPrint(
+            'Colunas da tabela $tableName: ${columns.map((e) => e['name']).toList()}',
+          );
+        }
+
+        debugPrint('Scripts executados com sucesso ✅');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        debugPrint(
+          'Atualizando banco de dados de versão $oldVersion para $newVersion',
+        );
+
+        if (oldVersion < 2) {
+          for (var script in DatabaseScripts.scripts_v2_2025_08_23) {
+            await db.execute(script);
+          }
+          debugPrint('Banco de dados atualizado para a versão 2 ✅');
+        }
       },
     );
 

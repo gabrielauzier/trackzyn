@@ -90,18 +90,21 @@ class _ExportReportSheetState extends State<ExportReportSheet> {
 
   _buildExportContent() {
     return [
-      Text(
-        'Export reports to',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: ColorPalette.neutral900,
+      Center(
+        child: Text(
+          'Export reports to',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: ColorPalette.neutral900,
+          ),
         ),
       ),
       SizedBox(height: 24),
       Wrap(
         spacing: 12.0,
         runSpacing: 12.0,
+        alignment: WrapAlignment.center,
         children: [
           for (var ext in widget.allowedExtensions)
             GestureDetector(
