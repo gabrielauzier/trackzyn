@@ -22,7 +22,6 @@ class RecordState {
   final double finalTimeInSec;
 
   // Activities
-  final double activityProgress;
   final List<Activity> activities;
   final List<Project> projects;
   final List<Task> tasks;
@@ -40,7 +39,6 @@ class RecordState {
     this.status = RecordingStatus.notStarted,
     this.type = RecordingType.pomodoro,
     this.pomodoroType = PomodoroType.focus,
-    this.activityProgress = 0.0,
     this.finalTimeInSec = 60 * 5, // Default to 5 minutes
     this.pomodoroProgress = 0.0,
     this.activities = const [],

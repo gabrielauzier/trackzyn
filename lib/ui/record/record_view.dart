@@ -72,8 +72,6 @@ class _RecordViewState extends State<RecordView> with WidgetsBindingObserver {
   _buildPomodoroContent() {
     return SingleChildScrollView(
       child: Container(
-        // width: MediaQuery.of(context).size.width,
-        // height: MediaQuery.of(context).size.height,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -86,8 +84,6 @@ class _RecordViewState extends State<RecordView> with WidgetsBindingObserver {
 
   _buildActivitiesContent() {
     return ListView(
-      // mainAxisAlignment: MainAxisAlignment.start,
-      // crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(height: 20),
         Container(

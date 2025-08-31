@@ -51,34 +51,73 @@ class RecordCubit extends Cubit<RecordState> {
   static const double SHORT_BREAK_DURATION = 5 * 60; // 5 minutes in seconds
   static const double LONG_BREAK_DURATION = 15 * 60; // 15 minutes
 
+  static const double MINIMAL_ACTIVITY_DURATION = 5 * 60; // 5 minutes
+
   late Timer _timer;
   double _progress = 0;
   // final double _finalTimeInSec = 60 * 60 * 1 + 60 * 3 + 50; // 1h + 3min + 50sec
   double _finalTimeInSec = FOCUS_DURATION; // 5min
-  double _currentTimeInSec = 0;
+  double _pomodoroCurrentTimeInSec = 0;
+  double _activityCurrentTimeInSec = 0;
+
   late DateTime _startedAt;
 
-  void _startTimer(RecordingType type) {
-    double timeStep = 200; // Render every 250 milliseconds
+  void _startTimer(RecordingType type, {bool resume = false}) {
+    final double timeStep = 200; // Render every 250 milliseconds
+
+    PomodoroType pomodoroType = state.pomodoroType;
+
+    if (!resume) {
+      if (state.pomodoroType != PomodoroType.focus) {
+        // Start from the end for breaks
+        _pomodoroCurrentTimeInSec =
+            _finalTimeInSec + 0.800; // Small buffer to avoid precision issues
+      } else {
+        // Start from the beginning for focus
+        _pomodoroCurrentTimeInSec = 0;
+      }
+
+      // Start from the beginning for activity
+      _activityCurrentTimeInSec = 0;
+    }
+
     _timer = Timer.periodic(Duration(milliseconds: timeStep.floor()), (timer) {
       switch (type) {
         case RecordingType.pomodoro:
-          if (_currentTimeInSec < _finalTimeInSec) {
-            _currentTimeInSec +=
-                timeStep / 1000; // Convert milliseconds to seconds
-            _progress = _currentTimeInSec / _finalTimeInSec;
-            emit(state.copyWith(pomodoroProgress: _progress));
-          } else {
-            // Stop the timer when the final time is reached
-            _timer.cancel();
-            emit(state.copyWith(status: RecordingStatus.finished));
+          switch (pomodoroType) {
+            case PomodoroType.focus:
+              if (_pomodoroCurrentTimeInSec < _finalTimeInSec) {
+                _pomodoroCurrentTimeInSec +=
+                    timeStep / 1000; // Convert milliseconds to seconds
+                _progress = _pomodoroCurrentTimeInSec / _finalTimeInSec;
+                emit(state.copyWith(pomodoroProgress: _progress));
+              } else {
+                // Stop the timer when the final time is reached
+                _timer.cancel();
+                _onTimerFinishedSaveActivity();
+                emit(state.copyWith(status: RecordingStatus.finished));
+              }
+              break;
+
+            case PomodoroType.shortBreak:
+            case PomodoroType.longBreak:
+              if (_pomodoroCurrentTimeInSec > 0) {
+                _pomodoroCurrentTimeInSec -=
+                    timeStep / 1000; // Convert milliseconds to seconds
+                _progress = _pomodoroCurrentTimeInSec / _finalTimeInSec;
+                emit(state.copyWith(pomodoroProgress: _progress));
+              } else {
+                // Stop the timer when the final time is reached
+                _timer.cancel();
+                emit(state.copyWith(status: RecordingStatus.finished));
+              }
+              break;
           }
           break;
         case RecordingType.activity:
-          _currentTimeInSec +=
+          _activityCurrentTimeInSec +=
               timeStep / 1000; // Convert milliseconds to seconds
-          _progress = _currentTimeInSec / _finalTimeInSec;
-          emit(state.copyWith(activityProgress: _progress));
+          emit(state.copyWith()); // Just to trigger UI update
           break;
       }
     });
@@ -103,15 +142,69 @@ class RecordCubit extends Cubit<RecordState> {
   }
 
   void resumeRecording() {
-    _startTimer(state.type);
+    _startTimer(state.type, resume: true);
     emit(state.copyWith(status: RecordingStatus.recording));
   }
 
   void stopRecording({bool completed = false}) async {
+    final saveActivity =
+        (_activityCurrentTimeInSec >= MINIMAL_ACTIVITY_DURATION &&
+            state.type == RecordingType.activity) ||
+        (_pomodoroCurrentTimeInSec >= MINIMAL_ACTIVITY_DURATION &&
+            state.type == RecordingType.pomodoro &&
+            state.status != RecordingStatus.finished &&
+            state.pomodoroType == PomodoroType.focus);
+
+    if (saveActivity) {
+      await _onTimerFinishedSaveActivity();
+    }
+
+    switch (state.pomodoroType) {
+      case PomodoroType.focus:
+        _finalTimeInSec = FOCUS_DURATION;
+        _pomodoroCurrentTimeInSec = 0; // Reset current time when stopping
+        _progress = 0.0;
+        break;
+      case PomodoroType.shortBreak:
+        _finalTimeInSec = SHORT_BREAK_DURATION;
+        _pomodoroCurrentTimeInSec = SHORT_BREAK_DURATION; // Start from the end
+        _progress = 1.0;
+        break;
+      case PomodoroType.longBreak:
+        _finalTimeInSec = LONG_BREAK_DURATION;
+        _pomodoroCurrentTimeInSec = LONG_BREAK_DURATION; // Start from the end
+        _progress = 1.0;
+        break;
+    }
+
+    if (state.type == RecordingType.activity) {
+      _activityCurrentTimeInSec = 0;
+    }
+
+    emit(
+      state.copyWith(
+        status: RecordingStatus.notStarted,
+        pomodoroProgress: _progress,
+      ),
+    );
+
+    _timer.cancel();
+
+    getActivities();
+  }
+
+  Future<void> _onTimerFinishedSaveActivity() async {
+    var durationInSeconds = 0;
+    if (state.type == RecordingType.pomodoro) {
+      durationInSeconds = _pomodoroCurrentTimeInSec.toInt();
+    } else if (state.type == RecordingType.activity) {
+      durationInSeconds = _activityCurrentTimeInSec.toInt();
+    }
+
     await _addActivityUseCase.execute(
       Activity(
         startedAt: _startedAt,
-        durationInSeconds: _currentTimeInSec.toInt(),
+        durationInSeconds: durationInSeconds,
         taskId: state.taskId,
         taskName: state.taskName,
         projectName: state.projectName,
@@ -119,20 +212,6 @@ class RecordCubit extends Cubit<RecordState> {
         finishedAt: DateTime.now(),
       ),
     );
-
-    emit(
-      state.copyWith(
-        status: RecordingStatus.notStarted,
-        pomodoroProgress: 0.0,
-        activityProgress: 0.0,
-      ),
-    );
-
-    _timer.cancel();
-    _currentTimeInSec = 0;
-    _progress = 0;
-
-    getActivities();
   }
 
   void changePomodoroType(PomodoroType type) {
@@ -144,23 +223,27 @@ class RecordCubit extends Cubit<RecordState> {
     switch (type) {
       case PomodoroType.focus:
         _finalTimeInSec = FOCUS_DURATION;
+        _pomodoroCurrentTimeInSec = 0; // Reset current time when changing type
+        _progress = 0.0;
         break;
       case PomodoroType.shortBreak:
         _finalTimeInSec = SHORT_BREAK_DURATION;
+        _pomodoroCurrentTimeInSec = SHORT_BREAK_DURATION; // Start from the end
+        _progress = 1.0;
         break;
       case PomodoroType.longBreak:
         _finalTimeInSec = LONG_BREAK_DURATION;
+        _pomodoroCurrentTimeInSec = LONG_BREAK_DURATION; // Start from the end
+        _progress = 1.0;
         break;
     }
-
-    _currentTimeInSec = 0; // Reset current time when changing type
 
     emit(
       state.copyWith(
         pomodoroType: type,
         finalTimeInSec: _finalTimeInSec,
         status: RecordingStatus.notStarted,
-        pomodoroProgress: 0.0,
+        pomodoroProgress: _progress,
       ),
     );
   }
@@ -277,7 +360,7 @@ class RecordCubit extends Cubit<RecordState> {
     }
   }
 
-  void addProject(String projectName) async {
+  Future<int?> addProject(String projectName) async {
     try {
       final project = Project(name: projectName);
       final createdProjectId = await _addProjectUseCase.execute(project);
@@ -291,9 +374,11 @@ class RecordCubit extends Cubit<RecordState> {
         ),
       );
       getProjects(); // Refresh the project list after adding
+      return createdProjectId;
     } catch (e) {
       debugPrint('Erro ao adicionar projeto: $e');
     }
+    return null;
   }
 
   void getProjects() async {
@@ -305,15 +390,18 @@ class RecordCubit extends Cubit<RecordState> {
     }
   }
 
-  void addTask(String taskName) async {
+  Future<int?> addTask(String taskName, int? projectId) async {
     try {
-      final task = Task(name: taskName, projectId: state.projectId);
+      final taskProjectId = projectId ?? state.projectId;
+      final task = Task(name: taskName, projectId: taskProjectId);
       final createdTaskId = await _addTaskUseCase.execute(task);
       emit(state.copyWith(taskId: createdTaskId, taskName: taskName));
       getTasks(); // Refresh the task list after adding
+      return createdTaskId;
     } catch (e) {
       debugPrint('Erro ao adicionar tarefa: $e');
     }
+    return null;
   }
 
   void getTasks() async {
@@ -369,16 +457,20 @@ class RecordCubit extends Cubit<RecordState> {
 
   double get pomodoroCurrentTimeInSec {
     if (state.type != RecordingType.pomodoro) {
+      if (state.pomodoroType == PomodoroType.focus) {
+        return 0;
+      } else if (state.pomodoroType == PomodoroType.shortBreak) {
+        return SHORT_BREAK_DURATION;
+      } else if (state.pomodoroType == PomodoroType.longBreak) {
+        return LONG_BREAK_DURATION;
+      }
       return 0;
     }
-    return _currentTimeInSec;
+    return _pomodoroCurrentTimeInSec;
   }
 
   double get activityCurrentTimeInSec {
-    if (state.type != RecordingType.activity) {
-      return 0;
-    }
-    return _currentTimeInSec;
+    return _activityCurrentTimeInSec;
   }
 
   double get finalTimeInSec => _finalTimeInSec;

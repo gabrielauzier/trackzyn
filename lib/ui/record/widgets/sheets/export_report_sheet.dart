@@ -186,12 +186,14 @@ class _ExportReportSheetState extends State<ExportReportSheet> {
       const SizedBox(height: 24),
       IconSvg(IllustrationsLibrary.success, size: 128),
       const SizedBox(height: 24),
-      Text(
-        'Export successful!',
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: ColorPalette.neutral900,
+      Center(
+        child: Text(
+          'Export successful!',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: ColorPalette.neutral900,
+          ),
         ),
       ),
       const SizedBox(height: 12),

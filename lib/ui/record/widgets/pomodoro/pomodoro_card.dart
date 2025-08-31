@@ -126,6 +126,30 @@ class _PomodoroCardState extends State<PomodoroCard> {
   }
 
   Widget _buildActionButtonsList() {
+    getStartButtonBackgroundColor(RecordingStatus status, PomodoroType type) {
+      switch (type) {
+        case PomodoroType.focus:
+          switch (status) {
+            case RecordingStatus.notStarted:
+              return ColorPalette.violet500;
+            case RecordingStatus.paused:
+              return ColorPalette.amber500;
+            default:
+              return Colors.black;
+          }
+        case PomodoroType.shortBreak:
+        case PomodoroType.longBreak:
+          switch (status) {
+            case RecordingStatus.notStarted:
+              return ColorPalette.sky500;
+            case RecordingStatus.paused:
+              return ColorPalette.amber500;
+            default:
+              return Colors.black;
+          }
+      }
+    }
+
     return BlocBuilder<RecordCubit, RecordState>(
       builder: (context, state) {
         var recordingStatus = cubit.statusByType(RecordingType.pomodoro);
@@ -170,11 +194,10 @@ class _PomodoroCardState extends State<PomodoroCard> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: switch (recordingStatus) {
-                    RecordingStatus.notStarted => ColorPalette.violet500,
-                    RecordingStatus.paused => ColorPalette.amber500,
-                    _ => Colors.black,
-                  },
+                  backgroundColor: getStartButtonBackgroundColor(
+                    recordingStatus,
+                    state.pomodoroType,
+                  ),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),

@@ -6,7 +6,9 @@ import 'package:trackzyn/ui/shared/sleek_input.dart';
 import 'package:trackzyn/ui/shared/sleek_label.dart';
 
 class CreateTaskDialog extends StatefulWidget {
-  const CreateTaskDialog({super.key});
+  final int? projectId;
+
+  const CreateTaskDialog({super.key, this.projectId});
 
   @override
   State<CreateTaskDialog> createState() => _CreateTaskDialogState();
@@ -17,11 +19,19 @@ class _CreateTaskDialogState extends State<CreateTaskDialog> {
 
   final TextEditingController _taskNameController = TextEditingController();
 
+  void _onCreateTaskSuccessful(int? createdTaskId) {
+    final result = {'id': createdTaskId, 'name': _taskNameController.text};
+    Navigator.of(context).pop(result); // Close the dialog after creation
+  }
+
   void createTask() {
     Future.microtask(() async {
-      viewModel.addTask(_taskNameController.text);
+      final createdTaskId = await viewModel.addTask(
+        _taskNameController.text,
+        widget.projectId,
+      );
+      _onCreateTaskSuccessful(createdTaskId);
     });
-    Navigator.of(context).pop(); // Close the dialog after creation
   }
 
   @override

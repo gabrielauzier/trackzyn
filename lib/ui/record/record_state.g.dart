@@ -13,8 +13,6 @@ abstract class _$RecordStateCWProxy {
 
   RecordState pomodoroType(PomodoroType pomodoroType);
 
-  RecordState activityProgress(double activityProgress);
-
   RecordState finalTimeInSec(double finalTimeInSec);
 
   RecordState pomodoroProgress(double pomodoroProgress);
@@ -46,7 +44,6 @@ abstract class _$RecordStateCWProxy {
     RecordingStatus status,
     RecordingType type,
     PomodoroType pomodoroType,
-    double activityProgress,
     double finalTimeInSec,
     double pomodoroProgress,
     List<Activity> activities,
@@ -76,10 +73,6 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
   @override
   RecordState pomodoroType(PomodoroType pomodoroType) =>
       this(pomodoroType: pomodoroType);
-
-  @override
-  RecordState activityProgress(double activityProgress) =>
-      this(activityProgress: activityProgress);
 
   @override
   RecordState finalTimeInSec(double finalTimeInSec) =>
@@ -128,7 +121,6 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
     Object? status = const $CopyWithPlaceholder(),
     Object? type = const $CopyWithPlaceholder(),
     Object? pomodoroType = const $CopyWithPlaceholder(),
-    Object? activityProgress = const $CopyWithPlaceholder(),
     Object? finalTimeInSec = const $CopyWithPlaceholder(),
     Object? pomodoroProgress = const $CopyWithPlaceholder(),
     Object? activities = const $CopyWithPlaceholder(),
@@ -156,11 +148,6 @@ class _$RecordStateCWProxyImpl implements _$RecordStateCWProxy {
               ? _value.pomodoroType
               // ignore: cast_nullable_to_non_nullable
               : pomodoroType as PomodoroType,
-      activityProgress:
-          activityProgress == const $CopyWithPlaceholder()
-              ? _value.activityProgress
-              // ignore: cast_nullable_to_non_nullable
-              : activityProgress as double,
       finalTimeInSec:
           finalTimeInSec == const $CopyWithPlaceholder()
               ? _value.finalTimeInSec

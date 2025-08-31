@@ -17,11 +17,21 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
 
   final TextEditingController _projectNameController = TextEditingController();
 
+  void _onCreateProjectSuccessful(int? createdProjectId) {
+    final result = {
+      'id': createdProjectId,
+      'name': _projectNameController.text,
+    };
+    Navigator.of(context).pop(result); // Close the dialog after creation
+  }
+
   void createProject() {
     Future.microtask(() async {
-      viewModel.addProject(_projectNameController.text);
+      final createdProjectId = await viewModel.addProject(
+        _projectNameController.text,
+      );
+      _onCreateProjectSuccessful(createdProjectId);
     });
-    Navigator.of(context).pop(); // Close the dialog after creation
   }
 
   @override

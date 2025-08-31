@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
+import 'package:trackzyn/domain/models/project.dart';
 import 'package:trackzyn/domain/models/task.dart';
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/record_state.dart';
 import 'package:trackzyn/ui/record/widgets/dialogs/create_project_dialog.dart';
 import 'package:trackzyn/ui/record/widgets/dialogs/create_task_dialog.dart';
+import 'package:trackzyn/ui/record/widgets/sheets/selects/select_project_popup_menu.dart';
+import 'package:trackzyn/ui/record/widgets/sheets/selects/select_task_popup_menu.dart';
 import 'package:trackzyn/ui/record/widgets/time/time_wheel.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/shared/dashed_line.dart';
 import 'package:trackzyn/ui/shared/sleek_bottom_sheet.dart';
 import 'package:trackzyn/ui/shared/sleek_label.dart';
-import 'package:trackzyn/ui/shared/sleek_select.dart';
 import 'package:trackzyn/ui/utils/date_compare.dart';
 import 'package:trackzyn/ui/utils/get_full_date_str.dart';
 import 'package:trackzyn/ui/utils/get_time_str.dart';
@@ -32,7 +34,10 @@ class _CreateActivityRecordSheetState extends State<CreateActivityRecordSheet> {
   final TextEditingController _noteController = TextEditingController();
 
   int? _projectId;
+  String? _projectName;
+
   int? _taskId;
+  String? _taskName;
 
   TimeOfDay _startTime = TimeOfDay.now();
   String _startTimeStr = getTimeStr(TimeOfDay.now());
@@ -62,76 +67,170 @@ class _CreateActivityRecordSheetState extends State<CreateActivityRecordSheet> {
 
   List<Task> _tasks = [];
 
+  Widget _buildProjectsSelect(BuildContext context, RecordState state) {
+    return SelectProjectPopupMenu(
+      projects: state.projects,
+      onSelected: (value) async {
+        if (value == 'New') {
+          final createdProject = await showDialog(
+            context: context,
+            builder: (context) {
+              return CreateProjectDialog();
+            },
+          );
+
+          if (createdProject == null) return;
+
+          final projectId = int.tryParse(createdProject['id'].toString());
+          final projectName = createdProject['name'].toString();
+
+          setState(() {
+            _projectId = projectId;
+            _projectName = projectName;
+            _taskId = null; // Reset taskId when project changes
+            _taskName = null;
+          });
+
+          return;
+        }
+
+        final projectId = int.tryParse(value);
+
+        setState(() {
+          _projectId = projectId;
+          _projectName =
+              state.projects
+                  .firstWhere(
+                    (project) => project.id == _projectId,
+                    orElse: () => Project(id: 0, name: 'No project assigned'),
+                  )
+                  .name;
+          _taskId = null; // Reset taskId when project changes
+          _taskName = null;
+        });
+
+        _loadProjectTasks(projectId);
+      },
+      projectId: _projectId,
+      projectName: _projectName,
+    );
+  }
+
+  Widget _buildTasksSelect(BuildContext context) {
+    return SelectTaskPopupMenu(
+      tasks: _tasks,
+      onSelected: (value) async {
+        if (value == 'New') {
+          Map<String, Object?>? createdTask = await showDialog(
+            context: context,
+            builder: (context) {
+              return CreateTaskDialog(projectId: _projectId);
+            },
+          );
+
+          if (createdTask == null) return;
+
+          _loadProjectTasks(_projectId);
+
+          final taskId = int.tryParse(createdTask['id'].toString());
+          final taskName = createdTask['name'].toString();
+
+          setState(() {
+            _taskId = taskId;
+            _taskName = taskName;
+          });
+
+          return;
+        }
+
+        setState(() {
+          _taskId = int.tryParse(value);
+          _taskName =
+              _tasks
+                  .firstWhere(
+                    (task) => task.id == _taskId,
+                    orElse: () => Task(name: 'No task assigned'),
+                  )
+                  .name;
+        });
+      },
+      projectId: _projectId,
+      taskId: _taskId,
+      taskName: _taskName,
+    );
+  }
+
   List<Widget> _buildProject(RecordState state) {
     return [
       SleekLabel(text: 'Project associated', count: state.projectsCount),
-      SleekSelect(
-        selectedValue: _projectId?.toString(),
-        onChanged: (value) {
-          final projectId = int.tryParse(value ?? '');
-          _loadProjectTasks(projectId);
-          setState(() {
-            _projectId = projectId;
-            _taskId = null; // Reset taskId when project changes
-          });
-        },
-        items: [
-          DropdownMenuItem(
-            alignment: Alignment.centerLeft,
-            value: null,
-            child: Text(
-              'No project assignee',
-              style: TextStyle(color: ColorPalette.neutral400),
-            ),
-          ),
-          ...state.projects.map(
-            (option) => DropdownMenuItem(
-              alignment: Alignment.centerLeft,
-              value: option.id.toString(),
-              child: Text(option.name),
-            ),
-          ),
-        ],
-      ),
-      SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              vertical: 12.0,
-              horizontal: 12.0,
-            ),
-            backgroundColor: ColorPalette.neutral100,
-            foregroundColor: ColorPalette.neutral800,
-            shape: RoundedRectangleBorder(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(8.0),
-                bottomRight: Radius.circular(8.0),
-              ),
-              side: BorderSide(color: ColorPalette.neutral300, width: 1.0),
-            ),
-            elevation: 0,
-          ),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) {
-                return CreateProjectDialog();
-              },
-            );
-          },
-          child: Row(
-            children: [
-              Icon(Icons.add, color: ColorPalette.neutral800),
-              const SizedBox(width: 8.0),
-              const Text(
-                'Create new project',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        ),
-      ),
+      _buildProjectsSelect(context, state),
+      // SleekSelect(
+      //   selectedValue: _projectId?.toString(),
+      //   onChanged: (value) {
+      //     final projectId = int.tryParse(value ?? '');
+      //     _loadProjectTasks(projectId);
+      //     setState(() {
+      //       _projectId = projectId;
+      //       _taskId = null; // Reset taskId when project changes
+      //     });
+      //   },
+      //   items: [
+      //     DropdownMenuItem(
+      //       alignment: Alignment.centerLeft,
+      //       value: null,
+      //       child: Text(
+      //         'No project assignee',
+      //         style: TextStyle(color: ColorPalette.neutral400),
+      //       ),
+      //     ),
+      //     ...state.projects.map(
+      //       (option) => DropdownMenuItem(
+      //         alignment: Alignment.centerLeft,
+      //         value: option.id.toString(),
+      //         child: Text(option.name),
+      //       ),
+      //     ),
+      //   ],
+      // ),
+      // SizedBox(
+      //   width: MediaQuery.of(context).size.width,
+      //   child: ElevatedButton(
+      //     style: ElevatedButton.styleFrom(
+      //       padding: const EdgeInsets.symmetric(
+      //         vertical: 12.0,
+      //         horizontal: 12.0,
+      //       ),
+      //       backgroundColor: ColorPalette.neutral100,
+      //       foregroundColor: ColorPalette.neutral800,
+      //       shape: RoundedRectangleBorder(
+      //         borderRadius: const BorderRadius.only(
+      //           bottomLeft: Radius.circular(8.0),
+      //           bottomRight: Radius.circular(8.0),
+      //         ),
+      //         side: BorderSide(color: ColorPalette.neutral300, width: 1.0),
+      //       ),
+      //       elevation: 0,
+      //     ),
+      //     onPressed: () {
+      //       showDialog(
+      //         context: context,
+      //         builder: (context) {
+      //           return CreateProjectDialog();
+      //         },
+      //       );
+      //     },
+      //     child: Row(
+      //       children: [
+      //         Icon(Icons.add, color: ColorPalette.neutral800),
+      //         const SizedBox(width: 8.0),
+      //         const Text(
+      //           'Create new project',
+      //           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      //         ),
+      //       ],
+      //     ),
+      //   ),
+      // ),
     ];
   }
 
@@ -139,73 +238,74 @@ class _CreateActivityRecordSheetState extends State<CreateActivityRecordSheet> {
     return [
       const SizedBox(height: 16.0),
       SleekLabel(text: 'Task name', count: _tasks.length),
-      SleekSelect(
-        selectedValue: _taskId?.toString(),
-        onChanged: (value) {
-          final taskId = int.tryParse(value ?? '');
-          setState(() {
-            _taskId = taskId;
-          });
-        },
-        items: [
-          DropdownMenuItem(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'No task assignee',
-              style: TextStyle(color: ColorPalette.neutral400),
-            ),
-          ),
-          ..._tasks.map(
-            (option) => DropdownMenuItem(
-              alignment: Alignment.centerLeft,
-              value: option.id.toString(),
-              child: Text(option.name),
-            ),
-          ),
-        ],
-      ),
-      SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              vertical: 12.0,
-              horizontal: 12.0,
-            ),
-            backgroundColor: ColorPalette.neutral100,
-            foregroundColor: ColorPalette.neutral800,
-            shape: RoundedRectangleBorder(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(8.0),
-                bottomRight: Radius.circular(8.0),
-              ),
-              side: BorderSide(color: ColorPalette.neutral300, width: 1.0),
-            ),
-            elevation: 0,
-          ),
-          onPressed:
-              _projectId != null
-                  ? () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return CreateTaskDialog();
-                      },
-                    );
-                  }
-                  : null,
-          child: Row(
-            children: [
-              Icon(Icons.add, color: ColorPalette.neutral800),
-              const SizedBox(width: 8.0),
-              const Text(
-                'Create new task',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        ),
-      ),
+      _buildTasksSelect(context),
+      // SleekSelect(
+      //   selectedValue: _taskId?.toString(),
+      //   onChanged: (value) {
+      //     final taskId = int.tryParse(value ?? '');
+      //     setState(() {
+      //       _taskId = taskId;
+      //     });
+      //   },
+      //   items: [
+      //     DropdownMenuItem(
+      //       alignment: Alignment.centerLeft,
+      //       child: Text(
+      //         'No task assignee',
+      //         style: TextStyle(color: ColorPalette.neutral400),
+      //       ),
+      //     ),
+      //     ..._tasks.map(
+      //       (option) => DropdownMenuItem(
+      //         alignment: Alignment.centerLeft,
+      //         value: option.id.toString(),
+      //         child: Text(option.name),
+      //       ),
+      //     ),
+      //   ],
+      // ),
+      // SizedBox(
+      //   width: MediaQuery.of(context).size.width,
+      //   child: ElevatedButton(
+      //     style: ElevatedButton.styleFrom(
+      //       padding: const EdgeInsets.symmetric(
+      //         vertical: 12.0,
+      //         horizontal: 12.0,
+      //       ),
+      //       backgroundColor: ColorPalette.neutral100,
+      //       foregroundColor: ColorPalette.neutral800,
+      //       shape: RoundedRectangleBorder(
+      //         borderRadius: const BorderRadius.only(
+      //           bottomLeft: Radius.circular(8.0),
+      //           bottomRight: Radius.circular(8.0),
+      //         ),
+      //         side: BorderSide(color: ColorPalette.neutral300, width: 1.0),
+      //       ),
+      //       elevation: 0,
+      //     ),
+      //     onPressed:
+      //         _projectId != null
+      //             ? () {
+      //               showDialog(
+      //                 context: context,
+      //                 builder: (context) {
+      //                   return CreateTaskDialog();
+      //                 },
+      //               );
+      //             }
+      //             : null,
+      //     child: Row(
+      //       children: [
+      //         Icon(Icons.add, color: ColorPalette.neutral800),
+      //         const SizedBox(width: 8.0),
+      //         const Text(
+      //           'Create new task',
+      //           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      //         ),
+      //       ],
+      //     ),
+      //   ),
+      // ),
     ];
   }
 
@@ -217,7 +317,7 @@ class _CreateActivityRecordSheetState extends State<CreateActivityRecordSheet> {
         controller: _noteController,
         decoration: InputDecoration(
           hintText: 'Enter note...',
-          hintStyle: TextStyle(color: ColorPalette.neutral400),
+          hintStyle: TextStyle(color: ColorPalette.neutral400, fontSize: 14),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.0),
             borderSide: BorderSide(color: ColorPalette.neutral300),
@@ -264,24 +364,24 @@ class _CreateActivityRecordSheetState extends State<CreateActivityRecordSheet> {
                           (_estimatedTimeMinutes * 60) +
                           _estimatedTimeSeconds;
 
-                      final startDateTime = DateTime(
-                        _startDate.year,
-                        _startDate.month,
-                        _startDate.day,
-                        _startTime.hour,
-                        _startTime.minute,
+                      final stopDateTime = DateTime(
+                        _stopDate.year,
+                        _stopDate.month,
+                        _stopDate.day,
+                        _stopTime.hour,
+                        _stopTime.minute,
                       );
-                      final stopDateTime = startDateTime.add(
+                      final startDateTime = stopDateTime.subtract(
                         Duration(
                           hours: _estimatedTimeHours,
                           minutes: _estimatedTimeMinutes,
                           seconds: _estimatedTimeSeconds,
                         ),
                       );
-                      _stopDate = stopDateTime;
-                      _stopDateStr = getFullDateStr(stopDateTime);
-                      _stopTime = TimeOfDay.fromDateTime(stopDateTime);
-                      _stopTimeStr = getTimeStr(_stopTime);
+                      _startDate = startDateTime;
+                      _startDateStr = getFullDateStr(startDateTime);
+                      _startTime = TimeOfDay.fromDateTime(startDateTime);
+                      _startTimeStr = getTimeStr(_startTime);
                     });
                   },
                 ),
@@ -308,24 +408,24 @@ class _CreateActivityRecordSheetState extends State<CreateActivityRecordSheet> {
                           (_estimatedTimeMinutes * 60) +
                           _estimatedTimeSeconds;
 
-                      final startDateTime = DateTime(
-                        _startDate.year,
-                        _startDate.month,
-                        _startDate.day,
-                        _startTime.hour,
-                        _startTime.minute,
+                      final stopDateTime = DateTime(
+                        _stopDate.year,
+                        _stopDate.month,
+                        _stopDate.day,
+                        _stopTime.hour,
+                        _stopTime.minute,
                       );
-                      final stopDateTime = startDateTime.add(
+                      final startDateTime = stopDateTime.subtract(
                         Duration(
                           hours: _estimatedTimeHours,
                           minutes: _estimatedTimeMinutes,
                           seconds: _estimatedTimeSeconds,
                         ),
                       );
-                      _stopDate = stopDateTime;
-                      _stopDateStr = getFullDateStr(stopDateTime);
-                      _stopTime = TimeOfDay.fromDateTime(stopDateTime);
-                      _stopTimeStr = getTimeStr(_stopTime);
+                      _startDate = startDateTime;
+                      _startDateStr = getFullDateStr(startDateTime);
+                      _startTime = TimeOfDay.fromDateTime(startDateTime);
+                      _startTimeStr = getTimeStr(_startTime);
                     });
                   },
                 ),

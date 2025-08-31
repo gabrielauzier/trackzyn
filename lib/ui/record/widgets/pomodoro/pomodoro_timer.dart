@@ -1,33 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/record_state.dart';
 import 'package:trackzyn/ui/record/widgets/arc.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 
+enum PomodoroProgressionType { progressive, regressive }
+
 class PomodoroTimer extends StatefulWidget {
   final double diameter;
+  final PomodoroProgressionType type;
 
-  const PomodoroTimer({super.key, this.diameter = 220});
+  const PomodoroTimer({
+    super.key,
+    this.diameter = 220,
+    this.type = PomodoroProgressionType.progressive,
+  });
 
   @override
   State<PomodoroTimer> createState() => _PomodoroTimerState();
 }
 
 class _PomodoroTimerState extends State<PomodoroTimer> {
-  Widget _buildButton() {
-    var cubit = BlocProvider.of<RecordCubit>(context);
+  late final viewModel = Provider.of<RecordCubit>(context, listen: false);
 
+  final minimalRecordDurationInSec = 5 * 60; // 5 minutes
+
+  Widget _buildButton() {
     return GestureDetector(
       onTap: () {
-        switch (cubit.statusByType(RecordingType.pomodoro)) {
+        switch (viewModel.statusByType(RecordingType.pomodoro)) {
           // Custom
           case RecordingStatus.notStarted:
             break;
           // Stop
           default:
-            cubit.stopRecording();
+            _handleStopConfirmation();
             break;
         }
       },
@@ -40,7 +50,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            switch (cubit.statusByType(RecordingType.pomodoro)) {
+            switch (viewModel.statusByType(RecordingType.pomodoro)) {
               // Custom
               RecordingStatus.notStarted => const Icon(Icons.edit),
               // Stop
@@ -55,7 +65,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
               ),
             },
             const SizedBox(width: 10),
-            switch (cubit.statusByType(RecordingType.pomodoro)) {
+            switch (viewModel.statusByType(RecordingType.pomodoro)) {
               // Custom
               RecordingStatus.notStarted => const Text(
                 'Custom',
@@ -74,14 +84,11 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
   }
 
   Widget _buildTimerInfo() {
-    var cubit = BlocProvider.of<RecordCubit>(context);
-
-    var completedSeconds = cubit.pomodoroCurrentTimeInSec.toInt();
+    var completedSeconds = viewModel.pomodoroCurrentTimeInSec.toInt();
     var completedMinutes = (completedSeconds / 60).floor();
     var completedHours = (completedMinutes / 60).floor();
 
-    var finalTimeInSec =
-        BlocProvider.of<RecordCubit>(context).finalTimeInSec.toInt();
+    var finalTimeInSec = viewModel.finalTimeInSec.toInt();
 
     var totalHours = (finalTimeInSec / 3600).floor();
     var totalMinutes = (finalTimeInSec / 60).floor();
@@ -119,7 +126,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
             '${completedHours.toString().padLeft(2, '0')}:${(completedMinutes % 60).toString().padLeft(2, '0')}:${(completedSeconds % 60).toString().padLeft(2, '0')}',
             style: TextStyle(
               fontSize: 40,
-              color: switch (cubit.statusByType(RecordingType.pomodoro)) {
+              color: switch (viewModel.statusByType(RecordingType.pomodoro)) {
                 RecordingStatus.notStarted => ColorPalette.neutral400,
                 RecordingStatus.paused => ColorPalette.neutral500,
                 RecordingStatus.recording => ColorPalette.neutral900,
@@ -130,7 +137,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
             ),
           ),
           const SizedBox(height: 14),
-          if (!(cubit.statusByType(RecordingType.pomodoro) ==
+          if (!(viewModel.statusByType(RecordingType.pomodoro) ==
               RecordingStatus.finished))
             _buildButton()
           else
@@ -147,8 +154,83 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
     );
   }
 
+  _onStopConfirmed() {
+    viewModel.stopRecording();
+    Navigator.of(context).pop(); // Close the dialog
+  }
+
+  _onStopCancelled() {
+    viewModel.resumeRecording();
+    Navigator.of(context).pop(); // Close the dialog
+  }
+
+  _handleStopConfirmation() async {
+    viewModel.pauseRecording();
+
+    showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Stop Timer?'),
+            content: Text(
+              'Are you sure you want to stop the timer? \n\nRecords with less than 5 minutes won`t be saved.',
+              textAlign: TextAlign.left,
+            ),
+            actions: [
+              TextButton(
+                onPressed: _onStopCancelled,
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: ColorPalette.neutral900),
+                ),
+              ),
+              TextButton(
+                onPressed: _onStopConfirmed,
+                child: Text(
+                  'Stop',
+                  style: TextStyle(color: ColorPalette.red600),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    getArcColor(RecordState state) {
+      switch (state.pomodoroType) {
+        case PomodoroType.focus:
+          switch (state.status) {
+            case RecordingStatus.notStarted:
+              return ColorPalette.sky300;
+            case RecordingStatus.recording:
+              return ColorPalette.violet500;
+            case RecordingStatus.paused:
+              return ColorPalette.amber500;
+            case RecordingStatus.finished:
+              return ColorPalette.green500;
+            case RecordingStatus.stopped:
+              return ColorPalette.red500;
+          }
+
+        case PomodoroType.shortBreak:
+        case PomodoroType.longBreak:
+          switch (state.status) {
+            case RecordingStatus.notStarted:
+              return ColorPalette.sky500;
+            case RecordingStatus.recording:
+              return ColorPalette.sky500;
+            case RecordingStatus.paused:
+              return ColorPalette.amber500;
+            case RecordingStatus.finished:
+              return ColorPalette.green500;
+            case RecordingStatus.stopped:
+              return ColorPalette.red500;
+          }
+      }
+    }
+
     return BlocBuilder<RecordCubit, RecordState>(
       builder: (context, state) {
         return Column(
@@ -183,13 +265,7 @@ class _PomodoroTimerState extends State<PomodoroTimer> {
                 Arc(
                   diameter: widget.diameter,
                   progress: state.pomodoroProgress,
-                  color: switch (state.status) {
-                    RecordingStatus.notStarted => ColorPalette.neutral200,
-                    RecordingStatus.recording => ColorPalette.violet500,
-                    RecordingStatus.paused => ColorPalette.amber500,
-                    RecordingStatus.finished => ColorPalette.green500,
-                    _ => ColorPalette.transparent,
-                  },
+                  color: getArcColor(state),
                   pointer: true,
                 ),
                 _buildTimerInfo(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import 'package:trackzyn/ui/record/record_cubit.dart';
 import 'package:trackzyn/ui/record/record_state.dart';
@@ -18,6 +19,8 @@ class ActivitySessionCard extends StatefulWidget {
 }
 
 class _ActivitySessionCardState extends State<ActivitySessionCard> {
+  late final viewModel = Provider.of<RecordCubit>(context, listen: false);
+
   Widget _buildHeader() {
     return WhatAreYouWorkingOn();
   }
@@ -54,10 +57,52 @@ class _ActivitySessionCardState extends State<ActivitySessionCard> {
     );
   }
 
+  _onStopCancelled() {
+    Navigator.of(context).pop(); // Close the dialog
+    viewModel.resumeRecording();
+  }
+
+  _onStopConfirmed() {
+    Navigator.of(context).pop(); // Close the dialog
+    viewModel.stopRecording(completed: true);
+  }
+
+  _handleStopConfirmation() async {
+    viewModel.pauseRecording();
+
+    showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Stop Timer?'),
+            content: Text(
+              'Are you sure you want to stop the timer? \n\nRecords with less than 5 minutes won`t be saved.',
+              textAlign: TextAlign.left,
+            ),
+            actions: [
+              TextButton(
+                onPressed: _onStopCancelled,
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: ColorPalette.neutral900),
+                ),
+              ),
+              TextButton(
+                onPressed: _onStopConfirmed,
+                child: Text(
+                  'Stop',
+                  style: TextStyle(color: ColorPalette.red600),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
   _buildStopButton() {
     return OutlinedButton(
       onPressed: () {
-        context.read<RecordCubit>().stopRecording(completed: true);
+        _handleStopConfirmation();
       },
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

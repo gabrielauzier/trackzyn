@@ -26,7 +26,9 @@ class _ActivitiesHistoryCardState extends State<ActivitiesHistoryCard> {
   @override
   void initState() {
     super.initState();
-    viewModel.getActivities();
+    Future.microtask(() {
+      viewModel.getActivities();
+    });
   }
 
   @override
