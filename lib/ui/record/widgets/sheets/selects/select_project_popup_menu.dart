@@ -118,7 +118,7 @@ class _SelectProjectPopupMenuState extends State<SelectProjectPopupMenu> {
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
+                  padding: const EdgeInsets.only(left: 12.0),
                   child: Row(
                     children: [
                       IconSvg(

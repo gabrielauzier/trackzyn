@@ -8,6 +8,7 @@ class Arc extends StatelessWidget {
   final double progress; // Progress as a value between 0.0 and 1.0
   final Color color;
   final bool pointer;
+  final double strokeWidth;
 
   const Arc({
     super.key,
@@ -15,12 +16,18 @@ class Arc extends StatelessWidget {
     this.progress = 0.0,
     this.color = ColorPalette.violet500,
     this.pointer = false,
+    this.strokeWidth = 4.0,
   });
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: ArcPainter(progress: progress, color: color, pointer: pointer),
+      painter: ArcPainter(
+        progress: progress,
+        color: color,
+        pointer: pointer,
+        strokeWidth: strokeWidth,
+      ),
       size: Size(diameter, diameter),
     );
   }
@@ -30,11 +37,13 @@ class ArcPainter extends CustomPainter {
   final double progress;
   final Color color;
   final bool pointer;
+  final double strokeWidth;
 
   ArcPainter({
     this.progress = 0.0,
     this.color = ColorPalette.violet500,
     this.pointer = false,
+    this.strokeWidth = 4.0,
   });
 
   @override
@@ -42,7 +51,7 @@ class ArcPainter extends CustomPainter {
     Paint paint = Paint()..color = color;
     paint.style = PaintingStyle.stroke;
     paint.strokeCap = StrokeCap.round;
-    paint.strokeWidth = 4;
+    paint.strokeWidth = strokeWidth;
 
     // Convert progress percentage to radians
     double sweepAngle = progress * 2 * math.pi;

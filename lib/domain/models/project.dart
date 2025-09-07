@@ -30,6 +30,7 @@ class Project {
       name: map['name'] as String,
       description: map['description'] as String?,
       dueDate: map['due_date'] != null ? DateTime.parse(map['due_date']) : null,
+      taskCount: map['task_count'] as int? ?? 0,
       // createdAt: DateTime.parse(map['created_at']),
       // updatedAt: DateTime.parse(map['updated_at']),
     );

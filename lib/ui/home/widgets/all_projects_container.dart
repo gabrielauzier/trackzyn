@@ -93,6 +93,7 @@ class _AllProjectsContainerState extends State<AllProjectsContainer> {
                                 padding: EdgeInsets.only(right: 8.0),
                                 child: ProjectSquareCard(
                                   key: ValueKey('project_$index'),
+                                  projectId: project.id,
                                   projectName: project.name,
                                   taskCount: project.taskCount,
                                 ),

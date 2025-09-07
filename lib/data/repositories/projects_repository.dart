@@ -7,7 +7,7 @@ abstract class ProjectsRepository {
     DateTime? endDate,
   });
 
-  Future<Project> getById(String projectId);
+  Future<Project?> getById(int projectId);
 
   Future<int?> add(Project project);
 

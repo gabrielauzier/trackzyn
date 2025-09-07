@@ -33,9 +33,17 @@ class LocalTasksRepository implements TasksRepository {
     final List<Map<String, Object?>> taskMaps = await _service.database!
         .rawQuery(
           '''
-          SELECT * FROM task
-          WHERE project_id = ?
-          ORDER BY id DESC
+          SELECT
+            t.id,
+            t.project_id,
+            t.name,
+            t.description,
+            SUM(a.duration_in_seconds) as total_duration_seconds
+          FROM task t
+            LEFT JOIN activity a ON t.id = a.task_id
+          WHERE t.project_id = ?
+          GROUP BY t.id, t.project_id, t.name, t.description
+          ORDER BY t.id DESC
           ''',
           [projectId],
         );

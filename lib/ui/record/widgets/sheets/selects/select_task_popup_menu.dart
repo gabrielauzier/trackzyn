@@ -120,7 +120,7 @@ class _SelectTaskPopupMenuState extends State<SelectTaskPopupMenu> {
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
+                  padding: const EdgeInsets.only(left: 12.0),
                   child: Row(
                     children: [
                       IconSvg(

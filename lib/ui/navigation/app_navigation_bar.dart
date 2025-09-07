@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'package:trackzyn/ui/agenda/agenda_view.dart';
 import 'package:trackzyn/ui/home/home_view.dart';
-
 import 'package:trackzyn/ui/record/record_view.dart';
 import 'package:trackzyn/ui/reports/reports_view.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
@@ -16,7 +16,7 @@ class AppNavigationBar extends StatefulWidget {
 }
 
 class _AppNavigationBarState extends State<AppNavigationBar> {
-  int currentPageIndex = 2; // Default to RecordView
+  int currentPageIndex = 0; // Default to RecordView
 
   final destinations = [
     NavigationDestinationCustomItem(

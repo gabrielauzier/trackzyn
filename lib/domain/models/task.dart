@@ -6,6 +6,8 @@ class Task {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  final int? totalDurationInSeconds;
+
   Task({
     this.id,
     this.projectId,
@@ -13,6 +15,7 @@ class Task {
     this.description,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.totalDurationInSeconds = 0,
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -35,6 +38,10 @@ class Task {
       projectId: map['project_id'] as int?,
       name: map['name'] as String,
       description: map['description'] as String?,
+      totalDurationInSeconds:
+          map['total_duration_seconds'] != null
+              ? map['total_duration_seconds'] as int
+              : 0,
       // createdAt: DateTime.parse(map['created_at'] as String),
       // updatedAt: DateTime.parse(map['updated_at'] as String),
     );

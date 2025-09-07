@@ -17,6 +17,8 @@ class SleekInput extends StatelessWidget {
   final void Function(String)? onSubmitted;
   final bool autofocus;
 
+  final double _borderRadius = 20.0;
+
   @override
   Widget build(BuildContext context) {
     return TextField(
@@ -27,15 +29,15 @@ class SleekInput extends StatelessWidget {
         hintText: hintText,
         hintStyle: TextStyle(color: ColorPalette.neutral400),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          borderRadius: BorderRadius.all(Radius.circular(_borderRadius)),
           borderSide: BorderSide(color: ColorPalette.neutral200),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          borderRadius: BorderRadius.all(Radius.circular(_borderRadius)),
           borderSide: BorderSide(color: ColorPalette.neutral200),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          borderRadius: BorderRadius.all(Radius.circular(_borderRadius)),
           borderSide: BorderSide(color: ColorPalette.neutral200),
         ),
         prefixIcon: prefixIcon,
