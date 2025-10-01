@@ -9,6 +9,7 @@ class SleekPopupMenuItem extends StatelessWidget {
   final bool isSelected;
   final bool showIcon;
   final bool noneVariant;
+  final Widget? customIcon;
 
   const SleekPopupMenuItem(
     this.text, {
@@ -16,6 +17,7 @@ class SleekPopupMenuItem extends StatelessWidget {
     this.isSelected = false,
     this.showIcon = true,
     this.noneVariant = false,
+    this.customIcon,
   });
 
   @override
@@ -34,7 +36,10 @@ class SleekPopupMenuItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (showIcon) ...[
+          if (customIcon != null && showIcon) ...[
+            customIcon!,
+            const SizedBox(width: 8.0),
+          ] else if (showIcon) ...[
             if (noneVariant)
               IconSvg(IllustrationsLibrary.folderGrey, size: 20.0)
             else

@@ -191,6 +191,8 @@ class _DetailProjectViewState extends State<DetailProjectView> {
                         vertical: 6.0,
                       ),
                       child: TaskCard(
+                        id: task.id!,
+                        projectId: task.projectId,
                         name: task.name,
                         description: task.description,
                         totalDurationInSeconds:

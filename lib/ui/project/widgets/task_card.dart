@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+import 'package:trackzyn/domain/use_cases/get_one_task_usecase.dart';
+import 'package:trackzyn/domain/use_cases/get_projects_usecase.dart';
+import 'package:trackzyn/domain/use_cases/save_task_usecase.dart';
+import 'package:trackzyn/ui/project/widgets/detail_project_viewmodel.dart';
 import 'package:trackzyn/ui/record/widgets/arc.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 import 'package:trackzyn/ui/shared/dashed_line.dart';
 import 'package:trackzyn/ui/shared/styles/shared_activity_card_box_decoration.dart';
+import 'package:trackzyn/ui/task/task_detail_view.dart';
+import 'package:trackzyn/ui/task/task_detail_viewmodel.dart';
 import 'package:trackzyn/ui/utils/get_total_time_str.dart';
 
 class TaskCard extends StatefulWidget {
+  final int id;
+  final int? projectId;
   final String? name;
   final String? description;
   final List<String>? tags;
@@ -18,6 +28,8 @@ class TaskCard extends StatefulWidget {
 
   const TaskCard({
     super.key,
+    this.id = 0,
+    this.projectId,
     this.name,
     this.description,
     this.tags,
@@ -33,7 +45,37 @@ class TaskCard extends StatefulWidget {
 }
 
 class _TaskCardState extends State<TaskCard> {
+  late final viewModel = Provider.of<DetailProjectViewModel>(
+    context,
+    listen: false,
+  );
+
   bool _markedAsCompleted = false;
+
+  _handleSeeDetails() async {
+    bool? refresh = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => BlocProvider<TaskDetailViewModel>(
+              create:
+                  (context) => TaskDetailViewModel(
+                    context.read<GetProjectsUseCase>(),
+                    context.read<GetOneTaskUseCase>(),
+                    context.read<SaveTaskUseCase>(),
+                  ),
+              child: TaskDetailView(
+                taskId: widget.id,
+                projectId: widget.projectId,
+              ),
+            ),
+      ),
+    );
+
+    if (refresh == true) {
+      viewModel.loadProjectTasks(widget.projectId ?? 0);
+    }
+  }
 
   _toggleMarkedAsCompleted() {
     debugPrint('Toggling marked as completed');
@@ -52,118 +94,123 @@ class _TaskCardState extends State<TaskCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: sharedActivityCardBoxDecoration(),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: _toggleMarkedAsCompleted,
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
+    return GestureDetector(
+      onTap: _handleSeeDetails,
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: sharedActivityCardBoxDecoration(),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: _toggleMarkedAsCompleted,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color:
+                        _markedAsCompleted
+                            ? ColorPalette.green700
+                            : ColorPalette.neutral500,
+                    width: 1.0,
+                  ),
+                ),
+                child: Icon(
+                  Icons.check,
                   color:
                       _markedAsCompleted
                           ? ColorPalette.green700
                           : ColorPalette.neutral500,
-                  width: 1.0,
+                  size: 16.0,
                 ),
-              ),
-              child: Icon(
-                Icons.check,
-                color:
-                    _markedAsCompleted
-                        ? ColorPalette.green700
-                        : ColorPalette.neutral500,
-                size: 16.0,
               ),
             ),
-          ),
-          const SizedBox(width: 16.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.name ?? 'No task',
-                  style: TextStyle(
-                    fontSize: 14.0,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        _markedAsCompleted
-                            ? ColorPalette.green700
-                            : ColorPalette.neutral800,
-                    decoration:
-                        _markedAsCompleted ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-                if (widget.description != null &&
-                    widget.description!.isNotEmpty)
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    widget.description ?? 'Blank description',
+                    widget.name ?? 'No task',
                     style: TextStyle(
-                      fontSize: 12.0,
-                      color: ColorPalette.neutral500,
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          _markedAsCompleted
+                              ? ColorPalette.green700
+                              : ColorPalette.neutral800,
+                      decoration:
+                          _markedAsCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
                     ),
                   ),
+                  if (widget.description != null &&
+                      widget.description!.isNotEmpty)
+                    Text(
+                      widget.description ?? 'Blank description',
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: ColorPalette.neutral500,
+                      ),
+                    ),
 
-                DashedLine(),
-                Row(
-                  children: [
-                    Text(
-                      widget.substasksTotal > 0
-                          ? '${widget.subtasksDone} of ${widget.substasksTotal} subtasks'
-                          : 'No subtasks',
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: ColorPalette.neutral500,
-                      ),
-                    ),
-                    const SizedBox(width: 4.0),
-                    Text(
-                      '• ${getTotalTimeStr(widget.totalDurationInSeconds, showSeconds: true)}',
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: ColorPalette.neutral500,
-                      ),
-                    ),
-                    Spacer(),
-                    if (widget.substasksTotal > 0) ...[
-                      Stack(
-                        children: [
-                          Arc(
-                            color: ColorPalette.neutral200,
-                            diameter: 16,
-                            progress: 1,
-                            strokeWidth: 2.0,
-                          ),
-                          Arc(
-                            color: ColorPalette.green600,
-                            diameter: 16,
-                            progress: 0.75,
-                            strokeWidth: 2.0,
-                          ),
-                        ],
-                      ),
-                      SizedBox(width: 6),
+                  DashedLine(),
+                  Row(
+                    children: [
                       Text(
-                        '75%',
+                        widget.substasksTotal > 0
+                            ? '${widget.subtasksDone} of ${widget.substasksTotal} subtasks'
+                            : 'No subtasks',
                         style: TextStyle(
                           fontSize: 12.0,
                           color: ColorPalette.neutral500,
                         ),
                       ),
+                      const SizedBox(width: 4.0),
+                      Text(
+                        '• ${getTotalTimeStr(widget.totalDurationInSeconds, showSeconds: true)}',
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: ColorPalette.neutral500,
+                        ),
+                      ),
+                      Spacer(),
+                      if (widget.substasksTotal > 0) ...[
+                        Stack(
+                          children: [
+                            Arc(
+                              color: ColorPalette.neutral200,
+                              diameter: 16,
+                              progress: 1,
+                              strokeWidth: 2.0,
+                            ),
+                            Arc(
+                              color: ColorPalette.green600,
+                              diameter: 16,
+                              progress: 0.75,
+                              strokeWidth: 2.0,
+                            ),
+                          ],
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          '75%',
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            color: ColorPalette.neutral500,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

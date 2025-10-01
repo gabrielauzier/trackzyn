@@ -1,6 +1,10 @@
 // ignore_for_file: non_constant_identifier_names
 
 class DatabaseScripts {
+  ///****************************************************************************
+  /// SCRIPTS V1 - 01/08/2025
+  ///****************************************************************************
+
   static const List<String> scripts_v1_2025_08_01 = [
     """
       CREATE TABLE IF NOT EXISTS "task" (
@@ -88,4 +92,44 @@ class DatabaseScripts {
       PRAGMA foreign_keys=on;
     """,
   ];
+
+  ///****************************************************************************
+  /// SCRIPTS V3 - 07/09/2025
+  ///****************************************************************************
+  static List<String> scripts_v3_2025_09_07 = withRawScript("""
+      ALTER TABLE "task" ADD COLUMN "status" VARCHAR DEFAULT 'not_started';
+      ALTER TABLE "task" ADD COLUMN "priority" VARCHAR DEFAULT 'low';
+      ALTER TABLE "task" ADD COLUMN "tags" VARCHAR;
+      ALTER TABLE "task" ADD COLUMN "due_date" DATETIME;
+      ALTER TABLE "task" ADD COLUMN "created_at" DATETIME;
+ 
+      CREATE TABLE IF NOT EXISTS "subtask" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+        "task_id" INTEGER NOT NULL,
+        "name" VARCHAR NOT NULL,
+        "description" VARCHAR,
+        FOREIGN KEY ("task_id") REFERENCES "task"("id")
+        ON UPDATE NO ACTION ON DELETE NO ACTION
+      );
+    """);
+
+  ///****************************************************************************
+  /// ALL SCRIPTS
+  ///****************************************************************************
+
+  static final all_scripts = [
+    ...scripts_v1_2025_08_01,
+    ...scripts_v2_2025_08_23,
+    ...scripts_v3_2025_09_07,
+  ];
+}
+
+List<String> withRawScript(String rawScript) {
+  return rawScript
+      .split(';')
+      .map(
+        (script) => script.trim(),
+      ) // Trim each script to remove extra whitespace
+      .where((script) => script.isNotEmpty) // Remove any empty strings
+      .toList();
 }

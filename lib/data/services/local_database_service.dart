@@ -32,12 +32,11 @@ class LocalDatabaseService {
       onCreate: (db, version) async {
         debugPrint('Banco de dados criado: $dbPath ✅');
 
-        for (var script in DatabaseScripts.scripts_v1_2025_08_01) {
-          await db.execute(script);
-        }
-
-        for (var script in DatabaseScripts.scripts_v2_2025_08_23) {
-          await db.execute(script);
+        // Execute all scripts to create tables and set up the database
+        for (var script in DatabaseScripts.all_scripts) {
+          if (script.trim().isNotEmpty) {
+            await db.execute(script);
+          }
         }
 
         // Verify if tables were created
@@ -68,6 +67,13 @@ class LocalDatabaseService {
             await db.execute(script);
           }
           debugPrint('Banco de dados atualizado para a versão 2 ✅');
+        }
+
+        if (oldVersion < 3) {
+          for (var script in DatabaseScripts.scripts_v3_2025_09_07) {
+            await db.execute(script);
+          }
+          debugPrint('Banco de dados atualizado para a versão 3 ✅');
         }
       },
     );

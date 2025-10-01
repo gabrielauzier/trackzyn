@@ -29,7 +29,7 @@ getMonthName(int month) {
   }
 }
 
-getFullDateStr(DateTime date) {
+getFullDateStr(DateTime date, {bool withTime = false}) {
   final day = date.day.toString().padLeft(2, '0');
   final year = date.year.toString();
   final weekday = () {
@@ -53,5 +53,5 @@ getFullDateStr(DateTime date) {
     }
   }();
 
-  return '$weekday, $day ${getMonthName(date.month)} $year';
+  return '$weekday, $day ${getMonthName(date.month)} $year ${withTime ? 'at ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}' : ''}';
 }

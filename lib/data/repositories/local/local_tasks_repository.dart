@@ -63,14 +63,27 @@ class LocalTasksRepository implements TasksRepository {
   }
 
   @override
-  Future<Task?> getById(int taskId) {
-    // TODO: implement getById
-    throw UnimplementedError();
+  Future<Task?> getById(int taskId) async {
+    final taskMap = await _service.database!.query(
+      'task',
+      where: 'id = ?',
+      whereArgs: [taskId],
+    );
+
+    if (taskMap.isNotEmpty) {
+      return Task.fromMap(taskMap.first);
+    }
+
+    return null;
   }
 
   @override
-  Future<void> update(Task task) {
-    // TODO: implement update
-    throw UnimplementedError();
+  Future<void> update(Task task) async {
+    await _service.database!.update(
+      'task',
+      task.toMap(),
+      where: 'id = ?',
+      whereArgs: [task.id],
+    );
   }
 }

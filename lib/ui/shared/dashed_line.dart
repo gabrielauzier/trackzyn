@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:trackzyn/ui/resources/color_palette.dart';
 
 class DashedLine extends StatelessWidget {
-  const DashedLine({super.key});
+  final bool marginZero;
+
+  const DashedLine({super.key, this.marginZero = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: EdgeInsets.symmetric(vertical: marginZero ? 0 : 8),
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           return Row(

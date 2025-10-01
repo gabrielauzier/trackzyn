@@ -2,7 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:trackzyn/data/repositories/tasks_repository.dart';
 import 'package:trackzyn/domain/use_cases/add_task_usecase.dart';
+import 'package:trackzyn/domain/use_cases/get_one_task_usecase.dart';
 import 'package:trackzyn/domain/use_cases/get_tasks_usecase.dart';
+import 'package:trackzyn/domain/use_cases/save_task_usecase.dart';
 
 List<SingleChildWidget> get tasksUseCasesProviders {
   return [
@@ -11,6 +13,12 @@ List<SingleChildWidget> get tasksUseCasesProviders {
     ),
     RepositoryProvider<AddTaskUseCase>(
       create: (context) => AddTaskUseCase(context.read<TasksRepository>()),
+    ),
+    RepositoryProvider<GetOneTaskUseCase>(
+      create: (context) => GetOneTaskUseCase(context.read<TasksRepository>()),
+    ),
+    RepositoryProvider<SaveTaskUseCase>(
+      create: (context) => SaveTaskUseCase(context.read<TasksRepository>()),
     ),
   ];
 }

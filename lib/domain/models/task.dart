@@ -1,11 +1,22 @@
+import 'package:copy_with_extension/copy_with_extension.dart';
+
+part 'task.g.dart';
+
+@CopyWith()
 class Task {
   final int? id;
   final int? projectId;
   final String name;
-  final String? description;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  String? description;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final DateTime? dueDate;
+  final String? tags;
+  final String? status;
+  final String? priority;
 
+  // Agreggated fields
+  final String? projectName;
   final int? totalDurationInSeconds;
 
   Task({
@@ -13,13 +24,19 @@ class Task {
     this.projectId,
     required this.name,
     this.description,
-    DateTime? createdAt,
-    DateTime? updatedAt,
+    this.createdAt,
+    this.updatedAt,
+    this.dueDate,
     this.totalDurationInSeconds = 0,
-  }) : createdAt = createdAt ?? DateTime.now(),
-       updatedAt = updatedAt ?? DateTime.now();
+    this.projectName,
+    this.tags,
+    this.status,
+    this.priority,
+  });
 
-  // Additional methods like toJson, fromJson, etc. can be added here.
+  resetDescription() {
+    description = null;
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -27,7 +44,11 @@ class Task {
       'project_id': projectId,
       'name': name,
       'description': description,
-      // 'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'due_date': dueDate?.toIso8601String(),
+      'tags': tags,
+      'status': status,
+      'priority': priority,
       // 'updated_at': updatedAt.toIso8601String(),
     };
   }
@@ -42,8 +63,54 @@ class Task {
           map['total_duration_seconds'] != null
               ? map['total_duration_seconds'] as int
               : 0,
-      // createdAt: DateTime.parse(map['created_at'] as String),
+      createdAt:
+          map['created_at'] != null
+              ? DateTime.parse(map['created_at'] as String)
+              : null,
+      dueDate:
+          map['due_date'] != null
+              ? DateTime.parse(map['due_date'] as String)
+              : null,
+      status: map['status'] as String?,
+      priority: map['priority'] as String?,
+      // tags: map['tags'] as String?,
+      // projectName: map['project_name'] as String?,
       // updatedAt: DateTime.parse(map['updated_at'] as String),
     );
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        projectId.hashCode ^
+        name.hashCode ^
+        description.hashCode ^
+        createdAt.hashCode ^
+        updatedAt.hashCode ^
+        dueDate.hashCode ^
+        tags.hashCode ^
+        status.hashCode ^
+        priority.hashCode ^
+        projectName.hashCode ^
+        totalDurationInSeconds.hashCode;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Task &&
+        other.id == id &&
+        other.projectId == projectId &&
+        other.name == name &&
+        other.description == description &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.dueDate == dueDate &&
+        other.tags == tags &&
+        other.status == status &&
+        other.priority == priority &&
+        other.projectName == projectName &&
+        other.totalDurationInSeconds == totalDurationInSeconds;
   }
 }
