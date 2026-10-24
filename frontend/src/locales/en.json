@@ -545,6 +545,13 @@
         "heartbeat": "Signal",
         "recover": "Recover session"
       }
+    },
+    "page": {
+      "pickList": "Pick a list",
+      "home": "Back to the board",
+      "collapse": "Collapse",
+      "estimate": "Est.: {{estimate}}",
+      "next": "Next tasks"
     }
   }
 }

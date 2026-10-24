@@ -998,9 +998,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: abrir chama `start` na primeira de Hoje; última concluída mostra `Tudo limpo`; tarefa sumida volta ao quadro; ícone de home volta ao quadro sem pausar; reabrir o app com tarefa pausada não abre esta página (SYNC-12)
-- [ ] Gate check passes: Full (frontend)
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: abrir chama `start` na primeira de Hoje; última concluída mostra `Tudo limpo`; tarefa sumida volta ao quadro; ícone de home volta ao quadro sem pausar; reabrir o app com tarefa pausada não abre esta página (SYNC-12)
+- [x] Gate check passes: Full (frontend)
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
