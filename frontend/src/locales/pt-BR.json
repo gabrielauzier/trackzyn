@@ -439,6 +439,11 @@
     "pendingCount_one": "{{count}} tarefa pendente",
     "pendingCount_other": "{{count}} tarefas pendentes",
     "deleteTitle": "Excluir lista",
-    "deleteDescription": "{{name}} será excluída com as tarefas, as subtarefas e o tempo registrado."
+    "deleteDescription": "{{name}} será excluída com as tarefas, as subtarefas e o tempo registrado.",
+    "createTitle": "Criar lista",
+    "renameTitle": "Renomear lista",
+    "colorOption": "Cor {{number}}",
+    "nameRequired": "Informe um nome",
+    "nameTooLong": "Use no máximo 100 caracteres"
   }
 }

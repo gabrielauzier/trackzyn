@@ -605,9 +605,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: nome vazio bloqueia; 422 simulado mostra a mensagem e mantém o diálogo; a cor escolhida vai no corpo
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: nome vazio bloqueia; 422 simulado mostra a mensagem e mantém o diálogo; a cor escolhida vai no corpo
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
