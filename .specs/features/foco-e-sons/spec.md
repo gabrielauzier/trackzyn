@@ -186,10 +186,10 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | BREAK-03 | P1: Intervalos | Tasks | Implementing |
 | BREAK-04 | P1: Intervalos | Tasks | Implementing |
 | BREAK-05 | P1: Intervalos | Tasks | Implementing |
-| SOUND-01 | P1: Sons | Tasks | In Tasks |
-| SOUND-02 | P1: Sons | Tasks | In Tasks |
-| SOUND-03 | P1: Sons | Tasks | In Tasks |
-| SOUND-04 | P1: Sons | Tasks | In Tasks |
+| SOUND-01 | P1: Sons | Tasks | Implementing |
+| SOUND-02 | P1: Sons | Tasks | Implementing |
+| SOUND-03 | P1: Sons | Tasks | Implementing |
+| SOUND-04 | P1: Sons | Tasks | Implementing |
 | SOUND-05 | P1: Sons | Tasks | Implementing |
 | SOUND-06 | P1: Sons | Tasks | Implementing |
 | SOUND-07 | P1: Sons | Tasks | Implementing |

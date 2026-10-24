@@ -688,9 +688,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: gasto 599 → 600 toca `progress`; 600 → 601 não; passagem para `awaiting_extend` toca `estimate`; `break` → `paused` sem ação toca `break_end`; tarefa concluída toca `complete`; intervalos nunca tocam `progress`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: gasto 599 → 600 toca `progress`; 600 → 601 não; passagem para `awaiting_extend` toca `estimate`; `break` → `paused` sem ação toca `break_end`; tarefa concluída toca `complete`; intervalos nunca tocam `progress`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
