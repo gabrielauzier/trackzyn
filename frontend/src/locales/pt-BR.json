@@ -461,6 +461,11 @@
     "newSubtask": "Nova subtarefa",
     "subtaskTitle": "Título da subtarefa",
     "renameSubtask": "Renomear {{title}}",
-    "deleteSubtask": "Excluir {{title}}"
+    "deleteSubtask": "Excluir {{title}}",
+    "editTask": "Editar tarefa",
+    "notes": "Anotações",
+    "notesTooLong": "Use no máximo {{max}} caracteres",
+    "deleteTask": "Excluir tarefa",
+    "deleteTaskDescription": "{{title}} será excluída com as subtarefas e o tempo registrado."
   }
 }

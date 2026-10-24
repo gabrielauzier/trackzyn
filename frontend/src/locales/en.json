@@ -461,6 +461,11 @@
     "newSubtask": "New subtask",
     "subtaskTitle": "Subtask title",
     "renameSubtask": "Rename {{title}}",
-    "deleteSubtask": "Delete {{title}}"
+    "deleteSubtask": "Delete {{title}}",
+    "editTask": "Edit task",
+    "notes": "Notes",
+    "notesTooLong": "Use at most {{max}} characters",
+    "deleteTask": "Delete task",
+    "deleteTaskDescription": "{{title}} will be deleted with its subtasks and tracked time."
   }
 }

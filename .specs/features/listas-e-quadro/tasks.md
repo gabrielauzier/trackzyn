@@ -776,9 +776,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: anotações com 10 001 caracteres bloqueiam; salvar envia só os campos alterados; excluir pede confirmação
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: anotações com 10 001 caracteres bloqueiam; salvar envia só os campos alterados; excluir pede confirmação
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

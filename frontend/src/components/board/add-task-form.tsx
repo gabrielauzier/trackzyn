@@ -7,24 +7,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
+import { isValidEstimate, toEstimate } from '@/components/board/estimate'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import type { TaskColumn } from '@/types'
-
-/** An empty estimate is allowed; otherwise a whole number of minutes from 1 to 1440. */
-function isValidEstimate(value: string): boolean {
-  const text = value.trim()
-  if (text === '') return true
-  if (!/^\d+$/.test(text)) return false
-  const minutes = Number(text)
-  return minutes >= 1 && minutes <= 1440
-}
-
-function toEstimate(value: string): number | null {
-  const text = value.trim()
-  return text === '' ? null : Number(text)
-}
 
 interface AddTaskFormProps {
   listId: string
