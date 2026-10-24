@@ -172,10 +172,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Um teste por AC citado, incluindo prévia com 2 de Hoje + 1 de Esta semana + 1 de Backlog e lista de outro workspace → 404
-- [ ] Mover renumera de 0 a n-1 sem posições repetidas, também com dois movimentos concorrentes
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Um teste por AC citado, incluindo prévia com 2 de Hoje + 1 de Esta semana + 1 de Backlog e lista de outro workspace → 404
+- [x] Mover renumera de 0 a n-1 sem posições repetidas, também com dois movimentos concorrentes
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
