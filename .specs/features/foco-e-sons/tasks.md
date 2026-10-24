@@ -462,9 +462,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: 1h de estimativa com 10 min gastos → `countdown` 3000; extend → `countup` a partir de 3600; sem estimativa → `countup` do gasto; intervalo de 5 min → `break` 300
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: 1h de estimativa com 10 min gastos → `countdown` 3000; extend → `countup` a partir de 3600; sem estimativa → `countup` do gasto; intervalo de 5 min → `break` 300
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

@@ -177,3 +177,34 @@ export interface Board {
     done: { today_count: number; days: { date: string; tasks: TaskCardView[] }[] }
   }
 }
+
+/** The open focus session: a task counting or a break (`task_id` null). */
+export interface FocusSession {
+  id: string
+  kind: 'task' | 'break'
+  task_id: string | null
+  list_id: string
+  device_id: string
+  started_at: string
+  /** End of the estimate or of the break; null for a task without estimate or extended past it. */
+  deadline_at: string | null
+  planned_seconds: number | null
+}
+
+/** What `GET /api/focus` and every focus action answer. */
+export interface FocusState {
+  /** The server's clock when it answered (FOCUS-03). */
+  server_now: string
+  session: FocusSession | null
+  /** The task in focus, or the first pending task of Today. `spent_seconds` is counted up to `server_now`. */
+  task: {
+    id: string
+    title: string
+    estimate_minutes: number | null
+    spent_seconds: number
+    awaiting_extend: boolean
+  } | null
+  today: { pending: number; done: number; estimate_minutes: number }
+  /** The open session when it has had no signal for more than 120 s (SYNC-11). */
+  stale: { session_id: string; last_seen_at: string; seconds: number } | null
+}
