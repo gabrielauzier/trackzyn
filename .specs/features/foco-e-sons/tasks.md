@@ -406,9 +406,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Teste: com o relógio local 5 min adiantado ou atrasado, `serverNow()` fica a menos de 1 s do servidor
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Teste: com o relógio local 5 min adiantado ou atrasado, `serverNow()` fica a menos de 1 s do servidor
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
