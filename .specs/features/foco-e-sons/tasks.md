@@ -546,9 +546,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Tipos batem com a resposta de `GET /api/focus`
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend não diminui
+- [x] Tipos batem com a resposta de `GET /api/focus`
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend não diminui
+
+**Status**: ✅ Done
 
 **Tests**: none
 **Gate**: build

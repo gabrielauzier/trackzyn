@@ -10,6 +10,7 @@ import type {
   AppSetting,
   Board,
   FileSettings,
+  FocusState,
   ListsResponse,
   Subtask,
   Task,
@@ -21,6 +22,7 @@ import type {
   WorkspaceRole,
   WorkspaceStats,
 } from '@/types'
+import type { QueuedAction } from '@/lib/focus/queue'
 
 const api = axios.create({
   baseURL: '/api',
@@ -356,6 +358,25 @@ export const tasks = {
   },
   remove: async (id: string): Promise<void> => {
     await api.delete(`/tasks/${id}`)
+  },
+}
+
+// Focus: every answer, errors included, carries the server's clock in `server_now`
+export const focus = {
+  get: async (listId: string): Promise<FocusState> => {
+    const { data } = await api.get('/focus', { params: { list_id: listId } })
+    return data
+  },
+  /** Sends a queued action to `POST /api/focus/<type>`; only a break names its list. */
+  send: async ({ action_id, action }: QueuedAction): Promise<FocusState> => {
+    const { type, list_id, ...payload } = action
+    const { data } = await api.post(`/focus/${type}`, { action_id, ...payload, ...(type === 'break' ? { list_id } : {}) })
+    return data
+  },
+  /** The signal of an open app (SYNC-10); answers 409 when this device has no open session. */
+  heartbeat: async (deviceId: string): Promise<FocusState> => {
+    const { data } = await api.post('/focus/heartbeat', { device_id: deviceId })
+    return data
   },
 }
 
