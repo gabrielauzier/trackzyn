@@ -15,7 +15,8 @@ import {
 } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { settle, spentMilliseconds } from './focus-settle.ts'
-import { type FocusState, isAwaitingExtend, openSession, readFocusState, toSessionView } from './focus-state.ts'
+import { type FocusState, STALE_AFTER_MS, isAwaitingExtend, openSession, readFocusState, toSessionView } from './focus-state.ts'
+import { getList } from './lists.ts'
 import { findTask, moveTask } from './tasks.ts'
 
 /** Who acts: the user and the workspace the request addresses. */
@@ -285,5 +286,93 @@ export function extendFocus(
     if (!(await isAwaitingExtend(tx, context.userId, task, Math.floor(spent / 1000)))) throw invalidTransition()
     await insertTaskSession(tx, context, task, null)
     return task.listId
+  })
+}
+
+/**
+ * Ends the task session, if one is counting, and opens a break of `minutes` (1 to 120) whose deadline
+ * is its end (BREAK-01, BREAK-02). Settlement closes it there with `break_end` (BREAK-03, BREAK-05).
+ */
+export function breakFocus(
+  db: Database,
+  actor: FocusActor,
+  input: FocusActionInput,
+  payload: { minutes: number; listId: string },
+  now: Date,
+): Promise<FocusState> {
+  if (!Number.isInteger(payload.minutes) || payload.minutes < 1 || payload.minutes > 120) {
+    return Promise.reject(new HttpError(422, 'minutes must be an integer from 1 to 120'))
+  }
+  return applyAction(db, actor, input, now, async (tx, context) => {
+    const list = await getList(tx, payload.listId, context.workspaceId)
+    const open = await openSession(tx, context.userId)
+    if (open?.kind === 'break') throw invalidTransition()
+    if (open) await endSession(tx, open, context.at, 'break')
+    const plannedSeconds = payload.minutes * 60
+    await tx.insert(focusSessions).values({
+      id: randomUUID(),
+      userId: context.userId,
+      workspaceId: context.workspaceId,
+      listId: list.id,
+      taskId: null,
+      kind: 'break',
+      deviceId: context.deviceId,
+      startedAt: context.at,
+      endedAt: null,
+      deadlineAt: new Date(context.at.getTime() + plannedSeconds * 1000),
+      plannedSeconds,
+      lastSeenAt: context.at,
+      endReason: null,
+    })
+    return list.id
+  })
+}
+
+/** Ends the break at the click with the time that passed; the task stays paused (BREAK-04). */
+export function endBreakFocus(db: Database, actor: FocusActor, input: FocusActionInput, now: Date): Promise<FocusState> {
+  return applyAction(db, actor, input, now, async (tx, context) => {
+    const open = await openSession(tx, context.userId)
+    if (open?.kind !== 'break') throw invalidTransition()
+    await endSession(tx, open, context.at, 'break_stop')
+    return open.listId
+  })
+}
+
+/**
+ * The signal of an open app (SYNC-10): records `now` as the last signal of the open session of this
+ * device. Without `action_id`: resending it is harmless. Another device's session, or none, is refused.
+ */
+export function heartbeatFocus(db: Database, actor: FocusActor, payload: { deviceId: string }, now: Date): Promise<FocusState> {
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, actor.userId)).for('update')
+    await settle(tx, actor.userId, now)
+    const open = await openSession(tx, actor.userId)
+    if (!open || open.deviceId !== payload.deviceId) throw invalidTransition()
+    await tx.update(focusSessions).set({ lastSeenAt: now }).where(eq(focusSessions.id, open.id))
+    return readFocusState(tx, actor.userId, await workspaceOfList(tx, open.listId), open.listId, now)
+  })
+}
+
+/**
+ * Resolves a session left open without signal for more than 120 s (SYNC-11): `keep` records a fresh
+ * signal and keeps it counting, `cut` ends it at its last signal.
+ */
+export function recoverFocus(
+  db: Database,
+  actor: FocusActor,
+  input: FocusActionInput,
+  payload: { decision: 'keep' | 'cut' },
+  now: Date,
+): Promise<FocusState> {
+  return applyAction(db, actor, input, now, async (tx, context) => {
+    const open = await openSession(tx, context.userId)
+    if (!open || now.getTime() - open.lastSeenAt.getTime() <= STALE_AFTER_MS) throw invalidTransition()
+    if (payload.decision === 'keep') {
+      await tx.update(focusSessions).set({ lastSeenAt: now }).where(eq(focusSessions.id, open.id))
+    } else {
+      await endSession(tx, open, open.lastSeenAt, 'crash_cut')
+    }
+    return open.listId
   })
 }

@@ -182,6 +182,14 @@ function send(action: CaseAction, keys: Map<string, string>, actionId = randomUU
       return focus.completeFocus(db, actor, input, { taskId }, now)
     case 'extend':
       return focus.extendFocus(db, actor, input, { taskId }, now)
+    case 'break':
+      return focus.breakFocus(db, actor, input, { minutes: action.minutes!, listId: seed.listId }, now)
+    case 'break/end':
+      return focus.endBreakFocus(db, actor, input, now)
+    case 'heartbeat':
+      return focus.heartbeatFocus(db, actor, { deviceId: input.deviceId }, now)
+    case 'recover':
+      return focus.recoverFocus(db, actor, input, { decision: action.decision! }, now)
     default:
       throw new Error(`unknown action ${action.type}`)
   }
@@ -305,6 +313,27 @@ describe('the frame of every focus action', () => {
     ])
     expect(results.map((result) => result.status).sort()).toEqual(['fulfilled', 'rejected'])
     expect((await db.select().from(focusSessions)).filter((row) => row.endedAt === null)).toHaveLength(1)
+  })
+
+  it('BREAK-02 a break of 0 or 121 minutes answers 422 and opens nothing; 1 and 120 are accepted', async () => {
+    await seed.addTask({ estimate: 60 })
+    for (const minutes of [0, 121]) {
+      const error = await focus.breakFocus(db, actor(), input(0), { minutes, listId: seed.listId }, time(0)).then(
+        () => null,
+        (caught: unknown) => caught,
+      )
+      expect(error).toMatchObject({ statusCode: 422 })
+    }
+    expect(await db.select().from(focusSessions)).toHaveLength(0)
+
+    expect((await focus.breakFocus(db, actor(), input(0), { minutes: 1, listId: seed.listId }, time(0))).session).toMatchObject({
+      planned_seconds: 60,
+    })
+    await focus.endBreakFocus(db, actor(), input(0.5), time(0.5))
+    expect((await focus.breakFocus(db, actor(), input(2), { minutes: 120, listId: seed.listId }, time(2))).session).toMatchObject({
+      planned_seconds: 7200,
+      deadline_at: time(122).toISOString(),
+    })
   })
 
   it('answers 404 for a task of another workspace', async () => {

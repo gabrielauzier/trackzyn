@@ -181,10 +181,10 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | FOCUS-16 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-17 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-18 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| BREAK-01 | P1: Intervalos | Tasks | In Tasks |
-| BREAK-02 | P1: Intervalos | Tasks | In Tasks |
+| BREAK-01 | P1: Intervalos | Tasks | Implementing |
+| BREAK-02 | P1: Intervalos | Tasks | Implementing |
 | BREAK-03 | P1: Intervalos | Tasks | Implementing |
-| BREAK-04 | P1: Intervalos | Tasks | In Tasks |
+| BREAK-04 | P1: Intervalos | Tasks | Implementing |
 | BREAK-05 | P1: Intervalos | Tasks | Implementing |
 | SOUND-01 | P1: Sons | Tasks | In Tasks |
 | SOUND-02 | P1: Sons | Tasks | In Tasks |
@@ -202,7 +202,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | SYNC-07 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 | SYNC-08 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 | SYNC-09 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
-| SYNC-10 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
+| SYNC-10 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-11 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-12 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 

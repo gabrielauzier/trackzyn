@@ -346,10 +346,12 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Cada linha de intervalo e recuperação da tabela de casos vira um teste; `break` com 0 e 121 → 422
-- [ ] `recover cut` com último sinal às 10:00 fecha a sessão às 10:00
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Cada linha de intervalo e recuperação da tabela de casos vira um teste; `break` com 0 e 121 → 422
+- [x] `recover cut` com último sinal às 10:00 fecha a sessão às 10:00
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

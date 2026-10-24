@@ -7,7 +7,7 @@
     "tasks": "given.tasks lists the tasks of the list in board order; key names a task in the case and in the expected results. column defaults to today, estimate_minutes to null, completed_at to null (a done task gives it).",
     "sessions": "Sessions of the user, oldest first. task is a task key, or null for a break. Defaults: kind task (break when task is null), device A, ended_at, end_reason, deadline_at and planned_seconds null, last_seen_at equal to started_at.",
     "given.state": "What GET /api/focus answers at action.at before the action. That read settles the due sessions (AD-001), which given.sessions does not show and expect.sessions does.",
-    "action": "type is the route after /api/focus/ (start, pause, ...). at is occurred_at; received_at (default at) is when the server receives it, the now of the response. device defaults to A. The other fields are the payload: task (a key), takeover, minutes, decision.",
+    "action": "type is the route after /api/focus/ (start, pause, skip, complete, extend, break, break/end, heartbeat, recover). at is occurred_at; received_at (default at) is when the server receives it, the now of the response. heartbeat has no occurred_at: its at is when the server receives it. device defaults to A. The other fields are the payload: task (a key), takeover, minutes, decision; break uses the case's list.",
     "expect": "status is the HTTP status; code the error code of a 409 or 422. sessions is every session after the action, oldest first. tasks, when present, is every task after the action in board order (columns backlog, this_week, today, done; position inside each); when absent the tasks did not change. state is the 200 response at received_at.",
     "state": "session: the open session (task key, kind, device, started_at, deadline_at, planned_seconds) or null. task: the task in focus or the first pending task of Today (key, spent_seconds, awaiting_extend) or null. today: pending tasks, tasks completed today and the estimate sum of the pending ones. stale: the open session when it has had no signal for more than 120 s (last_seen_at, seconds) or null."
   },
@@ -955,6 +955,384 @@
         "sessions": [
           { "task": "a", "started_at": 0, "ended_at": 10, "end_reason": "pause" }
         ]
+      }
+    },
+    {
+      "name": "break while a task counts ends the task session and opens a break whose deadline is its end",
+      "requirements": ["BREAK-01"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 20 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "break", "at": 20, "minutes": 5 },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 20, "end_reason": "break", "deadline_at": 60, "last_seen_at": 20 },
+          { "task": null, "started_at": 20, "planned_seconds": 300, "deadline_at": 25 }
+        ],
+        "state": {
+          "session": { "kind": "break", "task": null, "device": "A", "started_at": 20, "deadline_at": 25, "planned_seconds": 300 },
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "break while paused opens a break",
+      "requirements": ["BREAK-01"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 20, "end_reason": "pause", "deadline_at": 60 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "break", "at": 30, "minutes": 10 },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 20, "end_reason": "pause", "deadline_at": 60 },
+          { "task": null, "started_at": 30, "planned_seconds": 600, "deadline_at": 40 }
+        ],
+        "state": {
+          "session": { "kind": "break", "task": null, "device": "A", "started_at": 30, "deadline_at": 40, "planned_seconds": 600 },
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "break during a break answers invalid_transition",
+      "requirements": ["FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": null, "started_at": 0, "planned_seconds": 600, "deadline_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 10, "planned_seconds": 600 },
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "break", "at": 2, "minutes": 5 },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": null, "started_at": 0, "planned_seconds": 600, "deadline_at": 10 }
+        ]
+      }
+    },
+    {
+      "name": "a break past its deadline ended exactly at its planned length and the task stays paused until start",
+      "requirements": ["BREAK-03", "BREAK-05"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 20, "end_reason": "break", "deadline_at": 60 },
+          { "task": null, "started_at": 20, "planned_seconds": 300, "deadline_at": 25 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 90, "task": "a" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 20, "end_reason": "break", "deadline_at": 60 },
+          { "task": null, "started_at": 20, "ended_at": 25, "end_reason": "break_end", "planned_seconds": 300, "deadline_at": 25 },
+          { "task": "a", "started_at": 90, "deadline_at": 130 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 90, "deadline_at": 130, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "break/end before the end ends the break with the time that passed and leaves the task paused",
+      "requirements": ["BREAK-04"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": null, "started_at": 0, "planned_seconds": 600, "deadline_at": 10, "last_seen_at": 3 }
+        ],
+        "state": {
+          "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 10, "planned_seconds": 600 },
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "break/end", "at": 3 },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          {
+            "task": null,
+            "started_at": 0,
+            "ended_at": 3,
+            "end_reason": "break_stop",
+            "planned_seconds": 600,
+            "deadline_at": 10,
+            "last_seen_at": 3
+          }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "break/end without a break answers invalid_transition",
+      "requirements": ["FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 5 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "break/end", "at": 5 },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 5 }
+        ]
+      }
+    },
+    {
+      "name": "heartbeat records the last signal of the session of this device",
+      "requirements": ["SYNC-10"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "heartbeat", "at": 1 },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 1 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "heartbeat from another device leaves the session alone and answers invalid_transition",
+      "requirements": ["SYNC-10"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "heartbeat", "at": 1, "device": "B" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60 }
+        ]
+      }
+    },
+    {
+      "name": "heartbeat without an open session answers invalid_transition",
+      "requirements": ["SYNC-10"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "heartbeat", "at": 1 },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": []
+      }
+    },
+    {
+      "name": "recover keep records a fresh signal and keeps the session counting",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": { "last_seen_at": 10, "seconds": 300 }
+        }
+      },
+      "action": { "type": "recover", "at": 15, "decision": "keep" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 15 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "recover cut with the last signal at 10:00 ends the session at 10:00",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": -30, "last_seen_at": 0 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": -30, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 2100, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": { "last_seen_at": 0, "seconds": 300 }
+        }
+      },
+      "action": { "type": "recover", "at": 5, "decision": "cut" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": -30, "ended_at": 0, "end_reason": "crash_cut", "last_seen_at": 0 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "recover on a session with a recent signal answers invalid_transition",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 4 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": null
+        }
+      },
+      "action": { "type": "recover", "at": 5, "decision": "cut" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 4 }
+        ]
+      }
+    },
+    {
+      "name": "recover without an open session answers invalid_transition",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" }
+        ],
+        "sessions": [],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": null
+        }
+      },
+      "action": { "type": "recover", "at": 5, "decision": "keep" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": []
       }
     }
   ]
