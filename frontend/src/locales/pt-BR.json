@@ -488,5 +488,15 @@
     "summary_zero": "Esta lista tem 0 tarefas pendentes, Est.: {{estimate}}",
     "summary_one": "Esta lista tem {{count}} tarefa pendente, Est.: {{estimate}}",
     "summary_other": "Esta lista tem {{count}} tarefas pendentes, Est.: {{estimate}}"
+  },
+  "focus": {
+    "sounds": {
+      "settings": "Ajustes de som",
+      "title": "Sons",
+      "complete": "Tarefa concluída",
+      "progress": "A cada 10 minutos",
+      "estimate": "Fim da estimativa",
+      "break_end": "Fim do intervalo"
+    }
   }
 }

@@ -744,9 +744,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Teste: os 4 interruptores refletem e alteram `prefs`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Teste: os 4 interruptores refletem e alteram `prefs`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
