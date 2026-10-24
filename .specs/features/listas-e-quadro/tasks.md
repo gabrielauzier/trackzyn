@@ -201,10 +201,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Cada rota testada com `app.inject`: caminho feliz, 422 (nome vazio e com 101 caracteres), 403 `Read-only role` para `viewer`, 404 de outro workspace
-- [ ] `GET /api/lists` devolve `timezone` e só as não arquivadas por padrão
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Cada rota testada com `app.inject`: caminho feliz, 422 (nome vazio e com 101 caracteres), 403 `Read-only role` para `viewer`, 404 de outro workspace
+- [x] `GET /api/lists` devolve `timezone` e só as não arquivadas por padrão
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

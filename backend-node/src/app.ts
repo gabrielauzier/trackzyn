@@ -12,6 +12,7 @@ import { authRoutes } from './routes/auth.ts'
 import { fileRoutes } from './routes/files.ts'
 import { healthRoutes } from './routes/health.ts'
 import { infoRoutes } from './routes/info.ts'
+import { listRoutes } from './routes/lists.ts'
 import { oidcRoutes } from './routes/oidc.ts'
 import { passkeyRoutes } from './routes/passkeys.ts'
 import { setupRoutes } from './routes/setup.ts'
@@ -58,6 +59,7 @@ export async function buildApp(
   await app.register(userRoutes(ctx))
   await app.register(setupRoutes(ctx))
   await app.register(workspaceRoutes(ctx))
+  await app.register(listRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
 

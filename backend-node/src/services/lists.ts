@@ -100,7 +100,8 @@ export async function updateList(
   changes: { name?: string; color?: number; isArchived?: boolean },
 ): Promise<List> {
   const list = await getList(db, listId, workspaceId)
-  const updated = { ...list, ...changes }
+  const given = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined))
+  const updated: List = { ...list, ...given }
   await db
     .update(lists)
     .set({ name: updated.name, color: updated.color, isArchived: updated.isArchived })
