@@ -504,6 +504,13 @@
       "minutes": "Minutos",
       "start": "Começar intervalo",
       "range": "Use de 1 a 120 minutos"
+    },
+    "extend": {
+      "reached": "A estimativa acabou",
+      "extend": "Estender"
+    },
+    "controls": {
+      "complete": "Concluir"
     }
   }
 }

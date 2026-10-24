@@ -830,9 +830,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: os dois botões chamam `extend` e `complete`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: os dois botões chamam `extend` e `complete`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

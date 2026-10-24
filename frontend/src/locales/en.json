@@ -504,6 +504,13 @@
       "minutes": "Minutes",
       "start": "Start break",
       "range": "Use 1 to 120 minutes"
+    },
+    "extend": {
+      "reached": "The estimate is up",
+      "extend": "Extend"
+    },
+    "controls": {
+      "complete": "Complete"
     }
   }
 }
