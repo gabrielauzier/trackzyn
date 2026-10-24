@@ -431,5 +431,14 @@
       "afternoon": "One task at a time.",
       "night": "Time to wrap up the day calmly."
     }
+  },
+  "lists": {
+    "rename": "Rename",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "pendingCount_one": "{{count}} pending task",
+    "pendingCount_other": "{{count}} pending tasks",
+    "deleteTitle": "Delete list",
+    "deleteDescription": "{{name}} will be deleted with its tasks, subtasks and tracked time."
   }
 }

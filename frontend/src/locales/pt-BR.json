@@ -431,5 +431,14 @@
       "afternoon": "Uma tarefa de cada vez.",
       "night": "Hora de fechar o dia com calma."
     }
+  },
+  "lists": {
+    "rename": "Renomear",
+    "archive": "Arquivar",
+    "unarchive": "Desarquivar",
+    "pendingCount_one": "{{count}} tarefa pendente",
+    "pendingCount_other": "{{count}} tarefas pendentes",
+    "deleteTitle": "Excluir lista",
+    "deleteDescription": "{{name}} será excluída com as tarefas, as subtarefas e o tempo registrado."
   }
 }

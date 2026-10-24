@@ -577,9 +577,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: 2 prévias → 2 linhas com título + 2 vazias; `viewer` não vê o menu; excluir pede confirmação com o nome
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: 2 prévias → 2 linhas com título + 2 vazias; `viewer` não vê o menu; excluir pede confirmação com o nome
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
