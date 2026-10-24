@@ -63,6 +63,144 @@
       "maxLength": null
     }
   ],
+  "lists": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "name",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 100
+    },
+    {
+      "column": "color",
+      "type": "smallint",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "position",
+      "type": "integer",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "is_archived",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "created_by_user_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "subtasks": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "task_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "title",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 255
+    },
+    {
+      "column": "done",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "position",
+      "type": "integer",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "tasks": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "list_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "title",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 255
+    },
+    {
+      "column": "notes",
+      "type": "text",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "estimate_minutes",
+      "type": "integer",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "column",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 16
+    },
+    {
+      "column": "position",
+      "type": "integer",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "completed_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
   "user_passkeys": [
     {
       "column": "id",

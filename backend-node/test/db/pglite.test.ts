@@ -8,14 +8,14 @@ import { describe, expect, it } from 'vitest'
 import { connectPglite, type Database } from '../../src/db/client.ts'
 import { applyMigrations } from '../../src/db/migrate.ts'
 
-const SIX_TABLES = ['app_settings', 'files', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
+const TABLES = ['app_settings', 'files', 'lists', 'subtasks', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
   return ((await db.execute(query)) as unknown as { rows: T[] }).rows
 }
 
 describe('the Drizzle schema on PGlite', () => {
-  it('creates the six tables', async () => {
+  it('creates every table of the schema', async () => {
     const client = new PGlite()
     const db = drizzle(client) as unknown as Database
     await applyMigrations(db)
@@ -23,7 +23,7 @@ describe('the Drizzle schema on PGlite', () => {
       db,
       sql`select table_name from information_schema.tables where table_schema = 'public' order by table_name`,
     )
-    expect(tables.map((row) => row.table_name)).toEqual(SIX_TABLES)
+    expect(tables.map((row) => row.table_name)).toEqual(TABLES)
     await client.close()
   })
 
@@ -74,7 +74,7 @@ describe('the Drizzle schema on PGlite', () => {
       second.db,
       sql`select table_name from information_schema.tables where table_schema = 'public' order by table_name`,
     )
-    expect(tables.map((row) => row.table_name)).toEqual(SIX_TABLES)
+    expect(tables.map((row) => row.table_name)).toEqual(TABLES)
     await second.close()
     rmSync(root, { recursive: true, force: true })
   })

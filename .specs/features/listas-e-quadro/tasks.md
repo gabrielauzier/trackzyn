@@ -111,10 +111,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Banco vazio recebe as 6 tabelas originais e as 3 novas; base `0000` recebe só a DDL da `0001`, com as 6 tabelas originais mantendo oid e colunas
-- [ ] Testes provam: `UPDATE` que deixa `column = 'done'` sem `completed_at` falha (TASK-08); excluir a lista apaga tarefas e subtarefas; `estimate_minutes = 0` e `1441` falham
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Banco vazio recebe as 6 tabelas originais e as 3 novas; base `0000` recebe só a DDL da `0001`, com as 6 tabelas originais mantendo oid e colunas
+- [x] Testes provam: `UPDATE` que deixa `column = 'done'` sem `completed_at` falha (TASK-08); excluir a lista apaga tarefas e subtarefas; `estimate_minutes = 0` e `1441` falham
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

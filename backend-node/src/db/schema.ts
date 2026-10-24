@@ -1,10 +1,13 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  check,
   index,
   integer,
   json,
   pgTable,
+  smallint,
   text,
   timestamp,
   unique,
@@ -13,8 +16,8 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 
-// The same six tables `alembic upgrade head` creates (backend/alembic/versions/001_initial_schema.py).
-// Column order matters: pg_dump prints it, and the schema-diff job compares the dumps.
+// The first six tables match what Alembic revision 001 created, so a database from the old Python
+// backend is adopted as migration 0000 (see db/migrate.ts). Tables after them exist only here.
 
 export const appSettings = pgTable('app_settings', {
   key: varchar('key', { length: 255 }).primaryKey(),
@@ -115,9 +118,70 @@ export const workspaceMembers = pgTable(
   (t) => [unique('uq_workspace_member').on(t.workspaceId, t.userId)],
 )
 
+export const lists = pgTable(
+  'lists',
+  {
+    id: uuid('id').primaryKey(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    /** Index 1..8 of the `--chart-N` palette. */
+    color: smallint('color').notNull(),
+    position: integer('position').notNull(),
+    isArchived: boolean('is_archived').notNull().default(false),
+    createdByUserId: uuid('created_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [index('ix_lists_workspace_id').on(t.workspaceId, t.position)],
+)
+
+export const TASK_COLUMNS = ['backlog', 'this_week', 'today', 'done'] as const
+export type TaskColumn = (typeof TASK_COLUMNS)[number]
+
+export const tasks = pgTable(
+  'tasks',
+  {
+    id: uuid('id').primaryKey(),
+    listId: uuid('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    notes: text('notes').notNull().default(''),
+    estimateMinutes: integer('estimate_minutes'),
+    column: varchar('column', { length: 16 }).$type<TaskColumn>().notNull(),
+    position: integer('position').notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
+    check('ck_tasks_column', sql`${t.column} IN ('backlog', 'this_week', 'today', 'done')`),
+    check('ck_tasks_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
+    check('ck_tasks_done_completed_at', sql`(${t.column} = 'done') = (${t.completedAt} IS NOT NULL)`),
+  ],
+)
+
+export const subtasks = pgTable(
+  'subtasks',
+  {
+    id: uuid('id').primaryKey(),
+    taskId: uuid('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    done: boolean('done').notNull().default(false),
+    position: integer('position').notNull(),
+  },
+  (t) => [index('ix_subtasks_task_id').on(t.taskId, t.position)],
+)
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Workspace = typeof workspaces.$inferSelect
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect
 export type StoredFileRecord = typeof files.$inferSelect
 export type UserPasskey = typeof userPasskeys.$inferSelect
+export type List = typeof lists.$inferSelect
+export type Task = typeof tasks.$inferSelect
+export type Subtask = typeof subtasks.$inferSelect

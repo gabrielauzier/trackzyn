@@ -2,7 +2,9 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { type AddressInfo, createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { readMigrationFiles } from 'drizzle-orm/migrator'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { MIGRATIONS_FOLDER } from '../../src/db/migrate.ts'
 import { type LocalServer, startLocalServer } from '../../src/local/local-server.ts'
 
 const TOKEN = 'b'.repeat(64)
@@ -65,7 +67,8 @@ describe('the local server', () => {
 
   it('reports how many migrations it applied', async () => {
     const first = await start()
-    expect(first.migrationsApplied).toBe(1)
+    // A new database runs every migration file.
+    expect(first.migrationsApplied).toBe(readMigrationFiles({ migrationsFolder: MIGRATIONS_FOLDER }).length)
   })
 
   it('never writes the session token or the secret key to its log, even at trace level', async () => {

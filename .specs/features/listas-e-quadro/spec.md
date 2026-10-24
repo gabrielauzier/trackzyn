@@ -146,7 +146,7 @@ O trackzyn ainda é só a base do launchkit: não tem onde registrar uma tarefa,
 | LIST-06 | P1: Listas na home | Tasks | In Tasks |
 | LIST-07 | P1: Listas na home | Tasks | In Tasks |
 | LIST-08 | P1: Listas na home | Tasks | In Tasks |
-| LIST-09 | P1: Listas na home | Tasks | In Tasks |
+| LIST-09 | P1: Listas na home | Tasks | Implementing |
 | LIST-10 | P1: Listas na home | Tasks | In Tasks |
 | LIST-11 | P1: Listas na home | Tasks | In Tasks |
 | BOARD-01 | P1: Quadro da lista | Tasks | In Tasks |
@@ -169,10 +169,10 @@ O trackzyn ainda é só a base do launchkit: não tem onde registrar uma tarefa,
 | TASK-02 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
 | TASK-03 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
 | TASK-04 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
-| TASK-05 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
+| TASK-05 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 | TASK-06 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
 | TASK-07 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
-| TASK-08 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
+| TASK-08 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 
 **Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 
