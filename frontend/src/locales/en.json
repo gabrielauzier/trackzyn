@@ -515,6 +515,12 @@
     "elsewhere": {
       "title": "You are already focusing on another device.",
       "takeOver": "Take over"
+    },
+    "stale": {
+      "title": "Focus stopped unexpectedly",
+      "description": "The task kept counting for {{duration}} since the last signal.",
+      "keep": "Keep",
+      "cut": "Cut at the last signal"
     }
   }
 }

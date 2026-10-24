@@ -515,6 +515,12 @@
     "elsewhere": {
       "title": "Você já está focando em outro dispositivo.",
       "takeOver": "Assumir"
+    },
+    "stale": {
+      "title": "O foco parou de forma inesperada",
+      "description": "A tarefa ficou contando {{duration}} desde o último sinal.",
+      "keep": "Manter",
+      "cut": "Cortar no último sinal"
     }
   }
 }

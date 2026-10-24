@@ -886,9 +886,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: `stale.seconds` 754 mostra `12min`; os botões chamam `recover` com `keep` e `cut`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: `stale.seconds` 754 mostra `12min`; os botões chamam `recover` com `keep` e `cut`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
