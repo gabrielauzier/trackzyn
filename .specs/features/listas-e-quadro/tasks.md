@@ -519,9 +519,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Tipos batem com as respostas das rotas (`Board`, `ListCard`, `Task`, `Subtask`)
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend não diminui
+- [x] Tipos batem com as respostas das rotas (`Board`, `ListCard`, `Task`, `Subtask`)
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend não diminui
+
+**Status**: ✅ Done
 
 **Tests**: none
 **Gate**: build

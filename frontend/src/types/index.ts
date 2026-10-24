@@ -96,3 +96,84 @@ export interface FileSettings {
   allowed_extensions: string[]
   max_file_size_mb: number
 }
+
+/** Index into the `--chart-1..8` palette. */
+export type ListColor = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+
+export interface TaskList {
+  id: string
+  workspace_id: string
+  name: string
+  color: number
+  position: number
+  is_archived: boolean
+  created_by_user_id: string | null
+  created_at: string
+}
+
+/** A list as the home shows it: the next pending titles and how many are left. */
+export interface ListCard extends TaskList {
+  pending_count: number
+  preview: { id: string; title: string }[]
+}
+
+export interface ListsResponse {
+  /** Timezone that decides "today" and the greeting for this workspace. */
+  timezone: string
+  lists: ListCard[]
+}
+
+export type TaskColumn = 'backlog' | 'this_week' | 'today' | 'done'
+
+export interface Subtask {
+  id: string
+  task_id: string
+  title: string
+  done: boolean
+  position: number
+}
+
+export interface Task {
+  id: string
+  list_id: string
+  title: string
+  notes: string
+  estimate_minutes: number | null
+  column: TaskColumn
+  position: number
+  completed_at: string | null
+  created_at: string
+  subtasks: Subtask[]
+}
+
+export interface TaskCardView {
+  id: string
+  title: string
+  estimate_minutes: number | null
+  spent_seconds: number
+  position: number
+  subtasks: { done: number; total: number }
+}
+
+export interface BoardColumnView {
+  tasks: TaskCardView[]
+  estimate_minutes: number
+}
+
+/** Today and This week also carry the `done/total` progress bar. */
+export interface BoardProgressColumnView extends BoardColumnView {
+  done: number
+  total: number
+}
+
+export interface Board {
+  list: { id: string; name: string; color: number }
+  timezone: string
+  pending: { count: number; estimate_minutes: number }
+  columns: {
+    backlog: BoardColumnView
+    this_week: BoardProgressColumnView
+    today: BoardProgressColumnView
+    done: { today_count: number; days: { date: string; tasks: TaskCardView[] }[] }
+  }
+}

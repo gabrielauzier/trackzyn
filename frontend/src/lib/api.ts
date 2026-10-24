@@ -8,7 +8,13 @@ import type {
   Passkey,
   PasskeyOptionsResponse,
   AppSetting,
+  Board,
   FileSettings,
+  ListsResponse,
+  Subtask,
+  Task,
+  TaskColumn,
+  TaskList,
   StoredFile,
   Workspace,
   WorkspaceMember,
@@ -285,6 +291,85 @@ export const files = {
   },
   remove: async (id: string): Promise<void> => {
     await api.delete(`/files/${id}`)
+  },
+}
+
+// Lists: the home cards, the board and their tasks
+export const lists = {
+  list: async (params: { archived?: boolean } = {}): Promise<ListsResponse> => {
+    const { data } = await api.get('/lists', { params: { archived: params.archived ?? false } })
+    return data
+  },
+  get: async (id: string): Promise<TaskList> => {
+    const { data } = await api.get(`/lists/${id}`)
+    return data
+  },
+  create: async (payload: { name: string; color: number }): Promise<TaskList> => {
+    const { data } = await api.post('/lists', payload)
+    return data
+  },
+  update: async (
+    id: string,
+    payload: { name?: string; color?: number; is_archived?: boolean },
+  ): Promise<TaskList> => {
+    const { data } = await api.patch(`/lists/${id}`, payload)
+    return data
+  },
+  /** Put the list right before `beforeListId`, or at the end when null. */
+  move: async (id: string, beforeListId: string | null): Promise<void> => {
+    await api.post(`/lists/${id}/move`, { before_list_id: beforeListId })
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.delete(`/lists/${id}`)
+  },
+  board: async (id: string): Promise<Board> => {
+    const { data } = await api.get(`/lists/${id}/board`)
+    return data
+  },
+}
+
+export const tasks = {
+  create: async (payload: {
+    list_id: string
+    title: string
+    estimate_minutes: number | null
+    column: TaskColumn
+  }): Promise<Task> => {
+    const { data } = await api.post('/tasks', payload)
+    return data
+  },
+  get: async (id: string): Promise<Task> => {
+    const { data } = await api.get(`/tasks/${id}`)
+    return data
+  },
+  update: async (
+    id: string,
+    payload: { title?: string; estimate_minutes?: number | null; notes?: string },
+  ): Promise<Task> => {
+    const { data } = await api.patch(`/tasks/${id}`, payload)
+    return data
+  },
+  /** Put the task in `column`, right before `beforeTaskId`, or at the end when null. */
+  move: async (id: string, payload: { column: TaskColumn; before_task_id: string | null }): Promise<Task> => {
+    const { data } = await api.post(`/tasks/${id}/move`, payload)
+    return data
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.delete(`/tasks/${id}`)
+  },
+}
+
+export const subtasks = {
+  create: async (taskId: string, title: string): Promise<Subtask> => {
+    const { data } = await api.post(`/tasks/${taskId}/subtasks`, { title })
+    return data
+  },
+  update: async (id: string, payload: { title?: string; done?: boolean }): Promise<Subtask> => {
+    const { data } = await api.patch(`/subtasks/${id}`, payload)
+    return data
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.delete(`/subtasks/${id}`)
   },
 }
 
