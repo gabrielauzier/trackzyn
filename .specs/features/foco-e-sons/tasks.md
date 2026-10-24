@@ -660,9 +660,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: padrão ligado; desligar `progress` não afeta os outros e sobrevive a recarregar
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: padrão ligado; desligar `progress` não afeta os outros e sobrevive a recarregar
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
