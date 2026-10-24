@@ -145,10 +145,12 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Sessão com prazo vencido é fechada exatamente no prazo, também quando `settle` roda 2h depois (FOCUS-11, BREAK-05)
-- [ ] Sessão sem prazo, ou com prazo no futuro, continua aberta; `spentSeconds` soma sessões fechadas e a aberta até `now`
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Sessão com prazo vencido é fechada exatamente no prazo, também quando `settle` roda 2h depois (FOCUS-11, BREAK-05)
+- [x] Sessão sem prazo, ou com prazo no futuro, continua aberta; `spentSeconds` soma sessões fechadas e a aberta até `now`
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

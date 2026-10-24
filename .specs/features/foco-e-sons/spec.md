@@ -172,8 +172,8 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | FOCUS-07 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-08 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-09 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-10 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-11 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
+| FOCUS-10 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
+| FOCUS-11 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-12 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-13 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-14 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
@@ -183,9 +183,9 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | FOCUS-18 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | BREAK-01 | P1: Intervalos | Tasks | In Tasks |
 | BREAK-02 | P1: Intervalos | Tasks | In Tasks |
-| BREAK-03 | P1: Intervalos | Tasks | In Tasks |
+| BREAK-03 | P1: Intervalos | Tasks | Implementing |
 | BREAK-04 | P1: Intervalos | Tasks | In Tasks |
-| BREAK-05 | P1: Intervalos | Tasks | In Tasks |
+| BREAK-05 | P1: Intervalos | Tasks | Implementing |
 | SOUND-01 | P1: Sons | Tasks | In Tasks |
 | SOUND-02 | P1: Sons | Tasks | In Tasks |
 | SOUND-03 | P1: Sons | Tasks | In Tasks |
