@@ -192,15 +192,6 @@
       "toLabel": "Até"
     }
   },
-  "dashboard": {
-    "adminHint": "Usuários, cadastro e configurações da instância",
-    "buildHint": "Esta página é um ponto de partida — substitua pela visão geral do seu produto.",
-    "componentsHint": "Todos os componentes e gráficos, ao vivo",
-    "filesHint": "Envie e gerencie os arquivos do workspace",
-    "getStarted": "Comece por aqui",
-    "greeting": "Bem-vindo(a), {{name}}",
-    "workspaceHint": "Nome, membros, papéis e fuso horário"
-  },
   "desktop": {
     "connect": {
       "title": "Conectar a um servidor",
@@ -282,12 +273,14 @@
   "nav": {
     "collapseSidebar": "Recolher barra lateral",
     "components": "Componentes",
-    "dashboard": "Painel",
     "expandSidebar": "Expandir barra lateral",
     "files": "Arquivos",
     "groupAdmin": "Administração",
     "groupDevelopers": "Desenvolvimento",
-    "groupWorkspace": "Workspace"
+    "groupWorkspace": "Workspace",
+    "newList": "Criar nova lista",
+    "allLists": "Todas as minhas listas",
+    "archivedLists": "Listas arquivadas"
   },
   "privacy": {
     "hide": "Ocultar valores",
@@ -430,7 +423,9 @@
       "morning": "Comece pelo que mais importa.",
       "afternoon": "Uma tarefa de cada vez.",
       "night": "Hora de fechar o dia com calma."
-    }
+    },
+    "yourLists": "Suas listas",
+    "createList": "Criar lista"
   },
   "lists": {
     "rename": "Renomear",

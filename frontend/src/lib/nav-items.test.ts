@@ -31,4 +31,23 @@ describe('visibleNavItems', () => {
     ]
     expect(separators(visibleNavItems(items, () => false))).toEqual(['nav.a'])
   })
+
+  it('hides write actions from a user who cannot write', () => {
+    const items: NavItem[] = [
+      { type: 'separator', labelKey: 'nav.a' },
+      { type: 'link', key: 'create', path: '/?new=1', icon: 'span', write: true },
+      { type: 'link', key: 'browse', path: '/', icon: 'span' },
+    ]
+    expect(linkKeys(visibleNavItems(items, () => false, false))).toEqual(['browse'])
+    expect(linkKeys(visibleNavItems(items, () => false, true))).toEqual(['create', 'browse'])
+  })
+
+  it('opens the workspace section with the three list entries', () => {
+    const lists = navItems.filter((item) => item.type === 'link').slice(0, 3)
+    expect(lists.map((item) => item.type === 'link' && [item.key, item.path])).toEqual([
+      ['newList', '/?new=1'],
+      ['allLists', '/'],
+      ['archivedLists', '/lists/archived'],
+    ])
+  })
 })

@@ -20,7 +20,7 @@ it('restores a persisted locale before initialization resolves', async () => {
   const { default: i18n, i18nReady } = await import('@/lib/i18n')
   await i18nReady
   expect(i18n.language).toBe('pt-BR')
-  expect(i18n.t('nav.dashboard')).toBe((await import('./pt-BR.json')).default.nav.dashboard)
+  expect(i18n.t('nav.allLists')).toBe((await import('./pt-BR.json')).default.nav.allLists)
   expect(document.documentElement.lang).toBe('pt-BR')
 })
 
@@ -29,5 +29,5 @@ it('falls back to English for a language without a bundle', async () => {
   vi.resetModules()
   const { default: i18n, i18nReady } = await import('@/lib/i18n')
   await i18nReady
-  expect(i18n.t('nav.dashboard')).toBe((await import('./en.json')).default.nav.dashboard)
+  expect(i18n.t('nav.allLists')).toBe((await import('./en.json')).default.nav.allLists)
 })

@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({
     preferences: { onboarding_completed: true },
   },
   workspace: { id: 'synthetic', name: 'Synthetic workspace', role: 'owner' },
+  canWrite: false,
   auth: {
     oidcConfig: vi.fn(),
     listPasskeys: vi.fn(),
@@ -43,7 +44,7 @@ vi.mock('@/contexts/workspace-context', () => ({
     workspaces: [state.workspace],
     switchWorkspace: vi.fn(),
     refresh: vi.fn(),
-    canWrite: false,
+    canWrite: state.canWrite,
     isLoading: false,
   }),
 }))
@@ -94,6 +95,7 @@ function installDesktopApi(platform: string) {
 
 afterEach(() => {
   Reflect.deleteProperty(window, 'trackzyn')
+  state.canWrite = false
 })
 
 describe('app layout title bar', () => {
@@ -123,5 +125,38 @@ describe('app layout title bar', () => {
       unmount()
       Reflect.deleteProperty(window, 'trackzyn')
     }
+  })
+})
+
+describe('app layout sidebar', () => {
+  it('offers the list entries, with All my lists selected on the home', () => {
+    state.canWrite = true
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const nav = screen.getByRole('navigation')
+    expect(within(nav).getByRole('link', { name: 'Create new list' })).toHaveAttribute('href', '/?new=1')
+    expect(within(nav).getByRole('link', { name: 'All my lists' })).toHaveAttribute('aria-current', 'page')
+    const archived = within(nav).getByRole('link', { name: 'Archived lists' })
+    expect(archived).toHaveAttribute('href', '/lists/archived')
+    expect(archived).not.toHaveAttribute('aria-current')
+    expect(within(nav).queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
+  })
+
+  it('selects Archived lists on its page', () => {
+    state.canWrite = true
+    renderWithProviders(<AppLayout />, { route: '/lists/archived' })
+
+    const nav = screen.getByRole('navigation')
+    expect(within(nav).getByRole('link', { name: 'Archived lists' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'All my lists' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('hides Create new list from a viewer', () => {
+    state.canWrite = false
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const nav = screen.getByRole('navigation')
+    expect(within(nav).queryByRole('link', { name: 'Create new list' })).not.toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'All my lists' })).toBeInTheDocument()
   })
 })

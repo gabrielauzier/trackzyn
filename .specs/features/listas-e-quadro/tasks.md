@@ -633,10 +633,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: workspace sem listas mostra só `Criar lista`; saudação usa `display_name` e, sem ele, o e-mail antes do `@`; reordenar chama `move` com `before_list_id`; `viewer` sem criar nem arrastar
-- [ ] `@dnd-kit` instalado com `npm install` respeitando `frontend/.npmrc` e lockfile commitado
-- [ ] Gate check passes: Full (frontend)
-- [ ] Test count: a contagem do frontend só aumenta (testes de `dashboard` substituídos, não apagados sem substituto)
+- [x] Testes: workspace sem listas mostra só `Criar lista`; saudação usa `display_name` e, sem ele, o e-mail antes do `@`; reordenar chama `move` com `before_list_id`; `viewer` sem criar nem arrastar
+- [x] `@dnd-kit` instalado com `npm install` respeitando `frontend/.npmrc` e lockfile commitado
+- [x] Gate check passes: Full (frontend)
+- [x] Test count: a contagem do frontend só aumenta (testes de `dashboard` substituídos, não apagados sem substituto)
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

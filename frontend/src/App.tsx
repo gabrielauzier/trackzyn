@@ -16,7 +16,7 @@ const SetupPage = lazy(() => import('@/pages/setup'))
 const LoginPage = lazy(() => import('@/pages/login'))
 const RegisterPage = lazy(() => import('@/pages/register'))
 const OIDCCallbackPage = lazy(() => import('@/pages/oidc-callback'))
-const DashboardPage = lazy(() => import('@/pages/dashboard'))
+const HomePage = lazy(() => import('@/pages/home'))
 const FilesPage = lazy(() => import('@/pages/files'))
 const ComponentsShowcasePage = lazy(() => import('@/pages/showcase'))
 const WorkspaceSettingsPage = lazy(() => import('@/pages/workspace-settings'))
@@ -63,7 +63,7 @@ function App() {
                           </ProtectedRoute>
                         }
                       >
-                        <Route path="/" element={<DashboardPage />} />
+                        <Route path="/" element={<HomePage />} />
                         <Route path="/files" element={<FilesPage />} />
                         <Route path="/components" element={<ComponentsShowcasePage />} />
                         <Route path="/workspace/settings" element={<WorkspaceSettingsPage />} />

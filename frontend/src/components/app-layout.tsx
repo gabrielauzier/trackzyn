@@ -65,7 +65,7 @@ export function AppLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
-  const { isLoading: workspaceLoading } = useWorkspace()
+  const { isLoading: workspaceLoading, canWrite } = useWorkspace()
   const { isEnabled, updateCheckRepo } = useFeatureFlags()
   const localAuthEnabled = useLocalAuthEnabled()
 
@@ -83,8 +83,8 @@ export function AppLayout() {
   }, [resolvedTheme])
 
   const finalNavItems: NavItem[] = useMemo(
-    () => visibleNavItems(navItems, isEnabled),
-    [isEnabled],
+    () => visibleNavItems(navItems, isEnabled, canWrite),
+    [isEnabled, canWrite],
   )
   // macOS desktop hides the native title bar, so the header becomes the drag area.
   const dragHeader = isDesktop() && getDesktopApi().platform === 'darwin'
@@ -258,6 +258,7 @@ export function AppLayout() {
                     onClick={() => setSidebarOpen(false)}
                     title={t(`nav.${item.key}`)}
                     aria-label={t(`nav.${item.key}`)}
+                    aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-3 text-[13px] font-medium transition-all rounded-lg px-3 py-2',
                       isActive

@@ -192,15 +192,6 @@
       "toLabel": "To"
     }
   },
-  "dashboard": {
-    "adminHint": "Users, registration and instance settings",
-    "buildHint": "This page is a placeholder — replace it with your product's overview.",
-    "componentsHint": "Every UI component and chart, live",
-    "filesHint": "Upload and manage workspace files",
-    "getStarted": "Get started",
-    "greeting": "Welcome, {{name}}",
-    "workspaceHint": "Name, members, roles and timezone"
-  },
   "desktop": {
     "connect": {
       "title": "Connect to a server",
@@ -282,12 +273,14 @@
   "nav": {
     "collapseSidebar": "Collapse sidebar",
     "components": "Components",
-    "dashboard": "Dashboard",
     "expandSidebar": "Expand sidebar",
     "files": "Files",
     "groupAdmin": "Administration",
     "groupDevelopers": "Developers",
-    "groupWorkspace": "Workspace"
+    "groupWorkspace": "Workspace",
+    "newList": "Create new list",
+    "allLists": "All my lists",
+    "archivedLists": "Archived lists"
   },
   "privacy": {
     "hide": "Hide values",
@@ -430,7 +423,9 @@
       "morning": "Start with what matters most.",
       "afternoon": "One task at a time.",
       "night": "Time to wrap up the day calmly."
-    }
+    },
+    "yourLists": "Your lists",
+    "createList": "Create list"
   },
   "lists": {
     "rename": "Rename",
