@@ -232,10 +232,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Um teste por AC citado; mover de `done` para `today` limpa `completed_at` e mantém a tarefa
-- [ ] Dois movimentos concorrentes na mesma coluna deixam posições 0..n-1 sem repetição e a última gravação na ordem final
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Um teste por AC citado; mover de `done` para `today` limpa `completed_at` e mantém a tarefa
+- [x] Dois movimentos concorrentes na mesma coluna deixam posições 0..n-1 sem repetição e a última gravação na ordem final
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
