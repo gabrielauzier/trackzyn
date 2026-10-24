@@ -149,16 +149,16 @@ O trackzyn ainda é só a base do launchkit: não tem onde registrar uma tarefa,
 | LIST-09 | P1: Listas na home | Tasks | Implementing |
 | LIST-10 | P1: Listas na home | Tasks | Implementing |
 | LIST-11 | P1: Listas na home | Tasks | Implementing |
-| BOARD-01 | P1: Quadro da lista | Tasks | In Tasks |
-| BOARD-02 | P1: Quadro da lista | Tasks | In Tasks |
+| BOARD-01 | P1: Quadro da lista | Tasks | Implementing |
+| BOARD-02 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-03 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-04 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-05 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-06 | P1: Quadro da lista | Tasks | In Tasks |
+| BOARD-06 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-07 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-08 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-09 | P1: Quadro da lista | Tasks | In Tasks |
-| BOARD-10 | P1: Quadro da lista | Tasks | In Tasks |
+| BOARD-09 | P1: Quadro da lista | Tasks | Implementing |
+| BOARD-10 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-11 | P1: Quadro da lista | Tasks | In Tasks |
 | BOARD-12 | P1: Quadro da lista | Tasks | In Tasks |
 | BOARD-13 | P1: Quadro da lista | Tasks | In Tasks |

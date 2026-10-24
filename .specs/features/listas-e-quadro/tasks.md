@@ -318,11 +318,13 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Teste do cenário do print: 11 concluídas na semana, 0 hoje, 1 pendente em Hoje → `11/12` e `0/1`
-- [ ] Concluídas: com conclusões hoje, ontem e há 3 dias, só hoje e ontem; sem conclusões hoje, só o último dia anterior; virada do dia não move tarefas de Hoje (BOARD-16)
-- [ ] Lista vazia → somas 0 e `today_count` 0 (Edge Case)
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Teste do cenário do print: 11 concluídas na semana, 0 hoje, 1 pendente em Hoje → `11/12` e `0/1`
+- [x] Concluídas: com conclusões hoje, ontem e há 3 dias, só hoje e ontem; sem conclusões hoje, só o último dia anterior; virada do dia não move tarefas de Hoje (BOARD-16)
+- [x] Lista vazia → somas 0 e `today_count` 0 (Edge Case)
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
