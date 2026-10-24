@@ -164,7 +164,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | FOCUS-01 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-02 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
+| FOCUS-02 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-03 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-04 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-05 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
@@ -175,8 +175,8 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | FOCUS-10 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-11 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-12 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-13 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-14 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
+| FOCUS-13 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
+| FOCUS-14 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-15 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-16 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-17 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
@@ -203,7 +203,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | SYNC-08 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 | SYNC-09 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 | SYNC-10 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
-| SYNC-11 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
+| SYNC-11 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-12 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 
 **Coverage:** 42 total, 42 mapped to tasks, 0 unmapped

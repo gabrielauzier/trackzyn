@@ -260,9 +260,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: tarefa com última sessão `estimate` → `awaiting_extend = true`; gasto acima da estimativa sem prazo → `false`; `last_seen_at` há 121 s → `stale` preenchido, há 119 s → `null`
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Testes: tarefa com última sessão `estimate` → `awaiting_extend = true`; gasto acima da estimativa sem prazo → `false`; `last_seen_at` há 121 s → `stale` preenchido, há 119 s → `null`
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
