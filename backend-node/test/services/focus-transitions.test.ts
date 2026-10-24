@@ -176,6 +176,12 @@ function send(action: CaseAction, keys: Map<string, string>, actionId = randomUU
       return focus.startFocus(db, actor, input, { taskId, takeover: action.takeover ?? false }, now)
     case 'pause':
       return focus.pauseFocus(db, actor, input, now)
+    case 'skip':
+      return focus.skipFocus(db, actor, input, { taskId }, now)
+    case 'complete':
+      return focus.completeFocus(db, actor, input, { taskId }, now)
+    case 'extend':
+      return focus.extendFocus(db, actor, input, { taskId }, now)
     default:
       throw new Error(`unknown action ${action.type}`)
   }

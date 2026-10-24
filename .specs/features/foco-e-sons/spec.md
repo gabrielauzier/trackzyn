@@ -168,13 +168,13 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | FOCUS-03 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
 | FOCUS-04 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-05 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-06 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-07 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-08 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
-| FOCUS-09 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
+| FOCUS-06 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
+| FOCUS-07 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
+| FOCUS-08 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
+| FOCUS-09 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-10 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-11 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-12 | P1: Focar nas tarefas de Hoje | Tasks | In Tasks |
+| FOCUS-12 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-13 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-14 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
 | FOCUS-15 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |

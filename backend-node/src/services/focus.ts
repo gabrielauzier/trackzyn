@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { eq, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import {
   type FocusEndReason,
@@ -9,13 +9,14 @@ import {
   focusActions,
   focusSessions,
   lists,
+  tasks,
   users,
   workspaces,
 } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { settle, spentMilliseconds } from './focus-settle.ts'
 import { type FocusState, isAwaitingExtend, openSession, readFocusState, toSessionView } from './focus-state.ts'
-import { findTask } from './tasks.ts'
+import { findTask, moveTask } from './tasks.ts'
 
 /** Who acts: the user and the workspace the request addresses. */
 export interface FocusActor {
@@ -128,6 +129,10 @@ async function openTaskSession(tx: Database, context: TransitionContext, task: T
     if (leftMs > 0) deadlineAt = new Date(context.at.getTime() + leftMs)
     else if (await isAwaitingExtend(tx, context.userId, task, Math.floor(spentMs / 1000))) return
   }
+  await insertTaskSession(tx, context, task, deadlineAt)
+}
+
+async function insertTaskSession(tx: Database, context: TransitionContext, task: Task, deadlineAt: Date | null): Promise<void> {
   await tx.insert(focusSessions).values({
     id: randomUUID(),
     userId: context.userId,
@@ -143,6 +148,33 @@ async function openTaskSession(tx: Database, context: TransitionContext, task: T
     lastSeenAt: context.at,
     endReason: null,
   })
+}
+
+/** The pending tasks of Today of the list, in board order. */
+async function todayTasks(tx: Database, listId: string): Promise<Task[]> {
+  return tx
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.listId, listId), eq(tasks.column, 'today')))
+    .orderBy(asc(tasks.position), asc(tasks.createdAt))
+}
+
+/**
+ * The task of Today the action is about, and the open session, which must be on that task or absent:
+ * a break or another task counting refuses the action (FOCUS-18).
+ */
+async function focusedTask(tx: Database, context: TransitionContext, taskId: string) {
+  const task = await findTask(tx, taskId, context.workspaceId)
+  if (task.column !== 'today') throw invalidTransition()
+  const open = await openSession(tx, context.userId)
+  if (open && (open.kind !== 'task' || open.taskId !== task.id)) throw invalidTransition()
+  return { task, open }
+}
+
+/** Opens a session on the first pending task of Today, if there is one (FOCUS-06, FOCUS-08, FOCUS-09). */
+async function startNext(tx: Database, context: TransitionContext, listId: string): Promise<void> {
+  const [next] = await todayTasks(tx, listId)
+  if (next) await openTaskSession(tx, context, next)
 }
 
 /**
@@ -190,5 +222,68 @@ export function pauseFocus(db: Database, actor: FocusActor, input: FocusActionIn
     if (!open || open.kind !== 'task') throw invalidTransition()
     await endSession(tx, open, context.at, 'pause')
     return open.listId
+  })
+}
+
+/**
+ * Ends the session, moves the task to the end of Today and starts the next one (FOCUS-06). Refused with
+ * a single pending task in Today (FOCUS-07).
+ */
+export function skipFocus(
+  db: Database,
+  actor: FocusActor,
+  input: FocusActionInput,
+  payload: { taskId: string },
+  now: Date,
+): Promise<FocusState> {
+  return applyAction(db, actor, input, now, async (tx, context) => {
+    const { task, open } = await focusedTask(tx, context, payload.taskId)
+    if ((await todayTasks(tx, task.listId)).length <= 1) throw invalidTransition()
+    if (open) await endSession(tx, open, context.at, 'skip')
+    await moveTask(tx, task.id, context.workspaceId, { column: 'today', beforeTaskId: null }, context.at)
+    await startNext(tx, context, task.listId)
+    return task.listId
+  })
+}
+
+/**
+ * Ends the session, moves the task to done with `completed_at` = the click and starts the next task of
+ * Today, or leaves no session when Today is clear (FOCUS-08, FOCUS-09). A task already done is refused
+ * and keeps its `completed_at` (FOCUS-18).
+ */
+export function completeFocus(
+  db: Database,
+  actor: FocusActor,
+  input: FocusActionInput,
+  payload: { taskId: string },
+  now: Date,
+): Promise<FocusState> {
+  return applyAction(db, actor, input, now, async (tx, context) => {
+    const { task, open } = await focusedTask(tx, context, payload.taskId)
+    if (open) await endSession(tx, open, context.at, 'complete')
+    await moveTask(tx, task.id, context.workspaceId, { column: 'done', beforeTaskId: null }, context.at)
+    await startNext(tx, context, task.listId)
+    return task.listId
+  })
+}
+
+/**
+ * Opens a session without deadline on a task that awaits `Estender`, so the timer counts up from the
+ * estimate; the estimate itself does not change (FOCUS-12).
+ */
+export function extendFocus(
+  db: Database,
+  actor: FocusActor,
+  input: FocusActionInput,
+  payload: { taskId: string },
+  now: Date,
+): Promise<FocusState> {
+  return applyAction(db, actor, input, now, async (tx, context) => {
+    const { task, open } = await focusedTask(tx, context, payload.taskId)
+    if (open) throw invalidTransition()
+    const spent = (await spentMilliseconds(tx, [task.id], context.at)).get(task.id) ?? 0
+    if (!(await isAwaitingExtend(tx, context.userId, task, Math.floor(spent / 1000)))) throw invalidTransition()
+    await insertTaskSession(tx, context, task, null)
+    return task.listId
   })
 }

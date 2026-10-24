@@ -318,9 +318,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Cada linha `skip`/`complete`/`extend` da tabela de casos vira um teste; concluir tarefa já concluída → 409 sem mudar `completed_at`
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Cada linha `skip`/`complete`/`extend` da tabela de casos vira um teste; concluir tarefa já concluída → 409 sem mudar `completed_at`
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
