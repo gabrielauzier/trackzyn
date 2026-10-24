@@ -772,9 +772,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes com timers falsos: tarefa de 11 min toca `progress` aos 10 min e `estimate` aos 11, uma vez cada; som desligado não toca
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes com timers falsos: tarefa de 11 min toca `progress` aos 10 min e `estimate` aos 11, uma vez cada; som desligado não toca
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: build
