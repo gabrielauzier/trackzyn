@@ -942,9 +942,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: 3000 s mostra `00:50:00`; `countup` de 3601 mostra `01:00:01`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: 3000 s mostra `00:50:00`; `countup` de 3601 mostra `01:00:01`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
