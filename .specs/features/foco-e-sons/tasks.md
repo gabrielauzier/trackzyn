@@ -574,9 +574,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes com timers falsos: heartbeat em 60 s e 120 s só para a sessão deste dispositivo; ação sem rede aparece na hora e é enviada quando a rede volta
-- [ ] Gate check passes: Full (frontend)
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes com timers falsos: heartbeat em 60 s e 120 s só para a sessão deste dispositivo; ação sem rede aparece na hora e é enviada quando a rede volta
+- [x] Gate check passes: Full (frontend)
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
