@@ -510,7 +510,11 @@
       "extend": "Extend"
     },
     "controls": {
-      "complete": "Complete"
+      "complete": "Complete",
+      "pause": "Pause",
+      "resume": "Resume",
+      "skip": "Skip",
+      "endBreak": "End break"
     },
     "elsewhere": {
       "title": "You are already focusing on another device.",
