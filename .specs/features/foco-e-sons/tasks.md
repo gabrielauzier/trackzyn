@@ -518,9 +518,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: ação de 24h01 descartada com aviso; 409 vira conflito com `retry` e `discard`; erro de rede mantém a ordem; recarregar a página mantém a fila
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: ação de 24h01 descartada com aviso; 409 vira conflito com `retry` e `discard`; erro de rede mantém a ordem; recarregar a página mantém a fila
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
