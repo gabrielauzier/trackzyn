@@ -26,11 +26,17 @@ export interface FocusTaskView {
   awaiting_extend: boolean
 }
 
+/** A pending task of Today, as the client needs it to apply skip, complete or start offline. */
+export interface FocusTodayTaskView extends FocusTaskView {
+  position: number
+}
+
 export interface FocusState {
   server_now: string
   session: FocusSessionView | null
   task: FocusTaskView | null
-  today: { pending: number; done: number; estimate_minutes: number }
+  /** Totals of Today and its pending tasks in board order. */
+  today: { pending: number; done: number; estimate_minutes: number; tasks: FocusTodayTaskView[] }
   stale: { session_id: string; last_seen_at: string; seconds: number } | null
 }
 
@@ -79,8 +85,8 @@ export async function isAwaitingExtend(
 
 /**
  * The focus of `userId` as the focus screen of `listId` shows it at `now`, after settling (AD-001): the
- * open session, the task in focus (or the first pending task of Today), the totals of Today and the
- * open session when it has had no signal for more than 120 s.
+ * open session, the task in focus (or the first pending task of Today), the totals and the pending
+ * tasks of Today in board order, and the open session when it has had no signal for more than 120 s.
  */
 export async function readFocusState(
   tx: Database,
@@ -109,12 +115,24 @@ export async function readFocusState(
     }
   }
 
+  const todayTasks: FocusTodayTaskView[] = []
+  for (const card of today.tasks) {
+    todayTasks.push({
+      id: card.id,
+      title: card.title,
+      estimate_minutes: card.estimate_minutes,
+      spent_seconds: card.spent_seconds,
+      awaiting_extend: await isAwaitingExtend(tx, userId, { id: card.id, estimateMinutes: card.estimate_minutes }, card.spent_seconds),
+      position: card.position,
+    })
+  }
+
   const silentMs = session ? now.getTime() - session.lastSeenAt.getTime() : 0
   return {
     server_now: now.toISOString(),
     session: session ? toSessionView(session) : null,
     task,
-    today: { pending: today.tasks.length, done: today.done, estimate_minutes: today.estimate_minutes },
+    today: { pending: today.tasks.length, done: today.done, estimate_minutes: today.estimate_minutes, tasks: todayTasks },
     stale:
       session && silentMs > STALE_AFTER_MS
         ? { session_id: session.id, last_seen_at: session.lastSeenAt.toISOString(), seconds: Math.floor(silentMs / 1000) }

@@ -33,19 +33,24 @@ const sessionSchema = z.object({
   planned_seconds: z.number().nullable(),
 })
 
+const taskViewSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  estimate_minutes: z.number().nullable(),
+  spent_seconds: z.number(),
+  awaiting_extend: z.boolean(),
+})
+
 const focusStateSchema = z.object({
   server_now: z.string(),
   session: sessionSchema.nullable(),
-  task: z
-    .object({
-      id: z.string(),
-      title: z.string(),
-      estimate_minutes: z.number().nullable(),
-      spent_seconds: z.number(),
-      awaiting_extend: z.boolean(),
-    })
-    .nullable(),
-  today: z.object({ pending: z.number(), done: z.number(), estimate_minutes: z.number() }),
+  task: taskViewSchema.nullable(),
+  today: z.object({
+    pending: z.number(),
+    done: z.number(),
+    estimate_minutes: z.number(),
+    tasks: z.array(taskViewSchema.extend({ position: z.number() })),
+  }),
   stale: z.object({ session_id: z.string(), last_seen_at: z.string(), seconds: z.number() }).nullable(),
 })
 

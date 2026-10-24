@@ -210,7 +210,8 @@ interface FocusState {
   server_now: string
   session: { id; kind; task_id; list_id; device_id; started_at; deadline_at; planned_seconds } | null
   task: { id; title; estimate_minutes; spent_seconds; awaiting_extend: boolean } | null // a tarefa em foco ou a primeira de Hoje
-  today: { pending: number; done: number; estimate_minutes: number }
+  today: { pending: number; done: number; estimate_minutes: number
+           tasks: { id; title; estimate_minutes; spent_seconds; awaiting_extend: boolean; position: number }[] } // pendentes de Hoje, em ordem (decidido em 2026-10-24, ver Tech Decisions)
   stale: { session_id: string; last_seen_at: string; seconds: number } | null // SYNC-11
 }
 ```
@@ -258,3 +259,5 @@ interface FocusState {
 | Dispositivo | `device_id` gerado no cliente e gravado na sessão | Diferencia "outro dispositivo" (SYNC-02) da mesma máquina com duas janelas |
 | Sons | Síntese com Web Audio, sem arquivo | Decisão do usuário; sem licença nem asset no bundle |
 | Fila offline | `localStorage` | Poucas ações, 24h no máximo; acesso síncrono no `pagehide` |
+| Próxima tarefa no cliente | `FocusState.today.tasks` traz as pendentes de Hoje, com tempo gasto e `awaiting_extend` | Decisão do usuário em 2026-10-24, depois do bloqueio do T14: sem a lista, 9 das 45 transições (pular, concluir, começar outra tarefa) não podem ser aplicadas no cliente sem conexão. Rejeitado: usar o quadro em cache (nem sempre carregado no widget) e estado parcial até a resposta |
+| Id do dispositivo e `action_id` | UUID v4 com `crypto.getRandomValues` quando `crypto.randomUUID` não existe | `randomUUID` só existe em contexto seguro; uma instalação self-hosted por HTTP na rede local quebraria |

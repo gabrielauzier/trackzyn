@@ -34,7 +34,12 @@ interface CaseSession {
 interface CaseState {
   session: { kind: string; task: string | null; device: string; started_at: number; deadline_at: number | null; planned_seconds: number | null } | null
   task: { key: string; spent_seconds: number; awaiting_extend: boolean } | null
-  today: { pending: number; done: number; estimate_minutes: number }
+  today: {
+    pending: number
+    done: number
+    estimate_minutes: number
+    tasks: Array<{ key: string; spent_seconds: number; awaiting_extend: boolean }>
+  }
   stale: { last_seen_at: number; seconds: number } | null
 }
 interface CaseAction {
@@ -134,7 +139,16 @@ function projectState(state: FocusState, keys: Map<string, string>): CaseState {
       planned_seconds: state.session.planned_seconds,
     },
     task: state.task && { key: keyOf(state.task.id)!, spent_seconds: state.task.spent_seconds, awaiting_extend: state.task.awaiting_extend },
-    today: state.today,
+    today: {
+      pending: state.today.pending,
+      done: state.today.done,
+      estimate_minutes: state.today.estimate_minutes,
+      tasks: state.today.tasks.map((task) => ({
+        key: keyOf(task.id)!,
+        spent_seconds: task.spent_seconds,
+        awaiting_extend: task.awaiting_extend,
+      })),
+    },
     stale: state.stale && { last_seen_at: minutesOf(state.stale.last_seen_at)!, seconds: state.stale.seconds },
   }
 }

@@ -9,7 +9,7 @@
     "given.state": "What GET /api/focus answers at action.at before the action. That read settles the due sessions (AD-001), which given.sessions does not show and expect.sessions does.",
     "action": "type is the route after /api/focus/ (start, pause, skip, complete, extend, break, break/end, heartbeat, recover). at is occurred_at; received_at (default at) is when the server receives it, the now of the response. heartbeat has no occurred_at: its at is when the server receives it. device defaults to A. The other fields are the payload: task (a key), takeover, minutes, decision; break uses the case's list.",
     "expect": "status is the HTTP status; code the error code of a 409 or 422. sessions is every session after the action, oldest first. tasks, when present, is every task after the action in board order (columns backlog, this_week, today, done; position inside each); when absent the tasks did not change. state is the 200 response at received_at.",
-    "state": "session: the open session (task key, kind, device, started_at, deadline_at, planned_seconds) or null. task: the task in focus or the first pending task of Today (key, spent_seconds, awaiting_extend) or null. today: pending tasks, tasks completed today and the estimate sum of the pending ones. stale: the open session when it has had no signal for more than 120 s (last_seen_at, seconds) or null."
+    "state": "session: the open session (task key, kind, device, started_at, deadline_at, planned_seconds) or null. task: the task in focus or the first pending task of Today (key, spent_seconds, awaiting_extend) or null. today: pending tasks, tasks completed today, the estimate sum of the pending ones and tasks, the pending tasks of Today in board order (key, spent_seconds, awaiting_extend; title and estimate are the task's, position is checked by the order). stale: the open session when it has had no signal for more than 120 s (last_seen_at, seconds) or null."
   },
   "cases": [
     {
@@ -24,7 +24,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -37,7 +37,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -55,7 +55,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -69,7 +69,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 20, "deadline_at": 70, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -87,7 +87,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -101,7 +101,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 20, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -119,7 +119,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": true },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 1800, "awaiting_extend": true } ] },
           "stale": null
         }
       },
@@ -132,7 +132,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": true },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 1800, "awaiting_extend": true } ] },
           "stale": null
         }
       }
@@ -151,7 +151,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 2400, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 2400, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -166,7 +166,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 50, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 2400, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 2400, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -184,7 +184,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 60, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -210,7 +210,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 60, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -223,7 +223,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 60, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -242,7 +242,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -256,7 +256,7 @@
         "state": {
           "session": { "kind": "task", "task": "b", "device": "A", "started_at": 5, "deadline_at": 35, "planned_seconds": null },
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -274,7 +274,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -287,7 +287,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -306,7 +306,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -320,7 +320,7 @@
         "state": {
           "session": { "kind": "task", "task": "b", "device": "A", "started_at": 5, "deadline_at": 35, "planned_seconds": null },
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -338,7 +338,7 @@
         "state": {
           "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 5, "planned_seconds": 300 },
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -363,7 +363,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -386,7 +386,7 @@
         "state": {
           "session": null,
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 1, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 1, "estimate_minutes": 30, "tasks": [ { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -410,7 +410,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 720, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 720, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -423,7 +423,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 720, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 720, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -441,7 +441,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -454,7 +454,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -472,7 +472,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 30, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -485,7 +485,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -503,7 +503,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": true },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 1800, "awaiting_extend": true } ] },
           "stale": null
         }
       },
@@ -529,7 +529,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 720, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 720, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -555,7 +555,7 @@
         "state": {
           "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 10, "planned_seconds": 600 },
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -582,7 +582,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -600,7 +600,7 @@
         "state": {
           "session": { "kind": "task", "task": "b", "device": "A", "started_at": 10, "deadline_at": 40, "planned_seconds": null },
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "b", "spent_seconds": 0, "awaiting_extend": false }, { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -619,7 +619,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -637,7 +637,7 @@
         "state": {
           "session": { "kind": "task", "task": "b", "device": "A", "started_at": 20, "deadline_at": 50, "planned_seconds": null },
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "b", "spent_seconds": 0, "awaiting_extend": false }, { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -655,7 +655,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -682,7 +682,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -709,7 +709,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -727,7 +727,7 @@
         "state": {
           "session": { "kind": "task", "task": "b", "device": "A", "started_at": 15, "deadline_at": 45, "planned_seconds": null },
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 1, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 1, "estimate_minutes": 30, "tasks": [ { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -745,7 +745,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -758,7 +758,7 @@
         "tasks": [
           { "key": "a", "column": "done", "completed_at": 15 }
         ],
-        "state": { "session": null, "task": null, "today": { "pending": 0, "done": 1, "estimate_minutes": 0 }, "stale": null }
+        "state": { "session": null, "task": null, "today": { "pending": 0, "done": 1, "estimate_minutes": 0, "tasks": [] }, "stale": null }
       }
     },
     {
@@ -775,7 +775,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": true },
-          "today": { "pending": 2, "done": 0, "estimate_minutes": 30 },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 30, "tasks": [ { "key": "a", "spent_seconds": 1800, "awaiting_extend": true }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -793,7 +793,7 @@
         "state": {
           "session": { "kind": "task", "task": "b", "device": "A", "started_at": 40, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 1, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 1, "estimate_minutes": 0, "tasks": [ { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -810,7 +810,7 @@
         "state": {
           "session": null,
           "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 1, "estimate_minutes": 30 },
+          "today": { "pending": 1, "done": 1, "estimate_minutes": 30, "tasks": [ { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -834,7 +834,7 @@
         "state": {
           "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 5, "planned_seconds": 300 },
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -860,7 +860,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 3600, "awaiting_extend": true },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 3600, "awaiting_extend": true } ] },
           "stale": null
         }
       },
@@ -874,7 +874,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 61, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 3600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 3600, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -892,7 +892,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -918,7 +918,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -944,7 +944,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 600, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -970,7 +970,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -984,7 +984,7 @@
         "state": {
           "session": { "kind": "break", "task": null, "device": "A", "started_at": 20, "deadline_at": 25, "planned_seconds": 300 },
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -1002,7 +1002,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1016,7 +1016,7 @@
         "state": {
           "session": { "kind": "break", "task": null, "device": "A", "started_at": 30, "deadline_at": 40, "planned_seconds": 600 },
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -1034,7 +1034,7 @@
         "state": {
           "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 10, "planned_seconds": 600 },
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1061,7 +1061,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1076,7 +1076,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 90, "deadline_at": 130, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 1200, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -1094,7 +1094,7 @@
         "state": {
           "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 10, "planned_seconds": 600 },
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1115,7 +1115,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -1133,7 +1133,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1159,7 +1159,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 60, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1172,7 +1172,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 60, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -1190,7 +1190,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 60, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1214,7 +1214,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1238,7 +1238,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false } ] },
           "stale": { "last_seen_at": 10, "seconds": 300 }
         }
       },
@@ -1251,7 +1251,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -1269,7 +1269,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": -30, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 2100, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 2100, "awaiting_extend": false } ] },
           "stale": { "last_seen_at": 0, "seconds": 300 }
         }
       },
@@ -1282,7 +1282,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 1800, "awaiting_extend": false } ] },
           "stale": null
         }
       }
@@ -1300,7 +1300,7 @@
         "state": {
           "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
           "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 300, "awaiting_extend": false } ] },
           "stale": null
         }
       },
@@ -1324,7 +1324,7 @@
         "state": {
           "session": null,
           "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
-          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 0, "awaiting_extend": false } ] },
           "stale": null
         }
       },

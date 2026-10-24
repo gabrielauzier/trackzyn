@@ -49,9 +49,18 @@ describe('GET /api/focus', () => {
     expect(owners.json()).toMatchObject({
       session: null,
       task: { id: taskA, title: 'A', estimate_minutes: 60, spent_seconds: 0, awaiting_extend: false },
-      today: { pending: 2, done: 0, estimate_minutes: 90 },
+      today: {
+        pending: 2,
+        done: 0,
+        estimate_minutes: 90,
+        tasks: [
+          { id: taskA, title: 'A', estimate_minutes: 60, spent_seconds: 0, awaiting_extend: false },
+          { id: taskB, title: 'B', estimate_minutes: 30, spent_seconds: 0, awaiting_extend: false },
+        ],
+      },
       stale: null,
     })
+    expect(owners.json().today.tasks.map((task: { position: unknown }) => typeof task.position)).toEqual(['number', 'number'])
     expectServerNow(owners.json())
 
     const viewers = await call('GET', `/api/focus?list_id=${listId}`, viewer.token, workspaceId)

@@ -29,7 +29,7 @@ const read = (now: Date) =>
 describe('readFocusState', () => {
   it('FOCUS-02 without a session, shows the first pending task of Today with its spent time, and the totals of Today', async () => {
     const first = await seed.addTask({ title: 'first', estimate: 60 })
-    await seed.addTask({ title: 'second', estimate: 30 })
+    const second = await seed.addTask({ title: 'second', estimate: 30 })
     await seed.addTask({ title: 'later', estimate: 500, column: 'this_week' })
     await seed.addTask({ title: 'finished', estimate: 500, column: 'done' })
     await seed.addSession({ taskId: first, startedAt: T0, endedAt: at(T0, 10) })
@@ -40,7 +40,15 @@ describe('readFocusState', () => {
       server_now: at(T0, 20).toISOString(),
       session: null,
       task: { id: first, title: 'first', estimate_minutes: 60, spent_seconds: 600, awaiting_extend: false },
-      today: { pending: 2, done: 1, estimate_minutes: 90 },
+      today: {
+        pending: 2,
+        done: 1,
+        estimate_minutes: 90,
+        tasks: [
+          { id: first, title: 'first', estimate_minutes: 60, spent_seconds: 600, awaiting_extend: false, position: 0 },
+          { id: second, title: 'second', estimate_minutes: 30, spent_seconds: 0, awaiting_extend: false, position: 1 },
+        ],
+      },
       stale: null,
     })
   })
@@ -116,7 +124,27 @@ describe('readFocusState', () => {
     const state = await read(T0)
 
     expect(state.task).toBeNull()
-    expect(state.today).toEqual({ pending: 0, done: 1, estimate_minutes: 0 })
+    expect(state.today).toEqual({ pending: 0, done: 1, estimate_minutes: 0, tasks: [] })
+  })
+
+  it('SYNC-05 lists the pending tasks of Today of the list in board order, each with its spent time and whether it awaits extend', async () => {
+    const used = await seed.addTask({ title: 'used', estimate: 30 })
+    const counting = await seed.addTask({ title: 'counting', estimate: null })
+    const fresh = await seed.addTask({ title: 'fresh', estimate: 45 })
+    await seed.addTask({ title: 'later', estimate: 10, column: 'this_week' })
+    await seed.addTask({ title: 'finished', estimate: 10, column: 'done' })
+    const other = await seed.addList()
+    await seed.addTask({ title: 'elsewhere', estimate: 10, listId: other })
+    await seed.addSession({ taskId: used, startedAt: T0, endedAt: at(T0, 30), endReason: 'estimate' })
+    await seed.addSession({ taskId: counting, startedAt: at(T0, 40) })
+
+    const state = await read(at(T0, 45))
+
+    expect(state.today.tasks).toEqual([
+      { id: used, title: 'used', estimate_minutes: 30, spent_seconds: 1800, awaiting_extend: true, position: 0 },
+      { id: counting, title: 'counting', estimate_minutes: null, spent_seconds: 300, awaiting_extend: false, position: 1 },
+      { id: fresh, title: 'fresh', estimate_minutes: 45, spent_seconds: 0, awaiting_extend: false, position: 2 },
+    ])
   })
 
   it('SYNC-11 an open session without signal for 121 s is stale; for 119 s or 120 s it is not', async () => {
