@@ -1,0 +1,49 @@
+{
+  "name": "launchkit-desktop",
+  "productName": "launchkit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "launchkit desktop client",
+  "author": {
+    "name": "launchkit",
+    "email": "noreply@launchkit.invalid"
+  },
+  "homepage": "https://github.com/gabrielauzier/launchkit",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "build:frontend": "npm --prefix ../frontend run build:desktop",
+    "build": "electron-vite build",
+    "build:backend": "node scripts/build-backend.mjs",
+    "build:all": "npm run build:frontend && npm run build && npm run build:backend",
+    "package:dir": "npm run build:all && electron-builder --dir -c.mac.identity=-",
+    "dev": "electron-vite dev",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:e2e": "npm run build:all && playwright test",
+    "check:web-bundle": "node scripts/check-web-bundle.mjs --build",
+    "package:unsigned": "npm run build:all && electron-builder -c.mac.identity=-"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@node-rs/argon2": "^2.2.2",
+    "electron-updater": "^6.8.9"
+  },
+  "devDependencies": {
+    "@electron/fuses": "^2.1.3",
+    "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.10.13",
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.1",
+    "globals": "^17.0.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
+  }
+}

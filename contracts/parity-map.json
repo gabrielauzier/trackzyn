@@ -1,0 +1,193 @@
+{
+  "test_two_factor.py": {
+    "test_setup_2fa": [
+      "C25 2fa setup returns a secret and an otpauth uri"
+    ],
+    "test_totp_enrollment_forbidden_when_local_auth_disabled": [
+      "C25 2fa setup is 403 LOCAL_AUTH_DISABLED when local auth is off",
+      "C25 2fa enable is 403 LOCAL_AUTH_DISABLED when local auth is off"
+    ],
+    "test_disable_2fa_allowed_for_cleanup_when_local_auth_disabled": [
+      "C25 2fa disable stays allowed for cleanup when local auth is off"
+    ],
+    "test_enable_2fa": [
+      "C25 2fa enable with a valid code is 200 2FA enabled"
+    ],
+    "test_enable_2fa_invalid_code": [
+      "C25 2fa enable with an invalid code is 400"
+    ],
+    "test_verify_totp_allows_adjacent_time_windows": [
+      "C25 a code from the previous or next 30 s window is accepted, two windows away is not"
+    ],
+    "test_login_with_2fa": [
+      "C25 login with 2fa on answers requires_2fa and a temp token"
+    ],
+    "test_verify_2fa": [
+      "C25 verify with the temp token and a valid code returns a bearer token"
+    ],
+    "test_verify_2fa_invalid_code": [
+      "C25 verify with an invalid code is 400"
+    ],
+    "test_verify_2fa_expired_token": [
+      "C25 verify with a token that never existed is 401 Invalid or expired token"
+    ],
+    "test_disable_2fa": [
+      "C25 disable after a full 2fa login is 200 and the next login is plain"
+    ],
+    "test_enable_2fa_without_setup": [
+      "C25 enable without calling setup first is 400 and names setup"
+    ],
+    "test_verify_2fa_invalid_token": [
+      "C25 verify with a made-up token is 401"
+    ],
+    "test_verify_2fa_with_valid_token": [
+      "C25 verify accepts a legacy temp token that stores only the user id"
+    ]
+  },
+  "test_passkeys.py": {
+    "test_register_options_requires_auth": [
+      "C25 passkey registration options require authentication"
+    ],
+    "test_register_and_list_passkey": [
+      "C25 a passkey can be registered and listed"
+    ],
+    "test_authenticate_passkey_returns_jwt_and_bypasses_2fa": [
+      "C25 authenticating with a passkey returns a token and bypasses 2fa"
+    ],
+    "test_backed_up_passkey_skips_sign_count_check": [
+      "C25 a backed-up passkey skips the sign count check"
+    ],
+    "test_device_bound_passkey_enforces_sign_count": [
+      "C25 a device-bound passkey enforces the sign count"
+    ],
+    "test_password_login_with_passkey_but_no_2fa_returns_token": [
+      "C25 password login with a passkey but no 2fa returns a token"
+    ],
+    "test_password_login_with_2fa_and_passkey_offers_both_methods": [
+      "C25 password login with 2fa and a passkey offers both methods"
+    ],
+    "test_passkey_second_factor_returns_jwt_for_same_user_passkey": [
+      "C25 the passkey second factor returns a token for the same user's passkey"
+    ],
+    "test_passkey_second_factor_rejects_other_users_passkey": [
+      "C25 the passkey second factor rejects another user's passkey"
+    ],
+    "test_authenticate_email_bound_challenge_rejects_other_users_passkey": [
+      "C25 an email-bound challenge rejects another user's passkey"
+    ],
+    "test_authenticate_email_bound_challenge_rejects_unknown_email": [
+      "C25 an email-bound challenge for an unknown email rejects every passkey"
+    ],
+    "test_delete_passkey_is_owner_scoped": [
+      "C25 deleting a passkey is scoped to its owner"
+    ],
+    "test_register_verify_deletes_challenge_after_failure": [
+      "C25 a failed registration verify consumes the challenge"
+    ],
+    "test_passkey_registration_forbidden_when_local_auth_disabled": [
+      "C25 passkey registration is 403 LOCAL_AUTH_DISABLED when local auth is off"
+    ],
+    "test_delete_passkey_allowed_when_local_auth_disabled": [
+      "C25 deleting a passkey stays allowed when local auth is off"
+    ],
+    "test_passkey_login_forbidden_when_local_auth_disabled": [
+      "C25 passkey login is 403 LOCAL_AUTH_DISABLED when local auth is off"
+    ],
+    "test_passkey_second_factor_forbidden_when_local_auth_disabled": [
+      "C25 the passkey second factor is 403 LOCAL_AUTH_DISABLED when local auth is off"
+    ],
+    "test_register_options_derive_rp_id_from_request_origin": [
+      "C22 rp id and origin follow the request origin"
+    ],
+    "test_register_options_allow_http_localhost": [
+      "C22 http localhost is allowed and is its own rp id"
+    ],
+    "test_register_options_reject_ip_origin": [
+      "C22 an IP address origin is 400 passkey_origin_ip"
+    ],
+    "test_register_options_reject_loopback_ip_origin": [
+      "C22 a loopback IP origin is 400 passkey_origin_ip"
+    ],
+    "test_register_options_reject_insecure_origin": [
+      "C22 a plain http origin on a domain is 400 passkey_origin_insecure"
+    ],
+    "test_register_options_use_configured_rp_id_for_subdomain": [
+      "C22 a pinned rp id is used for an origin on a subdomain"
+    ],
+    "test_register_options_reject_origin_outside_configured_rp_id": [
+      "C22 origin outside the pinned rp id is 400 passkey_origin_mismatch"
+    ],
+    "test_register_options_fall_back_to_forwarded_host": [
+      "C22 forwarded host and proto stand in for a missing origin"
+    ],
+    "test_authenticate_options_derive_rp_id_from_request_origin": [
+      "C22 authenticate options derive the rp id from the request origin"
+    ],
+    "test_register_verify_uses_the_origin_the_challenge_was_issued_for": [
+      "C22 register verify uses the origin the challenge was issued for"
+    ]
+  },
+  "test_oidc_auth.py": {
+    "test_decode_id_token_accepts_google_style_at_hash": [
+      "C25 an id_token carrying at_hash from the provider is accepted"
+    ],
+    "test_oidc_config_disabled_by_default": [
+      "C25 oidc config is disabled by default"
+    ],
+    "test_oidc_config_exposes_local_auth_disabled": [
+      "C25 oidc config exposes the provider name and local auth switched off"
+    ],
+    "test_oidc_login_redirects_to_provider": [
+      "C23 login redirects with the eight parameters",
+      "C23 state is stored as oidc_state:<state> with nonce and code_verifier"
+    ],
+    "test_oidc_callback_creates_user_and_redirects_with_app_token": [
+      "C25 the callback creates a user, a personal workspace and redirects with an app token"
+    ],
+    "test_oidc_callback_syncs_existing_user_admin_and_workspace_role": [
+      "C25 the callback syncs an existing user admin flag and workspace role"
+    ],
+    "test_oidc_callback_sync_roles_can_revoke_admin": [
+      "C25 the callback can revoke the admin flag"
+    ],
+    "test_oidc_callback_signed_claims_override_userinfo_roles": [
+      "C25 signed claims win over userinfo for email and roles"
+    ],
+    "test_oidc_callback_rejects_userinfo_subject_mismatch": [
+      "C25 the callback rejects a userinfo subject that differs from the id_token subject"
+    ],
+    "test_oidc_callback_requires_verified_email_claim_when_enabled": [
+      "C25 the callback requires a verified email claim when enabled"
+    ],
+    "test_oidc_callback_rejects_unlinked_existing_user_by_default": [
+      "C25 the callback rejects an unlinked existing user by default"
+    ],
+    "test_oidc_callback_verified_email_link_mode_links_existing_user": [
+      "C25 verified_email mode links an existing user"
+    ],
+    "test_oidc_callback_rejects_existing_user_with_different_linked_subject": [
+      "C25 the callback rejects an existing user linked to a different subject"
+    ],
+    "test_oidc_callback_respects_disabled_registration_setting": [
+      "C25 the callback respects the disabled registration setting"
+    ],
+    "test_oidc_callback_email_link_mode_links_existing_user_without_verified_email": [
+      "C25 email mode links an existing user without a verified email"
+    ],
+    "test_oidc_callback_linked_user_can_login_without_verified_email_when_required": [
+      "C25 a linked user can sign in without a verified email when one is required"
+    ],
+    "test_oidc_callback_linked_user_can_login_without_email_claim": [
+      "C25 a linked user can sign in without an email claim"
+    ],
+    "test_oidc_callback_registration_disabled_does_not_block_existing_email_link": [
+      "C25 disabled registration does not block linking an existing email"
+    ],
+    "test_oidc_login_rejects_missing_or_short_desktop_nonce": [
+      "D4 rejects a missing or short desktop_nonce"
+    ],
+    "test_oidc_callback_returns_the_desktop_nonce_to_the_redirect_target": [
+      "D3 callback redirects to the desktop deep link with an app token in the fragment"
+    ]
+  }
+}

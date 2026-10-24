@@ -1,0 +1,53 @@
+# Shared by both backend stacks (docker-compose.prod.yml includes the file for BACKEND_STACK).
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/launchkit
+  SECRET_KEY: ${SECRET_KEY:-dev-secret-change-in-production}
+  DEBUG: ${DEBUG:-false}
+  FRONTEND_URL: ${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-3000}}
+  WEBAUTHN_RP_NAME: ${WEBAUTHN_RP_NAME:-launchkit}
+  WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-}
+  WEBAUTHN_ORIGIN: ${WEBAUTHN_ORIGIN:-}
+  REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+  OIDC_ENABLED: ${OIDC_ENABLED:-false}
+  OIDC_PROVIDER_NAME: ${OIDC_PROVIDER_NAME:-OIDC}
+  OIDC_DISCOVERY_URL: ${OIDC_DISCOVERY_URL:-}
+  OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+  OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+  OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-}
+  OIDC_SCOPES: ${OIDC_SCOPES:-openid email profile}
+  OIDC_AUTO_REGISTER: ${OIDC_AUTO_REGISTER:-true}
+  OIDC_EXISTING_USER_LINK_MODE: ${OIDC_EXISTING_USER_LINK_MODE:-disabled}
+  OIDC_REQUIRE_VERIFIED_EMAIL: ${OIDC_REQUIRE_VERIFIED_EMAIL:-true}
+  OIDC_SYNC_ROLES: ${OIDC_SYNC_ROLES:-false}
+  OIDC_ROLES_CLAIM: ${OIDC_ROLES_CLAIM:-groups}
+  OIDC_ADMIN_ROLES: ${OIDC_ADMIN_ROLES:-}
+  OIDC_WORKSPACE_ROLE_MAP: ${OIDC_WORKSPACE_ROLE_MAP:-}
+  LOCAL_AUTH_ENABLED: ${LOCAL_AUTH_ENABLED:-true}
+  # The backend is reached through the bundled nginx frontend below, so rate
+  # limiting needs to trust exactly one reverse-proxy hop to key by real
+  # client IP instead of nginx's own container address.
+  TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-1}
+  REDIS_URL: redis://redis:6379/0
+  STORAGE_LOCAL_PATH: /app/data/files
+  STORAGE_MAX_FILE_SIZE_MB: ${STORAGE_MAX_FILE_SIZE_MB:-10}
+  STORAGE_ALLOWED_EXTENSIONS: ${STORAGE_ALLOWED_EXTENSIONS:-jpg,jpeg,png,webp,gif,heic,pdf}
+  UPDATE_CHECK_REPO: ${UPDATE_CHECK_REPO:-}
+
+services:
+  backend-common:
+    environment: *backend-env
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    volumes:
+      - files:/app/data/files
+    restart: unless-stopped
+
+  frontend-common:
+    image: ${IMAGE_PREFIX:-ghcr.io/your-org/launchkit}-frontend:${APP_VERSION:-latest}
+    ports:
+      - "${FRONTEND_PORT:-3000}:8080"
+    environment:
+      BACKEND_URL: http://backend:8000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    restart: unless-stopped

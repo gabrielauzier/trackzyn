@@ -1,0 +1,10 @@
+apiVersion: v2
+name: launchkit
+description: A Helm chart for launchkit, a self-hosted full-stack application template.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - launchkit
+  - fastapi
+  - react

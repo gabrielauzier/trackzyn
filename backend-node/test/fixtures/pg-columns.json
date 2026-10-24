@@ -1,0 +1,308 @@
+{
+  "app_settings": [
+    {
+      "column": "key",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 255
+    },
+    {
+      "column": "value",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 2000
+    }
+  ],
+  "files": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "uploaded_by_user_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "filename",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 255
+    },
+    {
+      "column": "storage_key",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 512
+    },
+    {
+      "column": "content_type",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 127
+    },
+    {
+      "column": "size",
+      "type": "bigint",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "user_passkeys": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "credential_id",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 512
+    },
+    {
+      "column": "public_key",
+      "type": "text",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "sign_count",
+      "type": "integer",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "name",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 100
+    },
+    {
+      "column": "transports",
+      "type": "json",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "aaguid",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 64
+    },
+    {
+      "column": "device_type",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 50
+    },
+    {
+      "column": "backed_up",
+      "type": "boolean",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "last_used_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    }
+  ],
+  "users": [
+    {
+      "column": "preferences",
+      "type": "json",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "totp_secret",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 32
+    },
+    {
+      "column": "is_2fa_enabled",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "oidc_issuer",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 255
+    },
+    {
+      "column": "oidc_subject",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 255
+    },
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "email",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 320
+    },
+    {
+      "column": "hashed_password",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 1024
+    },
+    {
+      "column": "is_active",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "is_superuser",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "is_verified",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "workspace_members": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "role",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 20
+    },
+    {
+      "column": "invited_by_user_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "joined_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "workspaces": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "name",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 100
+    },
+    {
+      "column": "created_by_user_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "is_archived",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "managed_by_user_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "locale",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 10
+    },
+    {
+      "column": "timezone",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 64
+    },
+    {
+      "column": "icon",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 50
+    },
+    {
+      "column": "color",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 7
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ]
+}

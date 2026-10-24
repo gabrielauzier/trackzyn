@@ -1,0 +1,31 @@
+# Images are published by .github/workflows/release.yml. Point IMAGE_PREFIX at
+# your registry (e.g. ghcr.io/acme/launchkit) and pin APP_VERSION to a tag.
+x-node-image: &node-image
+  image: ${IMAGE_PREFIX:-ghcr.io/your-org/launchkit}-backend-node:${APP_VERSION:-latest}
+
+services:
+  backend-node:
+    <<: *node-image
+    extends: { file: compose/prod/common.yml, service: backend-common }
+    command: sh -c "node dist/migrate.js && node dist/server.js"
+    # The frontend and the other containers reach the API as http://backend:8000.
+    networks:
+      default:
+        aliases: [backend]
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    extends: { file: compose/prod/common.yml, service: frontend-common }
+    depends_on:
+      - backend-node
+
+  worker-node:
+    <<: *node-image
+    extends: { file: compose/prod/common.yml, service: backend-common }
+    command: node dist/worker.js
+
+  scheduler-node:
+    <<: *node-image
+    extends: { file: compose/prod/common.yml, service: backend-common }
+    command: node dist/scheduler.js

@@ -1,0 +1,34 @@
+x-node-base: &node-base
+  extends: { file: compose/dev/common.yml, service: backend-common }
+  build:
+    context: ./backend-node
+    target: dev
+  volumes:
+    - ./backend-node:/app
+    - /app/node_modules
+    - files:/app/data/files
+
+services:
+  backend-node:
+    <<: *node-base
+    # The migration runs first; if it fails the container exits and /api/health never answers.
+    command: sh -c "npm run migrate && npm run dev"
+    # The frontend and the other containers reach the API as http://backend:8000.
+    networks:
+      default:
+        aliases: [backend]
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    extends: { file: compose/dev/common.yml, service: frontend-common }
+    depends_on:
+      - backend-node
+
+  worker-node:
+    <<: *node-base
+    command: npm run worker
+
+  scheduler-node:
+    <<: *node-base
+    command: npm run scheduler

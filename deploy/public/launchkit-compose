@@ -1,0 +1,38 @@
+#!/bin/bash
+# Atalho para o Docker Compose da PRODUÇÃO do launchkit. Funciona de qualquer pasta.
+#
+# Garante, em todo comando, as duas coisas que não podem ser esquecidas:
+#   -p launchkit-prod        projeto isolado do ambiente de desenvolvimento (que usa o projeto "launchkit")
+#   --env-file ...        segredos, URL pública e versão fixa das imagens (IMAGE_PREFIX, APP_VERSION)
+#
+# Uso:    ./deploy/public/launchkit-compose ps | pull | up -d | stop | start | logs -f backend ...
+# Opção:  LAUNCHKIT_ENV_FILE=caminho/do/.env  (padrão: deploy/public/.env, relativo à raiz do repositório)
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+ENV_FILE="${LAUNCHKIT_ENV_FILE:-deploy/public/.env}"
+[ -r "$ENV_FILE" ] || { echo "arquivo de ambiente não encontrado: $ENV_FILE (copie deploy/public/.env.example)" >&2; exit 1; }
+
+# BACKEND_STACK (python ou node): o ambiente vence o arquivo, como no Compose.
+STACK="${BACKEND_STACK:-}"
+if [ -z "$STACK" ]; then
+  STACK="$(grep '^BACKEND_STACK=' "$ENV_FILE" | tail -n 1 | cut -d= -f2- | tr -d "\"' \r" || true)"
+fi
+case "${STACK:-python}" in
+  python|node) ;;
+  *) echo "BACKEND_STACK must be python or node (got: $STACK)" >&2; exit 2 ;;
+esac
+
+# `down -v` e `volume rm` apagam o banco e os arquivos: exige confirmação explícita.
+for arg in "$@"; do
+  if [ "$arg" = "-v" ] || [ "$arg" = "--volumes" ]; then
+    echo "ATENÇÃO: '$arg' apaga os volumes (banco e arquivos). Digite APAGAR para continuar:" >&2
+    read -r answer; [ "$answer" = "APAGAR" ] || { echo "cancelado." >&2; exit 1; }
+    break
+  fi
+done
+
+exec docker compose -p launchkit-prod --env-file "$ENV_FILE" \
+  -f docker-compose.prod.yml "$@"

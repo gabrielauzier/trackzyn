@@ -1,0 +1,28 @@
+.venv
+.env
+secrets/
+.worktrees/
+.DS_Store
+.playwright-mcp/
+.claude
+.mcp.json
+CLAUDE.md
+docs/plans/
+tmp/
+docker-compose.override.yml
+
+# Ignore local configuration files
+.vscode/
+
+# Runtime data written by the backend (uploaded files). User data — never commit.
+backend/data/
+
+# Contract suite and Node backend (local only)
+contracts/.env.local
+contracts/.logs/
+contracts/node_modules/
+backend-node/node_modules/
+backend-node/dist/
+backend-node/coverage/
+backend-node/data/
+.agents/

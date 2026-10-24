@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "launchkit.fullname" . }}-migration
+  labels:
+    {{- include "launchkit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migration
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "launchkit.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migration
+          image: "{{ include "launchkit.backendImage" . }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Starting database migration..."
+              for i in $(seq 1 30); do
+                if {{ if eq (include "launchkit.backendStack" .) "node" }}node dist/migrate.js{{ else }}alembic upgrade head{{ end }}; then
+                  echo "Migration successful."
+                  exit 0
+                fi
+                echo "Migration failed (database might not be ready). Retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "Migration failed after multiple retries."
+              exit 1
+          envFrom:
+            - configMapRef:
+                name: {{ include "launchkit.fullname" . }}-config
+            - secretRef:
+                {{- if .Values.global.existingSecret }}
+                name: {{ .Values.global.existingSecret }}
+                {{- else }}
+                name: {{ include "launchkit.fullname" . }}-secrets
+                {{- end }}
+          {{- if .Values.backend.resources }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          {{- end }}

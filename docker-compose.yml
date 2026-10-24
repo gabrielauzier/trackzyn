@@ -1,0 +1,45 @@
+name: launchkit
+
+# podman-compose groups all services into a single pod by default, which
+# interferes with per-service port mapping and networking. Disabling it makes
+# podman-compose behave like Docker Compose. Docker ignores unknown top-level
+# x- keys.
+x-podman:
+  in_pod: false
+
+# select-stack:begin multi
+# The backend stack is chosen by BACKEND_STACK (python or node, default python). Each stack file
+# declares its API, worker and scheduler plus the frontend, which depends on that stack's API.
+# select-stack:end
+include:
+  - path: compose/dev/${BACKEND_STACK:-python}.yml
+    project_directory: .
+
+services:
+  redis:
+    image: docker.io/library/redis:8-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  db:
+    image: ${DB_IMAGE:-docker.io/library/postgres:16-alpine}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: launchkit
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+  files:

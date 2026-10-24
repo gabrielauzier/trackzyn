@@ -1,0 +1,62 @@
+{{- if .Values.celeryBeat.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "launchkit.fullname" . }}-beat
+  labels:
+    {{- include "launchkit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "launchkit.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/common/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "launchkit.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
+    spec:
+      containers:
+        - name: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
+          image: "{{ include "launchkit.backendImage" . }}"
+          imagePullPolicy: {{ .Values.celeryBeat.image.pullPolicy }}
+          command:
+            {{- if eq (include "launchkit.backendStack" .) "node" }}
+            - node
+            - dist/scheduler.js
+            {{- else }}
+            - celery
+            - -A
+            - app.worker
+            - beat
+            - --loglevel=info
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "launchkit.fullname" . }}-config
+            - secretRef:
+                {{- if .Values.global.existingSecret }}
+                name: {{ .Values.global.existingSecret }}
+                {{- else }}
+                name: {{ include "launchkit.fullname" . }}-secrets
+                {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.files.enabled }}
+            - name: files
+              mountPath: /app/data/files
+            {{- end }}
+          {{- if .Values.celeryBeat.resources }}
+          resources:
+            {{- toYaml .Values.celeryBeat.resources | nindent 12 }}
+          {{- end }}
+      volumes:
+        {{- if .Values.persistence.files.enabled }}
+        - name: files
+          persistentVolumeClaim:
+            claimName: {{ include "launchkit.fullname" . }}-files
+        {{- end }}
+{{- end }}

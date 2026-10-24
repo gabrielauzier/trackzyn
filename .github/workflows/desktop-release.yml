@@ -1,0 +1,147 @@
+name: Desktop Release
+
+# Builds the desktop installers and publishes them to the releases repository
+# named by the repository variable LAUNCHKIT_DESKTOP_RELEASE_REPO (owner/repo).
+# Push a tag such as desktop-v0.1.0; it must match desktop/package.json.
+on:
+  push:
+    tags: ["desktop-v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-release:
+    name: Desktop Release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # select-stack:begin node
+        # One build per architecture on a runner of that architecture: the packaged local backend
+        # carries the host's native argon2 addon, so an x64 app cannot be built on the arm64 runner.
+        # select-stack:end
+        # select-stack:begin python
+        #~ # One build per architecture on a runner of that architecture.
+        # select-stack:end
+        include:
+          - os: macos-latest
+            electron_args: --arm64
+          - os: macos-15-intel
+            electron_args: --x64
+          - os: windows-latest
+            electron_args: --x64
+          - os: ubuntu-latest
+            electron_args: --x64
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          # select-stack:begin node
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+            backend-node/package-lock.json
+          # select-stack:end
+          # select-stack:begin python
+          #~ cache-dependency-path: |
+          #~   frontend/package-lock.json
+          #~   desktop/package-lock.json
+          # select-stack:end
+
+      - name: Check the tag matches the desktop version
+        shell: bash
+        working-directory: desktop
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "desktop-v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match desktop/package.json version ${version}"
+            exit 1
+          fi
+
+      - name: Resolve the releases repository and signing
+        shell: bash
+        env:
+          RELEASE_REPO: ${{ vars.LAUNCHKIT_DESKTOP_RELEASE_REPO }}
+          HAS_MAC_CSC_LINK: ${{ secrets.CSC_LINK != '' }}
+          HAS_MAC_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD != '' }}
+          HAS_MAC_APPLE_ID: ${{ secrets.APPLE_ID != '' }}
+          HAS_MAC_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+          HAS_MAC_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID != '' }}
+          HAS_WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK != '' }}
+          HAS_WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD != '' }}
+        run: |
+          if ! [[ "${RELEASE_REPO}" =~ ^[^/]+/[^/]+$ ]]; then
+            echo "::error::Set the repository variable LAUNCHKIT_DESKTOP_RELEASE_REPO to owner/repo"
+            exit 1
+          fi
+          echo "LAUNCHKIT_DESKTOP_RELEASE_OWNER=${RELEASE_REPO%%/*}" >> "$GITHUB_ENV"
+          echo "LAUNCHKIT_DESKTOP_RELEASE_REPO_NAME=${RELEASE_REPO##*/}" >> "$GITHUB_ENV"
+          # Only a code-signed build may auto-update (macOS refuses unsigned
+          # updates). Linux packages have no signature to check, so Linux is
+          # never signed and never auto-updates.
+          signed=false
+          case "${RUNNER_OS}" in
+            macOS)
+              # An unsigned, un-notarized dmg/zip is refused by Gatekeeper and
+              # cannot auto-update: do not publish one.
+              missing=""
+              for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+                flag="HAS_MAC_${name}"
+                [ "${!flag}" = "true" ] || missing="${missing} ${name}"
+              done
+              if [ -n "${missing}" ]; then
+                echo "::error::The macOS release must be signed and notarized, but these secrets are missing:${missing}. Add them to the repository secrets; nothing was published."
+                exit 1
+              fi
+              signed=true
+              ;;
+            Windows) [ "${HAS_WIN_CSC_LINK}" = "true" ] && [ "${HAS_WIN_CSC_KEY_PASSWORD}" = "true" ] && signed=true ;;
+          esac
+          echo "LAUNCHKIT_DESKTOP_SIGNED=${signed}" >> "$GITHUB_ENV"
+          if [ "${signed}" = "false" ]; then
+            echo "::warning::${RUNNER_OS} has no code signing in this release: this build is unsigned and will not auto-update."
+          fi
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix desktop
+
+      # select-stack:begin node
+      # `npm run build:backend` bundles backend-node/src with esbuild: its packages must be there.
+      - name: Install the local backend's dependencies
+        shell: bash
+        run: npm ci --prefix backend-node
+      # select-stack:end
+
+      - name: Build the app
+        working-directory: desktop
+        run: npm run build:all
+
+      - name: Package, sign and publish
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.LAUNCHKIT_DESKTOP_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          # macOS signing and notarization
+          CSC_LINK: ${{ runner.os == 'macOS' && secrets.CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.CSC_KEY_PASSWORD || '' }}
+          APPLE_ID: ${{ runner.os == 'macOS' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ runner.os == 'macOS' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ runner.os == 'macOS' && secrets.APPLE_TEAM_ID || '' }}
+          # Windows signing
+          WIN_CSC_LINK: ${{ runner.os == 'Windows' && secrets.WIN_CSC_LINK || '' }}
+          WIN_CSC_KEY_PASSWORD: ${{ runner.os == 'Windows' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
+        run: >-
+          npx electron-builder ${{ matrix.electron_args }} --publish always
+          -c.publish.provider=github
+          -c.publish.owner="${LAUNCHKIT_DESKTOP_RELEASE_OWNER}"
+          -c.publish.repo="${LAUNCHKIT_DESKTOP_RELEASE_REPO_NAME}"

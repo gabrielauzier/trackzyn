@@ -1,0 +1,77 @@
+appId: com.launchkit.desktop
+productName: launchkit
+directories:
+  output: release
+files:
+  - out/**
+  - package.json
+  # select-stack:begin node
+  # The local backend runs from resources/backend (below) with its own copies of these two packages.
+  - '!node_modules/@electric-sql/pglite{,/**}'
+  - '!node_modules/@node-rs{,/**}'
+  # select-stack:end
+# The renderer is the frontend's desktop build; the main process serves it from
+# resources/frontend (see src/main/index.ts).
+extraResources:
+  - from: ../frontend/dist-desktop
+    to: frontend
+  # select-stack:begin node
+  # The local mode's backend: backend-node bundled by esbuild (npm run build:backend), its
+  # migrations, and the two packages the bundle leaves out (the PGlite wasm and the argon2 addon).
+  # It runs outside the asar, so it finds them in backend/node_modules next to it.
+  - from: out/backend
+    to: backend
+  - from: ../backend-node/drizzle
+    to: backend/drizzle
+  - from: node_modules/@electric-sql/pglite
+    to: backend/node_modules/@electric-sql/pglite
+  - from: node_modules/@node-rs
+    to: backend/node_modules/@node-rs
+  # select-stack:end
+asar: true
+# launchkit://auth/callback brings the SSO sign-in back from the system browser.
+protocols:
+  - name: launchkit
+    schemes: [launchkit]
+# Hardened Electron: no Node-as-runtime, no inspector flags, and the app code
+# is only loaded from the integrity-checked asar.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+# `publish` is not set here: the release workflow passes it as -c.publish.*
+# flags (releases live in their own repository), so unpublished package builds
+# need no release variables.
+mac:
+  category: public.app-category.productivity
+  # Signing and notarization read CSC_LINK, CSC_KEY_PASSWORD, APPLE_ID,
+  # APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID from the environment. The
+  # release workflow fails on macOS when they are missing; only local and CI
+  # package builds pass -c.mac.identity=- (an ad-hoc signature).
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  notarize: true
+  # zip is what macOS auto-update downloads; dmg is what people install.
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+linux:
+  category: Utility
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]

@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "launchkit.fullname" . }}-backend
+  labels:
+    {{- include "launchkit.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "launchkit.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/common/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "launchkit.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ include "launchkit.backendImage" . }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          command:
+            {{- if eq (include "launchkit.backendStack" .) "node" }}
+            - node
+            - dist/server.js
+            {{- else }}
+            - uvicorn
+            - app.main:app
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8000"
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          envFrom:
+            - configMapRef:
+                name: {{ include "launchkit.fullname" . }}-config
+            - secretRef:
+                {{- if .Values.global.existingSecret }}
+                name: {{ .Values.global.existingSecret }}
+                {{- else }}
+                name: {{ include "launchkit.fullname" . }}-secrets
+                {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.files.enabled }}
+            - name: files
+              mountPath: /app/data/files
+            {{- end }}
+          {{- if .Values.backend.resources }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          {{- end }}
+      volumes:
+        {{- if .Values.persistence.files.enabled }}
+        - name: files
+          persistentVolumeClaim:
+            claimName: {{ include "launchkit.fullname" . }}-files
+        {{- end }}

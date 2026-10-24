@@ -1,0 +1,753 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Only superseded PR runs are cancelled; every main push is validated.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # select-stack:begin python
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    # PostgreSQL starts on skipped PRs too; split setup if that cost dominates.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: launchkit_test
+          POSTGRES_PASSWORD: launchkit_test
+          POSTGRES_DB: launchkit_test
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U launchkit_test -d launchkit_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect backend-relevant changes
+        id: backend-changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip backend tests
+        if: steps.backend-changes.outputs.run_backend == 'false'
+        run: echo "No backend-relevant changes; skipping backend test suite."
+
+      - name: Set up Python
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        uses: actions/setup-python@v7
+        with:
+          # Single source of truth with the Docker image: CI must test the
+          # same interpreter the backend ships with.
+          python-version-file: backend/.python-version
+
+      - name: Set up uv
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.17"
+          enable-cache: true
+          cache-dependency-glob: |
+            backend/uv.lock
+            backend/pyproject.toml
+            backend/.python-version
+
+      - name: Install dependencies
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        run: uv sync --locked --all-extras
+
+      - name: Lint with Ruff
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        run: uv run --no-sync ruff check .
+
+      - name: Type check with ty
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        run: uv run --no-sync ty check .
+
+      - name: Run tests with coverage
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        env:
+          POSTGRES_TEST_URL: postgresql+asyncpg://launchkit_test:launchkit_test@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/launchkit_test
+        run: |
+          uv run --no-sync pytest -n auto --dist loadfile --cov=app --cov-report=xml --cov-report=term-missing --cov-fail-under=60 -ra -W error
+
+      - name: Upload coverage report
+        if: ${{ always() && steps.backend-changes.outputs.run_backend != 'false' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: backend/coverage.xml
+  # select-stack:end
+
+  # select-stack:begin python
+  migration-chain:
+    name: Migration Chain
+    runs-on: ubuntu-latest
+
+    steps:
+      # No `ref:` override, so on a pull request this is the merge with the
+      # base branch. That is the whole point: a revision id that only clashes
+      # once both sides are together is visible here and nowhere else.
+      - uses: actions/checkout@v7
+
+      - name: Test CI change selection
+        run: python3 .github/ci/test_changes.py
+
+      - name: Test CI workflow wiring
+        run: python3 .github/ci/test_workflow_jobs.py
+
+      - name: Check the Alembic revision chain
+        run: python3 backend/scripts/check_migration_chain.py
+  # select-stack:end
+
+  frontend-checks:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect frontend-relevant changes
+        id: frontend-changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip frontend checks
+        if: steps.frontend-changes.outputs.run_frontend == 'false'
+        run: echo "No frontend-relevant changes; skipping frontend checks."
+
+      - name: Set up Node.js
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm ci
+
+      - name: Lint
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm run lint -- --max-warnings=0
+
+      - name: Type check & Build
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm run build
+
+      - name: Run tests
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm test
+
+  helm-checks:
+    name: Helm Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect helm-relevant changes
+        id: helm-changes
+        run: python3 .github/ci/changes.py
+
+      - name: Skip helm checks
+        if: steps.helm-changes.outputs.run_helm == 'false'
+        run: echo "No helm-relevant changes; skipping helm lint."
+
+      - name: Set up Helm
+        if: steps.helm-changes.outputs.run_helm != 'false'
+        uses: azure/setup-helm@v5
+        with:
+          version: v4.3.0
+
+      - name: Lint Helm Chart
+        if: steps.helm-changes.outputs.run_helm != 'false'
+        run: helm lint charts/launchkit
+
+      - name: Validate Helm Chart with Kubeconform
+        if: steps.helm-changes.outputs.run_helm != 'false'
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar -xz
+          sudo mv kubeconform /usr/local/bin/
+
+          helm template launchkit-test charts/launchkit | kubeconform -summary -strict
+
+  eject-smoke:
+    name: Eject Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Only the template carries the eject script; an ejected project skips this.
+      - name: Eject into a temporary directory
+        if: hashFiles('scripts/eject.sh') != ''
+        run: ./scripts/eject.sh "$RUNNER_TEMP/ejected" --name acme-app --display-name "Acme"
+
+      - name: Check the copy is renamed and has no git history
+        if: hashFiles('scripts/eject.sh') != ''
+        run: |
+          cd "$RUNNER_TEMP/ejected"
+          test ! -e .git
+          test ! -e scripts/eject.sh
+          test -d charts/acme-app
+          if grep -rIil launchkit . ; then echo "template name left behind"; exit 1; fi
+
+  # select-stack:begin python
+  contract-drift:
+    name: Contract Drift
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect backend-relevant changes
+        id: backend-changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip contract drift check
+        if: steps.backend-changes.outputs.run_backend == 'false'
+        run: echo "No backend-relevant changes; skipping the contract drift check."
+
+      - name: Set up Python
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: backend/.python-version
+
+      - name: Set up uv
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.17"
+          enable-cache: true
+          cache-dependency-glob: |
+            backend/uv.lock
+            backend/pyproject.toml
+            backend/.python-version
+
+      - name: Install dependencies
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        run: uv sync --locked --all-extras
+
+      # contracts/openapi.json is the frozen HTTP contract: it must be exactly
+      # what the Python backend exports today.
+      - name: Check contracts/openapi.json is current
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        working-directory: .
+        run: backend/.venv/bin/python backend/scripts/export_openapi.py --check
+
+      # The Node backend validates timezones against this generated list (criterion 44).
+      - name: Check backend-node/src/data/timezones.json is current
+        if: steps.backend-changes.outputs.run_backend != 'false'
+        working-directory: .
+        run: backend/.venv/bin/python backend/scripts/export_timezones.py --check
+  # select-stack:end
+
+  # select-stack:begin node
+  backend-node-tests:
+    name: Backend Node Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-node
+    # Redis is the only service: the integration tests run on PGlite, and the BullMQ worker (C35)
+    # and RedisStore tests need a real Redis.
+    services:
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect Node backend changes
+        id: changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip Node backend checks
+        if: steps.changes.outputs.run_backend_node == 'false'
+        run: echo "No Node-backend-relevant changes; skipping the Node backend checks."
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.run_backend_node != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+
+      - name: Install dependencies
+        if: steps.changes.outputs.run_backend_node != 'false'
+        run: npm ci
+
+      - name: Lint
+        if: steps.changes.outputs.run_backend_node != 'false'
+        run: npm run lint
+
+      - name: Type check
+        if: steps.changes.outputs.run_backend_node != 'false'
+        run: npm run typecheck
+
+      # No database service: the integration tests run on PGlite. REDIS_URL turns on the tests
+      # that need a real Redis (RedisStore, BullMQ worker); without it they are not collected.
+      - name: Run tests with coverage
+        if: steps.changes.outputs.run_backend_node != 'false'
+        env:
+          REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports['6379'] }}/0
+        run: npm test -- --coverage
+  # select-stack:end
+
+  # select-stack:begin multi
+  contract:
+    name: Contract (${{ matrix.stack }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [python, node]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: launchkit_test
+          POSTGRES_PASSWORD: launchkit_test
+          POSTGRES_DB: launchkit_test
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U launchkit_test -d launchkit_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect relevant changes
+        id: changes
+        run: python3 .github/ci/changes.py
+
+      - name: Skip the contract suite
+        if: steps.changes.outputs.run_backend == 'false' && steps.changes.outputs.run_backend_node == 'false'
+        run: echo "No backend-relevant changes; skipping the contract suite."
+
+      # Both stacks are installed in both legs: the cross-stack cases (C9, C11, C18, C21)
+      # run the stack under test against the other one on the same database.
+      - name: Set up Python
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: backend/.python-version
+
+      - name: Set up uv
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.17"
+          enable-cache: true
+          cache-dependency-glob: |
+            backend/uv.lock
+            backend/pyproject.toml
+            backend/.python-version
+
+      - name: Install Python dependencies
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        working-directory: backend
+        run: uv sync --locked --all-extras
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            backend-node/package-lock.json
+            contracts/package-lock.json
+
+      - name: Install Node dependencies
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        run: |
+          npm ci --prefix backend-node
+          npm ci --prefix contracts
+
+      - name: Run the contract suite against ${{ matrix.stack }}
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        working-directory: contracts
+        env:
+          CONTRACT_STACK: ${{ matrix.stack }}
+          CONTRACT_DATABASE_URL: postgresql://launchkit_test:launchkit_test@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/launchkit_test
+          CONTRACT_REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports['6379'] }}/0
+          CONTRACT_PYTHON_BIN: ${{ github.workspace }}/backend/.venv/bin/python
+        run: |
+          status=0
+          npx vitest run --reporter=default --reporter=json --outputFile.json=.logs/result.json || status=$?
+          node scripts/summary.mjs .logs/result.json --no-skip
+          exit $status
+  # select-stack:end
+
+  # select-stack:begin multi
+  schema-diff:
+    name: Schema Diff
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: launchkit_test
+          POSTGRES_PASSWORD: launchkit_test
+          POSTGRES_DB: launchkit_test
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U launchkit_test -d launchkit_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect relevant changes
+        id: changes
+        run: python3 .github/ci/changes.py
+
+      - name: Skip the schema diff
+        if: steps.changes.outputs.run_backend == 'false' && steps.changes.outputs.run_backend_node == 'false'
+        run: echo "No backend-relevant changes; skipping the schema diff."
+
+      - name: Set up Python
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        uses: actions/setup-python@v7
+        with:
+          python-version-file: backend/.python-version
+
+      - name: Set up uv
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.17"
+          enable-cache: true
+          cache-dependency-glob: |
+            backend/uv.lock
+            backend/pyproject.toml
+            backend/.python-version
+
+      - name: Install Python dependencies
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        working-directory: backend
+        run: uv sync --locked --all-extras
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+
+      - name: Install Node dependencies
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        run: npm ci --prefix backend-node
+
+      # Alembic and Drizzle build two empty databases; pg_dump --schema-only of both must match.
+      - name: Compare the Alembic and Drizzle schemas
+        if: steps.changes.outputs.run_backend != 'false' || steps.changes.outputs.run_backend_node != 'false'
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: ${{ job.services.postgres.ports['5432'] }}
+          PGUSER: launchkit_test
+          PGPASSWORD: launchkit_test
+          SCHEMA_DIFF_URL_BASE: postgresql://launchkit_test:launchkit_test@127.0.0.1:${{ job.services.postgres.ports['5432'] }}
+          PYTHON_BIN: ${{ github.workspace }}/backend/.venv/bin/python
+        run: backend-node/scripts/schema-diff.sh --self-test
+  # select-stack:end
+
+  # select-stack:begin multi
+  stack-switch:
+    name: Stack Switch
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect stack-relevant changes
+        id: changes
+        run: python3 .github/ci/changes.py
+
+      - name: Skip stack switch checks
+        if: steps.changes.outputs.run_stack_switch == 'false'
+        run: echo "No stack-relevant changes; skipping the stack switch checks."
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.run_stack_switch != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Preflight BACKEND_STACK
+        if: steps.changes.outputs.run_stack_switch != 'false'
+        run: scripts/stack/preflight.sh
+
+      # C1, C2, C4, C17 and C18: each case brings a Compose project up on random host ports.
+      - name: Run the stack cases with Docker Compose
+        if: steps.changes.outputs.run_stack_switch != 'false'
+        run: node --test --test-name-pattern='^C(1|2|4|17|18) ' scripts/stack/stack.test.mjs
+  # select-stack:end
+
+  # select-stack:begin multi
+  select-stack:
+    name: Select Stack (${{ matrix.stack }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [python, node]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect stack-relevant changes
+        id: changes
+        run: python3 .github/ci/changes.py
+
+      - name: Skip select-stack checks
+        if: steps.changes.outputs.run_select_stack == 'false'
+        run: echo "No stack-relevant changes; skipping the select-stack checks."
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.run_select_stack != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      # C14 on a copy of the repository with only this stack: compose config, helm lint, actionlint,
+      # and the CI tests of the copy.
+      - name: Apply select-stack to a copy and check it
+        if: steps.changes.outputs.run_select_stack != 'false'
+        env:
+          ONLY_STACK: ${{ matrix.stack }}
+        run: node --test --test-name-pattern='^C14 ' scripts/stack/select-stack.test.mjs
+  # select-stack:end
+
+  desktop-checks:
+    name: Desktop Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect desktop-relevant changes
+        id: desktop-changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip desktop checks
+        if: steps.desktop-changes.outputs.run_desktop == 'false'
+        run: echo "No desktop-relevant changes; skipping desktop checks."
+
+      - name: Set up Node.js
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          # select-stack:begin node
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+            backend-node/package-lock.json
+          # select-stack:end
+          # select-stack:begin python
+          #~ cache-dependency-path: |
+          #~   frontend/package-lock.json
+          #~   desktop/package-lock.json
+          # select-stack:end
+
+      - name: Install dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: |
+          npm ci --prefix ../frontend
+          npm ci
+
+      # select-stack:begin node
+      # `npm run build:backend` bundles backend-node/src with esbuild: its packages must be there.
+      - name: Install the local backend's dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm ci --prefix ../backend-node
+      # select-stack:end
+
+      - name: Lint
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run lint
+
+      - name: Type check
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run typecheck
+
+      # Unsigned: no certificates here, so the app is built and packaged only
+      # to prove it builds (and for the fuse checks in the test run below).
+      - name: Build the unsigned app
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run package:dir
+
+      # select-stack:begin node
+      # The packaged-app test starts the app with its local backend; it needs a display.
+      # select-stack:end
+      # select-stack:begin python
+      #~ # The packaged-app test starts the app; it needs a display.
+      # select-stack:end
+      - name: Start a virtual display
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: |
+          Xvfb :99 -screen 0 1280x1024x24 &
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm test
+
+      # The web build must not reach for the desktop bridge (window.launchkit).
+      - name: Check the web bundle
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run check:web-bundle
+
+  desktop-e2e:
+    name: Desktop E2E (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect desktop-relevant changes
+        id: desktop-changes
+        shell: bash
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip desktop E2E
+        if: steps.desktop-changes.outputs.run_desktop == 'false'
+        shell: bash
+        run: echo "No desktop-relevant changes; skipping desktop E2E."
+
+      - name: Set up Node.js
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          # select-stack:begin node
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+            backend-node/package-lock.json
+          # select-stack:end
+          # select-stack:begin python
+          #~ cache-dependency-path: |
+          #~   frontend/package-lock.json
+          #~   desktop/package-lock.json
+          # select-stack:end
+
+      - name: Install dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        shell: bash
+        run: |
+          npm ci --prefix ../frontend
+          npm ci
+
+      # select-stack:begin node
+      # `npm run build:backend` bundles backend-node/src with esbuild: its packages must be there.
+      - name: Install the local backend's dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        shell: bash
+        run: npm ci --prefix ../backend-node
+      # select-stack:end
+
+      # npm run test:e2e builds the app (frontend, main, bundled local backend) and runs every
+      # Playwright spec, including the local mode (local-flow.spec.ts) and the SSO deep link (sso.spec.ts).
+      # Linux has no display on the runner; the app needs one to open a window.
+      - name: Run Playwright tests (Linux)
+        if: runner.os == 'Linux' && steps.desktop-changes.outputs.run_desktop != 'false'
+        run: xvfb-run --auto-servernum npm run test:e2e
+
+      - name: Run Playwright tests
+        if: runner.os != 'Linux' && steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ failure() && steps.desktop-changes.outputs.run_desktop != 'false' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-e2e-${{ runner.os }}
+          path: |
+            desktop/test-results
+            desktop/playwright-report

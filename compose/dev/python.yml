@@ -1,0 +1,34 @@
+services:
+  backend:
+    extends: { file: compose/dev/common.yml, service: backend-common }
+    build: ./backend
+    command:
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port
+      8000 --reload"
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - files:/app/data/files
+
+  frontend:
+    extends: { file: compose/dev/common.yml, service: frontend-common }
+    depends_on:
+      - backend
+
+  celery-worker:
+    extends: { file: compose/dev/common.yml, service: backend-common }
+    build: ./backend
+    # Limit to 2 workers to save RAM (default = number of CPUs).
+    command: celery -A app.worker worker --loglevel=info --concurrency=2
+    volumes:
+      - ./backend:/app
+      - files:/app/data/files
+
+  celery-beat:
+    extends: { file: compose/dev/common.yml, service: backend-common }
+    build: ./backend
+    command: celery -A app.worker beat --loglevel=info
+    volumes:
+      - ./backend:/app
+      - files:/app/data/files
