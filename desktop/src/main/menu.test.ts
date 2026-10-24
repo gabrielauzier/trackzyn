@@ -62,7 +62,7 @@ describe('application menu', () => {
     const template = buildMenuTemplate({ isMac: false, strings, onSwitchServer: vi.fn(), onOpenDocs })
     const help = (template.find((item) => item.label === 'Help')?.submenu ?? []) as MenuItemConstructorOptions[]
     ;(help[0].click as () => void)()
-    expect(help[0].label).toBe('launchkit on GitHub')
+    expect(help[0].label).toBe('trackzyn on GitHub')
     expect(onOpenDocs).toHaveBeenCalledTimes(1)
   })
 
@@ -84,14 +84,14 @@ describe('application menu', () => {
     const item = fileMenu(template, 'File').find((entry) => entry.id === 'switch-server')
 
     ;(item?.click as () => void)()
-    await vi.waitFor(() => expect(calls).toContain('go:app://launchkit/mode'))
+    await vi.waitFor(() => expect(calls).toContain('go:app://trackzyn/mode'))
     // The backend stops (cleanly) before the choice opens; the data stays where it is.
-    expect(calls).toEqual(['stop', 'mode:null', 'go:app://launchkit/mode'])
+    expect(calls).toEqual(['stop', 'mode:null', 'go:app://trackzyn/mode'])
 
     calls.length = 0
     mode = 'remote'
     ;(item?.click as () => void)()
-    await vi.waitFor(() => expect(calls).toContain('go:app://launchkit/connect'))
-    expect(calls).toEqual(['go:app://launchkit/connect'])
+    await vi.waitFor(() => expect(calls).toContain('go:app://trackzyn/connect'))
+    expect(calls).toEqual(['go:app://trackzyn/connect'])
   })
 })

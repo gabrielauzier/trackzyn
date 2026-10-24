@@ -1,9 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { APP_VERSION_ARG, IPC, type LaunchkitApi } from '../shared/ipc'
+import { APP_VERSION_ARG, IPC, type TrackzynApi } from '../shared/ipc'
 
 const versionArg = process.argv.find((arg) => arg.startsWith(APP_VERSION_ARG))
 
-const api: LaunchkitApi = {
+const api: TrackzynApi = {
   isDesktop: true,
   platform: process.platform,
   appVersion: versionArg ? versionArg.slice(APP_VERSION_ARG.length) : '',
@@ -31,4 +31,4 @@ const api: LaunchkitApi = {
   },
 }
 
-contextBridge.exposeInMainWorld('launchkit', api)
+contextBridge.exposeInMainWorld('trackzyn', api)

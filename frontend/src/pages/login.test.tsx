@@ -4,7 +4,7 @@ import type { AxiosError } from 'axios'
 
 import LoginPage from '@/pages/login'
 import { i18n, renderWithProviders, t } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
 const navigate = vi.hoisted(() => vi.fn())
 vi.mock('react-router-dom', async (importOriginal) => ({
@@ -231,10 +231,10 @@ describe('LoginPage', () => {
   })
 
   it('hides passkey controls when running on desktop', async () => {
-    // The browser could do passkeys; the desktop origin (app://launchkit) cannot match the server's RP ID.
+    // The browser could do passkeys; the desktop origin (app://trackzyn) cannot match the server's RP ID.
     webauthn.isPasskeySupported.mockReturnValue(true)
     webauthn.isConditionalPasskeySupported.mockResolvedValue(true)
-    const desktopApi: LaunchkitApi = {
+    const desktopApi: TrackzynApi = {
       isDesktop: true,
       platform: 'darwin',
       appVersion: '0.1.0',
@@ -249,7 +249,7 @@ describe('LoginPage', () => {
       openLogs: vi.fn(async () => {}),
       onExportState: vi.fn(() => () => {}),
     }
-    Object.defineProperty(window, 'launchkit', { value: desktopApi, configurable: true })
+    Object.defineProperty(window, 'trackzyn', { value: desktopApi, configurable: true })
     try {
       authContext.login.mockResolvedValue({
         requires_2fa: true,
@@ -268,7 +268,7 @@ describe('LoginPage', () => {
       expect(screen.queryByRole('button', { name: t('auth.usePasskeySecondFactor') })).not.toBeInTheDocument()
       expect(api.auth.passkeyAuthenticationOptions).not.toHaveBeenCalled()
     } finally {
-      Reflect.deleteProperty(window, 'launchkit')
+      Reflect.deleteProperty(window, 'trackzyn')
     }
   })
 
@@ -289,7 +289,7 @@ describe('LoginPage', () => {
 
 describe('LoginPage SSO', () => {
   function installDesktopApi(serverUrl: string | null) {
-    const desktopApi: LaunchkitApi = {
+    const desktopApi: TrackzynApi = {
       isDesktop: true,
       platform: 'darwin',
       appVersion: '0.1.0',
@@ -304,13 +304,13 @@ describe('LoginPage SSO', () => {
       openLogs: vi.fn(async () => {}),
       onExportState: vi.fn(() => () => {}),
     }
-    Object.defineProperty(window, 'launchkit', { value: desktopApi, configurable: true })
+    Object.defineProperty(window, 'trackzyn', { value: desktopApi, configurable: true })
     return desktopApi
   }
 
   function stubLocation() {
     const original = window.location
-    const stub = { ...original, href: 'app://launchkit/login' } as Location
+    const stub = { ...original, href: 'app://trackzyn/login' } as Location
     Object.defineProperty(window, 'location', { value: stub, configurable: true, writable: true })
     return { stub, restore: () => Object.defineProperty(window, 'location', { value: original, configurable: true, writable: true }) }
   }
@@ -327,10 +327,10 @@ describe('LoginPage SSO', () => {
       await user.click(await screen.findByRole('button', { name: t('auth.loginWithProvider', { provider: 'Pocket ID' }) }))
 
       await waitFor(() => expect(desktopApi.startSso).toHaveBeenCalledTimes(1))
-      expect(location.stub.href).toBe('app://launchkit/login')
+      expect(location.stub.href).toBe('app://trackzyn/login')
     } finally {
       location.restore()
-      Reflect.deleteProperty(window, 'launchkit')
+      Reflect.deleteProperty(window, 'trackzyn')
     }
   })
 

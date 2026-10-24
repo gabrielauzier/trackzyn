@@ -4,16 +4,16 @@ import { ExportModal } from './export-modal'
 import { writesBlocked } from '@/lib/write-lock'
 import { I18nextProvider } from 'react-i18next'
 import { i18n } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
 })
 
 function install() {
   let emit: (state: { exporting: boolean }) => void = () => {}
-  const api = { isDesktop: true, onExportState: vi.fn((callback: typeof emit) => { emit = callback; return () => {} }) } as unknown as LaunchkitApi
-  Object.defineProperty(window, 'launchkit', { value: api, configurable: true })
+  const api = { isDesktop: true, onExportState: vi.fn((callback: typeof emit) => { emit = callback; return () => {} }) } as unknown as TrackzynApi
+  Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
   return (state: { exporting: boolean }) => act(() => emit(state))
 }
 

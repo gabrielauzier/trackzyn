@@ -1,11 +1,11 @@
 # Publicar releases (imagens Docker)
 
-Como construir e publicar as imagens Docker do launchkit que o seu servidor vai rodar, com uma versão fixa que você controla.
+Como construir e publicar as imagens Docker do trackzyn que o seu servidor vai rodar, com uma versão fixa que você controla.
 
 ## Como funciona
 - O workflow `.github/workflows/release.yml` roda quando uma **release é publicada** (`release: published`), constrói
-  `launchkit-backend` e `launchkit-frontend` (`linux/amd64` e `linux/arm64`) **a partir do commit da release** e publica no GHCR em
-  `ghcr.io/<dono-do-repositório>/launchkit-*`, com a tag da versão e com `latest`. O prefixo usa o dono do repositório, então
+  `trackzyn-backend` e `trackzyn-frontend` (`linux/amd64` e `linux/arm64`) **a partir do commit da release** e publica no GHCR em
+  `ghcr.io/<dono-do-repositório>/trackzyn-*`, com a tag da versão e com `latest`. O prefixo usa o dono do repositório, então
   **nenhuma alteração no workflow é necessária**.
 - Ele também empacota o chart Helm em `ghcr.io/<dono>/charts`. Se você não usa Kubernetes, ignore (o job é independente das imagens).
 
@@ -38,18 +38,18 @@ backend e o fallback do frontend reportarem a mesma versão. O frontend publicad
    ```
 4. Acompanhe o workflow "Build and Push Docker Images" (o build `arm64` sob emulação é o trecho lento):
    ```bash
-   gh run watch --repo <dono>/launchkit
+   gh run watch --repo <dono>/trackzyn
    ```
 5. Confira as imagens e as arquiteturas:
    ```bash
-   docker buildx imagetools inspect ghcr.io/<dono>/launchkit-backend:0.1.0 | grep Platform
-   docker buildx imagetools inspect ghcr.io/<dono>/launchkit-frontend:0.1.0 | grep Platform
+   docker buildx imagetools inspect ghcr.io/<dono>/trackzyn-backend:0.1.0 | grep Platform
+   docker buildx imagetools inspect ghcr.io/<dono>/trackzyn-frontend:0.1.0 | grep Platform
    ```
 
 ## Visibilidade dos pacotes (decida antes de puxar no servidor)
 Pacotes criados pelo workflow podem nascer **privados**. Duas opções:
 - **Tornar públicos:** no GitHub, *Packages* → cada pacote → *Package settings* → *Change visibility* (uma vez por pacote).
-  Verifique de uma máquina sem login: `docker logout ghcr.io; docker pull ghcr.io/<dono>/launchkit-backend:<versão>`.
+  Verifique de uma máquina sem login: `docker logout ghcr.io; docker pull ghcr.io/<dono>/trackzyn-backend:<versão>`.
 - **Mantê-los privados:** no servidor, `docker login ghcr.io -u <usuário>` com um token de acesso pessoal que tenha **apenas** `read:packages`.
 
 ## Colocar a versão no servidor
@@ -59,14 +59,14 @@ Pacotes criados pelo workflow podem nascer **privados**. Duas opções:
    ```
 2. No `.env` de produção, aponte para o seu registry e para a versão:
    ```env
-   IMAGE_PREFIX=ghcr.io/<dono>/launchkit
+   IMAGE_PREFIX=ghcr.io/<dono>/trackzyn
    APP_VERSION=0.1.0
    ```
 3. Confira o que será usado (nada é alterado) e aplique:
    ```bash
-   ./deploy/public/launchkit-compose config | grep image:
-   ./deploy/public/launchkit-compose pull
-   ./deploy/public/launchkit-compose up -d
+   ./deploy/public/trackzyn-compose config | grep image:
+   ./deploy/public/trackzyn-compose pull
+   ./deploy/public/trackzyn-compose up -d
    curl -s https://app.example.com/api/health
    ```
 4. **Reverter:** recoloque a tag anterior e repita o `pull` e o `up -d`. Se a versão nova aplicou migrations (veja os logs do backend), restaure

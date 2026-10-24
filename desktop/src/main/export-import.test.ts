@@ -34,7 +34,7 @@ const failWrites = faults
 
 let root = ''
 beforeEach(() => {
-  root = mkdtempSync(path.join(tmpdir(), 'launchkit-export-'))
+  root = mkdtempSync(path.join(tmpdir(), 'trackzyn-export-'))
   faults.failAt = -1
   faults.failFrom = -1
   faults.count = 0

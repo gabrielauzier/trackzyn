@@ -15,9 +15,9 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 error()   { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
 # Point these at your own repository and image registry before publishing
-# this script (e.g. LAUNCHKIT_REPO_URL=https://github.com/acme/launchkit.git).
-REPO_URL="${LAUNCHKIT_REPO_URL:-https://github.com/your-org/launchkit.git}"
-IMAGE_PREFIX="${LAUNCHKIT_IMAGE_PREFIX:-ghcr.io/your-org/launchkit}"
+# this script (e.g. TRACKZYN_REPO_URL=https://github.com/acme/trackzyn.git).
+REPO_URL="${TRACKZYN_REPO_URL:-https://github.com/your-org/trackzyn.git}"
+IMAGE_PREFIX="${TRACKZYN_IMAGE_PREFIX:-ghcr.io/your-org/trackzyn}"
 COMPOSE_FILE="docker-compose.prod.yml"
 HEALTH_URL="http://localhost:8000/api/health"
 HEALTH_TIMEOUT=60
@@ -325,9 +325,9 @@ setup_repo() {
     return
   fi
 
-  info "Cloning launchkit repository..."
-  git clone "$REPO_URL" launchkit
-  cd launchkit
+  info "Cloning trackzyn repository..."
+  git clone "$REPO_URL" trackzyn
+  cd trackzyn
   success "Repository cloned"
 }
 
@@ -365,7 +365,7 @@ EOF
 }
 
 # ── Backend stack check ──────────────────────────────────────────────────────
-# Same message as scripts/stack/preflight.sh and deploy/public/launchkit-compose; the environment
+# Same message as scripts/stack/preflight.sh and deploy/public/trackzyn-compose; the environment
 # wins over .env, like in Compose.
 check_backend_stack() {
   local value="${BACKEND_STACK:-}"
@@ -386,7 +386,7 @@ start_services() {
   info "Pulling latest images..."
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" pull
 
-  info "Starting launchkit..."
+  info "Starting trackzyn..."
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" up -d
 
   success "Containers started"
@@ -394,12 +394,12 @@ start_services() {
 
 # ── Health Check ─────────────────────────────────────────────────────────────
 wait_for_health() {
-  info "Waiting for launchkit to be ready (up to ${HEALTH_TIMEOUT}s)..."
+  info "Waiting for trackzyn to be ready (up to ${HEALTH_TIMEOUT}s)..."
   local elapsed=0
 
   while [ "$elapsed" -lt "$HEALTH_TIMEOUT" ]; do
     if curl -sf "$HEALTH_URL" > /dev/null 2>&1; then
-      success "launchkit is healthy"
+      success "trackzyn is healthy"
       return
     fi
     sleep 3
@@ -418,7 +418,7 @@ main() {
 
   echo ""
   echo -e "${BOLD}╔══════════════════════════════════════╗${NC}"
-  echo -e "${BOLD}║         launchkit Installer          ║${NC}"
+  echo -e "${BOLD}║         trackzyn Installer          ║${NC}"
   echo -e "${BOLD}╚══════════════════════════════════════╝${NC}"
   echo ""
 
@@ -433,14 +433,14 @@ main() {
 
   echo ""
   echo -e "${GREEN}${BOLD}════════════════════════════════════════${NC}"
-  echo -e "${GREEN}${BOLD}  launchkit is running!${NC}"
+  echo -e "${GREEN}${BOLD}  trackzyn is running!${NC}"
   echo -e "${GREEN}${BOLD}  Open ${APP_URL}${NC}"
   echo -e "${GREEN}${BOLD}════════════════════════════════════════${NC}"
   echo ""
   echo -e "  Useful commands:"
   echo -e "    ${BLUE}$COMPOSE_CMD_DISPLAY -f $COMPOSE_FILE logs -f${NC}    # View logs"
   echo -e "    ${BLUE}$COMPOSE_CMD_DISPLAY -f $COMPOSE_FILE ps${NC}         # Container status"
-  echo -e "    ${BLUE}$COMPOSE_CMD_DISPLAY -f $COMPOSE_FILE down${NC}       # Stop launchkit"
+  echo -e "    ${BLUE}$COMPOSE_CMD_DISPLAY -f $COMPOSE_FILE down${NC}       # Stop trackzyn"
   echo ""
 }
 

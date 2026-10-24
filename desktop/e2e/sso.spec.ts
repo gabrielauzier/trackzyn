@@ -15,9 +15,9 @@ test.afterEach(async () => {
 })
 
 const link = (token: string, nonce?: string) =>
-  `launchkit://auth/callback#access_token=${token}&token_type=bearer${nonce === undefined ? '' : `&desktop_nonce=${nonce}`}`
+  `trackzyn://auth/callback#access_token=${token}&token_type=bearer${nonce === undefined ? '' : `&desktop_nonce=${nonce}`}`
 
-/** What macOS does when the system hands the app a launchkit:// URL. */
+/** What macOS does when the system hands the app a trackzyn:// URL. */
 async function openUrl(app: ElectronApplication, url: string) {
   await app.evaluate(({ app: electronApp }, target) => {
     electronApp.emit('open-url', { preventDefault() {} }, target)
@@ -55,7 +55,7 @@ async function startSso(app: ElectronApplication, page: Page): Promise<string> {
 }
 
 async function expectSignedIn(page: Page) {
-  await expect(page).toHaveURL('app://launchkit/')
+  await expect(page).toHaveURL('app://trackzyn/')
   expect(await page.evaluate(() => localStorage.getItem('token'))).toBe(server.token)
   const status = await page.evaluate(async () => {
     const response = await fetch('/api/users/me', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
@@ -78,10 +78,10 @@ test('SSO button opens the system browser and keeps one window', async () => {
   await expect.poll(() => app.evaluate(() => (globalThis as { __opened?: string[] }).__opened?.length)).toBe(1)
   const opened = await app.evaluate(() => (globalThis as { __opened?: string[] }).__opened as string[])
   expect(opened[0]).toMatch(
-    new RegExp(`^${server.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/api/auth/oidc/login\\?redirect_target=launchkit%3A%2F%2Fauth%2Fcallback&desktop_nonce=[A-Za-z0-9_-]{43}$`),
+    new RegExp(`^${server.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/api/auth/oidc/login\\?redirect_target=trackzyn%3A%2F%2Fauth%2Fcallback&desktop_nonce=[A-Za-z0-9_-]{43}$`),
   )
   expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1)
-  expect(page.url()).toBe('app://launchkit/login')
+  expect(page.url()).toBe('app://trackzyn/login')
 })
 
 test('an open-url deep link signs in and lands on / with users/me 200', async () => {
@@ -140,18 +140,18 @@ test('an incomplete deep link shows the message and stores no token', async () =
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   // A flow the app did not start: a valid-looking token and nonce, nothing pending.
   await openUrl(app, link(server.token, 'p'.repeat(43)))
-  await expect(page).toHaveURL('app://launchkit/login?sso=failed')
+  await expect(page).toHaveURL('app://trackzyn/login?sso=failed')
   await expect(page.getByRole('alert')).toHaveText('Sign-in did not complete')
   expect(await page.evaluate(() => localStorage.getItem('token'))).toBeNull()
 
   // A flow the app started, answered with another nonce or without one.
-  await page.goto('app://launchkit/login')
+  await page.goto('app://trackzyn/login')
   const nonce = await startSso(app, page)
   await openUrl(app, link(server.token, `${nonce.slice(1)}x`))
-  await expect(page).toHaveURL('app://launchkit/login?sso=failed')
+  await expect(page).toHaveURL('app://trackzyn/login?sso=failed')
   expect(await page.evaluate(() => localStorage.getItem('token'))).toBeNull()
 
-  await openUrl(app, 'launchkit://auth/callback#error=access_denied')
+  await openUrl(app, 'trackzyn://auth/callback#error=access_denied')
   await expect(page.getByRole('alert')).toHaveText('Sign-in did not complete')
   expect(await page.evaluate(() => localStorage.getItem('token'))).toBeNull()
 
@@ -159,8 +159,8 @@ test('an incomplete deep link shows the message and stores no token', async () =
   await closeAll()
   const fresh = await launchApp()
   await expect(fresh.page.getByRole('button', { name: 'Use this computer' })).toBeVisible()
-  await openUrl(fresh.app, 'launchkit://auth/callback')
-  await expect(fresh.page).toHaveURL('app://launchkit/connect?sso=failed')
+  await openUrl(fresh.app, 'trackzyn://auth/callback')
+  await expect(fresh.page).toHaveURL('app://trackzyn/connect?sso=failed')
   await expect(fresh.page.getByRole('alert')).toHaveText('Sign-in did not complete')
   expect(await fresh.page.evaluate(() => localStorage.getItem('token'))).toBeNull()
 })
@@ -170,14 +170,14 @@ test('a deep link with another path is ignored', async () => {
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   const loads = await countLoads(app, '')
   for (const other of [
-    `launchkit://auth/other#access_token=${server.token}&token_type=bearer`,
-    `launchkit://evil/callback#access_token=${server.token}&token_type=bearer`,
-    `launchkit://auth/callback/extra#access_token=${server.token}&token_type=bearer`,
+    `trackzyn://auth/other#access_token=${server.token}&token_type=bearer`,
+    `trackzyn://evil/callback#access_token=${server.token}&token_type=bearer`,
+    `trackzyn://auth/callback/extra#access_token=${server.token}&token_type=bearer`,
   ]) {
     await openUrl(app, other)
   }
   await page.waitForTimeout(500)
   expect(await loads()).toEqual([])
-  expect(page.url()).toBe('app://launchkit/login')
+  expect(page.url()).toBe('app://trackzyn/login')
   expect(await page.evaluate(() => localStorage.getItem('token'))).toBeNull()
 })

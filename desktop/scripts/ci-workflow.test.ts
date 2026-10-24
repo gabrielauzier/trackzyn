@@ -38,7 +38,7 @@ describe('ci workflow', () => {
     expect(JSON.stringify(job)).not.toContain('secrets.')
   })
 
-  it('desktop-checks guards the web bundle against window.launchkit', () => {
+  it('desktop-checks guards the web bundle against window.trackzyn', () => {
     const job = ci.jobs['desktop-checks']
     const guard = job.steps.findIndex((step) => step.run === 'npm run check:web-bundle')
     expect(guard, 'a check:web-bundle step').toBeGreaterThan(-1)

@@ -10,7 +10,7 @@ export interface IpcLike {
 
 /**
  * Registers an `ipcMain.handle` listener that refuses any caller whose frame
- * was not served from app://launchkit/, before the handler runs.
+ * was not served from app://trackzyn/, before the handler runs.
  */
 export function trustedHandle<Args extends unknown[], Result>(
   ipc: IpcLike,

@@ -20,9 +20,9 @@ test('a 401 sends the app to /login and clears the token', async () => {
   const { page } = await launchApp({ serverUrl: remote.url })
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   await page.evaluate(() => localStorage.setItem('token', 'expired-token'))
-  await page.goto('app://launchkit/files')
+  await page.goto('app://trackzyn/files')
 
-  await expect(page).toHaveURL('app://launchkit/login')
+  await expect(page).toHaveURL('app://trackzyn/login')
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem('token'))).toBeNull()
   expect(remote.requests.some((request) => request.path === '/api/users/me' && request.headers.authorization === 'Bearer expired-token')).toBe(true)
@@ -33,7 +33,7 @@ test('switching workspace sends X-Workspace-Id', async () => {
   const { page } = await launchApp({ serverUrl: remote.url })
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   await page.evaluate((token) => localStorage.setItem('token', token), remote.token)
-  await page.goto('app://launchkit/files')
+  await page.goto('app://trackzyn/files')
   await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Main workspace' }).click()
@@ -53,7 +53,7 @@ test('a server without CORS answers 200', async () => {
   await page.getByLabel('Password').fill('secret')
   await page.getByRole('button', { name: 'Login' }).click()
 
-  await expect(page).toHaveURL('app://launchkit/')
+  await expect(page).toHaveURL('app://trackzyn/')
   const me = await page.evaluate(async () => {
     const response = await fetch('/api/users/me', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     return response.status
@@ -68,7 +68,7 @@ test('a server without CORS answers 200', async () => {
 })
 
 test('renderer never calls api.github.com', async () => {
-  const remote = await server({ updateCheckRepo: 'acme/launchkit' })
+  const remote = await server({ updateCheckRepo: 'acme/trackzyn' })
   const { page } = await launchApp({ serverUrl: remote.url })
   const external: string[] = []
   page.on('request', (request) => {
@@ -81,7 +81,7 @@ test('renderer never calls api.github.com', async () => {
   })
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   await page.evaluate((token) => localStorage.setItem('token', token), remote.token)
-  await page.goto('app://launchkit/files')
+  await page.goto('app://trackzyn/files')
   await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible()
   // The server names a repository to check, so the web app would query GitHub here.
   expect(remote.requests.some((request) => request.path === '/api/info')).toBe(true)

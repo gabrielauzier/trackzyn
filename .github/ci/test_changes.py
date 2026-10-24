@@ -21,7 +21,7 @@ class CIChangesTest(unittest.TestCase):
         self.git("init", "-q", "-b", "base")
         self.git("config", "user.name", "CI Test")
         self.git("config", "user.email", "ci@example.invalid")
-        for name in ("README.md", "docs/guide.md", "backend/old.py", "frontend/old.ts", "charts/launchkit/old.yaml"):
+        for name in ("README.md", "docs/guide.md", "backend/old.py", "frontend/old.ts", "charts/trackzyn/old.yaml"):
             self.write(name, "original\n")
         self.git("add", ".")
         self.git("commit", "-qm", "base")
@@ -87,8 +87,8 @@ class CIChangesTest(unittest.TestCase):
             ({"backend/new.py": "code"}, ("true", "false", "false")),
             ({"backend/README.md": "fixture"}, ("true", "false", "false")),
             ({"backend/new.py": "code", "frontend/new.ts": "code"}, ("true", "true", "false")),
-            ({"charts/launchkit/new.yaml": "chart"}, ("false", "false", "true")),
-            ({"charts/launchkit/README.md": "docs"}, ("false", "false", "true")),
+            ({"charts/trackzyn/new.yaml": "chart"}, ("false", "false", "true")),
+            ({"charts/trackzyn/README.md": "docs"}, ("false", "false", "true")),
         ]
         for name in (".github/workflows/ci.yml", ".github/ci/changes.py",
                      ".github/ci/test_changes.py", "charts/other/Chart.yaml", "docker-compose.yml", "mise.toml",
@@ -104,7 +104,7 @@ class CIChangesTest(unittest.TestCase):
             with self.subTest(name=name):
                 self.merge({name: "compose"})
                 self.select(("true", "true", "true", "true"), stack="true")
-        self.merge({"charts/launchkit/values.yaml": "chart"})
+        self.merge({"charts/trackzyn/values.yaml": "chart"})
         self.select(("false", "false", "true", "false"), stack="true")
         self.merge({"scripts/select-stack.mjs": "script"})
         self.select(("false", "false", "false", "false"), stack="true")
@@ -141,7 +141,7 @@ class CIChangesTest(unittest.TestCase):
             ({"backend-node/src/app.ts": "code"}, ("false", "false", "false", "true", "true")),
             ({"contracts/openapi.json": "contract"}, ("true", "false", "false", "true", "true")),
             ({"backend/new.py": "code"}, ("true", "false", "false", "false", "false")),
-            ({"charts/launchkit/new.yaml": "chart"}, ("false", "false", "true", "false", "false")),
+            ({"charts/trackzyn/new.yaml": "chart"}, ("false", "false", "true", "false", "false")),
             ({"docs/new.md": "docs"}, ("false", "false", "false", "false", "false")),
             ({"backend/new.py": "code", "desktop/new.ts": "code"}, ("true", "false", "false", "false", "true")),
             ({".github/workflows/desktop-release.yml": "shared"}, ("true", "true", "true", "true", "true")),
@@ -158,9 +158,9 @@ class CIChangesTest(unittest.TestCase):
             ("backend/old.py", "docs/moved.md", ("true", "false", "false")),
             ("frontend/old.ts", "docs/moved.md", ("false", "true", "false")),
             ("backend/old.py", "frontend/moved.ts", ("true", "true", "false")),
-            ("charts/launchkit/old.yaml", None, ("false", "false", "true")),
-            ("charts/launchkit/old.yaml", "docs/moved.md", ("false", "false", "true")),
-            ("charts/launchkit/old.yaml", "backend/moved.py", ("true", "false", "true")),
+            ("charts/trackzyn/old.yaml", None, ("false", "false", "true")),
+            ("charts/trackzyn/old.yaml", "docs/moved.md", ("false", "false", "true")),
+            ("charts/trackzyn/old.yaml", "backend/moved.py", ("true", "false", "true")),
             ("docs/guide.md", "backend/moved.py", ("true", "false", "false")),
         ):
             with self.subTest(old=old, new=new):

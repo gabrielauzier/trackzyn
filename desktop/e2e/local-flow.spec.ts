@@ -10,7 +10,7 @@ test.afterEach(async () => {
 })
 
 test('local mode end to end: choose, create, reopen, export, import into a new install', async () => {
-  const exportDir = mkdtempSync(path.join(os.tmpdir(), 'launchkit-flow-'))
+  const exportDir = mkdtempSync(path.join(os.tmpdir(), 'trackzyn-flow-'))
   try {
     // Choose the mode and create a user, a workspace and a file.
     const first = await launchApp()

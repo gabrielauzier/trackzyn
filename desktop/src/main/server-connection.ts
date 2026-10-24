@@ -18,7 +18,7 @@ async function getJson(fetchFn: typeof fetch, url: string, timeoutMs: number): P
   return response.json()
 }
 
-async function isLaunchkitServer(fetchFn: typeof fetch, url: string, timeoutMs: number): Promise<boolean> {
+async function isTrackzynServer(fetchFn: typeof fetch, url: string, timeoutMs: number): Promise<boolean> {
   try {
     const health = (await getJson(fetchFn, `${url}/api/health`, timeoutMs)) as { status?: unknown } | null
     if (health?.status !== 'healthy') return false
@@ -40,7 +40,7 @@ export function createServerConnection({ store, fetchFn = fetch, timeoutMs = 800
       const parsed = parseServerUrl(input)
       if (!parsed.ok) return parsed
       if (parsed.insecure && !options.allowInsecure) return { ok: false, reason: 'insecure' }
-      if (!(await isLaunchkitServer(fetchFn, parsed.url, timeoutMs))) return { ok: false, reason: 'unreachable' }
+      if (!(await isTrackzynServer(fetchFn, parsed.url, timeoutMs))) return { ok: false, reason: 'unreachable' }
       store.setServerUrl(parsed.url)
       return { ok: true, url: parsed.url }
     },

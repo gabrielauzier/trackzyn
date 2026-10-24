@@ -1,4 +1,4 @@
-name: launchkit
+name: trackzyn
 
 # podman-compose groups all services into a single pod by default, which
 # interferes with per-service port mapping and networking. Disabling it makes
@@ -27,7 +27,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: launchkit
+      POSTGRES_DB: trackzyn
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

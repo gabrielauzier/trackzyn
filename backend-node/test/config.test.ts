@@ -8,7 +8,7 @@ const DISCOVERY = 'https://id.example.com/.well-known/openid-configuration'
 const NO_FILES = { envFiles: [], secretsDirs: [] }
 
 function tmp(): string {
-  return mkdtempSync(join(tmpdir(), 'launchkit-config-'))
+  return mkdtempSync(join(tmpdir(), 'trackzyn-config-'))
 }
 
 describe('loadConfig', () => {
@@ -36,7 +36,7 @@ describe('loadConfig', () => {
       {
         LOCAL_AUTH_ENABLED: 'false',
         OIDC_ENABLED: 'true',
-        OIDC_CLIENT_ID: 'launchkit',
+        OIDC_CLIENT_ID: 'trackzyn',
         OIDC_DISCOVERY_URL: DISCOVERY,
       },
       NO_FILES,
@@ -48,14 +48,14 @@ describe('loadConfig', () => {
   it('uses the Python defaults for everything not set', () => {
     const config = loadConfig({}, NO_FILES)
     expect(config).toMatchObject({
-      appName: 'launchkit',
+      appName: 'trackzyn',
       secretKey: 'change-me-in-production',
       accessTokenExpireMinutes: 1440,
       frontendUrl: 'http://localhost:5173',
       redisUrl: 'redis://localhost:6379/0',
       trustedProxyHops: 0,
       registrationEnabled: true,
-      webauthnRpName: 'launchkit',
+      webauthnRpName: 'trackzyn',
       webauthnRpId: '',
       webauthnOrigin: '',
       webauthnChallengeTtlSeconds: 300,

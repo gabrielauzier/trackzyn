@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WorkspaceSwitcher } from './workspace-switcher'
 import { renderWithProviders, t } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
 const workspace = { id: 'ws-1', name: 'Synthetic workspace', role: 'owner' }
 
@@ -15,7 +15,7 @@ vi.mock('@/contexts/workspace-context', () => ({
 vi.mock('@/lib/api', () => ({ workspaces: { create: vi.fn() } }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
-function desktopApi(): LaunchkitApi {
+function desktopApi(): TrackzynApi {
   return {
     isDesktop: true,
     platform: 'darwin',
@@ -42,7 +42,7 @@ async function openAccountMenu() {
 }
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
 })
 
 describe('WorkspaceSwitcher passkeys entry', () => {
@@ -52,7 +52,7 @@ describe('WorkspaceSwitcher passkeys entry', () => {
   })
 
   it('hides the passkeys entry when running on desktop', async () => {
-    Object.defineProperty(window, 'launchkit', { value: desktopApi(), configurable: true })
+    Object.defineProperty(window, 'trackzyn', { value: desktopApi(), configurable: true })
     await openAccountMenu()
     expect(screen.getByText(t('auth.changePassword'))).toBeInTheDocument()
     expect(screen.queryByText(t('auth.passkeysTitle'))).not.toBeInTheDocument()

@@ -11,7 +11,7 @@ export interface TestServerOptions {
   hasUsers?: boolean
   /** How `/api/health` answers. */
   health?: 'ok' | 'status-503' | 'unhealthy-body'
-  /** A server without CORS for app://launchkit: any request carrying `Origin` gets 403. */
+  /** A server without CORS for app://trackzyn: any request carrying `Origin` gets 403. */
   rejectOrigin?: boolean
   /** How many workspaces `/api/workspaces` lists (default 1). */
   workspaceCount?: number
@@ -63,7 +63,7 @@ const workspace = {
   role: 'owner',
 }
 
-/** A minimal stand-in for a launchkit server: just enough for the app to render. */
+/** A minimal stand-in for a trackzyn server: just enough for the app to render. */
 export async function startTestServer(options: TestServerOptions = {}): Promise<TestServer> {
   const { hasUsers = true, health = 'ok', rejectOrigin = true, workspaceCount = 1, updateCheckRepo = null, oidcEnabled = false } = options
   const workspaceList = Array.from({ length: workspaceCount }, (_, index) => ({
@@ -104,7 +104,7 @@ export async function startTestServer(options: TestServerOptions = {}): Promise<
           if (health === 'status-503') return send(503, { status: 'starting' })
           return send(200, { status: health === 'unhealthy-body' ? 'starting' : 'healthy' })
         case '/api/info':
-          return send(200, { app_name: 'launchkit-test', features: {}, update_check_repo: updateCheckRepo })
+          return send(200, { app_name: 'trackzyn-test', features: {}, update_check_repo: updateCheckRepo })
         case '/api/setup/status':
           return send(200, { has_users: hasUsers })
         case '/api/auth/oidc/config':

@@ -12,7 +12,7 @@ function targetNames(section: unknown): string[] {
 
 describe('electron-builder config', () => {
   it('builder targets and app id', () => {
-    expect(config.appId).toBe('com.launchkit.desktop')
+    expect(config.appId).toBe('com.trackzyn.desktop')
     expect(targetNames(config.mac).sort()).toEqual(['dmg', 'zip'])
     expect(targetNames(config.win)).toEqual(['nsis'])
     expect(targetNames(config.linux).sort()).toEqual(['AppImage', 'deb'])
@@ -20,7 +20,7 @@ describe('electron-builder config', () => {
 
   it('does not depend on release variables, so unpublished builds need none', () => {
     expect(config.publish).toBeUndefined()
-    expect(JSON.stringify(config)).not.toContain('${env.LAUNCHKIT_DESKTOP_RELEASE')
+    expect(JSON.stringify(config)).not.toContain('${env.TRACKZYN_DESKTOP_RELEASE')
   })
 
   it('ships the desktop frontend as an extra resource named frontend', () => {
@@ -44,7 +44,7 @@ describe('electron-builder config', () => {
     expect(JSON.stringify(config)).not.toMatch(/BEGIN [A-Z ]*PRIVATE KEY/)
   })
 
-  it('declares the launchkit protocol', () => {
-    expect(config.protocols).toContainEqual({ name: 'launchkit', schemes: ['launchkit'] })
+  it('declares the trackzyn protocol', () => {
+    expect(config.protocols).toContainEqual({ name: 'trackzyn', schemes: ['trackzyn'] })
   })
 })

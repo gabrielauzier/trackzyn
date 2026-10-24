@@ -17,7 +17,7 @@ function getFrontendHost(frontendUrl?: string) {
  */
 function stripGoogleFonts(): Plugin {
   return {
-    name: 'launchkit-desktop-strip-google-fonts',
+    name: 'trackzyn-desktop-strip-google-fonts',
     enforce: 'pre',
     transformIndexHtml: (html) => html.replace(/^[ \t]*<link[^>]*fonts\.(googleapis|gstatic)\.com[^>]*>\r?\n/gm, ''),
     transform: (code, id) =>
@@ -41,7 +41,7 @@ export default defineConfig(async ({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       // True only for the Electron renderer build (`vite build --mode desktop`);
-      // lets the web bundle drop every reference to `window.launchkit`.
+      // lets the web bundle drop every reference to `window.trackzyn`.
       __DESKTOP_BUILD__: JSON.stringify(mode === 'desktop'),
     },
     build: {

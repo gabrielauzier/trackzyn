@@ -47,7 +47,7 @@ def changed_jobs():
                 frontend = True
             elif path.startswith(b"desktop/"):
                 desktop = True
-            elif path.startswith(b"charts/launchkit/"):
+            elif path.startswith(b"charts/trackzyn/"):
                 helm = True
             elif path == b"scripts/select-stack.mjs":
                 stack = True

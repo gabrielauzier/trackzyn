@@ -14,7 +14,7 @@ export interface MenuStrings {
   documentation: string
 }
 
-export const DOCS_URL = 'https://github.com/gabrielauzier/launchkit'
+export const DOCS_URL = 'https://github.com/gabrielauzier/trackzyn'
 
 export function menuStrings(locale: string): MenuStrings {
   const resource = locale.toLowerCase().startsWith('pt') ? ptBR : en

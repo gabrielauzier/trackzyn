@@ -6,7 +6,7 @@ import { ExportModal } from '@/components/export-modal'
 import { LocalFailed, LocalStarting } from '@/pages/mode-select'
 
 // Desktop only: on the web build the constants are false, so these chunks are never
-// emitted and nothing here can reach `window.launchkit`.
+// emitted and nothing here can reach `window.trackzyn`.
 const ConnectServerPage = __DESKTOP_BUILD__ ? lazy(() => import('@/pages/connect-server')) : null
 const ModeSelectPage = __DESKTOP_BUILD__ ? lazy(() => import('@/pages/mode-select')) : null
 

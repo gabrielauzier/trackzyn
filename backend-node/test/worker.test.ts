@@ -17,7 +17,7 @@ describe.runIf(process.env.REDIS_URL)('worker on BullMQ', () => {
 
   beforeEach(async () => {
     lines.length = 0
-    name = `launchkit-test-${Math.random().toString(36).slice(2)}`
+    name = `trackzyn-test-${Math.random().toString(36).slice(2)}`
     t = await createTestApp()
     queue = new BullMqQueue(process.env.REDIS_URL as string, name)
     connection = new Redis(process.env.REDIS_URL as string, { maxRetriesPerRequest: null })

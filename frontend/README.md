@@ -1,4 +1,4 @@
-# launchkit frontend
+# trackzyn frontend
 
 React 19 + TypeScript + Vite, styled with Tailwind CSS 4 and shadcn/Radix components. Data fetching runs through TanStack Query, and translations through i18next (en, pt-BR).
 

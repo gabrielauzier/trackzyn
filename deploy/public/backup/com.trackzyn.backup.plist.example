@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Modelo de LaunchAgent para o backup diário (macOS). Copie para
+  ~/Library/LaunchAgents/com.trackzyn.backup.plist, troque SEU_USUARIO e carregue com:
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.trackzyn.backup.plist
+  Teste na hora com:  launchctl kickstart gui/$(id -u)/com.trackzyn.backup
+  Log: ~/Library/Logs/trackzyn-backup.log
+
+  O script apontado fica em ~/.config/trackzyn-backup/ de propósito: o launchd não consegue ler scripts
+  nem renomear arquivos em volumes externos (proteção de privacidade do macOS), então use cópias no
+  disco interno e grave os backups também no disco interno (BACKUP_DIR abaixo).
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.trackzyn.backup</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>/Users/SEU_USUARIO/.config/trackzyn-backup/backup.sh</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>BACKUP_DIR</key>
+		<string>/Users/SEU_USUARIO/.config/trackzyn-backup/backups</string>
+		<key>KEEP_DAYS</key>
+		<string>14</string>
+	</dict>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>3</integer>
+		<key>Minute</key>
+		<integer>15</integer>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>/Users/SEU_USUARIO/Library/Logs/trackzyn-backup.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/SEU_USUARIO/Library/Logs/trackzyn-backup.log</string>
+</dict>
+</plist>

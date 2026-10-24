@@ -40,7 +40,7 @@ test('connect to a server leads to the connect screen', async () => {
   await expect(page.getByRole('heading', { name: 'Connect to a server' })).toBeVisible()
   await page.getByLabel('Server URL').fill(remote.url)
   await page.getByRole('button', { name: 'Connect' }).click()
-  await expect(page).toHaveURL('app://launchkit/login')
+  await expect(page).toHaveURL('app://trackzyn/login')
   expect(readConfig(configPath)).toMatchObject({ mode: 'remote', serverUrl: remote.url })
 })
 
@@ -59,7 +59,7 @@ test('use this computer lands on /setup with has_users false', async () => {
   const { page } = await launchApp()
   await page.getByRole('button', { name: 'Use this computer' }).click()
   await expect(page.getByRole('progressbar')).toBeVisible()
-  await expect(page).toHaveURL('app://launchkit/setup', { timeout: 45_000 })
+  await expect(page).toHaveURL('app://trackzyn/setup', { timeout: 45_000 })
   const status = await api(page, '/api/setup/status')
   expect(status).toEqual({ status: 200, body: { has_users: false } })
 })
@@ -72,7 +72,7 @@ test('the page reaches the backend and a direct call without the token is 401', 
   const bare = await fetch(`http://127.0.0.1:${port}/api/setup/status`)
   expect(bare.status).toBe(401)
   expect(await bare.json()).toEqual({ detail: 'Unauthorized' })
-  const guessed = await fetch(`http://127.0.0.1:${port}/api/setup/status`, { headers: { 'X-Launchkit-Local-Token': 'guess' } })
+  const guessed = await fetch(`http://127.0.0.1:${port}/api/setup/status`, { headers: { 'X-Trackzyn-Local-Token': 'guess' } })
   expect(guessed.status).toBe(401)
 })
 
@@ -175,12 +175,12 @@ test('open logs opens the logs folder and try again restarts the backend', async
 
   const log = readFileSync(path.join(userDataDir, 'logs', 'backend.log'), 'utf8')
   expect(log).toContain('did not start')
-  expect(log.toLowerCase()).not.toContain('x-launchkit-local-token')
+  expect(log.toLowerCase()).not.toContain('x-trackzyn-local-token')
 
   // The database is repaired (here: removed); Try again starts the backend.
   rmSync(db, { recursive: true, force: true })
   await page.getByRole('button', { name: 'Try again' }).click()
-  await expect(page).toHaveURL('app://launchkit/setup', { timeout: 60_000 })
+  await expect(page).toHaveURL('app://trackzyn/setup', { timeout: 60_000 })
   const secret = readFileSync(path.join(userDataDir, 'secret.key'), 'utf8').trim()
   expect(readFileSync(path.join(userDataDir, 'logs', 'backend.log'), 'utf8')).not.toContain(secret)
 })
@@ -209,7 +209,7 @@ test('switching server in local mode keeps the data', async () => {
   await app.evaluate(({ Menu }) => {
     Menu.getApplicationMenu()!.getMenuItemById('switch-server')!.click()
   })
-  await expect(page).toHaveURL('app://launchkit/mode')
+  await expect(page).toHaveURL('app://trackzyn/mode')
   await expect(page.getByRole('button', { name: 'Use this computer' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Connect to a server' })).toBeVisible()
   expect(existsSync(path.join(userDataDir, 'db', 'PG_VERSION'))).toBe(true)
@@ -226,7 +226,7 @@ test('switching server in local mode keeps the data', async () => {
 // ---- export and import (D22-D25) ----
 
 function exportTarget(): string {
-  const dir = mkdtempSync(path.join(os.tmpdir(), 'launchkit-export-e2e-'))
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'trackzyn-export-e2e-'))
   exportDirs.push(dir)
   return path.join(dir, 'export.zip')
 }
@@ -253,7 +253,7 @@ test('export writes a zip with manifest db.sql and files', async () => {
   expect(uploaded).toHaveLength(1)
   expect(entries[uploaded[0]].toString()).toBe('%PDF-1.4 local file')
   const { saveCalls } = await dialogState(app)
-  expect(saveCalls[0].defaultPath).toMatch(/^launchkit-export-\d{4}-\d{2}-\d{2}T[\d-]+Z?\.zip$/)
+  expect(saveCalls[0].defaultPath).toMatch(/^trackzyn-export-\d{4}-\d{2}-\d{2}T[\d-]+Z?\.zip$/)
 })
 
 test('no write leaves the renderer while exporting', async () => {

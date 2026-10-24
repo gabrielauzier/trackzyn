@@ -1,5 +1,5 @@
 #!/bin/bash
-# Endurecimento do Mac que hospeda o launchkit.
+# Endurecimento do Mac que hospeda o trackzyn.
 #
 # Altera configurações do SISTEMA e de SEGURANÇA do macOS, por isso exige sudo e é para VOCÊ rodar
 # no próprio terminal. Cada mudança é mostrada antes e pede confirmação. Idempotente.
@@ -69,7 +69,7 @@ fi
 echo
 
 echo "[4/4] (opcional) Não instalar atualizações do macOS automaticamente"
-echo "  Motivo: com FileVault, um reinício por atualização para na tela de senha e derruba o launchkit."
+echo "  Motivo: com FileVault, um reinício por atualização para na tela de senha e derruba o trackzyn."
 echo "  Custo: você passa a instalar as atualizações manualmente (recomendado: em janela de manutenção)."
 echo "  Mantém automáticas: verificação, download e atualizações críticas de segurança/configuração."
 if confirm "Aplicar?" n; then run defaults write "$SU_PLIST" AutomaticallyInstallMacOSUpdates -bool false; fi

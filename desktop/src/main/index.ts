@@ -107,7 +107,7 @@ function start() {
         isWriteBlocked: () => exporting,
         getExtraHeaders: (): Record<string, string> => {
           const local = store.getMode() === 'local' ? localBackend.info() : null
-          return local ? { 'x-launchkit-local-token': local.token } : {}
+          return local ? { 'x-trackzyn-local-token': local.token } : {}
         },
         fetchFn: (input, init) => net.fetch(String(input), init as RequestInit),
       }),
@@ -145,7 +145,7 @@ function start() {
       'will-download',
       createDownloadHandler({
         showSaveDialog: (win, options) => (win ? dialog.showSaveDialog(win as BrowserWindow, options) : dialog.showSaveDialog(options)),
-        tempPath: () => path.join(tmpdir(), `launchkit-download-${randomUUID()}`),
+        tempPath: () => path.join(tmpdir(), `trackzyn-download-${randomUUID()}`),
         getWindow: (webContents) => BrowserWindow.fromWebContents(webContents as Electron.WebContents),
       }) as never,
     )
@@ -182,12 +182,12 @@ function start() {
       appVersion: app.getVersion(),
       backend: localBackend,
       chooseSavePath: async (defaultPath) => {
-        const options = { defaultPath, filters: [{ name: 'launchkit export', extensions: ['zip'] }] }
+        const options = { defaultPath, filters: [{ name: 'trackzyn export', extensions: ['zip'] }] }
         const result = mainWindow ? await dialog.showSaveDialog(mainWindow, options) : await dialog.showSaveDialog(options)
         return result.canceled || !result.filePath ? null : result.filePath
       },
       chooseOpenPath: async () => {
-        const options = { properties: ['openFile' as const], filters: [{ name: 'launchkit export', extensions: ['zip'] }] }
+        const options = { properties: ['openFile' as const], filters: [{ name: 'trackzyn export', extensions: ['zip'] }] }
         const result = mainWindow ? await dialog.showOpenDialog(mainWindow, options) : await dialog.showOpenDialog(options)
         return result.canceled || !result.filePaths[0] ? null : result.filePaths[0]
       },

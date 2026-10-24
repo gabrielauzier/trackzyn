@@ -8,17 +8,17 @@ export const MAIN_ENTRY = path.join(DESKTOP_ROOT, 'out/main/index.js')
 
 /** Path of the Electron binary, for tests that start a process themselves. */
 export function electronBinary(): string {
-  return process.env.LAUNCHKIT_E2E_EXECUTABLE ?? (require('electron') as string) // eslint-disable-line @typescript-eslint/no-require-imports
+  return process.env.TRACKZYN_E2E_EXECUTABLE ?? (require('electron') as string) // eslint-disable-line @typescript-eslint/no-require-imports
 }
 
-/** With `LAUNCHKIT_E2E_EXECUTABLE` set, the tests drive a packaged app instead of `out/`. */
+/** With `TRACKZYN_E2E_EXECUTABLE` set, the tests drive a packaged app instead of `out/`. */
 export function launchArgs(userDataDir: string): string[] {
   // English, whatever the machine's language is: the specs read the main process's messages too.
   const userData = `--user-data-dir=${userDataDir}`
   const lang = '--lang=en-US'
   // CI Linux runners cannot set up Chromium's SUID sandbox for an unpacked Electron.
   const flags = process.env.CI && process.platform === 'linux' ? ['--no-sandbox', lang, userData] : [lang, userData]
-  return process.env.LAUNCHKIT_E2E_EXECUTABLE ? flags : [MAIN_ENTRY, ...flags]
+  return process.env.TRACKZYN_E2E_EXECUTABLE ? flags : [MAIN_ENTRY, ...flags]
 }
 
 /** Wide enough for the sidebar layout (the frontend switches at 1024px). */
@@ -35,7 +35,7 @@ const launched: ElectronApplication[] = []
 const tempDirs: string[] = []
 
 export function newUserDataDir(config?: Record<string, unknown>): string {
-  const dir = mkdtempSync(path.join(tmpdir(), 'launchkit-e2e-'))
+  const dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-e2e-'))
   tempDirs.push(dir)
   if (config) {
     mkdirSync(dir, { recursive: true })
@@ -56,7 +56,7 @@ export async function launchApp(
 ): Promise<LaunchedApp> {
   const userDataDir = options.userDataDir ?? newUserDataDir(options.config ?? (options.serverUrl ? { serverUrl: options.serverUrl } : undefined))
   const app = await electron.launch({
-    executablePath: process.env.LAUNCHKIT_E2E_EXECUTABLE,
+    executablePath: process.env.TRACKZYN_E2E_EXECUTABLE,
     args: [...launchArgs(userDataDir), ...(options.args ?? [])],
     cwd: DESKTOP_ROOT,
     env: { ...(process.env as Record<string, string>), ...options.env },

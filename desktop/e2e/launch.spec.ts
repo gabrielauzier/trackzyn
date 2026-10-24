@@ -14,21 +14,21 @@ test.afterEach(async () => {
   await server.close()
 })
 
-test('opens exactly one window at app://launchkit/', async () => {
+test('opens exactly one window at app://trackzyn/', async () => {
   const { app, page } = await launchApp({ serverUrl: server.url })
   expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1)
-  expect(page.url().startsWith('app://launchkit/')).toBe(true)
+  expect(page.url().startsWith('app://trackzyn/')).toBe(true)
 })
 
 test('reloading /files keeps the files page', async () => {
   const { page } = await launchApp({ serverUrl: server.url })
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
   await page.evaluate((token) => localStorage.setItem('token', token), server.token)
-  await page.goto('app://launchkit/files')
+  await page.goto('app://trackzyn/files')
   await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible()
 
   await page.reload()
-  expect(page.url()).toBe('app://launchkit/files')
+  expect(page.url()).toBe('app://trackzyn/files')
   await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible()
   const status = await page.evaluate(async () => (await fetch('/files')).status)
   expect(status).toBe(200)
@@ -55,6 +55,6 @@ test('opens with an unreachable server and shows one window', async () => {
   // An address nothing listens on: the app has no network to reach its server.
   // This is not a proof for C27: the app runs unpackaged here, so the updater never starts.
   const { app, page } = await launchApp({ serverUrl: 'http://127.0.0.1:9' })
-  expect(page.url().startsWith('app://launchkit/')).toBe(true)
+  expect(page.url().startsWith('app://trackzyn/')).toBe(true)
   expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1)
 })

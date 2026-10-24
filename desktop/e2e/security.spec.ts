@@ -13,7 +13,7 @@ test.afterEach(async () => {
   await server.close()
 })
 
-const LAUNCHKIT_MEMBERS = [
+const TRACKZYN_MEMBERS = [
   'appVersion',
   'getMode',
   'getServerUrl',
@@ -56,7 +56,7 @@ test('external link opens in the system browser', async () => {
   await page.locator('#external-link').click()
 
   await expect.poll(() => app.evaluate(() => (globalThis as { __opened?: string[] }).__opened)).toEqual(['https://example.com/'])
-  expect(page.url().startsWith('app://launchkit/')).toBe(true)
+  expect(page.url().startsWith('app://trackzyn/')).toBe(true)
   expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBe(1)
 })
 
@@ -86,14 +86,14 @@ test('renderer cannot navigate away', async () => {
 
 // The title is what task 3's proof (C20a) calls; the bridge has grown since (SSO, local mode, export),
 // so the list above is the current one (13 members) and this test fixes that list.
-test('window.launchkit exposes exactly the eight members', async () => {
+test('window.trackzyn exposes exactly the eight members', async () => {
   const { page } = await launchApp({ serverUrl: server.url })
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
-  const members = await page.evaluate(() => Object.keys((window as unknown as { launchkit: object }).launchkit).sort())
-  expect(members).toEqual(LAUNCHKIT_MEMBERS)
+  const members = await page.evaluate(() => Object.keys((window as unknown as { trackzyn: object }).trackzyn).sort())
+  expect(members).toEqual(TRACKZYN_MEMBERS)
   expect(
     await page.evaluate(() => {
-      const api = (window as unknown as { launchkit: { isDesktop: boolean; getServerUrl: unknown } }).launchkit
+      const api = (window as unknown as { trackzyn: { isDesktop: boolean; getServerUrl: unknown } }).trackzyn
       return [api.isDesktop, typeof api.getServerUrl]
     }),
   ).toEqual([true, 'function'])

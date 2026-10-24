@@ -4,7 +4,7 @@ import { type Server, createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { SignJWT, exportJWK, generateKeyPair } from 'jose'
 
-export const CLIENT_ID = 'launchkit'
+export const CLIENT_ID = 'trackzyn'
 export const CLIENT_SECRET = 'contract-idp-client-secret'
 
 export interface Grant {

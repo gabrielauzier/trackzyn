@@ -2,7 +2,7 @@ import { Queue, Worker } from 'bullmq'
 import { Redis } from 'ioredis'
 import type { JobHandler, JobQueue } from './job-queue.ts'
 
-export const QUEUE_NAME = 'launchkit'
+export const QUEUE_NAME = 'trackzyn'
 
 /** BullMQ on Redis: one queue, one worker per `start()`, schedules kept in Redis by name. */
 export class BullMqQueue implements JobQueue {

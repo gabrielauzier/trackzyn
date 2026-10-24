@@ -41,11 +41,11 @@ describe('external links', () => {
     expect(isAllowedExternalUrl('mailto:someone@example.com')).toBe(true)
   })
 
-  it('never opens javascript, file or launchkit urls', async () => {
+  it('never opens javascript, file or trackzyn urls', async () => {
     const openExternal = vi.fn(async () => {})
     const fake = fakeWebContents()
     hardenWebContents(fake.webContents, { openExternal })
-    const blocked = ['javascript:alert(1)', 'file:///etc/passwd', 'launchkit://open', 'app://launchkit/files', 'data:text/html,hi', 'not a url', '']
+    const blocked = ['javascript:alert(1)', 'file:///etc/passwd', 'trackzyn://open', 'app://trackzyn/files', 'data:text/html,hi', 'not a url', '']
 
     for (const url of blocked) {
       expect(fake.windowOpen(url), url).toEqual({ action: 'deny' })
@@ -57,23 +57,23 @@ describe('external links', () => {
 })
 
 describe('navigation', () => {
-  it('blocks navigation away from app://launchkit', () => {
+  it('blocks navigation away from app://trackzyn', () => {
     const openExternal = vi.fn(async () => {})
     const fake = fakeWebContents()
     hardenWebContents(fake.webContents, { openExternal })
 
     for (const event of ['will-navigate', 'will-redirect', 'will-frame-navigate']) {
-      for (const url of ['https://evil.example/', 'file:///etc/passwd', 'app://launchkit.evil.example/', 'app://other/', 'javascript:alert(1)']) {
+      for (const url of ['https://evil.example/', 'file:///etc/passwd', 'app://trackzyn.evil.example/', 'app://other/', 'javascript:alert(1)']) {
         expect(fake.navigate(event, url), `${event} ${url}`).toHaveBeenCalledOnce()
       }
-      for (const url of ['app://launchkit/files', 'app://launchkit/']) {
+      for (const url of ['app://trackzyn/files', 'app://trackzyn/']) {
         expect(fake.navigate(event, url), `${event} ${url}`).not.toHaveBeenCalled()
       }
     }
     // Navigating away never turns into opening the system browser: a script could do that without a click.
     expect(openExternal).not.toHaveBeenCalled()
     expect(fake.windowOpen('file:///etc/passwd')).toEqual({ action: 'deny' })
-    expect(fake.windowOpen('app://launchkit/files')).toEqual({ action: 'deny' })
-    expect(fake.navigate('will-attach-webview', 'app://launchkit/')).toHaveBeenCalledOnce()
+    expect(fake.windowOpen('app://trackzyn/files')).toEqual({ action: 'deny' })
+    expect(fake.navigate('will-attach-webview', 'app://trackzyn/')).toHaveBeenCalledOnce()
   })
 })

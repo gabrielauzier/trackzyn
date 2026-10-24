@@ -1,7 +1,7 @@
 name: Desktop Release
 
 # Builds the desktop installers and publishes them to the releases repository
-# named by the repository variable LAUNCHKIT_DESKTOP_RELEASE_REPO (owner/repo).
+# named by the repository variable TRACKZYN_DESKTOP_RELEASE_REPO (owner/repo).
 # Push a tag such as desktop-v0.1.0; it must match desktop/package.json.
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
       - name: Resolve the releases repository and signing
         shell: bash
         env:
-          RELEASE_REPO: ${{ vars.LAUNCHKIT_DESKTOP_RELEASE_REPO }}
+          RELEASE_REPO: ${{ vars.TRACKZYN_DESKTOP_RELEASE_REPO }}
           HAS_MAC_CSC_LINK: ${{ secrets.CSC_LINK != '' }}
           HAS_MAC_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD != '' }}
           HAS_MAC_APPLE_ID: ${{ secrets.APPLE_ID != '' }}
@@ -67,11 +67,11 @@ jobs:
           HAS_WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD != '' }}
         run: |
           if ! [[ "${RELEASE_REPO}" =~ ^[^/]+/[^/]+$ ]]; then
-            echo "::error::Set the repository variable LAUNCHKIT_DESKTOP_RELEASE_REPO to owner/repo"
+            echo "::error::Set the repository variable TRACKZYN_DESKTOP_RELEASE_REPO to owner/repo"
             exit 1
           fi
-          echo "LAUNCHKIT_DESKTOP_RELEASE_OWNER=${RELEASE_REPO%%/*}" >> "$GITHUB_ENV"
-          echo "LAUNCHKIT_DESKTOP_RELEASE_REPO_NAME=${RELEASE_REPO##*/}" >> "$GITHUB_ENV"
+          echo "TRACKZYN_DESKTOP_RELEASE_OWNER=${RELEASE_REPO%%/*}" >> "$GITHUB_ENV"
+          echo "TRACKZYN_DESKTOP_RELEASE_REPO_NAME=${RELEASE_REPO##*/}" >> "$GITHUB_ENV"
           # Only a code-signed build may auto-update (macOS refuses unsigned
           # updates). Linux packages have no signature to check, so Linux is
           # never signed and never auto-updates.
@@ -93,7 +93,7 @@ jobs:
               ;;
             Windows) [ "${HAS_WIN_CSC_LINK}" = "true" ] && [ "${HAS_WIN_CSC_KEY_PASSWORD}" = "true" ] && signed=true ;;
           esac
-          echo "LAUNCHKIT_DESKTOP_SIGNED=${signed}" >> "$GITHUB_ENV"
+          echo "TRACKZYN_DESKTOP_SIGNED=${signed}" >> "$GITHUB_ENV"
           if [ "${signed}" = "false" ]; then
             echo "::warning::${RUNNER_OS} has no code signing in this release: this build is unsigned and will not auto-update."
           fi
@@ -116,7 +116,7 @@ jobs:
       - name: Package, sign and publish
         working-directory: desktop
         env:
-          GH_TOKEN: ${{ secrets.LAUNCHKIT_DESKTOP_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TRACKZYN_DESKTOP_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
           # macOS signing and notarization
           CSC_LINK: ${{ runner.os == 'macOS' && secrets.CSC_LINK || '' }}
           CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.CSC_KEY_PASSWORD || '' }}
@@ -129,5 +129,5 @@ jobs:
         run: >-
           npx electron-builder ${{ matrix.electron_args }} --publish always
           -c.publish.provider=github
-          -c.publish.owner="${LAUNCHKIT_DESKTOP_RELEASE_OWNER}"
-          -c.publish.repo="${LAUNCHKIT_DESKTOP_RELEASE_REPO_NAME}"
+          -c.publish.owner="${TRACKZYN_DESKTOP_RELEASE_OWNER}"
+          -c.publish.repo="${TRACKZYN_DESKTOP_RELEASE_REPO_NAME}"

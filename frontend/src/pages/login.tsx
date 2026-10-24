@@ -53,7 +53,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isPasskeyLoading, setIsPasskeyLoading] = useState(false)
-  // Passkeys are bound to the server's origin; the desktop app lives on app://launchkit.
+  // Passkeys are bound to the server's origin; the desktop app lives on app://trackzyn.
   const [passkeySupported] = useState(() => !isDesktop() && isPasskeySupported())
   const [registrationEnabled, setRegistrationEnabled] = useState(true)
   const [oidcConfig, setOidcConfig] = useState<OIDCConfig | null>(null)
@@ -210,7 +210,7 @@ export default function LoginPage() {
   const handleOIDCLogin = async () => {
     conditionalPasskeyAbortRef.current?.abort()
     if (isDesktop()) {
-      // The main process opens the provider in the system browser; the sign-in returns through launchkit://auth/callback.
+      // The main process opens the provider in the system browser; the sign-in returns through trackzyn://auth/callback.
       await getDesktopApi().startSso()
       return
     }

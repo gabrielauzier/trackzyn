@@ -49,7 +49,7 @@ test('connecting saves the url in config.json', async () => {
   const remote = await server()
   const { page, configPath } = await launchApp()
   await connect(page, `${remote.url}/`)
-  await expect(page).toHaveURL('app://launchkit/login')
+  await expect(page).toHaveURL('app://trackzyn/login')
   expect(readConfig(configPath).serverUrl).toBe(remote.url)
   expect(remote.requests.map((request) => request.path)).toEqual(
     expect.arrayContaining(['/api/health', '/api/info', '/api/setup/status']),
@@ -60,14 +60,14 @@ test('fresh server lands on /setup', async () => {
   const remote = await server({ hasUsers: false })
   const { page } = await launchApp()
   await connect(page, remote.url)
-  await expect(page).toHaveURL('app://launchkit/setup')
+  await expect(page).toHaveURL('app://trackzyn/setup')
 })
 
 test('server with users lands on /login', async () => {
   const remote = await server({ hasUsers: true })
   const { page } = await launchApp()
   await connect(page, remote.url)
-  await expect(page).toHaveURL('app://launchkit/login')
+  await expect(page).toHaveURL('app://trackzyn/login')
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()
 })
 
@@ -83,7 +83,7 @@ test('reopening with a saved server skips the connect screen', async () => {
   const remote = await server()
   const first = await launchApp()
   await connect(first.page, remote.url)
-  await expect(first.page).toHaveURL('app://launchkit/login')
+  await expect(first.page).toHaveURL('app://trackzyn/login')
   await first.app.close()
 
   const { page } = await launchApp({ userDataDir: first.userDataDir })
@@ -99,7 +99,7 @@ test('switch server opens the connect screen', async () => {
     Menu.getApplicationMenu()!.getMenuItemById('switch-server')!.click()
   })
   await expect(connectHeading(page)).toBeVisible()
-  await expect(page).toHaveURL('app://launchkit/connect')
+  await expect(page).toHaveURL('app://trackzyn/connect')
   // Opening the screen does not forget the current server.
   expect(readConfig(configPath).serverUrl).toBe(remote.url)
 })
@@ -119,7 +119,7 @@ test('switching servers drops the session and never leaks the old token', async 
   })
   await expect(connectHeading(page)).toBeVisible()
   await connect(page, newServer.url)
-  await expect(page).toHaveURL('app://launchkit/login')
+  await expect(page).toHaveURL('app://trackzyn/login')
 
   expect(await page.evaluate(() => [localStorage.getItem('token'), localStorage.getItem('workspace_id')])).toEqual([null, null])
   expect(readConfig(configPath).serverUrl).toBe(newServer.url)

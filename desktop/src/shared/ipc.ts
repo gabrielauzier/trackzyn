@@ -16,8 +16,8 @@ export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** What the renderer sees as `window.launchkit`. Exactly these thirteen members. */
-export interface LaunchkitApi {
+/** What the renderer sees as `window.trackzyn`. Exactly these thirteen members. */
+export interface TrackzynApi {
   isDesktop: true
   platform: string
   appVersion: string
@@ -26,7 +26,7 @@ export interface LaunchkitApi {
   openExternal(url: string): Promise<void>
   onUpdateAvailable(callback: (info: { version: string }) => void): () => void
   installUpdate(): Promise<void>
-  /** Opens the server's SSO login in the system browser; the sign-in returns through launchkit://auth/callback. */
+  /** Opens the server's SSO login in the system browser; the sign-in returns through trackzyn://auth/callback. */
   startSso(): Promise<void>
   /** `null` while the choice between a server and this computer is open. */
   getMode(): Promise<'remote' | 'local' | null>
@@ -38,4 +38,4 @@ export interface LaunchkitApi {
   onExportState(callback: (state: { exporting: boolean }) => void): () => void
 }
 
-export const APP_VERSION_ARG = '--launchkit-app-version='
+export const APP_VERSION_ARG = '--trackzyn-app-version='

@@ -2,7 +2,7 @@ import { APP_HOST, APP_SCHEME } from './app-protocol'
 
 const EXTERNAL_SCHEMES = new Set(['http:', 'https:', 'mailto:'])
 
-/** True for urls served by the app itself (app://launchkit/...), and only those. */
+/** True for urls served by the app itself (app://trackzyn/...), and only those. */
 export function isAppUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
@@ -36,7 +36,7 @@ export interface HardenableWebContents {
 }
 
 /**
- * Keeps the renderer on app://launchkit: navigation elsewhere is cancelled,
+ * Keeps the renderer on app://trackzyn: navigation elsewhere is cancelled,
  * `window.open` never creates a window, and allowed links go to the system
  * browser only when the page asks to open a new window.
  */

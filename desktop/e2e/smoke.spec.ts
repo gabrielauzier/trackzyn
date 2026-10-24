@@ -25,7 +25,7 @@ test('connects, signs in, switches workspace and uploads a file', async () => {
   await page.getByLabel('Email').fill('admin@example.com')
   await page.getByLabel('Password').fill('secret')
   await page.getByRole('button', { name: 'Login' }).click()
-  await expect(page).toHaveURL('app://launchkit/')
+  await expect(page).toHaveURL('app://trackzyn/')
 
   await page.getByRole('link', { name: 'Files' }).first().click()
   await expect(page.getByRole('heading', { name: 'Files' })).toBeVisible()

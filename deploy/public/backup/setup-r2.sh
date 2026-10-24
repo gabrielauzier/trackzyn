@@ -7,12 +7,12 @@
 # rode este script no SEU terminal.
 #
 # Uso: ./deploy/public/backup/setup-r2.sh [--file CAMINHO] [--no-test]
-#   --file     onde salvar (padrão: ~/.config/launchkit-backup/r2.env, que o offsite.sh lê sozinho).
+#   --file     onde salvar (padrão: ~/.config/trackzyn-backup/r2.env, que o offsite.sh lê sozinho).
 #              Em outro caminho, defina R2_ENV_FILE=<caminho> para o offsite.sh encontrá-lo.
 #   --no-test  só grava o arquivo, sem testar contra o R2.
 set -euo pipefail
 
-FILE="$HOME/.config/launchkit-backup/r2.env"
+FILE="$HOME/.config/trackzyn-backup/r2.env"
 DO_TEST=1
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -50,7 +50,7 @@ ask_valid() { # ask_valid VAR "pergunta" 'regex' "mensagem" [padrão] [oculto]
   done
 }
 
-say "Configuração do Cloudflare R2 para os backups do launchkit"
+say "Configuração do Cloudflare R2 para os backups do trackzyn"
 say "Arquivo de destino: $FILE"
 say
 
@@ -68,7 +68,7 @@ ask_valid ACCOUNT_ID "Account ID (32 caracteres hexadecimais)" '^[0-9a-fA-F]{32}
 ask_valid ACCESS_KEY "Access Key ID (32 caracteres hexadecimais)" '^[0-9a-fA-F]{32}$' "esperado 32 caracteres hexadecimais"
 ask_valid SECRET_KEY "Secret Access Key (64 hexadecimais; não aparece ao digitar)" '^[0-9a-fA-F]{64}$' "esperado 64 caracteres hexadecimais" "" hidden
 ask_valid BUCKET "Nome do bucket" '^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$' "3 a 63 caracteres: minúsculas, números e hífen"
-ask_valid PREFIX "Pasta dentro do bucket" '^[A-Za-z0-9._-]{1,64}$' "use letras, números, ponto, hífen ou sublinhado" "launchkit"
+ask_valid PREFIX "Pasta dentro do bucket" '^[A-Za-z0-9._-]{1,64}$' "use letras, números, ponto, hífen ou sublinhado" "trackzyn"
 ask_valid KEEP "Dias de retenção no R2" '^[0-9]{1,4}$' "informe um número de dias" "90"
 if [ "$KEEP" -lt 7 ]; then say "  aviso: retenção muito curta (<7 dias); usando 7."; KEEP=7; fi
 

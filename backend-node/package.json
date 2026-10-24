@@ -1,8 +1,8 @@
 {
-  "name": "launchkit-backend-node",
+  "name": "trackzyn-backend-node",
   "version": "0.1.0",
   "private": true,
-  "description": "launchkit API, Node.js (Fastify) implementation with the same HTTP contract as backend/",
+  "description": "trackzyn API (Node.js, Fastify)",
   "type": "module",
   "engines": {
     "node": ">=22"

@@ -1,14 +1,14 @@
 {
-  "name": "launchkit-desktop",
-  "productName": "launchkit",
+  "name": "trackzyn-desktop",
+  "productName": "trackzyn",
   "version": "0.1.0",
   "private": true,
-  "description": "launchkit desktop client",
+  "description": "trackzyn desktop client",
   "author": {
-    "name": "launchkit",
-    "email": "noreply@launchkit.invalid"
+    "name": "trackzyn",
+    "email": "noreply@trackzyn.invalid"
   },
-  "homepage": "https://github.com/gabrielauzier/launchkit",
+  "homepage": "https://github.com/gabrielauzier/trackzyn",
   "main": "./out/main/index.js",
   "scripts": {
     "build:frontend": "npm --prefix ../frontend run build:desktop",

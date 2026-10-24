@@ -18,7 +18,7 @@ function seedDatabase() {
 const ISO_NAME = /^db-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z$/
 
 beforeEach(() => {
-  userData = mkdtempSync(path.join(tmpdir(), 'launchkit-backup-'))
+  userData = mkdtempSync(path.join(tmpdir(), 'trackzyn-backup-'))
 })
 afterEach(() => rmSync(userData, { recursive: true, force: true }))
 

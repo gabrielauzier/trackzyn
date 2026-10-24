@@ -5,17 +5,17 @@ import ConnectServerPage from './connect-server'
 import { setup } from '@/lib/api'
 import { WORKSPACE_STORAGE_KEY } from '@/lib/api'
 import { i18n, renderWithProviders, t } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>()
   return { ...actual, setup: { ...actual.setup, status: vi.fn() } }
 })
 
-type SetServerUrl = LaunchkitApi['setServerUrl']
+type SetServerUrl = TrackzynApi['setServerUrl']
 
 function installDesktopApi(setServerUrl: SetServerUrl) {
-  const api: LaunchkitApi = {
+  const api: TrackzynApi = {
     isDesktop: true,
     platform: 'darwin',
     appVersion: '0.1.0',
@@ -30,7 +30,7 @@ function installDesktopApi(setServerUrl: SetServerUrl) {
     openLogs: vi.fn(async () => {}),
     onExportState: vi.fn(() => () => {}),
   }
-  Object.defineProperty(window, 'launchkit', { value: api, configurable: true })
+  Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
   return api
 }
 
@@ -54,7 +54,7 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
   await i18n.changeLanguage('en')
   vi.clearAllMocks()
 })

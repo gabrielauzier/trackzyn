@@ -47,7 +47,7 @@ describe('packaged local backend', () => {
 
   it('packaged app starts the local backend without node on PATH', async (context) => {
     const { executable } = requireApp(context)
-    const userData = mkdtempSync(path.join(tmpdir(), 'launchkit-packaged-'))
+    const userData = mkdtempSync(path.join(tmpdir(), 'trackzyn-packaged-'))
     dirs.push(userData)
     writeFileSync(path.join(userData, 'config.json'), JSON.stringify({ mode: 'local' }))
     const debugPort = 9300 + Math.floor(Math.random() * 500)
@@ -66,7 +66,7 @@ describe('packaged local backend', () => {
     const deadline = Date.now() + 90_000
     let url = ''
     let status = ''
-    while (Date.now() < deadline && !(status && url === 'app://launchkit/setup')) {
+    while (Date.now() < deadline && !(status && url === 'app://trackzyn/setup')) {
       await new Promise((resolve) => setTimeout(resolve, 500))
       try {
         const targets = (await (await fetch(`http://127.0.0.1:${debugPort}/json`)).json()) as Array<{ type: string; webSocketDebuggerUrl: string; url: string }>
@@ -78,7 +78,7 @@ describe('packaged local backend', () => {
         // not up yet
       }
     }
-    expect(url).toBe('app://launchkit/setup')
+    expect(url).toBe('app://trackzyn/setup')
     expect(JSON.parse(status)).toEqual({ has_users: false })
   }, 120_000)
 })

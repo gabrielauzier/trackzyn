@@ -1,7 +1,7 @@
 # Images are published by .github/workflows/release.yml. Point IMAGE_PREFIX at
-# your registry (e.g. ghcr.io/acme/launchkit) and pin APP_VERSION to a tag.
+# your registry (e.g. ghcr.io/acme/trackzyn) and pin APP_VERSION to a tag.
 x-node-image: &node-image
-  image: ${IMAGE_PREFIX:-ghcr.io/your-org/launchkit}-backend-node:${APP_VERSION:-latest}
+  image: ${IMAGE_PREFIX:-ghcr.io/your-org/trackzyn}-backend-node:${APP_VERSION:-latest}
 
 services:
   backend-node:

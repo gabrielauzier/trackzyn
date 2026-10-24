@@ -18,7 +18,7 @@ describe('trusted ipc handlers', () => {
     const untrusted = [
       { senderFrame: { url: 'https://evil.example/' } },
       { senderFrame: { url: 'file:///etc/passwd' } },
-      { senderFrame: { url: 'app://launchkit.evil.example/' } },
+      { senderFrame: { url: 'app://trackzyn.evil.example/' } },
       { senderFrame: { url: 'app://other/' } },
       { senderFrame: null },
       {},
@@ -29,11 +29,11 @@ describe('trusted ipc handlers', () => {
     expect(handler).not.toHaveBeenCalled()
   })
 
-  it('runs the handler for frames served from app://launchkit/', async () => {
+  it('runs the handler for frames served from app://trackzyn/', async () => {
     const { ipc, call } = fakeIpc()
     const handler = vi.fn((_event: unknown, url: string) => `got ${url}`)
     trustedHandle(ipc, 'server:set-url', handler)
-    const event = { senderFrame: { url: 'app://launchkit/connect' } }
+    const event = { senderFrame: { url: 'app://trackzyn/connect' } }
     await expect(Promise.resolve(call('server:set-url', event, 'https://srv.example.com'))).resolves.toBe('got https://srv.example.com')
     expect(handler).toHaveBeenCalledTimes(1)
   })
@@ -69,17 +69,17 @@ describe('every ipc channel the main process serves', () => {
     expect(served).toEqual(handled.map(([key]) => key).sort())
   })
 
-  it('refuses a sender frame outside app://launchkit on each channel', () => {
+  it('refuses a sender frame outside app://trackzyn on each channel', () => {
     for (const [key, channel] of handled) {
       const listeners = new Map<string, (event: { senderFrame?: { url: string } | null }, ...args: unknown[]) => unknown>()
       const handler = vi.fn()
       trustedHandle({ handle: (name, listener) => listeners.set(name, listener) }, channel, handler)
       const listener = listeners.get(channel)!
-      for (const frame of [{ url: 'https://evil.example/' }, { url: 'app://launchkit.evil.example/' }, { url: 'file:///x' }, null, undefined]) {
+      for (const frame of [{ url: 'https://evil.example/' }, { url: 'app://trackzyn.evil.example/' }, { url: 'file:///x' }, null, undefined]) {
         expect(() => listener({ senderFrame: frame }), `${key} ${JSON.stringify(frame)}`).toThrow('Untrusted sender')
       }
       expect(handler).not.toHaveBeenCalled()
-      listener({ senderFrame: { url: 'app://launchkit/login' } })
+      listener({ senderFrame: { url: 'app://trackzyn/login' } })
       expect(handler).toHaveBeenCalledTimes(1)
     }
   })

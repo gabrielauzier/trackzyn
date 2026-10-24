@@ -10,7 +10,7 @@ function json(body: unknown, status = 200): Response {
 function healthyServer(): Handler {
   return (url) => {
     if (url.endsWith('/api/health')) return json({ status: 'healthy' })
-    if (url.endsWith('/api/info')) return json({ app_name: 'launchkit', features: {}, update_check_repo: null })
+    if (url.endsWith('/api/info')) return json({ app_name: 'trackzyn', features: {}, update_check_repo: null })
     return json({ detail: 'Not Found' }, 404)
   }
 }

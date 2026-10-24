@@ -8,7 +8,7 @@ const script = path.resolve(__dirname, 'check-web-bundle.mjs')
 const dirs: string[] = []
 
 function check(source: string) {
-  const dir = mkdtempSync(path.join(tmpdir(), 'launchkit-bundle-'))
+  const dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-bundle-'))
   dirs.push(dir)
   mkdirSync(path.join(dir, 'assets'))
   writeFileSync(path.join(dir, 'assets', 'index-abc123.js'), source)
@@ -21,18 +21,18 @@ afterEach(() => {
 })
 
 describe('check-web-bundle', () => {
-  it('accepts a bundle that only asks window.launchkit?.isDesktop', () => {
-    expect(check('const a=window.launchkit?.isDesktop;const b=globalThis.launchkit?.isDesktop;const c=window["launchkit"]?.isDesktop').status).toBe(0)
+  it('accepts a bundle that only asks window.trackzyn?.isDesktop', () => {
+    expect(check('const a=window.trackzyn?.isDesktop;const b=globalThis.trackzyn?.isDesktop;const c=window["trackzyn"]?.isDesktop').status).toBe(0)
     expect(check('var x=1;console.log("no bridge here")').status).toBe(0)
   })
 
   it.each([
-    ['window.launchkit.getServerUrl()', 'dot access'],
-    ["window['launchkit'].setServerUrl(u)", 'single-quoted bracket access'],
-    ['window["launchkit"].platform', 'double-quoted bracket access'],
-    ['globalThis.launchkit.platform', 'globalThis dot access'],
-    ["globalThis['launchkit'].platform", 'globalThis bracket access'],
-    ['window.launchkit?.platform', 'optional chain to another member'],
+    ['window.trackzyn.getServerUrl()', 'dot access'],
+    ["window['trackzyn'].setServerUrl(u)", 'single-quoted bracket access'],
+    ['window["trackzyn"].platform', 'double-quoted bracket access'],
+    ['globalThis.trackzyn.platform', 'globalThis dot access'],
+    ["globalThis['trackzyn'].platform", 'globalThis bracket access'],
+    ['window.trackzyn?.platform', 'optional chain to another member'],
   ])('rejects %s (%s)', (source) => {
     const { status, output } = check(`var a=1;${source};var b=2`)
     expect(status).toBe(1)
@@ -40,7 +40,7 @@ describe('check-web-bundle', () => {
   })
 
   it('fails when the directory holds no scripts', () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'launchkit-bundle-'))
+    const dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-bundle-'))
     dirs.push(dir)
     expect(spawnSync('node', [script, dir], { encoding: 'utf8' }).status).toBe(2)
   })

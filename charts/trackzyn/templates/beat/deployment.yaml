@@ -1,0 +1,54 @@
+{{- if .Values.scheduler.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trackzyn.fullname" . }}-beat
+  labels:
+    {{- include "trackzyn.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "trackzyn.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/common/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "trackzyn.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: scheduler
+    spec:
+      containers:
+        - name: scheduler
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.scheduler.image.pullPolicy }}
+          command:
+            - node
+            - dist/scheduler.js
+          envFrom:
+            - configMapRef:
+                name: {{ include "trackzyn.fullname" . }}-config
+            - secretRef:
+                {{- if .Values.global.existingSecret }}
+                name: {{ .Values.global.existingSecret }}
+                {{- else }}
+                name: {{ include "trackzyn.fullname" . }}-secrets
+                {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.files.enabled }}
+            - name: files
+              mountPath: /app/data/files
+            {{- end }}
+          {{- if .Values.scheduler.resources }}
+          resources:
+            {{- toYaml .Values.scheduler.resources | nindent 12 }}
+          {{- end }}
+      volumes:
+        {{- if .Values.persistence.files.enabled }}
+        - name: files
+          persistentVolumeClaim:
+            claimName: {{ include "trackzyn.fullname" . }}-files
+        {{- end }}
+{{- end }}

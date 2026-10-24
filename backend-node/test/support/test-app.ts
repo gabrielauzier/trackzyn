@@ -32,7 +32,7 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<T
     { SECRET_KEY: 'test-signing-key', TRUSTED_PROXY_HOPS: '1', ...env },
     { envFiles: [], secretsDirs: [] },
   )
-  const storage = new LocalStorageProvider(mkdtempSync(join(tmpdir(), 'launchkit-node-files-')))
+  const storage = new LocalStorageProvider(mkdtempSync(join(tmpdir(), 'trackzyn-node-files-')))
   const ctx: AppContext = { config, db, keyValueStore: new MemoryStore(), jobQueue: new InProcessQueue(), storage }
   const app = await buildApp(ctx)
   return {

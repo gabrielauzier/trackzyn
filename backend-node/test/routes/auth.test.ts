@@ -368,7 +368,7 @@ describe('LOCAL_AUTH_ENABLED=false', () => {
     const oidcOnly = await createTestApp({
       LOCAL_AUTH_ENABLED: 'false',
       OIDC_ENABLED: 'true',
-      OIDC_CLIENT_ID: 'launchkit',
+      OIDC_CLIENT_ID: 'trackzyn',
       OIDC_DISCOVERY_URL: 'https://id.example.com/.well-known/openid-configuration',
     })
     try {

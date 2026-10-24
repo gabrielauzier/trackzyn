@@ -204,7 +204,7 @@ describe('OpenID Connect', () => {
 })
 
 describe('OpenID Connect desktop sign-in', () => {
-  const TARGET = 'launchkit://auth/callback'
+  const TARGET = 'trackzyn://auth/callback'
   const login = (t: TestApp, query: string) => t.app.inject({ method: 'GET', url: `/api/auth/oidc/login?${query}` })
 
   it('rejects a missing or short desktop_nonce and stores nothing (desktop_nonce)', async () => {

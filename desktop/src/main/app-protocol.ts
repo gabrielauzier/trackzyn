@@ -2,7 +2,7 @@ import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 
 export const APP_SCHEME = 'app'
-export const APP_HOST = 'launchkit'
+export const APP_HOST = 'trackzyn'
 export const APP_ORIGIN = `${APP_SCHEME}://${APP_HOST}`
 
 interface Deps {

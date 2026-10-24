@@ -19,7 +19,7 @@ export interface LocalServerOptions {
   /** Directory the uploaded files live in. */
   filesDir: string
   secretKey: string
-  /** Secret every request must carry in `X-Launchkit-Local-Token`. */
+  /** Secret every request must carry in `X-Trackzyn-Local-Token`. */
   sessionToken: string
   migrationsFolder?: string
   logger?: FastifyServerOptions['logger']
@@ -72,7 +72,7 @@ export async function startLocalServer(options: LocalServerOptions): Promise<Loc
       HOST,
       PORT: String(options.port ?? 0),
       STORAGE_LOCAL_PATH: options.filesDir,
-      FRONTEND_URL: 'app://launchkit',
+      FRONTEND_URL: 'app://trackzyn',
     },
     { envFiles: [], secretsDirs: [] },
   )

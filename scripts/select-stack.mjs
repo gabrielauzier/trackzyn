@@ -93,9 +93,9 @@ export function applyMarkers(text, stack) {
 }
 
 const STACK_IF =
-  /(\{\{-?)\s*if eq \(include "launchkit\.backendStack" \.\) "node"\s*(-?\}\})([\s\S]*?)(\{\{-?)\s*else\s*(-?\}\})([\s\S]*?)(\{\{-?)\s*end\s*(-?\}\})/
+  /(\{\{-?)\s*if eq \(include "trackzyn\.backendStack" \.\) "node"\s*(-?\}\})([\s\S]*?)(\{\{-?)\s*else\s*(-?\}\})([\s\S]*?)(\{\{-?)\s*end\s*(-?\}\})/
 
-/** Resolves `{{ if eq (include "launchkit.backendStack" .) "node" }}A{{ else }}B{{ end }}` with Go's trim rules. */
+/** Resolves `{{ if eq (include "trackzyn.backendStack" .) "node" }}A{{ else }}B{{ end }}` with Go's trim rules. */
 export function resolveChart(text, stack) {
   let result = text
   for (let match = STACK_IF.exec(result); match; match = STACK_IF.exec(result)) {
@@ -117,7 +117,7 @@ export function resolveChart(text, stack) {
     result = before + chosen + after
   }
   result = result.replaceAll(
-    '{{ include "launchkit.backendImage" . }}',
+    '{{ include "trackzyn.backendImage" . }}',
     '{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}',
   )
   if (stack === 'node') {
@@ -253,7 +253,7 @@ function main() {
 
   for (const path of tracked) {
     if (!path.startsWith('charts/') || !existsSync(join(ROOT, path))) continue
-    if (readFileSync(join(ROOT, path), 'utf8').includes('launchkit.backendStack')) fail(1, `select-stack: unresolved stack conditional in ${path}`)
+    if (readFileSync(join(ROOT, path), 'utf8').includes('trackzyn.backendStack')) fail(1, `select-stack: unresolved stack conditional in ${path}`)
   }
 
   console.log(`selected: ${stack}`)

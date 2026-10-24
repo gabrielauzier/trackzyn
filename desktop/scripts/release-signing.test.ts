@@ -15,14 +15,14 @@ type RunnerOS = 'macOS' | 'Windows' | 'Linux'
 
 /** Runs the workflow's own resolve step the way a runner would and returns what it exported. */
 function runResolveStep(runnerOs: RunnerOS, secrets: { mac?: boolean; win?: boolean | 'link-only' }) {
-  const dir = mkdtempSync(path.join(tmpdir(), 'launchkit-release-'))
+  const dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-release-'))
   const githubEnv = path.join(dir, 'github-env')
   writeFileSync(githubEnv, '')
   try {
     // The step's `env:` holds `${{ ... }}` expressions; resolve them from the secrets flags.
     const env: Record<string, string> = { ...(process.env as Record<string, string>), RUNNER_OS: runnerOs, GITHUB_ENV: githubEnv }
     for (const [key, value] of Object.entries(resolveStep.env as Record<string, string>)) {
-      if (key === 'RELEASE_REPO') env[key] = 'acme/launchkit-releases'
+      if (key === 'RELEASE_REPO') env[key] = 'acme/trackzyn-releases'
       else if (key.startsWith('HAS_MAC')) env[key] = String(Boolean(secrets.mac))
       else if (key.startsWith('HAS_WIN')) env[key] = String(secrets.win === true || (secrets.win === 'link-only' && /LINK|CERT/.test(key)))
       else throw new Error(`unexpected env ${key}=${value} in the resolve step`)
@@ -58,7 +58,7 @@ describe('desktop-release signing defaults', () => {
     for (const secrets of [{}, { mac: true, win: true }]) {
       const { status, exported } = runResolveStep('Linux', secrets)
       expect(status).toBe(0)
-      expect(exported.LAUNCHKIT_DESKTOP_SIGNED).toBe('false')
+      expect(exported.TRACKZYN_DESKTOP_SIGNED).toBe('false')
       expect(updaterStarted(exported)).toBe(false)
     }
   })
@@ -66,30 +66,30 @@ describe('desktop-release signing defaults', () => {
   it('Windows is signed only with a certificate and starts the autoUpdater only then', () => {
     const unsigned = runResolveStep('Windows', {})
     expect(unsigned.status).toBe(0)
-    expect(unsigned.exported.LAUNCHKIT_DESKTOP_SIGNED).toBe('false')
+    expect(unsigned.exported.TRACKZYN_DESKTOP_SIGNED).toBe('false')
     expect(updaterStarted(unsigned.exported)).toBe(false)
 
     const signed = runResolveStep('Windows', { win: true })
-    expect(signed.exported.LAUNCHKIT_DESKTOP_SIGNED).toBe('true')
+    expect(signed.exported.TRACKZYN_DESKTOP_SIGNED).toBe('true')
     expect(updaterStarted(signed.exported)).toBe(true)
   })
 
   it('Windows with the certificate but no password is not signed', () => {
     const { status, exported } = runResolveStep('Windows', { win: 'link-only' })
     expect(status).toBe(0)
-    expect(exported.LAUNCHKIT_DESKTOP_SIGNED).toBe('false')
+    expect(exported.TRACKZYN_DESKTOP_SIGNED).toBe('false')
     expect(updaterStarted(exported)).toBe(false)
   })
 
   it('macOS secrets alone never sign Windows', () => {
     const { exported } = runResolveStep('Windows', { mac: true })
-    expect(exported.LAUNCHKIT_DESKTOP_SIGNED).toBe('false')
+    expect(exported.TRACKZYN_DESKTOP_SIGNED).toBe('false')
   })
 
   it('macOS with the signing secrets is signed and starts the autoUpdater', () => {
     const { status, exported } = runResolveStep('macOS', { mac: true })
     expect(status).toBe(0)
-    expect(exported.LAUNCHKIT_DESKTOP_SIGNED).toBe('true')
+    expect(exported.TRACKZYN_DESKTOP_SIGNED).toBe('true')
     expect(updaterStarted(exported)).toBe(true)
   })
 

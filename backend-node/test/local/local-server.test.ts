@@ -10,7 +10,7 @@ const open: LocalServer[] = []
 const roots: string[] = []
 
 function options(extra: Partial<Parameters<typeof startLocalServer>[0]> = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'launchkit-local-'))
+  const root = mkdtempSync(join(tmpdir(), 'trackzyn-local-'))
   roots.push(root)
   return { dataDir: join(root, 'db'), filesDir: join(root, 'files'), secretKey: 'local-test-secret', sessionToken: TOKEN, logger: false as const, ...extra }
 }
@@ -46,7 +46,7 @@ describe('the local server', () => {
     try {
       const server = await start()
       expect(server.ctx.config.redisUrl).toBeNull()
-      await fetch(`http://127.0.0.1:${server.port}/api/setup/status`, { headers: { 'x-launchkit-local-token': TOKEN } })
+      await fetch(`http://127.0.0.1:${server.port}/api/setup/status`, { headers: { 'x-trackzyn-local-token': TOKEN } })
       await new Promise((resolve) => setTimeout(resolve, 300))
       expect(connections).toBe(0)
     } finally {
@@ -73,15 +73,15 @@ describe('the local server', () => {
     const stream = { write: (line: string) => void lines.push(line) }
     const server = await start({ logger: { level: 'trace', stream } as never, secretKey: 'secret-that-must-not-leak-0123456789' })
     const url = `http://127.0.0.1:${server.port}`
-    await fetch(`${url}/api/health`, { headers: { 'X-Launchkit-Local-Token': TOKEN } })
-    await fetch(`${url}/api/health`, { headers: { 'X-Launchkit-Local-Token': 'wrong-token-value' } })
-    await fetch(`${url}/api/setup/status`, { headers: { 'X-Launchkit-Local-Token': TOKEN, Authorization: 'Bearer abc.def.ghi' } })
+    await fetch(`${url}/api/health`, { headers: { 'X-Trackzyn-Local-Token': TOKEN } })
+    await fetch(`${url}/api/health`, { headers: { 'X-Trackzyn-Local-Token': 'wrong-token-value' } })
+    await fetch(`${url}/api/setup/status`, { headers: { 'X-Trackzyn-Local-Token': TOKEN, Authorization: 'Bearer abc.def.ghi' } })
     const log = lines.join('')
     expect(log.length).toBeGreaterThan(0)
     expect(log).not.toContain(TOKEN.slice(0, 16))
     expect(log).not.toContain('wrong-token-value')
     expect(log).not.toContain('secret-that-must-not-leak-0123456789')
-    expect(log.toLowerCase()).not.toContain('x-launchkit-local-token')
+    expect(log.toLowerCase()).not.toContain('x-trackzyn-local-token')
     expect(log).not.toContain('abc.def.ghi')
   })
 })

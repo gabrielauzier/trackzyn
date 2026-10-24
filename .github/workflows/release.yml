@@ -34,7 +34,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.IMAGE_PREFIX }}/launchkit-backend-node
+          images: ${{ env.IMAGE_PREFIX }}/trackzyn-backend-node
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest
@@ -74,7 +74,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.IMAGE_PREFIX }}/launchkit-frontend
+          images: ${{ env.IMAGE_PREFIX }}/trackzyn-frontend
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest
@@ -122,9 +122,9 @@ jobs:
           VERSION="${VERSION#v}"
 
           echo "Injecting version $VERSION into values.yaml"
-          sed -i "s|tag: latest|tag: ${VERSION}|g" charts/launchkit/values.yaml
+          sed -i "s|tag: latest|tag: ${VERSION}|g" charts/trackzyn/values.yaml
 
           echo "Packaging chart version $VERSION"
-          helm package charts/launchkit --version "$VERSION" --app-version "$VERSION"
+          helm package charts/trackzyn --version "$VERSION" --app-version "$VERSION"
 
-          helm push "launchkit-$VERSION.tgz" oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
+          helm push "trackzyn-$VERSION.tgz" oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts

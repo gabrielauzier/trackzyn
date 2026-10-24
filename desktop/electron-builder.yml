@@ -1,5 +1,5 @@
-appId: com.launchkit.desktop
-productName: launchkit
+appId: com.trackzyn.desktop
+productName: trackzyn
 directories:
   output: release
 files:
@@ -25,10 +25,10 @@ extraResources:
   - from: node_modules/@node-rs
     to: backend/node_modules/@node-rs
 asar: true
-# launchkit://auth/callback brings the SSO sign-in back from the system browser.
+# trackzyn://auth/callback brings the SSO sign-in back from the system browser.
 protocols:
-  - name: launchkit
-    schemes: [launchkit]
+  - name: trackzyn
+    schemes: [trackzyn]
 # Hardened Electron: no Node-as-runtime, no inspector flags, and the app code
 # is only loaded from the integrity-checked asar.
 electronFuses:

@@ -22,7 +22,7 @@ async function signedIn(options: { userDataDir?: string } = {}) {
   const launched = await launchApp({ serverUrl: server.url, ...options })
   await expect(launched.page.getByRole('heading', { name: 'Login' })).toBeVisible()
   await launched.page.evaluate((token) => localStorage.setItem('token', token), server.token)
-  await launched.page.goto('app://launchkit/files')
+  await launched.page.goto('app://trackzyn/files')
   await expect(launched.page.getByRole('heading', { name: 'Files' })).toBeVisible()
   return launched
 }
@@ -61,7 +61,7 @@ test('window bounds survive a restart', async () => {
 
 test('download opens the save dialog and writes the same bytes', async () => {
   const { app, page } = await signedIn()
-  const target = path.join(mkdtempSync(path.join(tmpdir(), 'launchkit-save-')), 'saved.bin')
+  const target = path.join(mkdtempSync(path.join(tmpdir(), 'trackzyn-save-')), 'saved.bin')
   tempDirs.push(path.dirname(target))
   await app.evaluate(({ dialog }, filePath) => {
     const calls: { defaultPath?: string }[] = []

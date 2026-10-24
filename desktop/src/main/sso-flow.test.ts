@@ -25,7 +25,7 @@ describe('SSO pending flow', () => {
     const nonce = nonceOf(0)
     expect(nonce).toMatch(BASE64URL_43)
     expect(openExternal).toHaveBeenCalledWith(
-      `https://srv.example.com/api/auth/oidc/login?redirect_target=launchkit%3A%2F%2Fauth%2Fcallback&desktop_nonce=${nonce}`,
+      `https://srv.example.com/api/auth/oidc/login?redirect_target=trackzyn%3A%2F%2Fauth%2Fcallback&desktop_nonce=${nonce}`,
     )
   })
 

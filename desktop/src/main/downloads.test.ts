@@ -11,7 +11,7 @@ afterEach(() => {
 })
 
 function workspace() {
-  const dir = mkdtempSync(path.join(tmpdir(), 'launchkit-dl-'))
+  const dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-dl-'))
   dirs.push(dir)
   return dir
 }

@@ -1,12 +1,12 @@
 ---
 name: Feature Request
-about: Suggest an idea for launchkit
+about: Suggest an idea for trackzyn
 title: "[Feature] "
 labels: enhancement
 assignees: ""
 ---
 
-> Planning something large or a change to a core part of launchkit? Starting here is exactly right. Opening this issue first lets us align on the idea and timing before you build.
+> Planning something large or a change to a core part of trackzyn? Starting here is exactly right. Opening this issue first lets us align on the idea and timing before you build.
 
 ## Problem
 

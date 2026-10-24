@@ -11,7 +11,7 @@ afterEach(() => {
 
 describe('config store bounds', () => {
   it('keeps bounds next to the server url', () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'launchkit-cfg-'))
+    const dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-cfg-'))
     dirs.push(dir)
     const file = path.join(dir, 'config.json')
     const store = createConfigStore(file)

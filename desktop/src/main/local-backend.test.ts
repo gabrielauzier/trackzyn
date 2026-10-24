@@ -7,7 +7,7 @@ import { createLocalBackend, type ChildLike } from './local-backend'
 
 let userData = ''
 beforeEach(() => {
-  userData = mkdtempSync(path.join(tmpdir(), 'launchkit-local-backend-'))
+  userData = mkdtempSync(path.join(tmpdir(), 'trackzyn-local-backend-'))
 })
 afterEach(() => {
   vi.useRealTimers()

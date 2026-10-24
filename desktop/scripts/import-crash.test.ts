@@ -11,7 +11,7 @@ let work = ''
 let harness = ''
 
 beforeAll(async () => {
-  work = mkdtempSync(path.join(tmpdir(), 'launchkit-crash-'))
+  work = mkdtempSync(path.join(tmpdir(), 'trackzyn-crash-'))
   // Inside desktop/ so the external @electric-sql/pglite resolves from its node_modules.
   const cache = path.join(desktop, 'node_modules', '.cache', 'import-crash')
   mkdirSync(cache, { recursive: true })

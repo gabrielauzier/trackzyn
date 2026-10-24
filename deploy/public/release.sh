@@ -7,7 +7,7 @@
 # O que ele faz: confere que você está na branch de produção, com a árvore limpa e sincronizada com o
 # remoto; que a tag ainda não existe; mostra o
 # plano e pede confirmação; então cria a release de `v<versão>` apontando para o commit atual. A criação da
-# release dispara o workflow, que publica ghcr.io/<seu-usuario>/launchkit-backend e launchkit-frontend com a tag
+# release dispara o workflow, que publica ghcr.io/<seu-usuario>/trackzyn-backend e trackzyn-frontend com a tag
 # <versão> e com `latest`.
 #
 # Variáveis: RELEASE_BRANCH (padrão: prod), RELEASE_REMOTE (padrão: origin),
@@ -59,8 +59,8 @@ SHA="$(git rev-parse HEAD)"
 echo
 echo "Plano:"
 echo "  release  $TAG  em  $REPO  (commit $SHA)"
-echo "  imagens  ghcr.io/$OWNER/launchkit-backend:$VERSION   ghcr.io/$OWNER/launchkit-frontend:$VERSION   (e :latest)"
-echo "  depois   IMAGE_PREFIX=ghcr.io/$OWNER/launchkit  APP_VERSION=$VERSION  no .env do servidor"
+echo "  imagens  ghcr.io/$OWNER/trackzyn-backend:$VERSION   ghcr.io/$OWNER/trackzyn-frontend:$VERSION   (e :latest)"
+echo "  depois   IMAGE_PREFIX=ghcr.io/$OWNER/trackzyn  APP_VERSION=$VERSION  no .env do servidor"
 
 if [ "$DRY" -eq 1 ]; then echo; echo "(dry-run: nada foi criado)"; exit 0; fi
 
@@ -69,7 +69,7 @@ read -r -p "Publicar a release $TAG? [s/N]: " ans
 case "$ans" in s|S|sim|SIM) ;; *) echo "cancelado."; exit 1 ;; esac
 
 gh release create "$TAG" --repo "$REPO" --target "$SHA" --title "$TAG" \
-  --notes "Build de produção a partir de $BRANCH @ ${SHA:0:7}. Imagens: ghcr.io/$OWNER/launchkit-{backend,frontend}:$VERSION"
+  --notes "Build de produção a partir de $BRANCH @ ${SHA:0:7}. Imagens: ghcr.io/$OWNER/trackzyn-{backend,frontend}:$VERSION"
 
 echo
 echo "Release criada. O workflow 'Build and Push Docker Images' começou; acompanhe:"

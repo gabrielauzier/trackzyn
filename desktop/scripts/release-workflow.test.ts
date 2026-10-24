@@ -20,7 +20,7 @@ describe('desktop-release workflow', () => {
     // Publishes through electron-builder to the configurable repository.
     const publish = job.steps.find((step: { run?: string }) => step.run?.includes('--publish always'))
     expect(publish, 'a publish step').toBeDefined()
-    expect(text).toContain('vars.LAUNCHKIT_DESKTOP_RELEASE_REPO')
+    expect(text).toContain('vars.TRACKZYN_DESKTOP_RELEASE_REPO')
     expect(publish.env.GH_TOKEN).toContain('secrets.')
     expect(job.permissions.contents).toBe('write')
     expect(publish.run).not.toMatch(/--publish\s+never/)
@@ -43,8 +43,8 @@ describe('desktop-release workflow', () => {
 
   it('splits the configurable owner/repo for the builder', () => {
     const resolve = workflow.jobs['desktop-release'].steps.find((step: { name?: string }) => step.name?.startsWith('Resolve the releases repository'))
-    expect(resolve.env.RELEASE_REPO).toBe('${{ vars.LAUNCHKIT_DESKTOP_RELEASE_REPO }}')
-    const dir = mkdtempSync(path.join(tmpdir(), 'launchkit-release-'))
+    expect(resolve.env.RELEASE_REPO).toBe('${{ vars.TRACKZYN_DESKTOP_RELEASE_REPO }}')
+    const dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-release-'))
     try {
       const run = (repo: string) => {
         const githubEnv = path.join(dir, 'env')
@@ -53,13 +53,13 @@ describe('desktop-release workflow', () => {
         const result = spawnSync('bash', ['-c', resolve.run], { env, encoding: 'utf8' })
         return { status: result.status, exported: readFileSync(githubEnv, 'utf8') }
       }
-      const ok = run('acme/launchkit-releases')
+      const ok = run('acme/trackzyn-releases')
       expect(ok.status).toBe(0)
-      expect(ok.exported).toContain('LAUNCHKIT_DESKTOP_RELEASE_OWNER=acme\n')
-      expect(ok.exported).toContain('LAUNCHKIT_DESKTOP_RELEASE_REPO_NAME=launchkit-releases\n')
+      expect(ok.exported).toContain('TRACKZYN_DESKTOP_RELEASE_OWNER=acme\n')
+      expect(ok.exported).toContain('TRACKZYN_DESKTOP_RELEASE_REPO_NAME=trackzyn-releases\n')
       // Linux is never signed, so its build never starts the autoUpdater.
-      expect(ok.exported).toContain('LAUNCHKIT_DESKTOP_SIGNED=false\n')
-      expect(ok.exported).not.toContain('LAUNCHKIT_DESKTOP_SIGNED=true')
+      expect(ok.exported).toContain('TRACKZYN_DESKTOP_SIGNED=false\n')
+      expect(ok.exported).not.toContain('TRACKZYN_DESKTOP_SIGNED=true')
       for (const bad of ['', 'no-slash', 'a/b/c', '/repo']) expect(run(bad).status, JSON.stringify(bad)).not.toBe(0)
     } finally {
       rmSync(dir, { recursive: true, force: true })
@@ -67,8 +67,8 @@ describe('desktop-release workflow', () => {
     // ...and the publish command hands the builder exactly the variables the step writes.
     const publish = workflow.jobs['desktop-release'].steps.find((step: { run?: string }) => step.run?.includes('--publish always'))
     expect(publish.run).toContain('-c.publish.provider=github')
-    expect(publish.run).toContain('-c.publish.owner="${LAUNCHKIT_DESKTOP_RELEASE_OWNER}"')
-    expect(publish.run).toContain('-c.publish.repo="${LAUNCHKIT_DESKTOP_RELEASE_REPO_NAME}"')
+    expect(publish.run).toContain('-c.publish.owner="${TRACKZYN_DESKTOP_RELEASE_OWNER}"')
+    expect(publish.run).toContain('-c.publish.repo="${TRACKZYN_DESKTOP_RELEASE_REPO_NAME}"')
   })
 
   it('publishes the latest*.yml update feeds next to the installers', () => {
@@ -88,7 +88,7 @@ describe('desktop-release workflow', () => {
     const sign = job.steps.find((step: { env?: Record<string, string> }) => step.env?.CSC_LINK)
     expect(sign.env.CSC_LINK).toContain('secrets.')
     expect(sign.env.APPLE_ID).toContain('secrets.')
-    expect(text).toContain('LAUNCHKIT_DESKTOP_SIGNED')
+    expect(text).toContain('TRACKZYN_DESKTOP_SIGNED')
   })
 
   it('hands each signing secret to its own operating system only', () => {

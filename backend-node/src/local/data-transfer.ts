@@ -198,7 +198,7 @@ export async function checkDump(client: PGlite, dump: DataDump): Promise<Stateme
 /** Whether the import `id` committed: the marker is written inside the restore transaction. */
 export async function hasImport(client: PGlite, id: string): Promise<boolean> {
   try {
-    const result = await client.query<{ n: number }>('SELECT count(*)::int AS n FROM "launchkit_internal"."imports" WHERE "id" = $1', [id])
+    const result = await client.query<{ n: number }>('SELECT count(*)::int AS n FROM "trackzyn_internal"."imports" WHERE "id" = $1', [id])
     return (result.rows[0]?.n ?? 0) > 0
   } catch (error) {
     // "No marker table yet" is a real answer (no import ever committed); anything else means "could not ask".
@@ -225,9 +225,9 @@ export async function restoreData(client: PGlite, dump: DataDump, importId = 'un
         }
         await hooks.afterStatement?.(index, statement)
       }
-      await tx.query('CREATE SCHEMA IF NOT EXISTS "launchkit_internal"')
-      await tx.query('CREATE TABLE IF NOT EXISTS "launchkit_internal"."imports" ("id" text PRIMARY KEY)')
-      await tx.query('INSERT INTO "launchkit_internal"."imports" ("id") VALUES ($1)', [importId])
+      await tx.query('CREATE SCHEMA IF NOT EXISTS "trackzyn_internal"')
+      await tx.query('CREATE TABLE IF NOT EXISTS "trackzyn_internal"."imports" ("id" text PRIMARY KEY)')
+      await tx.query('INSERT INTO "trackzyn_internal"."imports" ("id") VALUES ($1)', [importId])
       await hooks.beforeCommit?.()
     })
   } catch (error) {

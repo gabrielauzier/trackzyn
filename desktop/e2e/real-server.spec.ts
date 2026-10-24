@@ -3,15 +3,15 @@ import { randomUUID } from 'node:crypto'
 import { closeAll, launchApp } from './support/launch'
 import { totp } from './support/totp'
 
-// Runs against a real launchkit server (the Python backend in Docker, later the
-// Node one): LAUNCHKIT_E2E_SERVER_URL=http://127.0.0.1:<port>.
+// Runs against a real trackzyn server (the Python backend in Docker, later the
+// Node one): TRACKZYN_E2E_SERVER_URL=http://127.0.0.1:<port>.
 // Each run registers two accounts and the Python server allows 3 registrations
 // per hour per address, so against a disposable server flush its Redis between
 // runs (`docker exec t03-redis redis-cli flushall`).
-const SERVER_URL = process.env.LAUNCHKIT_E2E_SERVER_URL?.replace(/\/+$/, '')
-const PASSWORD = 'Launchkit-e2e-Passw0rd!'
+const SERVER_URL = process.env.TRACKZYN_E2E_SERVER_URL?.replace(/\/+$/, '')
+const PASSWORD = 'Trackzyn-e2e-Passw0rd!'
 
-test.skip(!SERVER_URL, 'set LAUNCHKIT_E2E_SERVER_URL to run against a real server')
+test.skip(!SERVER_URL, 'set TRACKZYN_E2E_SERVER_URL to run against a real server')
 test.afterEach(closeAll)
 
 interface Account {
@@ -59,14 +59,14 @@ async function connectAndFillCredentials(page: Page, account: Account) {
   await page.getByRole('button', { name: 'Connect to a server' }).click()
   await page.getByLabel('Server URL').fill(SERVER_URL!)
   await page.getByRole('button', { name: 'Connect' }).click()
-  await expect(page).toHaveURL('app://launchkit/login')
+  await expect(page).toHaveURL('app://trackzyn/login')
   await page.getByLabel('Email').fill(account.email)
   await page.getByLabel('Password').fill(account.password)
   await page.getByRole('button', { name: 'Login' }).click()
 }
 
 async function expectSignedIn(page: Page) {
-  await expect(page).toHaveURL('app://launchkit/')
+  await expect(page).toHaveURL('app://trackzyn/')
   const status = await page.evaluate(async () => {
     const response = await fetch('/api/users/me', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     return response.status

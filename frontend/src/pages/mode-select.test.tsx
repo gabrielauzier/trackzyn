@@ -3,10 +3,10 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import ModeSelectPage from './mode-select'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
-function installDesktopApi(startLocal: LaunchkitApi['startLocal']) {
-  const api: LaunchkitApi = {
+function installDesktopApi(startLocal: TrackzynApi['startLocal']) {
+  const api: TrackzynApi = {
     isDesktop: true,
     platform: 'darwin',
     appVersion: '0.1.0',
@@ -21,7 +21,7 @@ function installDesktopApi(startLocal: LaunchkitApi['startLocal']) {
     openLogs: vi.fn(async () => {}),
     onExportState: vi.fn(() => () => {}),
   }
-  Object.defineProperty(window, 'launchkit', { value: api, configurable: true })
+  Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
   return api
 }
 
@@ -40,7 +40,7 @@ function renderPage(onLocalReady?: () => void) {
 }
 
 afterEach(async () => {
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
   await i18n.changeLanguage('en')
 })
 

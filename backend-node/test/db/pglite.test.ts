@@ -62,7 +62,7 @@ describe('the Drizzle schema on PGlite', () => {
   })
 
   it('applies the migrations to a PGlite directory on disk', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'launchkit-pglite-'))
+    const root = mkdtempSync(join(tmpdir(), 'trackzyn-pglite-'))
     const dir = join(root, 'db')
     const first = await connectPglite(dir)
     await applyMigrations(first.db)

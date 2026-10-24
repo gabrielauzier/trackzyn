@@ -35,7 +35,7 @@ export function createTransfer(deps: Deps) {
       deps.setExporting(true)
       try {
         const stamp = (deps.now?.() ?? new Date()).toISOString().replaceAll(':', '-').replace('.', '-')
-        const target = await deps.chooseSavePath(`launchkit-export-${stamp}.zip`)
+        const target = await deps.chooseSavePath(`trackzyn-export-${stamp}.zip`)
         if (!target) return
         try {
           await exportData({ dump: () => deps.backend.dump(), filesDir, appVersion: deps.appVersion, target })

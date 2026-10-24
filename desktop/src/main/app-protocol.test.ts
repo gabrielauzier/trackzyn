@@ -4,21 +4,21 @@ import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createAppHandler } from './app-protocol'
 
-const INDEX = '<!doctype html><title>launchkit</title><div id="root"></div>'
+const INDEX = '<!doctype html><title>trackzyn</title><div id="root"></div>'
 let distDir = ''
 
 beforeAll(() => {
-  distDir = mkdtempSync(path.join(tmpdir(), 'launchkit-dist-'))
+  distDir = mkdtempSync(path.join(tmpdir(), 'trackzyn-dist-'))
   mkdirSync(path.join(distDir, 'static'))
   writeFileSync(path.join(distDir, 'index.html'), INDEX)
   writeFileSync(path.join(distDir, 'static', 'app.js'), 'console.log(1)')
   writeFileSync(path.join(distDir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>')
-  writeFileSync(path.join(distDir, '..', 'launchkit-secret.txt'), 'secret')
+  writeFileSync(path.join(distDir, '..', 'trackzyn-secret.txt'), 'secret')
 })
 
 afterAll(() => {
   rmSync(distDir, { recursive: true, force: true })
-  rmSync(path.join(distDir, '..', 'launchkit-secret.txt'), { force: true })
+  rmSync(path.join(distDir, '..', 'trackzyn-secret.txt'), { force: true })
 })
 
 function handler(overrides: { serverUrl?: string | null; fetchFn?: typeof fetch } = {}) {
@@ -37,7 +37,7 @@ describe('app protocol static files', () => {
   it('serves index.html with 200 for unknown routes', async () => {
     const { handle } = handler()
     for (const route of ['/', '/files', '/workspace/settings', '/login']) {
-      const response = await handle(new Request(`app://launchkit${route}`))
+      const response = await handle(new Request(`app://trackzyn${route}`))
       expect(response.status, route).toBe(200)
       expect(response.headers.get('content-type'), route).toContain('text/html')
       expect(await response.text(), route).toBe(INDEX)
@@ -46,24 +46,24 @@ describe('app protocol static files', () => {
 
   it('serves an existing asset with its content type', async () => {
     const { handle } = handler()
-    const js = await handle(new Request('app://launchkit/static/app.js'))
+    const js = await handle(new Request('app://trackzyn/static/app.js'))
     expect(js.status).toBe(200)
     expect(js.headers.get('content-type')).toContain('text/javascript')
     expect(await js.text()).toBe('console.log(1)')
-    const svg = await handle(new Request('app://launchkit/favicon.svg'))
+    const svg = await handle(new Request('app://trackzyn/favicon.svg'))
     expect(svg.headers.get('content-type')).toContain('image/svg+xml')
   })
 
   it('returns 404 for a missing asset instead of index.html', async () => {
     const { handle } = handler()
-    const response = await handle(new Request('app://launchkit/static/missing.js'))
+    const response = await handle(new Request('app://trackzyn/static/missing.js'))
     expect(response.status).toBe(404)
   })
 
   it('refuses path traversal out of the dist directory', async () => {
     const { handle } = handler()
-    for (const route of ['/%2e%2e/launchkit-secret.txt', '/..%2flaunchkit-secret.txt', '/static/%2e%2e/%2e%2e/launchkit-secret.txt']) {
-      const response = await handle(new Request(`app://launchkit${route}`))
+    for (const route of ['/%2e%2e/trackzyn-secret.txt', '/..%2ftrackzyn-secret.txt', '/static/%2e%2e/%2e%2e/trackzyn-secret.txt']) {
+      const response = await handle(new Request(`app://trackzyn${route}`))
       expect(response.status, route).toBe(404)
       expect(await response.text(), route).not.toContain('secret')
     }
@@ -71,10 +71,10 @@ describe('app protocol static files', () => {
 
   it('answers 500 instead of failing the request when the build is missing', async () => {
     const handle = createAppHandler({ distDir: path.join(distDir, 'missing'), getServerUrl: () => null, fetchFn: fetch })
-    expect((await handle(new Request('app://launchkit/'))).status).toBe(500)
+    expect((await handle(new Request('app://trackzyn/'))).status).toBe(500)
   })
 
-  it('answers 404 for a host other than launchkit', async () => {
+  it('answers 404 for a host other than trackzyn', async () => {
     const { handle } = handler()
     expect((await handle(new Request('app://evil/index.html'))).status).toBe(404)
   })
@@ -85,11 +85,11 @@ describe('app protocol api proxy', () => {
     const fetchFn = vi.fn(async () => new Response('{"ok":true}', { status: 200 }))
     const { handle } = handler({ fetchFn: fetchFn as unknown as typeof fetch })
     const response = await handle(
-      new Request('app://launchkit/api/users/me?x=1', {
+      new Request('app://trackzyn/api/users/me?x=1', {
         headers: {
-          origin: 'app://launchkit',
-          referer: 'app://launchkit/files',
-          host: 'launchkit',
+          origin: 'app://trackzyn',
+          referer: 'app://trackzyn/files',
+          host: 'trackzyn',
           authorization: 'Bearer t',
           'x-workspace-id': 'w1',
         },
@@ -112,7 +112,7 @@ describe('app protocol api proxy', () => {
     const fetchFn = vi.fn(async () => new Response(null, { status: 204 }))
     const { handle } = handler({ fetchFn: fetchFn as unknown as typeof fetch })
     const response = await handle(
-      new Request('app://launchkit/api/workspaces', { method: 'POST', body: '{"name":"a"}', headers: { 'content-type': 'application/json' } }),
+      new Request('app://trackzyn/api/workspaces', { method: 'POST', body: '{"name":"a"}', headers: { 'content-type': 'application/json' } }),
     )
     expect(response.status).toBe(204)
     const [, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit & { duplex?: string }]
@@ -123,7 +123,7 @@ describe('app protocol api proxy', () => {
 
   it('answers 503 without leaving the machine when no server is configured', async () => {
     const { handle, fetchFn } = handler({ serverUrl: null })
-    const response = await handle(new Request('app://launchkit/api/health'))
+    const response = await handle(new Request('app://trackzyn/api/health'))
     expect(response.status).toBe(503)
     expect(fetchFn).not.toHaveBeenCalled()
   })
@@ -133,9 +133,9 @@ describe('app protocol content security policy', () => {
   it('sends a strict content security policy', async () => {
     const { handle } = handler()
     const responses = [
-      await handle(new Request('app://launchkit/')),
-      await handle(new Request('app://launchkit/static/app.js')),
-      await handle(new Request('app://launchkit/missing.js')),
+      await handle(new Request('app://trackzyn/')),
+      await handle(new Request('app://trackzyn/static/app.js')),
+      await handle(new Request('app://trackzyn/missing.js')),
     ]
     for (const response of responses) {
       const csp = response.headers.get('content-security-policy') ?? ''
@@ -153,11 +153,11 @@ describe('app protocol extra headers', () => {
     const handle = createAppHandler({
       distDir,
       getServerUrl: () => 'http://127.0.0.1:4567',
-      getExtraHeaders: () => ({ 'x-launchkit-local-token': 'real-token' }),
+      getExtraHeaders: () => ({ 'x-trackzyn-local-token': 'real-token' }),
       fetchFn,
     })
-    await handle(new Request('app://launchkit/api/health', { headers: { 'x-launchkit-local-token': 'spoofed' } }))
+    await handle(new Request('app://trackzyn/api/health', { headers: { 'x-trackzyn-local-token': 'spoofed' } }))
     const init = vi.mocked(fetchFn).mock.calls[0][1] as RequestInit
-    expect(new Headers(init.headers).get('x-launchkit-local-token')).toBe('real-token')
+    expect(new Headers(init.headers).get('x-trackzyn-local-token')).toBe('real-token')
   })
 })

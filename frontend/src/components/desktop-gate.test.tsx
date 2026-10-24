@@ -3,10 +3,10 @@ import { Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DesktopGate } from './desktop-gate'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
 function installDesktopApi(serverUrl: string | null, mode: 'remote' | 'local' | null = 'remote') {
-  const api: LaunchkitApi = {
+  const api: TrackzynApi = {
     isDesktop: true,
     platform: 'darwin',
     appVersion: '0.1.0',
@@ -21,7 +21,7 @@ function installDesktopApi(serverUrl: string | null, mode: 'remote' | 'local' | 
     openLogs: vi.fn(async () => {}),
     onExportState: vi.fn(() => () => {}),
   }
-  Object.defineProperty(window, 'launchkit', { value: api, configurable: true })
+  Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
   return api
 }
 
@@ -38,7 +38,7 @@ function renderGate(route: string) {
 }
 
 afterEach(async () => {
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
   await i18n.changeLanguage('en')
 })
 
@@ -82,7 +82,7 @@ describe('desktop gate', () => {
     await waitFor(() => expect(api.setServerUrl).toHaveBeenCalled())
   })
 
-  it('renders the app untouched on the web, where window.launchkit does not exist', async () => {
+  it('renders the app untouched on the web, where window.trackzyn does not exist', async () => {
     renderGate('/login')
     expect(await screen.findByText('login page')).toBeInTheDocument()
   })

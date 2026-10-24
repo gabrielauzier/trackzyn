@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
 
-export const LOCAL_TOKEN_HEADER = 'x-launchkit-local-token'
+export const LOCAL_TOKEN_HEADER = 'x-trackzyn-local-token'
 
 function matches(given: unknown, expected: Buffer): boolean {
   if (typeof given !== 'string') return false

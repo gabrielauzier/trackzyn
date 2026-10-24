@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 /** How long a sign-in started by the app may take to come back through the deep link. */
 export const SSO_PENDING_MS = 10 * 60 * 1000
 
-const REDIRECT_TARGET = 'launchkit://auth/callback'
+const REDIRECT_TARGET = 'trackzyn://auth/callback'
 
 interface Options {
   getServerUrl: () => string | null

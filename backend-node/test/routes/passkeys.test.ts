@@ -13,7 +13,7 @@ afterAll(async () => {
   await t.close()
 })
 
-const ORIGIN = 'https://launchkit.test'
+const ORIGIN = 'https://trackzyn.test'
 
 const post = (url: string, payload: unknown, token?: string, headers: Record<string, string> = {}) =>
   t.app.inject({
@@ -64,7 +64,7 @@ describe('passkeys', () => {
       challenge: begin.json().options.challenge,
       user_id: user.id,
       name: 'Key',
-      rp_id: 'launchkit.test',
+      rp_id: 'trackzyn.test',
       origin: ORIGIN,
     })
     const failed = await post(
@@ -193,7 +193,7 @@ describe('relying party resolution', () => {
     for (const [origin, code] of [
       ['http://192.168.4.10:3000', 'passkey_origin_ip'],
       ['http://[::1]:3000', 'passkey_origin_ip'],
-      ['http://launchkit.example.com', 'passkey_origin_insecure'],
+      ['http://trackzyn.example.com', 'passkey_origin_insecure'],
       ['not-an-origin', 'passkey_origin_invalid'],
       ['https://', 'passkey_origin_invalid'],
       ['https://[broken', 'passkey_origin_invalid'],

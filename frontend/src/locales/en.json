@@ -57,7 +57,7 @@
     }
   },
   "app": {
-    "name": "launchkit",
+    "name": "trackzyn",
     "toggleMenu": "Toggle menu",
     "updateAvailable": "Update Available",
     "updateAvailableHint": "A newer release ({{version}}) is available on GitHub",
@@ -204,9 +204,9 @@
   "desktop": {
     "connect": {
       "title": "Connect to a server",
-      "description": "Enter the address of your launchkit server.",
+      "description": "Enter the address of your trackzyn server.",
       "urlLabel": "Server URL",
-      "urlPlaceholder": "https://launchkit.example.com",
+      "urlPlaceholder": "https://trackzyn.example.com",
       "confirm": "Connect",
       "checking": "Checking…",
       "unreachable": "Could not reach the server",
@@ -220,7 +220,7 @@
       "view": "View",
       "window": "Window",
       "help": "Help",
-      "documentation": "launchkit on GitHub",
+      "documentation": "trackzyn on GitHub",
       "exportData": "Export data…",
       "importData": "Import data…"
     },
@@ -231,7 +231,7 @@
       "incomplete": "Sign-in did not complete"
     },
     "mode": {
-      "title": "Welcome to launchkit",
+      "title": "Welcome to trackzyn",
       "description": "Choose where your data lives.",
       "connect": "Connect to a server",
       "local": "Use this computer",

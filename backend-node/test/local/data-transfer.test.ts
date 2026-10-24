@@ -127,7 +127,7 @@ describe('data transfer', () => {
       ['CR ends a comment after a valid row', `${U}-- x\rCOMMIT;\rDROP TABLE "workspaces";\n`],
       ['CRLF comment', `-- x\r\nCOMMIT;\n`],
       ['block comment', `/* x */ ${U}`],
-      ['comment header', `-- launchkit data dump\n${U}`],
+      ['comment header', `-- trackzyn data dump\n${U}`],
       ['tab', `TRUNCATE\t"users" CASCADE;\n`],
       ['CRLF after truncate', `TRUNCATE "users" CASCADE;\r\n`],
       ['CR after truncate', `TRUNCATE "users" CASCADE;\r`],

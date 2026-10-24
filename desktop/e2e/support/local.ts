@@ -11,7 +11,7 @@ export async function chooseLocal(page: Page) {
 /** Chooses "Use this computer" and waits for the local backend and the setup screen. */
 export async function startLocalMode(page: Page) {
   await chooseLocal(page)
-  await expect(page).toHaveURL('app://launchkit/setup', { timeout: 45_000 })
+  await expect(page).toHaveURL('app://trackzyn/setup', { timeout: 45_000 })
 }
 
 export interface CallOptions {
@@ -112,7 +112,7 @@ export async function backendPids(app: ElectronApplication): Promise<number[]> {
   return app.evaluate(({ app: electronApp }) =>
     electronApp
       .getAppMetrics()
-      .filter((metric) => metric.type === 'Utility' && `${metric.name ?? ''} ${metric.serviceName ?? ''}`.includes('launchkit-backend'))
+      .filter((metric) => metric.type === 'Utility' && `${metric.name ?? ''} ${metric.serviceName ?? ''}`.includes('trackzyn-backend'))
       .map((metric) => metric.pid),
   )
 }

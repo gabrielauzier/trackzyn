@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { UpdateAvailableBanner } from './update-available-banner'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
 vi.mock('@/lib/api', () => ({ info: { get: vi.fn(async () => ({ features: {}, update_check_repo: null })) } }))
 
 function installDesktopApi() {
   let listener: ((info: { version: string }) => void) | null = null
-  const api: LaunchkitApi = {
+  const api: TrackzynApi = {
     isDesktop: true,
     platform: 'darwin',
     appVersion: '0.1.0',
@@ -29,12 +29,12 @@ function installDesktopApi() {
     openLogs: vi.fn(async () => {}),
     onExportState: vi.fn(() => () => {}),
   }
-  Object.defineProperty(window, 'launchkit', { value: api, configurable: true })
+  Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
   return { api, emit: (version: string) => listener?.({ version }) }
 }
 
 afterEach(async () => {
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
   await i18n.changeLanguage('en')
 })
 

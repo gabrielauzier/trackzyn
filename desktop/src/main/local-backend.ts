@@ -64,7 +64,7 @@ export function createLocalBackend({ fork, entry, userData, migrationsFolder }: 
     mkdirSync(logsDir, { recursive: true })
 
     return new Promise((resolve, reject) => {
-      const process_ = fork(entry, { serviceName: 'launchkit-backend', stdio: 'pipe' })
+      const process_ = fork(entry, { serviceName: 'trackzyn-backend', stdio: 'pipe' })
       child = process_
       if (process_.stdout || process_.stderr) {
         const log = createWriteStream(path.join(logsDir, 'backend.log'), { flags: 'a' })

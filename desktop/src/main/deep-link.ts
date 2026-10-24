@@ -1,11 +1,11 @@
 import { APP_ORIGIN } from './app-protocol'
 
-export const DEEP_LINK_SCHEME = 'launchkit'
+export const DEEP_LINK_SCHEME = 'trackzyn'
 
 export type DeepLink = { kind: 'ignored' } | { kind: 'failed' } | { kind: 'sign-in'; token: string; nonce: string | null }
 
 /**
- * Only `launchkit://auth/callback` is a link the app acts on. With an
+ * Only `trackzyn://auth/callback` is a link the app acts on. With an
  * `access_token` in the fragment it is a sign-in, without one an incomplete
  * sign-in; any other host or path is none of the app's business.
  */
@@ -24,14 +24,14 @@ export function parseDeepLink(link: string): DeepLink {
   return token ? { kind: 'sign-in', token, nonce: fragment.get('desktop_nonce') } : { kind: 'failed' }
 }
 
-/** The launchkit:// link in a process argv (second instance, or a cold start on Windows and Linux). */
+/** The trackzyn:// link in a process argv (second instance, or a cold start on Windows and Linux). */
 export function findDeepLink(argv: readonly string[]): string | undefined {
   return argv.find((arg) => arg.startsWith(`${DEEP_LINK_SCHEME}:`))
 }
 
 interface HandlerOptions {
   getServerUrl: () => string | null
-  /** Loads an `app://launchkit/...` URL in the main window. */
+  /** Loads an `app://trackzyn/...` URL in the main window. */
   navigate: (url: string) => void
   /** Brings the window to the front. */
   focus: () => void

@@ -10,7 +10,7 @@ let base: string
 let root = ''
 
 beforeAll(async () => {
-  root = mkdtempSync(join(tmpdir(), 'launchkit-local-'))
+  root = mkdtempSync(join(tmpdir(), 'trackzyn-local-'))
   server = await startLocalServer({
     dataDir: join(root, 'db'),
     filesDir: join(root, 'files'),
@@ -37,7 +37,7 @@ const ROUTES: Array<[string, string]> = [
 describe('the local session token', () => {
   it('answers 401 without the right token on every route', async () => {
     for (const [method, path] of ROUTES) {
-      for (const headers of <Array<Record<string, string>>>[{}, { 'x-launchkit-local-token': 'wrong' }, { 'x-launchkit-local-token': '' }, { 'x-launchkit-local-token': TOKEN.slice(1) }]) {
+      for (const headers of <Array<Record<string, string>>>[{}, { 'x-trackzyn-local-token': 'wrong' }, { 'x-trackzyn-local-token': '' }, { 'x-trackzyn-local-token': TOKEN.slice(1) }]) {
         const response = await fetch(`${base}${path}`, { method, headers })
         expect(response.status, `${method} ${path} ${JSON.stringify(headers)}`).toBe(401)
         expect(await response.json()).toEqual({ detail: 'Unauthorized' })
@@ -46,7 +46,7 @@ describe('the local session token', () => {
   })
 
   it('lets a request with the right token through', async () => {
-    const headers = { 'x-launchkit-local-token': TOKEN }
+    const headers = { 'x-trackzyn-local-token': TOKEN }
     const health = await fetch(`${base}/api/health`, { headers })
     expect(health.status).toBe(200)
     const status = await fetch(`${base}/api/setup/status`, { headers })

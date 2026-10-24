@@ -6,7 +6,7 @@ import { screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppLayout } from './app-layout'
 import { renderWithProviders, t } from '@/test/utils'
-import type { LaunchkitApi } from '@/lib/platform'
+import type { TrackzynApi } from '@/lib/platform'
 
 const state = vi.hoisted(() => ({
   user: {
@@ -74,7 +74,7 @@ const DRAG = '[-webkit-app-region:drag]'
 const NO_DRAG = '[-webkit-app-region:no-drag]'
 
 function installDesktopApi(platform: string) {
-  const api: LaunchkitApi = {
+  const api: TrackzynApi = {
     isDesktop: true,
     platform,
     appVersion: '0.1.0',
@@ -89,11 +89,11 @@ function installDesktopApi(platform: string) {
     openLogs: vi.fn(async () => {}),
     onExportState: vi.fn(() => () => {}),
   }
-  Object.defineProperty(window, 'launchkit', { value: api, configurable: true })
+  Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
 }
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
 })
 
 describe('app layout title bar', () => {
@@ -121,7 +121,7 @@ describe('app layout title bar', () => {
       const { unmount } = renderWithProviders(<AppLayout />)
       expect(document.body.innerHTML, String(platform)).not.toContain('-webkit-app-region')
       unmount()
-      Reflect.deleteProperty(window, 'launchkit')
+      Reflect.deleteProperty(window, 'trackzyn')
     }
   })
 })

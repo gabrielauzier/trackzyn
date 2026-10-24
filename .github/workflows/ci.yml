@@ -83,7 +83,7 @@ jobs:
 
       - name: Lint Helm Chart
         if: steps.helm-changes.outputs.run_helm != 'false'
-        run: helm lint charts/launchkit
+        run: helm lint charts/trackzyn
 
       - name: Validate Helm Chart with Kubeconform
         if: steps.helm-changes.outputs.run_helm != 'false'
@@ -91,7 +91,7 @@ jobs:
           curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar -xz
           sudo mv kubeconform /usr/local/bin/
 
-          helm template launchkit-test charts/launchkit | kubeconform -summary -strict
+          helm template trackzyn-test charts/trackzyn | kubeconform -summary -strict
 
   eject-smoke:
     name: Eject Smoke Test
@@ -111,7 +111,7 @@ jobs:
           test ! -e .git
           test ! -e scripts/eject.sh
           test -d charts/acme-app
-          if grep -rIil launchkit . ; then echo "template name left behind"; exit 1; fi
+          if grep -rIil trackzyn . ; then echo "template name left behind"; exit 1; fi
 
 
   backend-node-tests:
@@ -247,7 +247,7 @@ jobs:
         if: steps.desktop-changes.outputs.run_desktop != 'false'
         run: npm test
 
-      # The web build must not reach for the desktop bridge (window.launchkit).
+      # The web build must not reach for the desktop bridge (window.trackzyn).
       - name: Check the web bundle
         if: steps.desktop-changes.outputs.run_desktop != 'false'
         run: npm run check:web-bundle

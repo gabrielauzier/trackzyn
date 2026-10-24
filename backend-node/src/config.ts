@@ -125,7 +125,7 @@ export function loadConfig(env: Source = process.env, options: LoadConfigOptions
     return value === undefined ? fallback : parseInteger(name, value)
   }
 
-  const databaseUrl = text('DATABASE_URL', 'postgresql+asyncpg://postgres:postgres@localhost:5432/launchkit')
+  const databaseUrl = text('DATABASE_URL', 'postgresql+asyncpg://postgres:postgres@localhost:5432/trackzyn')
   const oidcEnabled = bool('OIDC_ENABLED', false)
   const oidcClientId = text('OIDC_CLIENT_ID', '')
   const oidcDiscoveryUrl = text('OIDC_DISCOVERY_URL', '')
@@ -145,7 +145,7 @@ export function loadConfig(env: Source = process.env, options: LoadConfigOptions
   const redisUrl = raw('REDIS_URL')
 
   return {
-    appName: text('APP_NAME', 'launchkit'),
+    appName: text('APP_NAME', 'trackzyn'),
     debug: bool('DEBUG', false),
     databaseUrl,
     pgConnectionString: databaseUrl.replace(/^(postgres(?:ql)?)\+[a-z0-9_]+:\/\//i, '$1://'),
@@ -154,7 +154,7 @@ export function loadConfig(env: Source = process.env, options: LoadConfigOptions
     algorithm: text('ALGORITHM', 'HS256'),
     accessTokenExpireMinutes: int('ACCESS_TOKEN_EXPIRE_MINUTES', 60 * 24),
     frontendUrl: text('FRONTEND_URL', 'http://localhost:5173'),
-    webauthnRpName: text('WEBAUTHN_RP_NAME', 'launchkit'),
+    webauthnRpName: text('WEBAUTHN_RP_NAME', 'trackzyn'),
     webauthnRpId: text('WEBAUTHN_RP_ID', ''),
     webauthnOrigin: text('WEBAUTHN_ORIGIN', ''),
     webauthnChallengeTtlSeconds: int('WEBAUTHN_CHALLENGE_TTL_SECONDS', 300),

@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve launchkit
+about: Report a bug to help us improve trackzyn
 title: "[Bug] "
 labels: bug
 assignees: ""

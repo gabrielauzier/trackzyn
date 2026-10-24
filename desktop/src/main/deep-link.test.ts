@@ -4,7 +4,7 @@ import { createDeepLinkHandler, findDeepLink, parseDeepLink, setupDeepLinks } fr
 
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2lnbmF0dXJl'
 const NONCE = 'n'.repeat(43)
-const SIGN_IN = `launchkit://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=${NONCE}`
+const SIGN_IN = `trackzyn://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=${NONCE}`
 
 function handlerWith(serverUrl: string | null = 'https://srv.example.com', pending: string | null = NONCE) {
   const navigate = vi.fn()
@@ -19,7 +19,7 @@ describe('deep links', () => {
     const { handle, navigate, focus } = handlerWith()
     handle(SIGN_IN)
     expect(navigate).toHaveBeenCalledTimes(1)
-    expect(navigate).toHaveBeenCalledWith(`app://launchkit/auth/oidc/callback#access_token=${TOKEN}&token_type=bearer`)
+    expect(navigate).toHaveBeenCalledWith(`app://trackzyn/auth/oidc/callback#access_token=${TOKEN}&token_type=bearer`)
     expect(focus).toHaveBeenCalled()
   })
 
@@ -33,34 +33,34 @@ describe('deep links', () => {
   it('handles a different link after the first', () => {
     const { handle, navigate } = handlerWith()
     handle(SIGN_IN)
-    handle(`launchkit://auth/callback#access_token=${TOKEN}b&token_type=bearer&desktop_nonce=${NONCE}`)
+    handle(`trackzyn://auth/callback#access_token=${TOKEN}b&token_type=bearer&desktop_nonce=${NONCE}`)
     expect(navigate).toHaveBeenCalledTimes(2)
   })
 
   it('sends an incomplete link to the sign-in failure screen', async () => {
     const incomplete = [
-      'launchkit://auth/callback',
-      'launchkit://auth/callback#',
-      'launchkit://auth/callback#access_token=&token_type=bearer',
-      'launchkit://auth/callback#error=access_denied',
+      'trackzyn://auth/callback',
+      'trackzyn://auth/callback#',
+      'trackzyn://auth/callback#access_token=&token_type=bearer',
+      'trackzyn://auth/callback#error=access_denied',
       // A token without the pending flow's nonce is not a sign-in the app started.
-      `launchkit://auth/callback#access_token=${TOKEN}&token_type=bearer`,
-      `launchkit://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=${'m'.repeat(43)}`,
-      `launchkit://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=`,
+      `trackzyn://auth/callback#access_token=${TOKEN}&token_type=bearer`,
+      `trackzyn://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=${'m'.repeat(43)}`,
+      `trackzyn://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=`,
     ]
     for (const link of incomplete) {
       const withServer = handlerWith('https://srv.example.com')
       withServer.handle(link)
       expect(withServer.navigate, link).toHaveBeenCalledTimes(1)
-      expect(withServer.navigate, link).toHaveBeenCalledWith('app://launchkit/login?sso=failed')
+      expect(withServer.navigate, link).toHaveBeenCalledWith('app://trackzyn/login?sso=failed')
 
       const withoutServer = handlerWith(null)
       withoutServer.handle(link)
-      expect(withoutServer.navigate, link).toHaveBeenCalledWith('app://launchkit/connect?sso=failed')
+      expect(withoutServer.navigate, link).toHaveBeenCalledWith('app://trackzyn/connect?sso=failed')
     }
 
     // The same table with the real pending flow: expired, already used, and none started.
-    const sign = (nonce: string, token = TOKEN) => `launchkit://auth/callback#access_token=${token}&token_type=bearer&desktop_nonce=${nonce}`
+    const sign = (nonce: string, token = TOKEN) => `trackzyn://auth/callback#access_token=${token}&token_type=bearer&desktop_nonce=${nonce}`
     async function started(clock: { now: number }) {
       let opened = ''
       const flow = createSsoFlow({ getServerUrl: () => 'https://srv.example.com', openExternal: async (url) => void (opened = url), now: () => clock.now })
@@ -70,7 +70,7 @@ describe('deep links', () => {
       const handle = createDeepLinkHandler({ getServerUrl: () => 'https://srv.example.com', navigate, focus: vi.fn(), consumeNonce: (value) => flow.consume(value) })
       return { nonce, navigate, handle }
     }
-    const failed = 'app://launchkit/login?sso=failed'
+    const failed = 'app://trackzyn/login?sso=failed'
 
     const late = { now: 1_000 }
     const lateFlow = await started(late)
@@ -108,9 +108,9 @@ describe('deep links', () => {
     const nonce = new URL(opened).searchParams.get('desktop_nonce')!
     const navigate = vi.fn()
     const handle = createDeepLinkHandler({ getServerUrl: () => 'https://srv.example.com', navigate, focus: vi.fn(), consumeNonce: (value) => flow.consume(value) })
-    handle(`launchkit://auth/callback#error=access_denied&desktop_nonce=${nonce}`)
-    expect(navigate).toHaveBeenLastCalledWith('app://launchkit/login?sso=failed')
-    handle(`launchkit://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=${nonce}`)
+    handle(`trackzyn://auth/callback#error=access_denied&desktop_nonce=${nonce}`)
+    expect(navigate).toHaveBeenLastCalledWith('app://trackzyn/login?sso=failed')
+    handle(`trackzyn://auth/callback#access_token=${TOKEN}&token_type=bearer&desktop_nonce=${nonce}`)
     expect(navigate).toHaveBeenLastCalledWith(expect.stringContaining('/auth/oidc/callback#access_token='))
   })
 
@@ -119,7 +119,7 @@ describe('deep links', () => {
       const { handle, navigate } = handlerWith('https://srv.example.com', pending)
       handle(SIGN_IN)
       expect(navigate).toHaveBeenCalledTimes(1)
-      expect(navigate).toHaveBeenCalledWith('app://launchkit/login?sso=failed')
+      expect(navigate).toHaveBeenCalledWith('app://trackzyn/login?sso=failed')
     }
   })
 
@@ -133,11 +133,11 @@ describe('deep links', () => {
 
   it('ignores links whose host and path are not auth/callback', () => {
     const others = [
-      'launchkit://auth/other',
-      'launchkit://evil/callback',
-      'launchkit://auth/callback/extra',
-      'launchkit://auth/callback/',
-      'launchkit://auth',
+      'trackzyn://auth/other',
+      'trackzyn://evil/callback',
+      'trackzyn://auth/callback/extra',
+      'trackzyn://auth/callback/',
+      'trackzyn://auth',
       'https://auth/callback#access_token=x',
       'not a url',
     ]
@@ -152,14 +152,14 @@ describe('deep links', () => {
 
   it('parses a complete link into a sign-in', () => {
     expect(parseDeepLink(SIGN_IN)).toEqual({ kind: 'sign-in', token: TOKEN, nonce: NONCE })
-    expect(parseDeepLink(`launchkit://auth/callback#access_token=${TOKEN}`)).toEqual({ kind: 'sign-in', token: TOKEN, nonce: null })
+    expect(parseDeepLink(`trackzyn://auth/callback#access_token=${TOKEN}`)).toEqual({ kind: 'sign-in', token: TOKEN, nonce: null })
   })
 })
 
 describe('deep link delivery', () => {
-  it('finds the launchkit url in a second-instance argv', () => {
-    expect(findDeepLink(['/Applications/launchkit.exe', '--flag', SIGN_IN])).toBe(SIGN_IN)
-    expect(findDeepLink(['/Applications/launchkit.exe', 'https://example.com'])).toBeUndefined()
+  it('finds the trackzyn url in a second-instance argv', () => {
+    expect(findDeepLink(['/Applications/trackzyn.exe', '--flag', SIGN_IN])).toBe(SIGN_IN)
+    expect(findDeepLink(['/Applications/trackzyn.exe', 'https://example.com'])).toBeUndefined()
     expect(findDeepLink([])).toBeUndefined()
   })
 
@@ -175,12 +175,12 @@ describe('deep link delivery', () => {
     }
   }
 
-  it('registers the launchkit protocol', () => {
+  it('registers the trackzyn protocol', () => {
     const packaged = fakeApp(true)
     setupDeepLinks(packaged, vi.fn(), [])
-    expect(packaged.setAsDefaultProtocolClient).toHaveBeenCalledWith('launchkit')
+    expect(packaged.setAsDefaultProtocolClient).toHaveBeenCalledWith('trackzyn')
 
-    // Unpackaged, the Electron binary would become the system handler of launchkit://.
+    // Unpackaged, the Electron binary would become the system handler of trackzyn://.
     const unpackaged = fakeApp(false)
     setupDeepLinks(unpackaged, vi.fn(), [])
     expect(unpackaged.setAsDefaultProtocolClient).not.toHaveBeenCalled()
@@ -193,12 +193,12 @@ describe('deep link delivery', () => {
     expect(onLink).toHaveBeenCalledWith(SIGN_IN)
 
     const preventDefault = vi.fn()
-    app.emit('open-url', { preventDefault }, 'launchkit://auth/callback#access_token=a&token_type=bearer')
+    app.emit('open-url', { preventDefault }, 'trackzyn://auth/callback#access_token=a&token_type=bearer')
     expect(preventDefault).toHaveBeenCalled()
-    expect(onLink).toHaveBeenLastCalledWith('launchkit://auth/callback#access_token=a&token_type=bearer')
+    expect(onLink).toHaveBeenLastCalledWith('trackzyn://auth/callback#access_token=a&token_type=bearer')
 
-    app.emit('second-instance', {}, ['electron', 'launchkit://auth/callback#access_token=b&token_type=bearer'])
-    expect(onLink).toHaveBeenLastCalledWith('launchkit://auth/callback#access_token=b&token_type=bearer')
+    app.emit('second-instance', {}, ['electron', 'trackzyn://auth/callback#access_token=b&token_type=bearer'])
+    expect(onLink).toHaveBeenLastCalledWith('trackzyn://auth/callback#access_token=b&token_type=bearer')
 
     const calls = onLink.mock.calls.length
     app.emit('second-instance', {}, ['electron'])

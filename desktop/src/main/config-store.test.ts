@@ -6,7 +6,7 @@ import { createConfigStore } from './config-store'
 
 let dir = ''
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), 'launchkit-config-'))
+  dir = mkdtempSync(path.join(tmpdir(), 'trackzyn-config-'))
 })
 afterEach(() => rmSync(dir, { recursive: true, force: true }))
 

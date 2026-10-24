@@ -18,14 +18,14 @@ const fetchMock = vi.fn()
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
-  info.get.mockResolvedValue({ features: {}, update_check_repo: 'acme/launchkit' })
-  fetchMock.mockResolvedValue({ ok: true, json: async () => ({ tag_name: 'v9.9.9', html_url: 'https://github.com/acme/launchkit/releases/v9.9.9' }) })
+  info.get.mockResolvedValue({ features: {}, update_check_repo: 'acme/trackzyn' })
+  fetchMock.mockResolvedValue({ ok: true, json: async () => ({ tag_name: 'v9.9.9', html_url: 'https://github.com/acme/trackzyn/releases/v9.9.9' }) })
   vi.stubGlobal('fetch', fetchMock)
 })
 
 afterEach(() => {
   vi.unstubAllGlobals()
-  Reflect.deleteProperty(window, 'launchkit')
+  Reflect.deleteProperty(window, 'trackzyn')
 })
 
 describe('useLatestRelease', () => {
@@ -34,11 +34,11 @@ describe('useLatestRelease', () => {
 
     await waitFor(() => expect(result.current.data?.tagName).toBe('v9.9.9'))
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock.mock.calls[0][0]).toBe('https://api.github.com/repos/acme/launchkit/releases/latest')
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.github.com/repos/acme/trackzyn/releases/latest')
   })
 
   it('does not call api.github.com on desktop', async () => {
-    Object.defineProperty(window, 'launchkit', { value: { isDesktop: true }, configurable: true })
+    Object.defineProperty(window, 'trackzyn', { value: { isDesktop: true }, configurable: true })
 
     const { result } = renderHook(() => useLatestRelease(), { wrapper })
 
