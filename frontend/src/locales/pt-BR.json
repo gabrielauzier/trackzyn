@@ -431,6 +431,7 @@
     "rename": "Renomear",
     "archive": "Arquivar",
     "unarchive": "Desarquivar",
+    "pendingCount_zero": "0 tarefas pendentes",
     "pendingCount_one": "{{count}} tarefa pendente",
     "pendingCount_other": "{{count}} tarefas pendentes",
     "deleteTitle": "Excluir lista",

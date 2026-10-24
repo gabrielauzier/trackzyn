@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 
 import { ListCard } from '@/components/lists/list-card'
 import { lists } from '@/lib/api'
-import { renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders } from '@/test/utils'
 import type { ListCard as ListCardData } from '@/types'
 
 vi.mock('@/lib/api', () => ({
@@ -40,6 +40,24 @@ describe('ListCard', () => {
     expect(screen.getByText('W')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'week' })).toHaveAttribute('href', `/lists/${card.id}`)
     expect(screen.getByText('5 pending tasks')).toBeInTheDocument()
+  })
+
+  it('pluralizes the pending count in Portuguese, zero included', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      const footers = [0, 1, 2].map((pending_count) => {
+        const { unmount } = renderWithProviders(
+          <ListCard list={{ ...card, pending_count }} canWrite onRename={vi.fn()} />,
+        )
+        const text = screen.getByText(/tarefas? pendentes?$/).textContent
+        unmount()
+        return text
+      })
+
+      expect(footers).toEqual(['0 tarefas pendentes', '1 tarefa pendente', '2 tarefas pendentes'])
+    } finally {
+      await i18n.changeLanguage('en')
+    }
   })
 
   it('fills four preview rows, leaving the missing ones empty', () => {

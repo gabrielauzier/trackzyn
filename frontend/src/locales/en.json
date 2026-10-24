@@ -431,6 +431,7 @@
     "rename": "Rename",
     "archive": "Archive",
     "unarchive": "Unarchive",
+    "pendingCount_zero": "0 pending tasks",
     "pendingCount_one": "{{count}} pending task",
     "pendingCount_other": "{{count}} pending tasks",
     "deleteTitle": "Delete list",
