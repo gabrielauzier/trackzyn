@@ -442,5 +442,14 @@
     "nameTooLong": "Use no máximo 100 caracteres",
     "archivedEmptyTitle": "Nenhuma lista arquivada",
     "archivedEmptyHint": "As listas arquivadas aparecem aqui, com as tarefas e o tempo registrado."
+  },
+  "board": {
+    "orderInToday": "Ordem em Hoje",
+    "complete": "Concluir {{title}}",
+    "estimate": "Estimativa",
+    "spent": "Tempo gasto",
+    "subtaskSummary": "{{done}}/{{total}} Subtarefas",
+    "addSubtask": "Adicionar subtarefa",
+    "showSubtasks": "Mostrar subtarefas"
   }
 }

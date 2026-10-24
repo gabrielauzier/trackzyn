@@ -442,5 +442,14 @@
     "nameTooLong": "Use at most 100 characters",
     "archivedEmptyTitle": "No archived lists",
     "archivedEmptyHint": "Archived lists show up here, with their tasks and tracked time kept."
+  },
+  "board": {
+    "orderInToday": "Order in Today",
+    "complete": "Complete {{title}}",
+    "estimate": "Estimate",
+    "spent": "Time spent",
+    "subtaskSummary": "{{done}}/{{total}} Subtasks",
+    "addSubtask": "Add subtask",
+    "showSubtasks": "Show subtasks"
   }
 }

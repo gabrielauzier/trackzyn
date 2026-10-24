@@ -692,9 +692,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: tarefa sem estimativa não mostra estimativa; em Hoje mostra `1`; concluída aparece riscada
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: tarefa sem estimativa não mostra estimativa; em Hoje mostra `1`; concluída aparece riscada
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
