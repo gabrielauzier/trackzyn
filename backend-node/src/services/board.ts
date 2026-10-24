@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import type { TaskColumn, Workspace } from '../db/schema.ts'
 import { daySql, dayTimezone } from './day.ts'
+import { settle, spentSeconds } from './focus-settle.ts'
 import { getList } from './lists.ts'
 
 export interface TaskCardView {
@@ -38,11 +39,17 @@ export interface Board {
 }
 
 /**
- * Seconds of focus spent on each task of the list. Nothing records focus time yet, so every task
- * has 0; the focus feature (`foco-e-sons`) sums its sessions here.
+ * Seconds of focus spent on each of `taskIds`, after closing the reader's due sessions (AD-001), so the
+ * board and the focus screen agree on the same instant.
  */
-export async function spentSecondsByTask(_db: Database, _listId: string): Promise<Map<string, number>> {
-  return new Map()
+export async function spentSecondsByTask(
+  db: Database,
+  taskIds: string[],
+  userId: string,
+  now: Date,
+): Promise<Map<string, number>> {
+  await settle(db, userId, now)
+  return spentSeconds(db, taskIds, now)
 }
 
 interface TaskRow extends Record<string, unknown> {
@@ -71,6 +78,8 @@ export async function buildBoard(
   db: Database,
   listId: string,
   workspace: Pick<Workspace, 'id' | 'timezone'>,
+  /** The reader, whose due focus sessions are settled before the time spent is summed. */
+  userId: string,
   now: Date = new Date(),
 ): Promise<Board> {
   const list = await getList(db, listId, workspace.id)
@@ -104,7 +113,12 @@ export async function buildBoard(
         ORDER BY t.position, t.created_at`,
   )
 
-  const spent = await spentSecondsByTask(db, list.id)
+  const spent = await spentSecondsByTask(
+    db,
+    found.map((row) => row.id),
+    userId,
+    now,
+  )
   const view = (row: TaskRow): TaskCardView => ({
     id: row.id,
     title: row.title,

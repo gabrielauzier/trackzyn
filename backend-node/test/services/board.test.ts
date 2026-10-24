@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { type TaskColumn, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
+import { type TaskColumn, focusSessions, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
 import { buildBoard } from '../../src/services/board.ts'
 import { createList } from '../../src/services/lists.ts'
@@ -16,10 +16,11 @@ let db: Database
 let client: PGlite
 let workspace: { id: string; timezone: string | null }
 let listId: string
+let userId: string
 
 beforeEach(async () => {
   ;({ db, client } = await migratedDb())
-  const userId = randomUUID()
+  userId = randomUUID()
   await db.insert(users).values({ id: userId, email: 'a@b.c', hashedPassword: 'x', isActive: true, isSuperuser: false, isVerified: true })
   workspace = { id: randomUUID(), timezone: TZ }
   await db.insert(workspaces).values({ id: workspace.id, name: 'Mine', timezone: TZ, createdAt: NOW })
@@ -45,7 +46,7 @@ async function task(column: TaskColumn, options: { title?: string; estimate?: nu
   return id
 }
 
-const board = (now = NOW) => buildBoard(db, listId, workspace, now)
+const board = (now = NOW) => buildBoard(db, listId, workspace, userId, now)
 const titles = (views: Array<{ title: string }>) => views.map((view) => view.title)
 
 describe('board service', () => {
@@ -94,6 +95,45 @@ describe('board service', () => {
     ])
     const [card] = (await board()).columns.today.tasks
     expect(card).toEqual({ id, title: 'with subtasks', estimate_minutes: 87, spent_seconds: 0, position: expect.any(Number), subtasks: { done: 1, total: 3 } })
+  })
+
+  const focusSession = (taskId: string, startedAt: string, minutes: number, open = false) =>
+    db.insert(focusSessions).values({
+      id: randomUUID(),
+      userId,
+      workspaceId: workspace.id,
+      listId,
+      taskId,
+      kind: 'task',
+      deviceId: 'device-a',
+      startedAt: new Date(startedAt),
+      endedAt: open ? null : new Date(new Date(startedAt).getTime() + minutes * 60_000),
+      deadlineAt: open ? new Date(new Date(startedAt).getTime() + minutes * 60_000) : null,
+      lastSeenAt: new Date(startedAt),
+      endReason: open ? null : 'pause',
+    })
+
+  it('TASK-01 BOARD-07 a task with sessions of 10min and 17min shows 1620 spent seconds, pending and done', async () => {
+    const pending = await task('today', { title: 'pending', estimate: 60 })
+    const done = await task('done', { title: 'done', estimate: 60, completedAt: '2026-10-24T14:00:00Z' })
+    for (const id of [pending, done]) {
+      await focusSession(id, '2026-10-24T12:00:00Z', 10)
+      await focusSession(id, '2026-10-24T13:00:00Z', 17)
+    }
+
+    const result = await board()
+    expect(result.columns.today.tasks.map((card) => [card.title, card.spent_seconds])).toEqual([['pending', 1620]])
+    expect(result.columns.done.days[0]?.tasks.map((card) => [card.title, card.spent_seconds])).toEqual([['done', 1620]])
+  })
+
+  it('AD-001 settles the reader before summing: a session past its deadline counts up to the deadline and is closed', async () => {
+    const id = await task('today', { title: 'due', estimate: 17 })
+    await focusSession(id, '2026-10-24T14:00:00Z', 17, true)
+
+    const [card] = (await board()).columns.today.tasks
+    expect(card?.spent_seconds).toBe(1020)
+    const [session] = await db.select().from(focusSessions)
+    expect(session).toMatchObject({ endedAt: new Date('2026-10-24T14:17:00Z'), endReason: 'estimate' })
   })
 
   it('BOARD-09 with completions today, yesterday and 3 days ago, shows only today and yesterday', async () => {
@@ -150,7 +190,7 @@ describe('board service', () => {
   })
 
   it('answers 404 for a list of another workspace', async () => {
-    const error = await buildBoard(db, listId, { id: randomUUID(), timezone: TZ }, NOW).then(
+    const error = await buildBoard(db, listId, { id: randomUUID(), timezone: TZ }, userId, NOW).then(
       () => null,
       (caught: unknown) => caught,
     )

@@ -44,7 +44,7 @@ export function boardRoutes(ctx: AppContext) {
         },
         preValidation: [requireUser, workspaceContext(ctx)],
       },
-      async (request) => buildBoard(ctx.db, request.params.list_id.toLowerCase(), request.workspace.workspace),
+      async (request) => buildBoard(ctx.db, request.params.list_id.toLowerCase(), request.workspace.workspace, request.workspace.user.id),
     )
   }
 }

@@ -174,9 +174,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Tarefa com sessões de 10min e 17min mostra `spent_seconds` 1620 no quadro e na coluna Concluídas
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Tarefa com sessões de 10min e 17min mostra `spent_seconds` 1620 no quadro e na coluna Concluídas
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
