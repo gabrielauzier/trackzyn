@@ -802,9 +802,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: atalho de 10 envia 10; campo com 0 e 121 bloqueia; 120 envia
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: atalho de 10 envia 10; campo com 0 e 121 bloqueia; 120 envia
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

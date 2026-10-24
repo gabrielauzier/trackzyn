@@ -497,6 +497,13 @@
       "progress": "Every 10 minutes",
       "estimate": "End of estimate",
       "break_end": "End of break"
+    },
+    "break": {
+      "open": "Break",
+      "shortcut": "{{minutes}} min",
+      "minutes": "Minutes",
+      "start": "Start break",
+      "range": "Use 1 to 120 minutes"
     }
   }
 }

@@ -497,6 +497,13 @@
       "progress": "A cada 10 minutos",
       "estimate": "Fim da estimativa",
       "break_end": "Fim do intervalo"
+    },
+    "break": {
+      "open": "Intervalo",
+      "shortcut": "{{minutes}} min",
+      "minutes": "Minutos",
+      "start": "Começar intervalo",
+      "range": "Use de 1 a 120 minutos"
     }
   }
 }
