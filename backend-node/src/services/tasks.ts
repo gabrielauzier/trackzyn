@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type Subtask, type Task, type TaskColumn, lists, subtasks, tasks } from '../db/schema.ts'
+import { type Subtask, type Task, type TaskColumn, focusSessions, lists, subtasks, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
+import { endOpenSessions } from './focus-settle.ts'
 import { getList } from './lists.ts'
 
 export type TaskWithSubtasks = Task & { subtasks: Subtask[] }
@@ -76,6 +77,7 @@ export async function updateTask(
 /**
  * Puts the task in `column`, right before `beforeTaskId` (or at the end for null), and renumbers the
  * columns it left and entered from 0 to n-1. Entering `done` records `completed_at = now`; leaving it clears it.
+ * A task that is not in `today` afterwards loses its open focus session, ended at `now` (FOCUS-15).
  */
 export async function moveTask(
   db: Database,
@@ -112,6 +114,7 @@ export async function moveTask(
 
     const completedAt = target.column !== 'done' ? null : current.column === 'done' ? current.completedAt : now
     await tx.update(tasks).set({ column: target.column, completedAt }).where(eq(tasks.id, current.id))
+    if (target.column !== 'today') await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
     for (const [position, id] of entered.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
     if (current.column !== target.column) {
       const left = await columnIds(current.column)

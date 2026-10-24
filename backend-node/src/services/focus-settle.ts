@@ -1,6 +1,6 @@
-import { and, eq, inArray, isNull, lt, lte, sql } from 'drizzle-orm'
+import { type SQL, and, eq, inArray, isNull, lt, lte, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { focusActions, focusSessions } from '../db/schema.ts'
+import { type FocusEndReason, focusActions, focusSessions } from '../db/schema.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -40,4 +40,19 @@ export async function spentSeconds(tx: Database, taskIds: string[], now: Date): 
     .where(and(eq(focusSessions.kind, 'task'), inArray(focusSessions.taskId, taskIds)))
     .groupBy(focusSessions.taskId)
   return new Map(found.map((row) => [row.taskId as string, row.seconds]))
+}
+
+/**
+ * Ends the open sessions that match `filter` at `now` with `reason`. A session whose deadline already
+ * passed ends at the deadline instead, as settlement would have closed it (AD-001).
+ */
+export async function endOpenSessions(tx: Database, filter: SQL, now: Date, reason: FocusEndReason): Promise<void> {
+  const due = sql`${focusSessions.deadlineAt} <= ${now.toISOString()}::timestamptz`
+  await tx
+    .update(focusSessions)
+    .set({
+      endedAt: sql`CASE WHEN ${due} THEN ${focusSessions.deadlineAt} ELSE ${now.toISOString()}::timestamptz END`,
+      endReason: sql`CASE WHEN ${due} THEN CASE ${focusSessions.kind} WHEN 'task' THEN 'estimate' ELSE 'break_end' END ELSE ${reason} END`,
+    })
+    .where(and(isNull(focusSessions.endedAt), filter))
 }

@@ -202,9 +202,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Mover a tarefa em foco para `this_week` fecha a sessão no horário do movimento; mover outra tarefa não mexe na sessão
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Mover a tarefa em foco para `this_week` fecha a sessão no horário do movimento; mover outra tarefa não mexe na sessão
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
