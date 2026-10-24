@@ -130,6 +130,25 @@ describe('ListBoardPage', () => {
     expect(lists.board).toHaveBeenCalledWith(WEEK)
   })
 
+  it('numbers the Today cards from 1 in column order', async () => {
+    const board = boardOf(WEEK, 'Week')
+    board.columns.today.tasks = [card(TODAY_TASK, 'DEV-1725'), card('t2', 'DEV-1726'), card('t3', 'DEV-1727')]
+    vi.mocked(lists.board).mockResolvedValue(board)
+    renderBoard()
+
+    await screen.findByText('DEV-1727')
+    const today = document.querySelector<HTMLElement>('[data-column="today"]')!
+    const numbered = Array.from(today.querySelectorAll<HTMLElement>('[data-task-id]')).map((task) => [
+      within(task).getByTitle('Order in Today').textContent,
+      within(task).getByRole('button', { name: /^DEV-/ }).textContent,
+    ])
+    expect(numbered).toEqual([
+      ['1', 'DEV-1725'],
+      ['2', 'DEV-1726'],
+      ['3', 'DEV-1727'],
+    ])
+  })
+
   it('moves a task dragged to Done into done', async () => {
     // jsdom has no layout: lay the four columns out in a row so the keyboard
     // sensor can find the column to the right.
