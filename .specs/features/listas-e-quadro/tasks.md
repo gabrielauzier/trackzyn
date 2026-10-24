@@ -406,9 +406,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes de 0, 59, 60, 3600, 5220 e 86400 segundos nos dois idiomas
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes de 0, 59, 60, 3600, 5220 e 86400 segundos nos dois idiomas
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
