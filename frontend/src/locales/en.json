@@ -511,6 +511,10 @@
     },
     "controls": {
       "complete": "Complete"
+    },
+    "elsewhere": {
+      "title": "You are already focusing on another device.",
+      "takeOver": "Take over"
     }
   }
 }
