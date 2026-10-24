@@ -7,12 +7,7 @@ export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-// select-stack:begin node
 /** Mirrors desktop/src/shared/ipc.ts: exactly these thirteen members. */
-// select-stack:end
-// select-stack:begin python
-//~ /** Mirrors desktop/src/shared/ipc.ts: exactly these nine members. */
-// select-stack:end
 export interface LaunchkitApi {
   isDesktop: true
   platform: string
@@ -23,7 +18,6 @@ export interface LaunchkitApi {
   onUpdateAvailable(callback: (info: { version: string }) => void): () => void
   installUpdate(): Promise<void>
   startSso(): Promise<void>
-  // select-stack:begin node
   /** `null` while the choice between a server and this computer is open. */
   getMode(): Promise<'remote' | 'local' | null>
   /** Starts (or joins) the local backend; resolves once it listens or has failed. */
@@ -32,7 +26,6 @@ export interface LaunchkitApi {
   openLogs(): Promise<void>
   /** Tells whether an export is running (the interface locks while it does); returns an unsubscribe. */
   onExportState(callback: (state: { exporting: boolean }) => void): () => void
-  // select-stack:end
 }
 
 declare global {

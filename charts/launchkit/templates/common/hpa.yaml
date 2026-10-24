@@ -2,7 +2,7 @@
 {{- range $component := list "backend" "frontend" "worker" }}
 {{- $componentEnabled := true }}
 {{- if eq $component "worker" }}
-  {{- $componentEnabled = $.Values.celeryWorker.enabled }}
+  {{- $componentEnabled = $.Values.worker.enabled }}
 {{- end }}
 {{- if $componentEnabled }}
 apiVersion: autoscaling/v2

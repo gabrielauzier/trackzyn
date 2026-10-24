@@ -66,7 +66,6 @@ describe('application menu', () => {
     expect(onOpenDocs).toHaveBeenCalledTimes(1)
   })
 
-  // select-stack:begin node
   it('switch server opens the mode choice in local mode and the connect screen in remote mode', async () => {
     const calls: string[] = []
     let mode: 'remote' | 'local' | null = 'local'
@@ -95,15 +94,4 @@ describe('application menu', () => {
     await vi.waitFor(() => expect(calls).toContain('go:app://launchkit/connect'))
     expect(calls).toEqual(['go:app://launchkit/connect'])
   })
-  // select-stack:end
-  // select-stack:begin python
-  //~ it('switch server opens the connect screen', async () => {
-  //~   const calls: string[] = []
-  //~   const switchServer = createSwitchServer({ navigate: (url) => calls.push(`go:${url}`) })
-  //~   const template = buildMenuTemplate({ isMac: false, strings: menuStrings('en'), onSwitchServer: () => void switchServer() })
-  //~   const item = fileMenu(template, 'File').find((entry) => entry.id === 'switch-server')
-  //~   ;(item?.click as () => void)()
-  //~   await vi.waitFor(() => expect(calls).toEqual(['go:app://launchkit/connect']))
-  //~ })
-  // select-stack:end
 })

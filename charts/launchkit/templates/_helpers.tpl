@@ -71,26 +71,3 @@ http://{{ .Values.global.domain }}
 {{- end -}}
 {{- end -}}
 
-{{/* select-stack:begin multi */}}
-{{/*
-Backend stack: python (default) or node. Anything else fails the render.
-*/}}
-{{- define "launchkit.backendStack" -}}
-{{- $stack := default "python" .Values.backend.stack -}}
-{{- if not (has $stack (list "python" "node")) -}}
-{{- fail (printf "backend.stack must be python or node (got: %s)" $stack) -}}
-{{- end -}}
-{{- $stack -}}
-{{- end -}}
-
-{{/*
-Image of the backend stack in use (API, migration job, worker and scheduler share it).
-*/}}
-{{- define "launchkit.backendImage" -}}
-{{- if eq (include "launchkit.backendStack" .) "node" -}}
-{{ .Values.backend.nodeImage.repository }}:{{ .Values.backend.nodeImage.tag }}
-{{- else -}}
-{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
-{{- end -}}
-{{- end -}}
-{{/* select-stack:end */}}

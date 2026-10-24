@@ -15,25 +15,17 @@ test.afterEach(async () => {
 
 const LAUNCHKIT_MEMBERS = [
   'appVersion',
-  // select-stack:begin node
   'getMode',
-  // select-stack:end
   'getServerUrl',
   'installUpdate',
   'isDesktop',
-  // select-stack:begin node
   'onExportState',
-  // select-stack:end
   'onUpdateAvailable',
   'openExternal',
-  // select-stack:begin node
   'openLogs',
-  // select-stack:end
   'platform',
   'setServerUrl',
-  // select-stack:begin node
   'startLocal',
-  // select-stack:end
   'startSso',
 ]
 

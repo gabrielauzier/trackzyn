@@ -56,32 +56,11 @@ config:
 
 # Backend configuration
 backend:
-  # select-stack:begin multi
-  # python (FastAPI + Celery, the default) or node (Fastify + BullMQ). Both serve the same API
-  # over the same database; the stack decides the image (image or nodeImage) and the commands of
-  # the API, the migration job, the worker and the scheduler (celeryWorker and celeryBeat values
-  # configure the worker and the scheduler of either stack).
-  stack: python
-  # select-stack:end
   replicaCount: 1
   image:
-    # select-stack:begin multi
-    repository: ghcr.io/your-org/launchkit-backend
-    # select-stack:end
-    # select-stack:begin python
-    #~repository: ghcr.io/your-org/launchkit-backend
-    # select-stack:end
-    # select-stack:begin node
-    #~repository: ghcr.io/your-org/launchkit-backend-node
-    # select-stack:end
-    tag: latest
-    pullPolicy: IfNotPresent
-  # select-stack:begin multi
-  # Used when stack is node.
-  nodeImage:
     repository: ghcr.io/your-org/launchkit-backend-node
     tag: latest
-  # select-stack:end
+    pullPolicy: IfNotPresent
   service:
     type: ClusterIP
     port: 8000
@@ -112,8 +91,8 @@ frontend:
       cpu: 50m
       memory: 64Mi
 
-# Celery Worker configuration
-celeryWorker:
+# Worker configuration
+worker:
   enabled: true
   replicaCount: 1
   image:
@@ -126,8 +105,8 @@ celeryWorker:
       cpu: 100m
       memory: 256Mi
 
-# Celery Beat configuration
-celeryBeat:
+# Scheduler configuration
+scheduler:
   enabled: true
   image:
     pullPolicy: IfNotPresent
@@ -140,7 +119,7 @@ celeryBeat:
       memory: 64Mi
 
 # Persistence for uploaded files
-# IMPORTANT: Backend, Celery Worker and Beat share the same files volume, so they
+# IMPORTANT: Backend, Worker and Beat share the same files volume, so they
 # mount this PVC concurrently. If your pods are scheduled across multiple nodes,
 # you MUST use a StorageClass that supports `ReadWriteMany` (RWX) access mode
 # (e.g., NFS, CephFS). `ReadWriteOnce` only works when all pods share one node.

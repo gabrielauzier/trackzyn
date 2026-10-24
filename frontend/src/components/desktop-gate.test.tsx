@@ -5,12 +5,7 @@ import { DesktopGate } from './desktop-gate'
 import { i18n, renderWithProviders } from '@/test/utils'
 import type { LaunchkitApi } from '@/lib/platform'
 
-// select-stack:begin node
 function installDesktopApi(serverUrl: string | null, mode: 'remote' | 'local' | null = 'remote') {
-// select-stack:end
-// select-stack:begin python
-//~ function installDesktopApi(serverUrl: string | null) {
-// select-stack:end
   const api: LaunchkitApi = {
     isDesktop: true,
     platform: 'darwin',
@@ -21,12 +16,10 @@ function installDesktopApi(serverUrl: string | null, mode: 'remote' | 'local' | 
     onUpdateAvailable: vi.fn(() => () => {}),
     installUpdate: vi.fn(async () => {}),
     startSso: vi.fn(async () => {}),
-    // select-stack:begin node
     getMode: vi.fn(async () => mode),
     startLocal: vi.fn(async (): Promise<{ ok: boolean }> => ({ ok: true })),
     openLogs: vi.fn(async () => {}),
     onExportState: vi.fn(() => () => {}),
-    // select-stack:end
   }
   Object.defineProperty(window, 'launchkit', { value: api, configurable: true })
   return api
@@ -94,7 +87,6 @@ describe('desktop gate', () => {
     expect(await screen.findByText('login page')).toBeInTheDocument()
   })
 
-  // select-stack:begin node
   it('shows the mode choice before anything else on first use', async () => {
     for (const [language, connect, local] of [
       ['en', 'Connect to a server', 'Use this computer'],
@@ -138,5 +130,4 @@ describe('desktop gate', () => {
     await user.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('login page')).toBeInTheDocument()
   })
-  // select-stack:end
 })

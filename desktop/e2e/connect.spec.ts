@@ -17,18 +17,10 @@ test.afterEach(async () => {
 
 const connectHeading = (page: Page) => page.getByRole('heading', { name: 'Connect to a server' })
 
-// select-stack:begin node
 /** A fresh install opens on the mode choice (task 4); the connect screen is one click away. */
 async function chooseServer(page: Page) {
   await page.getByRole('button', { name: 'Connect to a server' }).click()
 }
-// select-stack:end
-// select-stack:begin python
-//~ /** A fresh install opens straight on the connect screen. */
-//~ async function chooseServer(page: Page) {
-//~   await page.getByLabel('Server URL').waitFor()
-//~ }
-// select-stack:end
 
 async function connect(page: Page, url: string) {
   // Already on the connect screen when it was opened from the menu.

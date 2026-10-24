@@ -1,40 +1,32 @@
-{{- if .Values.celeryBeat.enabled }}
+{{- if .Values.scheduler.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "launchkit.fullname" . }}-beat
   labels:
     {{- include "launchkit.labels" . | nindent 4 }}
-    app.kubernetes.io/component: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
+    app.kubernetes.io/component: scheduler
 spec:
   replicas: 1
   selector:
     matchLabels:
       {{- include "launchkit.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
+      app.kubernetes.io/component: scheduler
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/common/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "launchkit.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
+        app.kubernetes.io/component: scheduler
     spec:
       containers:
-        - name: {{ if eq (include "launchkit.backendStack" .) "node" }}scheduler{{ else }}celery-beat{{ end }}
-          image: "{{ include "launchkit.backendImage" . }}"
-          imagePullPolicy: {{ .Values.celeryBeat.image.pullPolicy }}
+        - name: scheduler
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.scheduler.image.pullPolicy }}
           command:
-            {{- if eq (include "launchkit.backendStack" .) "node" }}
             - node
             - dist/scheduler.js
-            {{- else }}
-            - celery
-            - -A
-            - app.worker
-            - beat
-            - --loglevel=info
-            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "launchkit.fullname" . }}-config
@@ -49,9 +41,9 @@ spec:
             - name: files
               mountPath: /app/data/files
             {{- end }}
-          {{- if .Values.celeryBeat.resources }}
+          {{- if .Values.scheduler.resources }}
           resources:
-            {{- toYaml .Values.celeryBeat.resources | nindent 12 }}
+            {{- toYaml .Values.scheduler.resources | nindent 12 }}
           {{- end }}
       volumes:
         {{- if .Values.persistence.files.enabled }}

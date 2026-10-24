@@ -2,12 +2,4 @@ min_version = "2026.7.0"
 monorepo_root = true
 
 [monorepo]
-# select-stack:begin multi
-config_roots = ["backend/", "frontend/"]
-# select-stack:end
-# select-stack:begin python
-#~config_roots = ["backend/", "frontend/"]
-# select-stack:end
-# select-stack:begin node
-#~config_roots = ["frontend/"]
-# select-stack:end
+config_roots = ["frontend/"]

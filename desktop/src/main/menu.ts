@@ -5,10 +5,8 @@ import ptBR from '../../../frontend/src/locales/pt-BR.json'
 export interface MenuStrings {
   file: string
   switchServer: string
-  // select-stack:begin node
   exportData: string
   importData: string
-  // select-stack:end
   edit: string
   view: string
   window: string
@@ -27,33 +25,24 @@ interface Options {
   isMac: boolean
   strings: MenuStrings
   onSwitchServer: () => void
-  // select-stack:begin node
   /** Export and import exist only in local mode, with the backend running. */
   transfer?: { enabled: boolean; onExport: () => void; onImport: () => void }
-  // select-stack:end
   onOpenDocs?: () => void
 }
 
-// select-stack:begin node
 export function buildMenuTemplate({ isMac, strings, onSwitchServer, transfer, onOpenDocs }: Options): MenuItemConstructorOptions[] {
-// select-stack:end
-// select-stack:begin python
-//~ export function buildMenuTemplate({ isMac, strings, onSwitchServer, onOpenDocs }: Options): MenuItemConstructorOptions[] {
-// select-stack:end
   return [
     ...(isMac ? [{ role: 'appMenu' as const }] : []),
     {
       label: strings.file,
       submenu: [
         { id: 'switch-server', label: strings.switchServer, click: onSwitchServer },
-        // select-stack:begin node
         ...(transfer
           ? [
               { id: 'export-data', label: strings.exportData, enabled: transfer.enabled, click: transfer.onExport },
               { id: 'import-data', label: strings.importData, enabled: transfer.enabled, click: transfer.onImport },
             ]
           : []),
-        // select-stack:end
         { type: 'separator' },
         { role: isMac ? 'close' : 'quit' },
       ],
@@ -69,7 +58,6 @@ export function buildMenuTemplate({ isMac, strings, onSwitchServer, transfer, on
   ]
 }
 
-// select-stack:begin node
 export interface TransferStrings {
   exporting: string
   exportDone: string
@@ -90,4 +78,3 @@ export function transferStrings(locale: string): TransferStrings {
   const resource = locale.toLowerCase().startsWith('pt') ? ptBR : en
   return { ...resource.desktop.transfer }
 }
-// select-stack:end

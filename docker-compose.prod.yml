@@ -7,12 +7,8 @@ name: launchkit
 x-podman:
   in_pod: false
 
-# select-stack:begin multi
-# The backend stack is chosen by BACKEND_STACK (python or node, default python). Each stack file
-# declares its API, worker and scheduler plus the frontend, which depends on that stack's API.
-# select-stack:end
 include:
-  - path: compose/prod/${BACKEND_STACK:-python}.yml
+  - path: compose/prod/node.yml
     project_directory: .
 
 services:

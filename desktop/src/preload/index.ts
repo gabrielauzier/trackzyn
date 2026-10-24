@@ -19,7 +19,6 @@ const api: LaunchkitApi = {
   },
   installUpdate: () => ipcRenderer.invoke(IPC.installUpdate),
   startSso: () => ipcRenderer.invoke(IPC.startSso),
-  // select-stack:begin node
   getMode: () => ipcRenderer.invoke(IPC.getMode),
   startLocal: () => ipcRenderer.invoke(IPC.startLocal),
   openLogs: () => ipcRenderer.invoke(IPC.openLogs),
@@ -30,7 +29,6 @@ const api: LaunchkitApi = {
       ipcRenderer.removeListener(IPC.exportState, listener)
     }
   },
-  // select-stack:end
 }
 
 contextBridge.exposeInMainWorld('launchkit', api)

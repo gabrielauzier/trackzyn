@@ -56,9 +56,7 @@ async function createAccount(withTotp: boolean): Promise<Account> {
 }
 
 async function connectAndFillCredentials(page: Page, account: Account) {
-  // select-stack:begin node
   await page.getByRole('button', { name: 'Connect to a server' }).click()
-  // select-stack:end
   await page.getByLabel('Server URL').fill(SERVER_URL!)
   await page.getByRole('button', { name: 'Connect' }).click()
   await expect(page).toHaveURL('app://launchkit/login')

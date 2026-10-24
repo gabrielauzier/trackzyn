@@ -19,12 +19,7 @@ Closes #___ (or link the issue this addresses).
 
 ## Checklist
 
-<!-- select-stack:begin python -->
-- [ ] Backend tests pass (`pytest`)
-<!-- select-stack:end -->
-<!-- select-stack:begin node
 - [ ] Backend tests pass (`npm test` in `backend-node/`)
-select-stack:end -->
 - [ ] Frontend lints clean (`npm run lint`)
 - [ ] Frontend builds (`npm run build`)
 - [ ] Translations updated (if user-facing strings changed)

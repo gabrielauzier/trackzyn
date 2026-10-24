@@ -1,44 +1,23 @@
 import { randomUUID } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-// select-stack:begin node
 import { appendFileSync, mkdirSync } from 'node:fs'
-// select-stack:end
-// select-stack:begin node
 import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, session, shell, utilityProcess } from 'electron'
-// select-stack:end
-// select-stack:begin python
-//~ import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, session, shell } from 'electron'
-// select-stack:end
 import { autoUpdater } from 'electron-updater'
-// select-stack:begin node
 import { APP_ORIGIN, APP_SCHEME, createAppHandler } from './app-protocol'
-// select-stack:end
-// select-stack:begin python
-//~ import { APP_SCHEME, createAppHandler } from './app-protocol'
-// select-stack:end
 import { createConfigStore } from './config-store'
 import { createDeepLinkHandler, setupDeepLinks } from './deep-link'
 import { createDownloadHandler } from './downloads'
-// select-stack:begin node
 import { type ChildLike, createLocalBackend } from './local-backend'
-// select-stack:end
 import { trustedHandle } from './ipc'
-// select-stack:begin node
 import { buildMenuTemplate, DOCS_URL, menuStrings, transferStrings } from './menu'
-// select-stack:end
-// select-stack:begin python
-//~ import { buildMenuTemplate, DOCS_URL, menuStrings } from './menu'
-// select-stack:end
 import { denyAllPermissions, openExternalSafely } from './security'
 import { createServerConnection } from './server-connection'
 import { createSsoFlow } from './sso-flow'
 import { setupSingleInstance } from './single-instance'
 import { createSwitchServer } from './switch-server'
-// select-stack:begin node
 import { ImportJournalError, recoverImport } from './export-import'
 import { createTransfer } from './transfer'
-// select-stack:end
 import { createUpdater } from './updater'
 import { createMainWindow } from './window'
 import { IPC } from '../shared/ipc'
@@ -71,7 +50,6 @@ function start() {
   void app.whenReady().then(() => {
     const store = createConfigStore(path.join(app.getPath('userData'), 'config.json'))
     const connection = createServerConnection({ store, fetchFn: (input, init) => net.fetch(String(input), init as RequestInit) })
-    // select-stack:begin node
     const userData = app.getPath('userData')
     const logsDir = path.join(userData, 'logs')
     // Unpackaged: out/main -> out/backend. The migrations are the ones backend-node ships.
@@ -114,7 +92,6 @@ function start() {
       localStart = null
       return localBackend.stop().finally(() => installMenu())
     }
-    // select-stack:end
     // Packaged: electron-builder copies frontend/dist-desktop to resources/frontend.
     // Unpackaged: out/main -> out -> desktop -> repository root.
     const distDir = app.isPackaged
@@ -125,7 +102,6 @@ function start() {
       APP_SCHEME,
       createAppHandler({
         distDir,
-// select-stack:begin node
         // In local mode /api goes to the local backend, with the session token only this process knows.
         getServerUrl: () => (store.getMode() === 'local' ? (localBackend.info()?.url ?? null) : store.getServerUrl()),
         isWriteBlocked: () => exporting,
@@ -133,10 +109,6 @@ function start() {
           const local = store.getMode() === 'local' ? localBackend.info() : null
           return local ? { 'x-launchkit-local-token': local.token } : {}
         },
-// select-stack:end
-// select-stack:begin python
-//~         getServerUrl: () => store.getServerUrl(),
-// select-stack:end
         fetchFn: (input, init) => net.fetch(String(input), init as RequestInit),
       }),
     )
@@ -145,7 +117,6 @@ function start() {
     trustedHandle(ipcMain, IPC.setServerUrl, (_event, url: unknown, options: unknown) => {
       if (typeof url !== 'string') throw new TypeError('url must be a string')
       const allowInsecure = (options as { allowInsecure?: unknown } | null | undefined)?.allowInsecure === true
-// select-stack:begin node
       return connection.connect(url, { allowInsecure }).then(async (result) => {
         // A server was chosen: the local backend (if any) is done, its data stays in userData.
         if (result.ok) {
@@ -155,19 +126,13 @@ function start() {
         }
         return result
       })
-// select-stack:end
-// select-stack:begin python
-//~       return connection.connect(url, { allowInsecure })
-// select-stack:end
     })
-// select-stack:begin node
     trustedHandle(ipcMain, IPC.getMode, () => store.getMode())
     trustedHandle(ipcMain, IPC.startLocal, () => startLocal())
     trustedHandle(ipcMain, IPC.openLogs, async () => {
       mkdirSync(logsDir, { recursive: true })
       await shell.openPath(logsDir)
     })
-// select-stack:end
 
     trustedHandle(ipcMain, IPC.openExternal, (_event, url: unknown) => openExternalSafely(url, (target) => shell.openExternal(target)))
     const sso = createSsoFlow({
@@ -193,7 +158,6 @@ function start() {
     })
     trustedHandle(ipcMain, IPC.installUpdate, () => updater.install())
 
-// select-stack:begin node
     const switchServer = createSwitchServer({
       getMode: () => store.getMode(),
       stopLocal,
@@ -202,16 +166,7 @@ function start() {
         void mainWindow?.loadURL(url).catch(() => undefined)
       },
     })
-// select-stack:end
-// select-stack:begin python
-//~     const switchServer = createSwitchServer({
-//~       navigate: (url) => {
-//~         void mainWindow?.loadURL(url).catch(() => undefined)
-//~       },
-//~     })
-// select-stack:end
 
-// select-stack:begin node
     // The window closing quits the app; the backend gets to close its database first (five seconds at most).
     let quitting = false
     app.on('before-quit', (event) => {
@@ -253,8 +208,6 @@ function start() {
       },
     })
 
-// select-stack:end
-// select-stack:begin node
     // Rebuilt when the mode changes: export and import are enabled only in local mode with the backend up.
     function installMenu() {
       Menu.setApplicationMenu(
@@ -273,21 +226,6 @@ function start() {
         ),
       )
     }
-// select-stack:end
-// select-stack:begin python
-//~     function installMenu() {
-//~       Menu.setApplicationMenu(
-//~         Menu.buildFromTemplate(
-//~           buildMenuTemplate({
-//~             isMac: process.platform === 'darwin',
-//~             strings: menuStrings(app.getLocale()),
-//~             onSwitchServer: () => void switchServer(),
-//~             onOpenDocs: () => void shell.openExternal(DOCS_URL),
-//~           }),
-//~         ),
-//~       )
-//~     }
-// select-stack:end
     installMenu()
 
     mainWindow = createMainWindow(app.getVersion(), store)
@@ -296,9 +234,7 @@ function start() {
     })
     // A page loaded after the download finished still shows the banner.
     mainWindow.webContents.on('did-finish-load', () => {
-// select-stack:begin node
       if (exporting) mainWindow?.webContents.send(IPC.exportState, { exporting: true })
-// select-stack:end
       const pending = updater.pending()
       if (pending) mainWindow?.webContents.send(IPC.updateAvailable, pending)
     })

@@ -56,22 +56,11 @@ def changed_jobs():
             else:
                 # Unknown/shared paths (including workflows and this script) run everything.
                 return True, True, True, True, True, True
-        # select-stack:begin node
         # The desktop app bundles the frontend and, for its local mode, backend-node: a change to
         # either checks it too.
-        # select-stack:end
-        # select-stack:begin python
-        #~ # The desktop app bundles the frontend: a frontend change checks it too.
-        # select-stack:end
         # stack-switch and select-stack exercise the Compose files, the chart and both backends.
-        # select-stack:begin node
         return (backend, frontend, helm, backend_node, desktop or frontend or backend_node,
                 stack or backend or backend_node or helm)
-        # select-stack:end
-        # select-stack:begin python
-        #~ return (backend, frontend, helm, backend_node, desktop or frontend,
-        #~         stack or backend or backend_node or helm)
-        # select-stack:end
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         print(f"Cannot determine PR relevance ({type(error).__name__}); running all suites.")
         return True, True, True, True, True, True

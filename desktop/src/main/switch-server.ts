@@ -1,5 +1,4 @@
 import { APP_ORIGIN } from './app-protocol'
-// select-stack:begin node
 import type { Mode } from './config-store'
 
 interface Deps {
@@ -25,16 +24,3 @@ export function createSwitchServer({ getMode, stopLocal, setMode, navigate }: De
     navigate(`${APP_ORIGIN}/connect`)
   }
 }
-// select-stack:end
-// select-stack:begin python
-//~ interface Deps {
-//~   navigate: (url: string) => void
-//~ }
-//~
-//~ /** "Switch server": the connect screen (the saved server stays until a new one validates). */
-//~ export function createSwitchServer({ navigate }: Deps): () => Promise<void> {
-//~   return async () => {
-//~     navigate(`${APP_ORIGIN}/connect`)
-//~   }
-//~ }
-// select-stack:end

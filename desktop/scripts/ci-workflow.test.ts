@@ -66,12 +66,7 @@ describe('ci workflow', () => {
     // The script it calls builds first and the specs it must reach exist.
     const scripts = JSON.parse(readFileSync(path.resolve(__dirname, '../package.json'), 'utf8')).scripts as Record<string, string>
     expect(scripts['test:e2e']).toBe('npm run build:all && playwright test')
-    // select-stack:begin node
     for (const spec of ['local-flow.spec.ts', 'sso.spec.ts']) expect(existsSync(path.resolve(__dirname, '../e2e', spec)), spec).toBe(true)
-    // select-stack:end
-    // select-stack:begin python
-    //~ for (const spec of ['sso.spec.ts', 'connect.spec.ts']) expect(existsSync(path.resolve(__dirname, '../e2e', spec)), spec).toBe(true)
-    // select-stack:end
     const playwright = readFileSync(path.resolve(__dirname, '../playwright.config.mts'), 'utf8')
     expect(playwright).toContain("testMatch: '**/*.spec.ts'")
     expect(playwright).not.toMatch(/testIgnore|grep/)
@@ -93,18 +88,10 @@ describe('ci workflow', () => {
       const first = job.steps.findIndex((step) => step.run && BUILDS.test(step.run))
       expect(first, 'a build step').toBeGreaterThan(-1)
       const setup = job.steps.find((step) => step.uses?.startsWith('actions/setup-node'))
-      // select-stack:begin node
       const installs = job.steps.flatMap((step, index) => (step.run && /npm ci --prefix \.\.\/backend-node/.test(step.run) ? [index] : []))
       expect(installs, 'npm ci --prefix ../backend-node').toHaveLength(1)
       expect(installs[0]).toBeLessThan(first)
       expect(setup?.with?.['cache-dependency-path']).toContain('backend-node/package-lock.json')
-      // select-stack:end
-      // select-stack:begin python
-      //~ // A remote client has no local backend to install.
-      //~ const installs = job.steps.flatMap((step, index) => (step.run && /npm ci --prefix \S*backend/.test(step.run) ? [index] : []))
-      //~ expect(installs).toEqual([])
-      //~ expect(setup?.with?.['cache-dependency-path']?.trim().split('\n')).toEqual(['frontend/package-lock.json', 'desktop/package-lock.json'])
-      // select-stack:end
     })
   }
 })

@@ -19,7 +19,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migration
-          image: "{{ include "launchkit.backendImage" . }}"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           command:
             - sh
@@ -27,7 +27,7 @@ spec:
             - |
               echo "Starting database migration..."
               for i in $(seq 1 30); do
-                if {{ if eq (include "launchkit.backendStack" .) "node" }}node dist/migrate.js{{ else }}alembic upgrade head{{ end }}; then
+                if node dist/migrate.js; then
                   echo "Migration successful."
                   exit 0
                 fi

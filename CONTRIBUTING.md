@@ -53,32 +53,11 @@ The same applies to issues. An issue produced by pointing a model at the reposit
 
 1. Create a branch from `main`: `git checkout -b feature/your-feature`
 2. Make your changes
-<!-- select-stack:begin python -->
-3. Run backend tests: `cd backend && uv sync --all-extras && uv run pytest` (Python 3.11+)
-<!-- select-stack:end -->
-<!-- select-stack:begin node
 3. Run backend tests: `cd backend-node && npm ci && npm test` (Node 22+)
-select-stack:end -->
 4. Run frontend checks: `cd frontend && npm run lint && npm test`
 5. Commit with a clear message (see below)
 6. Push your branch and open a Pull Request
 
-<!-- select-stack:begin python -->
-Optional but recommended, so you catch lint and type errors before CI does:
-
-```bash
-prek install                                   # once, from the repo root
-# or, if you prefer the Python original:
-pip install pre-commit && pre-commit install
-```
-
-This runs `ruff check` and `ty check` on the backend whenever you commit a
-`backend/*.py` file. Both read their config from `backend/pyproject.toml`, so
-local and CI stay in sync.
-
-[prek](https://github.com/j178/prek) is a drop-in replacement for pre-commit:
-same `.pre-commit-config.yaml`, but a single binary with no Python bootstrap.
-<!-- select-stack:end -->
 
 ### Frontend tests
 
@@ -116,33 +95,6 @@ Use clear, descriptive commit messages:
 ## Running Tests
 
 ```bash
-# select-stack:begin python
-# Backend tests (run from backend/, needs Python 3.11+; same as CI)
-cd backend
-uv sync --all-extras   # first time only — builds .venv from uv.lock, same versions as CI
-source .venv/bin/activate
-pytest
-
-# No uv? pip works too, from an export of the lock:
-#   pip install uv && uv export --frozen --all-extras --no-emit-project -o /tmp/req.txt
-#   pip install --require-hashes -r /tmp/req.txt && pip install --no-deps -e .
-
-# Backend tests with coverage
-pytest --cov=app --cov-report=term-missing
-
-# Backend lint + type check (same commands CI runs)
-ruff check .
-ty check .
-
-# After changing dependencies in pyproject.toml: regenerate the lock and
-# commit uv.lock along with it (CI enforces this)
-./scripts/lock.sh
-
-# After adding a migration: check the revision chain is still a single line
-python3 scripts/check_migration_chain.py
-
-# select-stack:end
-# select-stack:begin node
 # Backend tests (run from backend-node/, needs Node 22+; same as CI)
 cd backend-node
 npm ci
@@ -150,7 +102,6 @@ npm test
 npm run lint
 npm run typecheck
 
-# select-stack:end
 # Frontend lint
 cd frontend && npm run lint
 
@@ -158,23 +109,6 @@ cd frontend && npm run lint
 cd frontend && npm run build
 ```
 
-<!-- select-stack:begin python -->
-### Adding a migration
-
-Number the file after the current head and chain it there, so
-`backend/alembic/versions/` sorts in apply order:
-
-```python
-revision: str = "076"
-down_revision: Union[str, None] = "075"
-```
-
-If another migration lands on `main` while your PR is open, your number is
-taken and you have to renumber. CI catches this: the Migration Chain job runs
-against your branch merged with `main`, so a clash fails there rather than on
-someone's `alembic upgrade head` after both are merged.
-
-<!-- select-stack:end -->
 ## Pull Request Guidelines
 
 - Keep PRs focused — one feature or fix per PR

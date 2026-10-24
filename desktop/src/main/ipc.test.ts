@@ -42,12 +42,7 @@ describe('trusted ipc handlers', () => {
 describe('every ipc channel the main process serves', () => {
   const source = readFileSync(path.resolve(__dirname, 'index.ts'), 'utf8')
   // Export and import are menu items of the main process, not channels; these two only carry events to the renderer.
-  // select-stack:begin node
   const SEND_ONLY = ['exportState', 'updateAvailable']
-  // select-stack:end
-  // select-stack:begin python
-  //~ const SEND_ONLY = ['updateAvailable']
-  // select-stack:end
   const handled = Object.entries(IPC).filter(([key]) => !SEND_ONLY.includes(key))
 
   it('is registered through trustedHandle and never through ipcMain directly', () => {
