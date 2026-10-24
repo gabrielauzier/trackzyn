@@ -450,6 +450,13 @@
     "spent": "Time spent",
     "subtaskSummary": "{{done}}/{{total}} Subtasks",
     "addSubtask": "Add subtask",
-    "showSubtasks": "Show subtasks"
+    "showSubtasks": "Show subtasks",
+    "addTask": "Add task",
+    "add": "Add",
+    "taskTitle": "Title",
+    "estimateMinutes": "Estimate (min)",
+    "titleRequired": "Enter a title",
+    "titleTooLong": "Use at most 255 characters",
+    "estimateRange": "Use 1 to 1440 minutes"
   }
 }

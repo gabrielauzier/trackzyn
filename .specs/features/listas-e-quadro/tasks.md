@@ -720,9 +720,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: título vazio bloqueia; estimativa 1441 bloqueia; sem estimativa envia `null`; 422 do servidor aparece
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: título vazio bloqueia; estimativa 1441 bloqueia; sem estimativa envia `null`; 422 do servidor aparece
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
