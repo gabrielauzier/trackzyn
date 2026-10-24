@@ -434,9 +434,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Teste: duas chamadas devolvem o mesmo id; `localStorage` limpo gera outro
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Teste: duas chamadas devolvem o mesmo id; `localStorage` limpo gera outro
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
