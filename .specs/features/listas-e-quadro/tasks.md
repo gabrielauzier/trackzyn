@@ -261,9 +261,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes de criar, renomear, marcar e excluir; subtarefa de tarefa de outro workspace → 404
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Testes de criar, renomear, marcar e excluir; subtarefa de tarefa de outro workspace → 404
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

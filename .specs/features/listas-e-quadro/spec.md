@@ -170,8 +170,8 @@ O trackzyn ainda é só a base do launchkit: não tem onde registrar uma tarefa,
 | TASK-03 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 | TASK-04 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
 | TASK-05 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-06 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
-| TASK-07 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
+| TASK-06 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
+| TASK-07 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 | TASK-08 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 
 **Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
