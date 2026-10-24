@@ -549,9 +549,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Teste: "week" → `W`; cor 3 usa `var(--chart-3)`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Teste: "week" → `W`; cor 3 usa `var(--chart-3)`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
