@@ -96,6 +96,23 @@ function mockMatchMedia(matches: boolean) {
   )
 }
 
+/**
+ * jsdom has no layout: lay the four columns out in a row so the keyboard
+ * sensor can find the column to the left or right.
+ */
+function layOutColumns() {
+  const columns = ['backlog', 'this_week', 'today', 'done']
+  const taskColumn: Record<string, string> = { [TODAY_TASK]: 'today', [DONE_TASK]: 'done' }
+  const original = HTMLElement.prototype.getBoundingClientRect
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    const column = this.dataset.column
+    if (column) return DOMRect.fromRect({ x: columns.indexOf(column) * 300, y: 0, width: 280, height: 600 })
+    const owner = taskColumn[this.dataset.taskId ?? '']
+    if (owner) return DOMRect.fromRect({ x: columns.indexOf(owner) * 300 + 10, y: 100, width: 260, height: 80 })
+    return original.call(this)
+  })
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   state.canWrite = true
@@ -150,18 +167,7 @@ describe('ListBoardPage', () => {
   })
 
   it('moves a task dragged to Done into done', async () => {
-    // jsdom has no layout: lay the four columns out in a row so the keyboard
-    // sensor can find the column to the right.
-    const columns = ['backlog', 'this_week', 'today', 'done']
-    const taskColumn: Record<string, string> = { [TODAY_TASK]: 'today', [DONE_TASK]: 'done' }
-    const original = HTMLElement.prototype.getBoundingClientRect
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      const column = this.dataset.column
-      if (column) return DOMRect.fromRect({ x: columns.indexOf(column) * 300, y: 0, width: 280, height: 600 })
-      const owner = taskColumn[this.dataset.taskId ?? '']
-      if (owner) return DOMRect.fromRect({ x: columns.indexOf(owner) * 300 + 10, y: 100, width: 260, height: 80 })
-      return original.call(this)
-    })
+    layOutColumns()
     const { user } = renderBoard()
 
     await screen.findByText('DEV-1725')
@@ -174,6 +180,42 @@ describe('ListBoardPage', () => {
     await waitFor(() =>
       expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }),
     )
+  })
+
+  it('moves a task dragged out of Done back to a pending column', async () => {
+    // The server answers the move by reopening the task in Today.
+    let reopened = false
+    vi.mocked(tasks.move).mockImplementation(async () => {
+      reopened = true
+      return { ...fullTask, id: DONE_TASK, title: 'DEV-1724' }
+    })
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      if (!reopened) return board
+      board.columns.today.tasks.unshift(card(DONE_TASK, 'DEV-1724'))
+      board.columns.done.days = []
+      return board
+    })
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1724')
+    document.querySelector<HTMLElement>(`[data-task-id="${DONE_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    // The first step lands on the Done column itself, the second on the Today card.
+    await user.keyboard('{ArrowLeft}{ArrowLeft}')
+    await user.keyboard(' ')
+
+    await waitFor(() =>
+      expect(tasks.move).toHaveBeenCalledWith(DONE_TASK, { column: 'today', before_task_id: TODAY_TASK }),
+    )
+    const today = document.querySelector<HTMLElement>('[data-column="today"]')!
+    const check = await within(today).findByRole('checkbox', { name: 'Complete DEV-1724' })
+    expect(check).toHaveAttribute('aria-checked', 'false')
+    expect(check).toBeEnabled()
+    expect(within(today).getByRole('button', { name: 'DEV-1724' })).not.toHaveClass('line-through')
+    const done = document.querySelector<HTMLElement>('[data-column="done"]')!
+    expect(within(done).queryByText('DEV-1724')).not.toBeInTheDocument()
   })
 
   it('completes a task from its check', async () => {
