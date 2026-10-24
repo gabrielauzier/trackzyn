@@ -1,3 +1,5 @@
+import { uuid } from '@/lib/focus/uuid'
+
 const STORAGE_KEY = 'trackzyn.device'
 
 /**
@@ -7,7 +9,7 @@ const STORAGE_KEY = 'trackzyn.device'
 export function deviceId(): string {
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored) return stored
-  const id = crypto.randomUUID()
+  const id = uuid()
   localStorage.setItem(STORAGE_KEY, id)
   return id
 }

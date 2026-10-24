@@ -204,7 +204,13 @@ export interface FocusState {
     spent_seconds: number
     awaiting_extend: boolean
   } | null
-  today: { pending: number; done: number; estimate_minutes: number }
+  /** Totals of Today and its pending tasks in board order, for applying actions offline (SYNC-05). */
+  today: {
+    pending: number
+    done: number
+    estimate_minutes: number
+    tasks: (NonNullable<FocusState['task']> & { position: number })[]
+  }
   /** The open session when it has had no signal for more than 120 s (SYNC-11). */
   stale: { session_id: string; last_seen_at: string; seconds: number } | null
 }

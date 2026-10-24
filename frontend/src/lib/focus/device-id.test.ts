@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { deviceId } from '@/lib/focus/device-id'
 
@@ -11,6 +11,19 @@ describe('deviceId (SYNC-02)', () => {
     expect(first).toMatch(UUID)
     expect(deviceId()).toBe(first)
     expect(localStorage.getItem('trackzyn.device')).toBe(first)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('works outside a secure context, where crypto.randomUUID is missing', () => {
+    vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) })
+
+    const id = deviceId()
+
+    expect(id).toMatch(UUID)
+    expect(deviceId()).toBe(id)
   })
 
   it('generates another id once localStorage is cleared', () => {

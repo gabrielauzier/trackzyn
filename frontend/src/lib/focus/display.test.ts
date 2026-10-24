@@ -32,7 +32,7 @@ function state(overrides: Partial<FocusState> = {}): FocusState {
     server_now: iso(NOW),
     session: null,
     task: task(),
-    today: { pending: 1, done: 0, estimate_minutes: 60 },
+    today: { pending: 1, done: 0, estimate_minutes: 60, tasks: [{ ...task(), position: 0 }] },
     stale: null,
     ...overrides,
   }
@@ -137,13 +137,13 @@ describe('deriveDisplay', () => {
   })
 
   it('shows Tudo limpo once the last pending task of Today is done (FOCUS-09)', () => {
-    const s = state({ task: null, today: { pending: 0, done: 3, estimate_minutes: 0 } })
+    const s = state({ task: null, today: { pending: 0, done: 3, estimate_minutes: 0, tasks: [] } })
 
     expect(deriveDisplay(s, NOW)).toEqual({ mode: 'all_clear', seconds: 0 })
   })
 
   it('is idle when Today has no task at all', () => {
-    const s = state({ task: null, today: { pending: 0, done: 0, estimate_minutes: 0 } })
+    const s = state({ task: null, today: { pending: 0, done: 0, estimate_minutes: 0, tasks: [] } })
 
     expect(deriveDisplay(s, NOW)).toEqual({ mode: 'idle', seconds: 0 })
   })
