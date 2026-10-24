@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 4,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "surviving_mutant::test drag and drop reorders within the same column in both directions not only moves between columns",
+      "text": "Test drag-and-drop reorders within the same column in both directions, not only moves between columns.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/drag-and-drop",
+      "status": "candidate",
+      "features": [
+        "listas-e-quadro"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M21 frontend/src/pages/list-board.tsx (frontend/drag-and-drop)"
+      ],
+      "created": "2026-10-24T16:00:37Z",
+      "last_seen": "2026-10-24T16:00:37Z"
+    },
+    {
+      "id": "L-002",
+      "key": "surviving_mutant::keyboard drags in tests always land on a card so extract the drop target math into a pure function and test drops on a column s empty area directly",
+      "text": "Keyboard drags in tests always land on a card, so extract the drop target math into a pure function and test drops on a column's empty area directly.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/drag-and-drop",
+      "status": "candidate",
+      "features": [
+        "listas-e-quadro"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M27 frontend/src/pages/list-board.tsx:141 (frontend/drag-and-drop)"
+      ],
+      "created": "2026-10-24T16:00:37Z",
+      "last_seen": "2026-10-24T16:00:37Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::pt br plural rules map 0 to one so every count string needs a zero key and a pt br test with 0",
+      "text": "pt-BR plural rules map 0 to one, so every count string needs a _zero key and a pt-BR test with 0.",
+      "signal": "ac_gap",
+      "scope": "frontend/i18n",
+      "status": "candidate",
+      "features": [
+        "listas-e-quadro"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "LIST-03 frontend/src/locales/pt-BR.json (frontend/i18n)"
+      ],
+      "created": "2026-10-24T16:00:37Z",
+      "last_seen": "2026-10-24T16:00:37Z"
+    }
+  ]
+}
