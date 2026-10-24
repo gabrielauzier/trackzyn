@@ -434,10 +434,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes de fronteira: 04:59 → madrugada, 05:00 → manhã, 11:59, 12:00, 17:59, 18:00, 23:59
-- [ ] Hora calculada em `America/Sao_Paulo` a partir de um instante UTC fixo
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes de fronteira: 04:59 → madrugada, 05:00 → manhã, 11:59, 12:00, 17:59, 18:00, 23:59
+- [x] Hora calculada em `America/Sao_Paulo` a partir de um instante UTC fixo
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

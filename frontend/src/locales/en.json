@@ -417,5 +417,19 @@
     "timezoneHint": "The calendar this workspace runs on. Dates and \"today\" roll over at midnight in this timezone.",
     "you": "you",
     "youManageThis": "You manage this workspace"
+  },
+  "home": {
+    "greeting": {
+      "dawn": "Good night, {{name}}",
+      "morning": "Good morning, {{name}}",
+      "afternoon": "Good afternoon, {{name}}",
+      "night": "Good evening, {{name}}"
+    },
+    "subtitle": {
+      "dawn": "Focusing while the world sleeps.",
+      "morning": "Start with what matters most.",
+      "afternoon": "One task at a time.",
+      "night": "Time to wrap up the day calmly."
+    }
   }
 }

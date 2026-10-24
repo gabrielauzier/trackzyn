@@ -417,5 +417,19 @@
     "timezoneHint": "O calendário em que este workspace funciona. Datas e o \"hoje\" viram à meia-noite nesse fuso.",
     "you": "você",
     "youManageThis": "Você gerencia este workspace"
+  },
+  "home": {
+    "greeting": {
+      "dawn": "Boa madrugada, {{name}}",
+      "morning": "Bom dia, {{name}}",
+      "afternoon": "Boa tarde, {{name}}",
+      "night": "Boa noite, {{name}}"
+    },
+    "subtitle": {
+      "dawn": "Focando enquanto o mundo dorme.",
+      "morning": "Comece pelo que mais importa.",
+      "afternoon": "Uma tarefa de cada vez.",
+      "night": "Hora de fechar o dia com calma."
+    }
   }
 }
