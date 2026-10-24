@@ -141,10 +141,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Workspace com `timezone` usa o dele; sem, usa o da aplicação
-- [ ] Teste em PGlite: `now()` às 02:30 UTC de um sábado em `America/Sao_Paulo` cai na sexta e na semana iniciada na segunda anterior
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Workspace com `timezone` usa o dele; sem, usa o da aplicação
+- [x] Teste em PGlite: `now()` às 02:30 UTC de um sábado em `America/Sao_Paulo` cai na sexta e na semana iniciada na segunda anterior
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
