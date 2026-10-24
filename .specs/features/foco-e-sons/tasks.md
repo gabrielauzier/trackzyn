@@ -716,9 +716,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: sem `window.trackzyn` → `true`; janela principal sem widget → `true`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: sem `window.trackzyn` → `true`; janela principal sem widget → `true`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
