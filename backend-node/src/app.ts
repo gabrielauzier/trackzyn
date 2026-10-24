@@ -16,6 +16,7 @@ import { listRoutes } from './routes/lists.ts'
 import { oidcRoutes } from './routes/oidc.ts'
 import { passkeyRoutes } from './routes/passkeys.ts'
 import { setupRoutes } from './routes/setup.ts'
+import { taskRoutes } from './routes/tasks.ts'
 import { twoFactorRoutes } from './routes/two-factor.ts'
 import { userRoutes } from './routes/users.ts'
 import { workspaceRoutes } from './routes/workspaces.ts'
@@ -60,6 +61,7 @@ export async function buildApp(
   await app.register(setupRoutes(ctx))
   await app.register(workspaceRoutes(ctx))
   await app.register(listRoutes(ctx))
+  await app.register(taskRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
 

@@ -289,10 +289,12 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] 422 testado para título vazio e com 256 caracteres, estimativa 0 e 1441, anotações com 10 001 caracteres, subtarefa vazia
-- [ ] 403 `Read-only role` para `viewer` em toda escrita; 404 de outro workspace; id que não é UUID → 422
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] 422 testado para título vazio e com 256 caracteres, estimativa 0 e 1441, anotações com 10 001 caracteres, subtarefa vazia
+- [x] 403 `Read-only role` para `viewer` em toda escrita; 404 de outro workspace; id que não é UUID → 422
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

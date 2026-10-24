@@ -1,0 +1,38 @@
+import { expect } from 'vitest'
+import { type TestApp, bearer, register } from './test-app.ts'
+
+export type User = Awaited<ReturnType<typeof register>>
+
+/** An owner, a viewer of the owner's new workspace, and a stranger with a workspace of their own. */
+export async function ownerViewerStranger(t: TestApp) {
+  const owner = await register(t)
+  const workspace = await t.app.inject({
+    method: 'POST',
+    url: '/api/workspaces',
+    headers: bearer(owner.token),
+    payload: { name: 'Shared', self_membership: true },
+  })
+  const workspaceId = workspace.json().id as string
+  const viewer = await register(t)
+  const invited = await t.app.inject({
+    method: 'POST',
+    url: `/api/workspaces/${workspaceId}/members`,
+    headers: bearer(owner.token),
+    payload: { email: viewer.email, role: 'viewer' },
+  })
+  expect(invited.statusCode).toBe(201)
+
+  const stranger = await register(t)
+  const theirs = await t.app.inject({
+    method: 'POST',
+    url: '/api/workspaces',
+    headers: bearer(stranger.token),
+    payload: { name: 'Theirs', self_membership: true },
+  })
+  return { owner, viewer, workspaceId, stranger, strangerWorkspaceId: theirs.json().id as string }
+}
+
+export const inWorkspace =
+  (t: TestApp) =>
+  (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, token: string, workspaceId: string, payload?: unknown) =>
+    t.app.inject({ method, url, headers: { ...bearer(token), 'x-workspace-id': workspaceId }, payload: payload as object })

@@ -163,12 +163,12 @@ O trackzyn ainda é só a base do launchkit: não tem onde registrar uma tarefa,
 | BOARD-12 | P1: Quadro da lista | Tasks | In Tasks |
 | BOARD-13 | P1: Quadro da lista | Tasks | In Tasks |
 | BOARD-14 | P1: Quadro da lista | Tasks | In Tasks |
-| BOARD-15 | P1: Quadro da lista | Tasks | In Tasks |
+| BOARD-15 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-16 | P1: Quadro da lista | Tasks | Implementing |
 | TASK-01 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-02 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
+| TASK-02 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 | TASK-03 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-04 | P1: Tarefas, subtarefas e anotações | Tasks | In Tasks |
+| TASK-04 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 | TASK-05 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 | TASK-06 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
 | TASK-07 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
