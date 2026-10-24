@@ -375,10 +375,12 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Toda rota: caminho feliz, 409 (`invalid_transition`, `focus_elsewhere`), 422, 403 `viewer`, reenvio do mesmo `action_id`
-- [ ] Toda resposta traz `server_now`
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Toda rota: caminho feliz, 409 (`invalid_transition`, `focus_elsewhere`), 422, 403 `viewer`, reenvio do mesmo `action_id`
+- [x] Toda resposta traz `server_now`
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: build

@@ -11,6 +11,7 @@ import { adminRoutes } from './routes/admin.ts'
 import { authRoutes } from './routes/auth.ts'
 import { boardRoutes } from './routes/board.ts'
 import { fileRoutes } from './routes/files.ts'
+import { focusRoutes } from './routes/focus.ts'
 import { healthRoutes } from './routes/health.ts'
 import { infoRoutes } from './routes/info.ts'
 import { listRoutes } from './routes/lists.ts'
@@ -64,6 +65,7 @@ export async function buildApp(
   await app.register(listRoutes(ctx))
   await app.register(taskRoutes(ctx))
   await app.register(boardRoutes(ctx))
+  await app.register(focusRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
 
