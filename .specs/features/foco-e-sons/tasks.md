@@ -230,9 +230,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Arquivar a lista com tarefa ou intervalo em foco fecha a sessão no horário do arquivamento
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Arquivar a lista com tarefa ou intervalo em foco fecha a sessão no horário do arquivamento
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

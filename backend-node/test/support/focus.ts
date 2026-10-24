@@ -52,11 +52,16 @@ export async function seedFocus(db: Database, now: Date) {
     })
     return id
   }
+  const addList = async () => {
+    const id = randomUUID()
+    await db.insert(lists).values({ id, workspaceId, name: 'Other', color: 2, position: 1, createdByUserId: userId, createdAt: now })
+    return id
+  }
   const session = async (id: string) => {
     const [row] = await db.select().from(focusSessions).where(eq(focusSessions.id, id))
     return row!
   }
-  return { userId, workspaceId, listId, addTask, addUser, addSession, session }
+  return { userId, workspaceId, listId, addTask, addList, addUser, addSession, session }
 }
 
 /** `base` plus `minutes` (and `seconds`). */

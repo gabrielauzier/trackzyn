@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type List, lists, tasks, workspaces } from '../db/schema.ts'
+import { type List, focusSessions, lists, tasks, workspaces } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
+import { endOpenSessions } from './focus-settle.ts'
 
 export interface ListCard {
   list: List
@@ -93,19 +94,24 @@ export async function createList(
   })
 }
 
+/** Archiving the list ends the open focus session on it, task or break, at `now` (FOCUS-15). */
 export async function updateList(
   db: Database,
   listId: string,
   workspaceId: string,
   changes: { name?: string; color?: number; isArchived?: boolean },
+  now: Date = new Date(),
 ): Promise<List> {
   const list = await getList(db, listId, workspaceId)
   const given = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined))
   const updated: List = { ...list, ...given }
-  await db
-    .update(lists)
-    .set({ name: updated.name, color: updated.color, isArchived: updated.isArchived })
-    .where(eq(lists.id, list.id))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(lists)
+      .set({ name: updated.name, color: updated.color, isArchived: updated.isArchived })
+      .where(eq(lists.id, list.id))
+    if (updated.isArchived) await endOpenSessions(tx as Database, eq(focusSessions.listId, list.id), now, 'task_left')
+  })
   return updated
 }
 
