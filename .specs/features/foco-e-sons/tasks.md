@@ -288,11 +288,13 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Cada linha `start`/`pause` da tabela de casos vira um teste; `deadline_at` = início + (estimativa − gasto)
-- [ ] Mesmo `action_id` duas vezes → mesma resposta e uma sessão só; `occurred_at` 6 s no futuro, anterior à última mudança ou com 25h → 422 `invalid_time`
-- [ ] Duas chamadas `start` simultâneas deixam uma sessão aberta (SYNC-01)
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Cada linha `start`/`pause` da tabela de casos vira um teste; `deadline_at` = início + (estimativa − gasto)
+- [x] Mesmo `action_id` duas vezes → mesma resposta e uma sessão só; `occurred_at` 6 s no futuro, anterior à última mudança ou com 25h → 422 `invalid_time`
+- [x] Duas chamadas `start` simultâneas deixam uma sessão aberta (SYNC-01)
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

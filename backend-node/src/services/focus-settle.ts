@@ -23,23 +23,29 @@ export async function settle(tx: Database, userId: string, now: Date): Promise<v
 }
 
 /**
- * Whole seconds of focus spent on each task, over every task session up to `now`. An open session
+ * Milliseconds of focus spent on each task, over every task session up to `now`. An open session
  * counts until `now`, and never past its deadline, so a session nobody settled yet is still exact.
  * Tasks without sessions are absent from the map.
  */
-export async function spentSeconds(tx: Database, taskIds: string[], now: Date): Promise<Map<string, number>> {
+export async function spentMilliseconds(tx: Database, taskIds: string[], now: Date): Promise<Map<string, number>> {
   if (taskIds.length === 0) return new Map()
   const instant = sql`${now.toISOString()}::timestamptz`
   const end = sql`coalesce(${focusSessions.endedAt}, least(${instant}, coalesce(${focusSessions.deadlineAt}, ${instant})))`
   const found = await tx
     .select({
       taskId: focusSessions.taskId,
-      seconds: sql<number>`floor(extract(epoch FROM sum(${end} - ${focusSessions.startedAt})))::int`,
+      ms: sql<number>`round(extract(epoch FROM sum(${end} - ${focusSessions.startedAt})) * 1000)::float8`,
     })
     .from(focusSessions)
     .where(and(eq(focusSessions.kind, 'task'), inArray(focusSessions.taskId, taskIds)))
     .groupBy(focusSessions.taskId)
-  return new Map(found.map((row) => [row.taskId as string, row.seconds]))
+  return new Map(found.map((row) => [row.taskId as string, Number(row.ms)]))
+}
+
+/** `spentMilliseconds` in whole seconds, as the board and the focus screen show it. */
+export async function spentSeconds(tx: Database, taskIds: string[], now: Date): Promise<Map<string, number>> {
+  const spent = await spentMilliseconds(tx, taskIds, now)
+  return new Map([...spent].map(([taskId, ms]) => [taskId, Math.floor(ms / 1000)]))
 }
 
 /**

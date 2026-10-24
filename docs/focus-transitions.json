@@ -1,0 +1,572 @@
+{
+  "description": "Focus transitions as the server applies them: a state (tasks and sessions of one user in one list), one action, and the result. The backend tests (backend-node/test/services/focus-transitions.test.ts) run every case against the server; the frontend optimistic transition (frontend/src/lib/focus/optimistic.ts) reads the same cases. Plain data: no code is needed to read it.",
+  "t0": "2026-10-24T13:00:00Z",
+  "timezone": "America/Sao_Paulo",
+  "conventions": {
+    "times": "Every time is in minutes after t0 (fractions allowed). t0 is 10:00 in the workspace timezone, so every case happens on one local day.",
+    "tasks": "given.tasks lists the tasks of the list in board order; key names a task in the case and in the expected results. column defaults to today, estimate_minutes to null, completed_at to null (a done task gives it).",
+    "sessions": "Sessions of the user, oldest first. task is a task key, or null for a break. Defaults: kind task (break when task is null), device A, ended_at, end_reason, deadline_at and planned_seconds null, last_seen_at equal to started_at.",
+    "given.state": "What GET /api/focus answers at action.at before the action. That read settles the due sessions (AD-001), which given.sessions does not show and expect.sessions does.",
+    "action": "type is the route after /api/focus/ (start, pause, ...). at is occurred_at; received_at (default at) is when the server receives it, the now of the response. device defaults to A. The other fields are the payload: task (a key), takeover, minutes, decision.",
+    "expect": "status is the HTTP status; code the error code of a 409 or 422. sessions is every session after the action, oldest first. tasks, when present, is every task after the action in board order (columns backlog, this_week, today, done; position inside each); when absent the tasks did not change. state is the 200 response at received_at.",
+    "state": "session: the open session (task key, kind, device, started_at, deadline_at, planned_seconds) or null. task: the task in focus or the first pending task of Today (key, spent_seconds, awaiting_extend) or null. today: pending tasks, tasks completed today and the estimate sum of the pending ones. stale: the open session when it has had no signal for more than 120 s (last_seen_at, seconds) or null."
+  },
+  "cases": [
+    {
+      "name": "start on the first task of Today opens a session whose deadline is the whole estimate",
+      "requirements": ["FOCUS-02"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 },
+          { "key": "b", "estimate_minutes": 30 }
+        ],
+        "sessions": [],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 0, "task": "a" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start after a pause resumes from the time already spent: deadline = start + (estimate - spent)",
+      "requirements": ["FOCUS-05"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 10, "end_reason": "pause", "deadline_at": 60 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 20, "task": "a" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 10, "end_reason": "pause", "deadline_at": 60 },
+          { "task": "a", "started_at": 20, "deadline_at": 70 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 20, "deadline_at": 70, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start on a task without estimate opens a session without deadline",
+      "requirements": ["FOCUS-14"],
+      "given": {
+        "tasks": [
+          { "key": "a" }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 10, "end_reason": "pause" }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 20, "task": "a" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 10, "end_reason": "pause" },
+          { "task": "a", "started_at": 20 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 20, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start on a task whose estimate is used up and awaits extend opens no session",
+      "requirements": ["FOCUS-10", "Edge: spent equals the estimate when the focus opens"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 30 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 30, "end_reason": "estimate", "deadline_at": 30 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": true },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 40, "task": "a" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 30, "end_reason": "estimate", "deadline_at": 30 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": true },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start after an extended session was paused counts up without deadline",
+      "requirements": ["FOCUS-13"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 30 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 30, "end_reason": "estimate", "deadline_at": 30 },
+          { "task": "a", "started_at": 31, "ended_at": 41, "end_reason": "pause" }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 2400, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 50, "task": "a" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 30, "end_reason": "estimate", "deadline_at": 30 },
+          { "task": "a", "started_at": 31, "ended_at": 41, "end_reason": "pause" },
+          { "task": "a", "started_at": 50 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 50, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 2400, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start with a session open on another device answers focus_elsewhere and opens nothing",
+      "requirements": ["SYNC-02"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "deadline_at": 60 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 1, "task": "a" },
+      "expect": {
+        "status": 409,
+        "code": "focus_elsewhere",
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "deadline_at": 60 }
+        ]
+      }
+    },
+    {
+      "name": "takeover on the same task keeps the session without cutting it and moves it to this device",
+      "requirements": ["SYNC-03"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "deadline_at": 60 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 1, "task": "a", "takeover": true },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "last_seen_at": 1 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 60, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "takeover on another task ends the old session and opens the new one at the same instant",
+      "requirements": ["SYNC-04"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 },
+          { "key": "b", "estimate_minutes": 30 }
+        ],
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "last_seen_at": 5 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 5, "task": "b", "takeover": true },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "ended_at": 5, "end_reason": "switch", "deadline_at": 60, "last_seen_at": 5 },
+          { "task": "b", "started_at": 5, "deadline_at": 35 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "b", "device": "A", "started_at": 5, "deadline_at": 35, "planned_seconds": null },
+          "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start on the task already counting on this device keeps its session",
+      "requirements": ["SYNC-01"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 5 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 5, "task": "a" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 5 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start on another task from the same device switches the session at the same instant",
+      "requirements": ["SYNC-01", "FOCUS-02"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 },
+          { "key": "b", "estimate_minutes": 30 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 5 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 300, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 5, "task": "b" },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 5, "end_reason": "switch", "deadline_at": 60, "last_seen_at": 5 },
+          { "task": "b", "started_at": 5, "deadline_at": 35 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "b", "device": "A", "started_at": 5, "deadline_at": 35, "planned_seconds": null },
+          "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 90 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "start during a break on this device answers invalid_transition",
+      "requirements": ["FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": null, "started_at": 0, "planned_seconds": 300, "deadline_at": 5 }
+        ],
+        "state": {
+          "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 5, "planned_seconds": 300 },
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 2, "task": "a" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": null, "started_at": 0, "planned_seconds": 300, "deadline_at": 5 }
+        ]
+      }
+    },
+    {
+      "name": "start on a task outside Today answers invalid_transition",
+      "requirements": ["FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 },
+          { "key": "b", "estimate_minutes": 30, "column": "this_week" }
+        ],
+        "sessions": [],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 0, "task": "b" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": []
+      }
+    },
+    {
+      "name": "start on a task already done answers invalid_transition",
+      "requirements": ["FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "b", "estimate_minutes": 30 },
+          { "key": "a", "estimate_minutes": 60, "column": "done", "completed_at": -60 }
+        ],
+        "sessions": [],
+        "state": {
+          "session": null,
+          "task": { "key": "b", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 1, "estimate_minutes": 30 },
+          "stale": null
+        }
+      },
+      "action": { "type": "start", "at": 0, "task": "a" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": []
+      }
+    },
+    {
+      "name": "pause ends the task session at the click and keeps the time spent",
+      "requirements": ["FOCUS-04"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 60, "last_seen_at": 12 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 720, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "pause", "at": 12 },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 12, "end_reason": "pause", "deadline_at": 60, "last_seen_at": 12 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 720, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "pause the task counting on another device ends it too",
+      "requirements": ["FOCUS-04"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": 60, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "pause", "at": 10 },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "ended_at": 10, "end_reason": "pause", "deadline_at": 60, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 600, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "pause sent offline and received after the deadline applies at the time of the click",
+      "requirements": ["SYNC-05", "FOCUS-04"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 30 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 30, "last_seen_at": 20 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": 30, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "stale": null
+        }
+      },
+      "action": { "type": "pause", "at": 20, "received_at": 40 },
+      "expect": {
+        "status": 200,
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 20, "end_reason": "pause", "deadline_at": 30, "last_seen_at": 20 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 1200, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "stale": null
+        }
+      }
+    },
+    {
+      "name": "pause after the deadline answers invalid_transition: the estimate already ended the session",
+      "requirements": ["FOCUS-10", "FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 30 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "deadline_at": 30 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 1800, "awaiting_extend": true },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 30 },
+          "stale": null
+        }
+      },
+      "action": { "type": "pause", "at": 35 },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 30, "end_reason": "estimate", "deadline_at": 30 }
+        ]
+      }
+    },
+    {
+      "name": "pause without an open session answers invalid_transition",
+      "requirements": ["FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 12, "end_reason": "pause", "deadline_at": 60 }
+        ],
+        "state": {
+          "session": null,
+          "task": { "key": "a", "spent_seconds": 720, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "pause", "at": 20 },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "ended_at": 12, "end_reason": "pause", "deadline_at": 60 }
+        ]
+      }
+    },
+    {
+      "name": "pause during a break answers invalid_transition",
+      "requirements": ["FOCUS-18"],
+      "given": {
+        "tasks": [
+          { "key": "a", "estimate_minutes": 60 }
+        ],
+        "sessions": [
+          { "task": null, "started_at": 0, "planned_seconds": 600, "deadline_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "break", "task": null, "device": "A", "started_at": 0, "deadline_at": 10, "planned_seconds": 600 },
+          "task": { "key": "a", "spent_seconds": 0, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 60 },
+          "stale": null
+        }
+      },
+      "action": { "type": "pause", "at": 2 },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": null, "started_at": 0, "planned_seconds": 600, "deadline_at": 10 }
+        ]
+      }
+    }
+  ]
+}

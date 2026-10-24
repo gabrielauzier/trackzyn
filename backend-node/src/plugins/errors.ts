@@ -67,7 +67,7 @@ export function registerErrorHandling(app: FastifyInstance): void {
 
   app.setErrorHandler((error: FastifyError | HttpError, request: FastifyRequest, reply: FastifyReply) => {
     if (error instanceof HttpError) {
-      return reply.code(error.statusCode).headers(error.headers).send({ detail: error.detail })
+      return reply.code(error.statusCode).headers(error.headers).send({ ...error.extra, detail: error.detail })
     }
 
     if (hasZodFastifySchemaValidationErrors(error)) {
