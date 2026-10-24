@@ -662,9 +662,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: lista arquivada aparece aqui e não na home; `Desarquivar` chama `PATCH is_archived=false`; vazio mostra estado vazio
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: lista arquivada aparece aqui e não na home; `Desarquivar` chama `PATCH is_archived=false`; vazio mostra estado vazio
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

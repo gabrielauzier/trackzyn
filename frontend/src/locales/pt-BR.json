@@ -439,6 +439,8 @@
     "renameTitle": "Renomear lista",
     "colorOption": "Cor {{number}}",
     "nameRequired": "Informe um nome",
-    "nameTooLong": "Use no máximo 100 caracteres"
+    "nameTooLong": "Use no máximo 100 caracteres",
+    "archivedEmptyTitle": "Nenhuma lista arquivada",
+    "archivedEmptyHint": "As listas arquivadas aparecem aqui, com as tarefas e o tempo registrado."
   }
 }
