@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
 import { lists, tasks } from '@/lib/api'
-import { renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders } from '@/test/utils'
 import type { Board, ListCard, Task, TaskCardView } from '@/types'
 
 const state = vi.hoisted(() => ({ canWrite: true }))
@@ -145,6 +145,39 @@ describe('ListBoardPage', () => {
       'Done',
     ])
     expect(lists.board).toHaveBeenCalledWith(WEEK)
+  })
+
+  it('shows an empty list as all clear in Portuguese', async () => {
+    vi.mocked(lists.board).mockResolvedValue({
+      list: { id: WEEK, name: 'Week', color: 3 },
+      timezone: 'America/Sao_Paulo',
+      pending: { count: 0, estimate_minutes: 0 },
+      columns: {
+        backlog: { tasks: [], estimate_minutes: 0 },
+        this_week: { tasks: [], estimate_minutes: 0, done: 0, total: 0 },
+        today: { tasks: [], estimate_minutes: 0, done: 0, total: 0 },
+        done: { today_count: 0, days: [] },
+      },
+    })
+    await i18n.changeLanguage('pt-BR')
+    try {
+      renderBoard()
+
+      expect(await screen.findByText('Esta lista tem 0 tarefas pendentes, Est.: 0min')).toBeInTheDocument()
+      const column = (name: string) => document.querySelector<HTMLElement>(`[data-column="${name}"]`)!
+      for (const [name, heading] of [
+        ['backlog', 'Backlog'],
+        ['this_week', 'Esta semana'],
+        ['today', 'Hoje'],
+      ]) {
+        expect(within(column(name)).getByRole('heading', { name: heading })).toBeInTheDocument()
+        expect(within(column(name)).getByText('Tudo limpo')).toBeInTheDocument()
+      }
+      expect(within(column('done')).getByRole('heading', { name: 'Concluídas' })).toBeInTheDocument()
+      expect(within(column('done')).getByText('0 tarefas hoje')).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
   })
 
   it('numbers the Today cards from 1 in column order', async () => {
