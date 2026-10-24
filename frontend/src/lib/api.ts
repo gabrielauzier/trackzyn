@@ -33,19 +33,28 @@ const api = axios.create({
 // the user picks another one.
 export const WORKSPACE_STORAGE_KEY = 'workspace_id'
 
+/** The auth token and active workspace headers every request carries, also outside axios. */
+export function authHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {}
+  const token = localStorage.getItem('token')
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  const workspaceId = localStorage.getItem(WORKSPACE_STORAGE_KEY)
+  if (workspaceId) {
+    headers['X-Workspace-Id'] = workspaceId
+  }
+  return headers
+}
+
 // Add auth token + active workspace header to requests
 api.interceptors.request.use((config) => {
   // Desktop export in progress: nothing may change the data under it.
   if (writesBlocked() && !['get', 'head', 'options'].includes((config.method ?? 'get').toLowerCase())) {
     return Promise.reject(new Error('Writes are blocked while the data is exported'))
   }
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  const workspaceId = localStorage.getItem(WORKSPACE_STORAGE_KEY)
-  if (workspaceId) {
-    config.headers['X-Workspace-Id'] = workspaceId
+  for (const [name, value] of Object.entries(authHeaders())) {
+    config.headers[name] = value
   }
   return config
 })
