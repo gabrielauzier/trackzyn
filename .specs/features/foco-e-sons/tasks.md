@@ -632,9 +632,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes com `AudioContext` falso: cada som agenda uma sequência de frequências diferente das outras 3
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes com `AudioContext` falso: cada som agenda uma sequência de frequências diferente das outras 3
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

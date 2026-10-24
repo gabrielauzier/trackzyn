@@ -190,9 +190,9 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | SOUND-02 | P1: Sons | Tasks | In Tasks |
 | SOUND-03 | P1: Sons | Tasks | In Tasks |
 | SOUND-04 | P1: Sons | Tasks | In Tasks |
-| SOUND-05 | P1: Sons | Tasks | In Tasks |
+| SOUND-05 | P1: Sons | Tasks | Implementing |
 | SOUND-06 | P1: Sons | Tasks | In Tasks |
-| SOUND-07 | P1: Sons | Tasks | In Tasks |
+| SOUND-07 | P1: Sons | Tasks | Implementing |
 | SYNC-01 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-02 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-03 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
