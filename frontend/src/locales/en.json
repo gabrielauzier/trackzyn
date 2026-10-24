@@ -466,6 +466,22 @@
     "notes": "Notes",
     "notesTooLong": "Use at most {{max}} characters",
     "deleteTask": "Delete task",
-    "deleteTaskDescription": "{{title}} will be deleted with its subtasks and tracked time."
+    "deleteTaskDescription": "{{title}} will be deleted with its subtasks and tracked time.",
+    "columns": {
+      "backlog": "Backlog",
+      "this_week": "This week",
+      "today": "Today",
+      "done": "Done"
+    },
+    "pendingEstimate": "Pending estimate",
+    "progress": "{{done}}/{{total}} Done",
+    "allClear": "All clear",
+    "focusNow": "Focus now",
+    "doneToday_one": "{{count}} task today",
+    "doneToday_other": "{{count}} tasks today",
+    "taskCount_one": "{{count}} task",
+    "taskCount_other": "{{count}} tasks",
+    "doneToday_zero": "0 tasks today",
+    "taskCount_zero": "0 tasks"
   }
 }

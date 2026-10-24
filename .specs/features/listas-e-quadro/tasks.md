@@ -804,9 +804,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: coluna vazia mostra `Tudo limpo`; `Focar agora` desabilitado sem pendentes; Concluídas mostra 2 grupos de dia e o contador do dia
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: coluna vazia mostra `Tudo limpo`; `Focar agora` desabilitado sem pendentes; Concluídas mostra 2 grupos de dia e o contador do dia
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

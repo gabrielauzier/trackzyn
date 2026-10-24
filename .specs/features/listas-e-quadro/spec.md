@@ -160,8 +160,8 @@ O trackzyn ainda é só a base do launchkit: não tem onde registrar uma tarefa,
 | BOARD-09 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-10 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-11 | P1: Quadro da lista | Tasks | In Tasks |
-| BOARD-12 | P1: Quadro da lista | Tasks | In Tasks |
-| BOARD-13 | P1: Quadro da lista | Tasks | In Tasks |
+| BOARD-12 | P1: Quadro da lista | Tasks | Implementing |
+| BOARD-13 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-14 | P1: Quadro da lista | Tasks | In Tasks |
 | BOARD-15 | P1: Quadro da lista | Tasks | Implementing |
 | BOARD-16 | P1: Quadro da lista | Tasks | Implementing |
