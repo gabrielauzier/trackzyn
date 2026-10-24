@@ -490,9 +490,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Cada linha da tabela de casos produz o mesmo resultado que o servidor
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Cada linha da tabela de casos produz o mesmo resultado que o servidor
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
