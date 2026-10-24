@@ -27,6 +27,7 @@ describe('BoardColumn', () => {
 
     expect(screen.getByRole('heading', { name: 'Backlog' })).toBeInTheDocument()
     expect(screen.getByText('All clear')).toBeInTheDocument()
+    expect(screen.getByText('All clear').querySelector('svg')).toHaveClass('lucide-circle-check')
   })
 
   it('lists the tasks instead of All clear', () => {

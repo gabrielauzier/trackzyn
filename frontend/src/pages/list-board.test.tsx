@@ -135,7 +135,10 @@ describe('ListBoardPage', () => {
   it('shows Back, the list selector, the summary and the four columns in order', async () => {
     renderBoard()
 
-    expect(await screen.findByRole('button', { name: 'Week' })).toBeInTheDocument()
+    const selector = await screen.findByRole('button', { name: 'Week' })
+    const badge = within(selector).getByText('W')
+    expect(badge).toHaveAttribute('data-slot', 'list-badge')
+    expect(badge.style.backgroundColor).toBe('var(--chart-3)')
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/')
     expect(screen.getByText('This list has 1 pending task, Est.: 1hr')).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
