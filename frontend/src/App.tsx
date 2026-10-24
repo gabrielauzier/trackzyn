@@ -18,6 +18,7 @@ const RegisterPage = lazy(() => import('@/pages/register'))
 const OIDCCallbackPage = lazy(() => import('@/pages/oidc-callback'))
 const HomePage = lazy(() => import('@/pages/home'))
 const ArchivedListsPage = lazy(() => import('@/pages/archived-lists'))
+const ListBoardPage = lazy(() => import('@/pages/list-board'))
 const FilesPage = lazy(() => import('@/pages/files'))
 const ComponentsShowcasePage = lazy(() => import('@/pages/showcase'))
 const WorkspaceSettingsPage = lazy(() => import('@/pages/workspace-settings'))
@@ -66,6 +67,7 @@ function App() {
                       >
                         <Route path="/" element={<HomePage />} />
                         <Route path="/lists/archived" element={<ArchivedListsPage />} />
+                        <Route path="/lists/:listId" element={<ListBoardPage />} />
                         <Route path="/files" element={<FilesPage />} />
                         <Route path="/components" element={<ComponentsShowcasePage />} />
                         <Route path="/workspace/settings" element={<WorkspaceSettingsPage />} />

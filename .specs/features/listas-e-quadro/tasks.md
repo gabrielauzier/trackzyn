@@ -832,9 +832,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: resumo com contagem e estimativa; arrastar para Concluídas chama `move` com `done`; trocar no seletor navega para a outra lista; com `matchMedia` < 768px aparecem as abas; `viewer` não arrasta
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: resumo com contagem e estimativa; arrastar para Concluídas chama `move` com `done`; trocar no seletor navega para a outra lista; com `matchMedia` < 768px aparecem as abas; `viewer` não arrasta
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: build
