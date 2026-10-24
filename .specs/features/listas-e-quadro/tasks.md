@@ -376,9 +376,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Teste novo: 2 listas, 3 tarefas, 2 subtarefas exportadas e importadas num banco limpo com os mesmos ids
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Teste novo: 2 listas, 3 tarefas, 2 subtarefas exportadas e importadas num banco limpo com os mesmos ids
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

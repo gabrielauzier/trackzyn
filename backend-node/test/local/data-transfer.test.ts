@@ -47,6 +47,38 @@ describe('data transfer', () => {
     expect(prefs.rows[0]).toEqual({ email: "o'brien@example.com", preferences: { n: "O'Brien \\ q" } })
   })
 
+  it('restores lists, tasks and subtasks with the same counts and ids', async () => {
+    const source = await fresh()
+    await seed(source)
+    const ws = '22222222-2222-2222-2222-222222222222'
+    await source.exec(`
+      INSERT INTO lists (id, workspace_id, name, color, position, created_by_user_id, created_at) VALUES ('a0000000-0000-0000-0000-000000000001', '${ws}', 'Work', 1, 0, '11111111-1111-1111-1111-111111111111', now());
+      INSERT INTO lists (id, workspace_id, name, color, position, is_archived, created_at) VALUES ('a0000000-0000-0000-0000-000000000002', '${ws}', 'Home', 8, 1, true, now());
+      INSERT INTO tasks (id, list_id, title, notes, estimate_minutes, "column", position, created_at) VALUES ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'Write', 'it''s; notes', 87, 'today', 0, now());
+      INSERT INTO tasks (id, list_id, title, "column", position, created_at) VALUES ('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', 'Read', 'backlog', 0, now());
+      INSERT INTO tasks (id, list_id, title, "column", position, completed_at, created_at) VALUES ('b0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', 'Shop', 'done', 0, '2026-10-23T12:00:00Z', now());
+      INSERT INTO subtasks (id, task_id, title, done, position) VALUES ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'Outline', true, 0);
+      INSERT INTO subtasks (id, task_id, title, position) VALUES ('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'Draft', 1);
+    `)
+    const snapshot = async (client: PGlite) => ({
+      lists: (await client.query('SELECT * FROM lists ORDER BY id')).rows,
+      tasks: (await client.query('SELECT * FROM tasks ORDER BY id')).rows,
+      subtasks: (await client.query('SELECT * FROM subtasks ORDER BY id')).rows,
+    })
+    const before = await snapshot(source)
+
+    const target = await fresh()
+    await restoreData(target, await dumpData(source))
+    const after = await snapshot(target)
+    expect([after.lists.length, after.tasks.length, after.subtasks.length]).toEqual([2, 3, 2])
+    expect(after.tasks.map((row) => (row as { id: string }).id)).toEqual([
+      'b0000000-0000-0000-0000-000000000001',
+      'b0000000-0000-0000-0000-000000000002',
+      'b0000000-0000-0000-0000-000000000003',
+    ])
+    expect(after).toEqual(before)
+  })
+
   it('refuses a database with users and leaves it alone', async () => {
     const source = await fresh()
     await seed(source)
