@@ -348,9 +348,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Caminho feliz, 404 de outro workspace, `viewer` lê com 200
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Caminho feliz, 404 de outro workspace, `viewer` lê com 200
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
