@@ -521,6 +521,26 @@
       "description": "The task kept counting for {{duration}} since the last signal.",
       "keep": "Keep",
       "cut": "Cut at the last signal"
+    },
+    "conflicts": {
+      "title": "Actions refused by the server",
+      "action": "{{action}} at {{time}}",
+      "retry": "Try again",
+      "discard": "Discard",
+      "expired_zero": "No action made offline was discarded.",
+      "expired_one": "An action made offline more than 24h ago was discarded.",
+      "expired_other": "{{count}} actions made offline more than 24h ago were discarded.",
+      "types": {
+        "start": "Start",
+        "pause": "Pause",
+        "skip": "Skip",
+        "complete": "Complete",
+        "extend": "Extend",
+        "break": "Break",
+        "break_end": "End break",
+        "heartbeat": "Signal",
+        "recover": "Recover session"
+      }
     }
   }
 }

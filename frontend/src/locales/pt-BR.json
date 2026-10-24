@@ -521,6 +521,26 @@
       "description": "A tarefa ficou contando {{duration}} desde o último sinal.",
       "keep": "Manter",
       "cut": "Cortar no último sinal"
+    },
+    "conflicts": {
+      "title": "Ações recusadas pelo servidor",
+      "action": "{{action}} às {{time}}",
+      "retry": "Tentar de novo",
+      "discard": "Descartar",
+      "expired_zero": "Nenhuma ação feita sem conexão foi descartada.",
+      "expired_one": "Uma ação feita sem conexão há mais de 24h foi descartada.",
+      "expired_other": "{{count}} ações feitas sem conexão há mais de 24h foram descartadas.",
+      "types": {
+        "start": "Começar",
+        "pause": "Pausar",
+        "skip": "Pular",
+        "complete": "Concluir",
+        "extend": "Estender",
+        "break": "Intervalo",
+        "break_end": "Encerrar intervalo",
+        "heartbeat": "Sinal",
+        "recover": "Recuperar sessão"
+      }
     }
   }
 }

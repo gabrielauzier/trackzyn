@@ -914,9 +914,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: um conflito mostra a ação e os dois botões; ação de 24h mostra o aviso
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: um conflito mostra a ação e os dois botões; ação de 24h mostra o aviso
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
