@@ -463,9 +463,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Teste: alterna com clique e teclado, expõe `role="checkbox"` e `aria-checked`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Teste: alterna com clique e teclado, expõe `role="checkbox"` e `aria-checked`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
