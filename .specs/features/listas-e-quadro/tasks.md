@@ -748,9 +748,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Testes: marcar chama `PATCH done`; título vazio bloqueia; contador `x/y` atualiza
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: marcar chama `PATCH done`; título vazio bloqueia; contador `x/y` atualiza
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

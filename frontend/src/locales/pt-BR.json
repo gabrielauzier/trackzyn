@@ -457,6 +457,10 @@
     "estimateMinutes": "Estimativa (min)",
     "titleRequired": "Informe um título",
     "titleTooLong": "Use no máximo 255 caracteres",
-    "estimateRange": "Use de 1 a 1440 minutos"
+    "estimateRange": "Use de 1 a 1440 minutos",
+    "newSubtask": "Nova subtarefa",
+    "subtaskTitle": "Título da subtarefa",
+    "renameSubtask": "Renomear {{title}}",
+    "deleteSubtask": "Excluir {{title}}"
   }
 }

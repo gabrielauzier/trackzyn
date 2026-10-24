@@ -457,6 +457,10 @@
     "estimateMinutes": "Estimate (min)",
     "titleRequired": "Enter a title",
     "titleTooLong": "Use at most 255 characters",
-    "estimateRange": "Use 1 to 1440 minutes"
+    "estimateRange": "Use 1 to 1440 minutes",
+    "newSubtask": "New subtask",
+    "subtaskTitle": "Subtask title",
+    "renameSubtask": "Rename {{title}}",
+    "deleteSubtask": "Delete {{title}}"
   }
 }
