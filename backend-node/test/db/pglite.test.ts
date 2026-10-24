@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { connectPglite, type Database } from '../../src/db/client.ts'
 import { applyMigrations } from '../../src/db/migrate.ts'
 
-const TABLES = ['app_settings', 'files', 'lists', 'subtasks', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
+const TABLES = ['app_settings', 'files', 'focus_actions', 'focus_sessions', 'lists', 'subtasks', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
   return ((await db.execute(query)) as unknown as { rows: T[] }).rows

@@ -176,6 +176,72 @@ export const subtasks = pgTable(
   (t) => [index('ix_subtasks_task_id').on(t.taskId, t.position)],
 )
 
+export const FOCUS_SESSION_KINDS = ['task', 'break'] as const
+export type FocusSessionKind = (typeof FOCUS_SESSION_KINDS)[number]
+
+export const FOCUS_END_REASONS = [
+  'pause',
+  'skip',
+  'complete',
+  'estimate',
+  'break',
+  'break_end',
+  'break_stop',
+  'switch',
+  'task_left',
+  'leave',
+  'crash_cut',
+] as const
+export type FocusEndReason = (typeof FOCUS_END_REASONS)[number]
+
+/** One stretch of focus on a task, or one break. A user has at most one open session (SYNC-01). */
+export const focusSessions = pgTable(
+  'focus_sessions',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    listId: uuid('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    /** Null for a break. */
+    taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'cascade' }),
+    kind: varchar('kind', { length: 8 }).$type<FocusSessionKind>().notNull(),
+    deviceId: varchar('device_id', { length: 64 }).notNull(),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    /** When the estimate or the break runs out; settlement closes the session there (AD-001). */
+    deadlineAt: timestamp('deadline_at', { withTimezone: true }),
+    /** Break length; only for a break. */
+    plannedSeconds: integer('planned_seconds'),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
+    endReason: varchar('end_reason', { length: 16 }).$type<FocusEndReason>(),
+  },
+  (t) => [
+    uniqueIndex('ix_focus_sessions_open_user').on(t.userId).where(sql`${t.endedAt} IS NULL`),
+    index('ix_focus_sessions_user_started').on(t.userId, t.startedAt),
+    index('ix_focus_sessions_task_id').on(t.taskId),
+  ],
+)
+
+/** Focus actions already applied, so a resent `action_id` gets the stored answer back (AD-002). */
+export const focusActions = pgTable(
+  'focus_actions',
+  {
+    actionId: uuid('action_id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    appliedAt: timestamp('applied_at', { withTimezone: true }).notNull(),
+    response: json('response').notNull(),
+  },
+  (t) => [index('ix_focus_actions_user_applied').on(t.userId, t.appliedAt)],
+)
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Workspace = typeof workspaces.$inferSelect
@@ -185,3 +251,5 @@ export type UserPasskey = typeof userPasskeys.$inferSelect
 export type List = typeof lists.$inferSelect
 export type Task = typeof tasks.$inferSelect
 export type Subtask = typeof subtasks.$inferSelect
+export type FocusSession = typeof focusSessions.$inferSelect
+export type FocusAction = typeof focusActions.$inferSelect

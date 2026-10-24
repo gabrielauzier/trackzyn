@@ -116,10 +116,12 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Inserir duas sessões abertas para o mesmo usuário falha; uma aberta e uma fechada passam (SYNC-01)
-- [ ] Excluir tarefa, lista ou usuário apaga as sessões dele
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Inserir duas sessões abertas para o mesmo usuário falha; uma aberta e uma fechada passam (SYNC-01)
+- [x] Excluir tarefa, lista ou usuário apaga as sessões dele
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

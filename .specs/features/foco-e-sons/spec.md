@@ -193,7 +193,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | SOUND-05 | P1: Sons | Tasks | In Tasks |
 | SOUND-06 | P1: Sons | Tasks | In Tasks |
 | SOUND-07 | P1: Sons | Tasks | In Tasks |
-| SYNC-01 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
+| SYNC-01 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-02 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 | SYNC-03 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
 | SYNC-04 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |

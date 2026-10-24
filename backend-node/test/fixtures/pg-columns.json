@@ -63,6 +63,112 @@
       "maxLength": null
     }
   ],
+  "focus_actions": [
+    {
+      "column": "action_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "applied_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "response",
+      "type": "json",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "focus_sessions": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "list_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "task_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "kind",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 8
+    },
+    {
+      "column": "device_id",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 64
+    },
+    {
+      "column": "started_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "ended_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "deadline_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "planned_seconds",
+      "type": "integer",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "last_seen_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "end_reason",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 16
+    }
+  ],
   "lists": [
     {
       "column": "id",
