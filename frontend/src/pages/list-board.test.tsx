@@ -23,6 +23,8 @@ const WEEK = '11111111-1111-4111-8111-111111111111'
 const WORK = '22222222-2222-4222-8222-222222222222'
 const TODAY_TASK = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const DONE_TASK = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+const T2 = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+const T3 = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 
 function card(id: string, title: string, estimate: number | null = 60): TaskCardView {
   return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 } }
@@ -100,17 +102,51 @@ function mockMatchMedia(matches: boolean) {
  * jsdom has no layout: lay the four columns out in a row so the keyboard
  * sensor can find the column to the left or right.
  */
-function layOutColumns() {
+function layOutColumns(todayStack: string[] = [TODAY_TASK]) {
   const columns = ['backlog', 'this_week', 'today', 'done']
-  const taskColumn: Record<string, string> = { [TODAY_TASK]: 'today', [DONE_TASK]: 'done' }
+  const taskColumn: Record<string, string> = { [DONE_TASK]: 'done' }
+  const taskRow: Record<string, number> = {}
+  todayStack.forEach((id, row) => {
+    taskColumn[id] = 'today'
+    taskRow[id] = row
+  })
   const original = HTMLElement.prototype.getBoundingClientRect
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     const column = this.dataset.column
     if (column) return DOMRect.fromRect({ x: columns.indexOf(column) * 300, y: 0, width: 280, height: 600 })
-    const owner = taskColumn[this.dataset.taskId ?? '']
-    if (owner) return DOMRect.fromRect({ x: columns.indexOf(owner) * 300 + 10, y: 100, width: 260, height: 80 })
+    const id = this.dataset.taskId ?? ''
+    const owner = taskColumn[id]
+    if (owner) {
+      const y = 100 + (taskRow[id] ?? 0) * 100
+      return DOMRect.fromRect({ x: columns.indexOf(owner) * 300 + 10, y, width: 260, height: 80 })
+    }
     return original.call(this)
   })
+}
+
+/** Today holds T1, T2 and T3; the server keeps whatever order the last move asked for. */
+function mockTodayOfThree() {
+  let order = [TODAY_TASK, T2, T3]
+  const titles: Record<string, string> = { [TODAY_TASK]: 'DEV-1725', [T2]: 'DEV-1726', [T3]: 'DEV-1727' }
+  vi.mocked(tasks.move).mockImplementation(async (id, { before_task_id }) => {
+    order = order.filter((other) => other !== id)
+    order.splice(before_task_id ? order.indexOf(before_task_id) : order.length, 0, id)
+    return { ...fullTask, id, title: titles[id] }
+  })
+  vi.mocked(lists.board).mockImplementation(async () => {
+    const board = boardOf(WEEK, 'Week')
+    board.columns.today.tasks = order.map((id) => card(id, titles[id]))
+    board.columns.today.total = 3
+    return board
+  })
+  layOutColumns([TODAY_TASK, T2, T3])
+}
+
+function todayTitles() {
+  const today = document.querySelector<HTMLElement>('[data-column="today"]')!
+  return Array.from(today.querySelectorAll<HTMLElement>('[data-task-id]')).map(
+    (task) => within(task).getByRole('button', { name: /^DEV-/ }).textContent,
+  )
 }
 
 beforeEach(() => {
@@ -252,6 +288,36 @@ describe('ListBoardPage', () => {
     expect(within(today).getByRole('button', { name: 'DEV-1724' })).not.toHaveClass('line-through')
     const done = document.querySelector<HTMLElement>('[data-column="done"]')!
     expect(within(done).queryByText('DEV-1724')).not.toBeInTheDocument()
+  })
+
+  it('reorders a task one position down within Today', async () => {
+    mockTodayOfThree()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1727')
+    document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'today', before_task_id: T3 }))
+    expect(tasks.move).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(todayTitles()).toEqual(['DEV-1726', 'DEV-1725', 'DEV-1727']))
+  })
+
+  it('reorders a task one position up within Today', async () => {
+    mockTodayOfThree()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1727')
+    document.querySelector<HTMLElement>(`[data-task-id="${T3}"]`)!.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowUp}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(T3, { column: 'today', before_task_id: T2 }))
+    expect(tasks.move).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(todayTitles()).toEqual(['DEV-1725', 'DEV-1727', 'DEV-1726']))
   })
 
   it('completes a task from its check', async () => {
