@@ -491,9 +491,11 @@ T23 → T24 → T26
 
 **Done when**:
 
-- [ ] Teste: `aria-valuenow` e largura do indicador para 0, 50 e 100
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Teste: `aria-valuenow` e largura do indicador para 0, 50 e 100
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
