@@ -6,6 +6,7 @@ import FocusPage from '@/pages/focus'
 import HomePage from '@/pages/home'
 import { focus, lists } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
+import { play } from '@/lib/sounds/synth'
 import type { QueuedAction } from '@/lib/focus/queue'
 import { renderWithProviders } from '@/test/utils'
 import type { FocusState, ListCard } from '@/types'
@@ -173,6 +174,19 @@ describe('FocusPage', () => {
     expect(sent()).toEqual([expect.objectContaining({ type: 'complete', task_id: taskA.id })])
     expect(screen.queryByRole('timer')).not.toBeInTheDocument()
     expect(screen.getByText('1/1 Done')).toBeInTheDocument()
+  })
+
+  it('plays the completion sound once for Complete, not again when the state shows the task done (SOUND-01)', async () => {
+    vi.mocked(focus.get).mockResolvedValue(counting(deviceId()))
+    vi.mocked(focus.send).mockResolvedValue(
+      counting(deviceId(), paused({ task: taskB, today: { pending: 1, done: 1, estimate_minutes: 30, tasks: [{ ...taskB, position: 0 }] } })),
+    )
+    const { user } = renderFocus()
+
+    await user.click(await screen.findByRole('button', { name: 'Complete' }))
+
+    expect(await screen.findByText('1/2 Done')).toBeInTheDocument()
+    expect(vi.mocked(play).mock.calls).toEqual([['complete']])
   })
 
   it('goes back to the board when the task in focus leaves Today (FOCUS-15)', async () => {

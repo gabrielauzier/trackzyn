@@ -60,7 +60,12 @@ export default function FocusPage() {
   const { canWrite } = useWorkspace()
   const { state, display, actions, conflicts, expired } = useFocus(listId)
   const [collapsed, setCollapsed] = useState(false)
-  useFocusSounds(state, display)
+  const { playComplete } = useFocusSounds(state, display)
+  // A completion made here plays its sound here, once (SOUND-01).
+  const complete = (taskId: string) => {
+    playComplete()
+    void actions.complete(taskId)
+  }
   useLeaveGuard(state)
 
   const { data: allLists } = useQuery({
@@ -162,14 +167,14 @@ export default function FocusPage() {
           ) : display.mode === 'awaiting_extend' && task ? (
             <div className="space-y-3 rounded-xl border-2 border-primary bg-card px-4 py-3">
               <p className="truncate text-base font-medium">{task.title}</p>
-              {canWrite && <ExtendPrompt onExtend={() => actions.extend(task.id)} onComplete={() => actions.complete(task.id)} />}
+              {canWrite && <ExtendPrompt onExtend={() => actions.extend(task.id)} onComplete={() => complete(task.id)} />}
             </div>
           ) : (
             task && <FocusTaskCard title={task.title} display={display} />
           )}
 
           {canWrite && !clear && (
-            <FocusControls display={display} taskId={task?.id ?? null} pending={today.pending} actions={actions} />
+            <FocusControls display={display} taskId={task?.id ?? null} pending={today.pending} actions={{ ...actions, complete }} />
           )}
 
           {!collapsed && (

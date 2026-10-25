@@ -46,6 +46,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | Sons | 4 sons diferentes gerados por código (Web Audio API), sem arquivos de terceiros: conclusão, progresso, fim da estimativa e fim do intervalo | Decisão do usuário | y |
 | Som de progresso | Toca quando o tempo total gasto na tarefa passa por 10, 20, 30… min, com a sessão aberta | Decisão do usuário (tempo total, não a sessão) | y |
 | Onde tocam os sons | No navegador e no desktop; concluir pelo check do quadro também toca | Decisão do usuário | y |
+| Sons com vários dispositivos | Progresso, fim da estimativa e fim do intervalo tocam só no dispositivo dono da sessão (`device_id`); o som de conclusão toca só no dispositivo que fez a conclusão (foco, widget ou quadro). Um dispositivo que só acompanha pelo polling não toca nada | Decisão do usuário em 2026-10-24 | y |
 | Desligar os sons | Um interruptor por som, salvo em cada dispositivo | Decisão do usuário | y |
 | Papel `viewer` | Não foca nem registra tempo | Decisão do usuário | y |
 | Relógio que vale | O do servidor: as respostas trazem `server_now` e o cliente calcula a diferença | Fato de projeto: é o que permite o cronômetro e a fila offline ficarem certos com o relógio local errado | y |

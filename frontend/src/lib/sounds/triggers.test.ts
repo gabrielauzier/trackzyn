@@ -8,7 +8,7 @@ const NOW = Date.parse('2026-10-24T13:00:00.000Z')
 const iso = (ms: number) => new Date(ms).toISOString()
 
 function frame(display: Display, overrides: Partial<SoundFrame> = {}): SoundFrame {
-  return { display, taskId: 'task-a', spent: 0, done: 0, breakEndsAt: null, at: NOW, ...overrides }
+  return { display, taskId: 'task-a', spent: 0, own: true, breakEndsAt: null, at: NOW, ...overrides }
 }
 
 const countdown = (seconds: number) => ({ mode: 'countdown', seconds }) as const
@@ -100,18 +100,50 @@ describe('soundsFor: end of the break (SOUND-04)', () => {
 })
 
 describe('soundsFor: task completed (SOUND-01)', () => {
-  it('plays complete once when a task of Today is done', () => {
-    const prev = frame(countdown(300), { spent: 300, done: 1 })
-    const next = frame(countdown(1200), { taskId: 'task-b', spent: 0, done: 2 })
+  it('never plays complete from the state: the next task taking over after a completion plays nothing', () => {
+    const prev = frame(countdown(300), { spent: 300 })
+    const next = frame(countdown(1200), { taskId: 'task-b', spent: 0 })
 
-    expect(soundsFor(prev, next)).toEqual(['complete'])
+    expect(soundsFor(prev, next)).toEqual([])
   })
 
-  it('plays complete when the last pending task of Today is done', () => {
+  it('never plays complete from the state when Today is cleared', () => {
     const prev = frame(countdown(300), { spent: 300 })
-    const next = frame({ mode: 'all_clear', seconds: 0 }, { taskId: null, done: 1 })
+    const next = frame({ mode: 'all_clear', seconds: 0 }, { taskId: null })
 
-    expect(soundsFor(prev, next)).toEqual(['complete'])
+    expect(soundsFor(prev, next)).toEqual([])
+  })
+})
+
+describe('soundsFor: only on the device that holds the session', () => {
+  it('plays no progress for a session of another device', () => {
+    const prev = frame(countdown(61), { spent: 599, own: false })
+    const next = frame(countdown(60), { spent: 600, own: false })
+
+    expect(soundsFor(prev, next)).toEqual([])
+  })
+
+  it("plays no estimate when the estimate of another device's session runs out", () => {
+    const prev = frame(countdown(1), { spent: 3599, own: false })
+    const next = frame({ mode: 'awaiting_extend', seconds: 0 }, { spent: 3600, own: false })
+
+    expect(soundsFor(prev, next)).toEqual([])
+  })
+
+  it("plays no break_end when the break that ended was another device's", () => {
+    const end = NOW + 300_000
+    const prev = frame({ mode: 'break', seconds: 1 }, { breakEndsAt: end, at: end - 1000, own: false })
+    const next = frame({ mode: 'paused', seconds: 1800 }, { at: end, own: false })
+
+    expect(soundsFor(prev, next)).toEqual([])
+  })
+
+  it("plays break_end when this device's break ends, though the frame after it has no session", () => {
+    const end = NOW + 300_000
+    const prev = frame({ mode: 'break', seconds: 1 }, { breakEndsAt: end, at: end - 1000, own: true })
+    const next = frame({ mode: 'paused', seconds: 1800 }, { at: end, own: false })
+
+    expect(soundsFor(prev, next)).toEqual(['break_end'])
   })
 })
 
@@ -140,11 +172,11 @@ describe('frameOf', () => {
   it('takes the total time spent from a countdown: an 11 min task with 60 s left has spent 600 s', () => {
     const s = state({ session: session({ deadline_at: iso(NOW + 660_000) }) })
 
-    expect(frameOf(s, countdown(60), NOW + 600_000)).toEqual({
+    expect(frameOf(s, countdown(60), NOW + 600_000, 'd')).toEqual({
       display: countdown(60),
       taskId: 'task-a',
       spent: 600,
-      done: 3,
+      own: true,
       breakEndsAt: null,
       at: NOW + 600_000,
     })
@@ -153,12 +185,19 @@ describe('frameOf', () => {
   it('takes the total time spent from a count up', () => {
     const s = state({ session: session({}), task: { ...taskA, estimate_minutes: null, spent_seconds: 1190 } })
 
-    expect(frameOf(s, countup(1200), NOW + 10_000).spent).toBe(1200)
+    expect(frameOf(s, countup(1200), NOW + 10_000, 'd').spent).toBe(1200)
+  })
+
+  it('marks a session of another device as not owned, and no session as not owned', () => {
+    const s = state({ session: session({}) })
+
+    expect(frameOf(s, countup(10), NOW, 'other').own).toBe(false)
+    expect(frameOf(state({}), { mode: 'paused', seconds: 660 }, NOW, 'd').own).toBe(false)
   })
 
   it('keeps the end of the break in progress', () => {
     const s = state({ session: session({ kind: 'break', task_id: null, deadline_at: iso(NOW + 300_000), planned_seconds: 300 }) })
 
-    expect(frameOf(s, { mode: 'break', seconds: 300 }, NOW).breakEndsAt).toBe(NOW + 300_000)
+    expect(frameOf(s, { mode: 'break', seconds: 300 }, NOW, 'd').breakEndsAt).toBe(NOW + 300_000)
   })
 })
