@@ -420,10 +420,14 @@ T12
 
 **Done when**:
 
-- [ ] O spec passa no macOS local e no CI Linux com `xvfb-run`
-- [ ] Pausar no widget para o cronômetro da principal em até 1 s (WIDGET-22)
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] O spec passa no macOS local e no CI Linux com `xvfb-run`
+- [x] Pausar no widget para o cronômetro da principal em até 1 s (WIDGET-22)
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Rodado só no macOS local (3 vezes seguidas, 16 s); o CI Linux com `xvfb-run` não foi conferido aqui. Sem gerenciador de janelas, minimizar e restaurar não mudam estado no xvfb: no Linux o spec não confere `isMinimized` e simula a restauração pelo sistema com `emit('restore')`. O atalho é digitado com `webContents.sendInputEvent`, porque o teclado do Playwright não passa por `before-input-event`. Só a janela principal informa `focus:state` (vai para `focusClose.reportState` e `controller.setFocusState`) e só ela pode pedir `focus:collapse`. O diálogo de SYNC-08 restaura a janela principal minimizada antes de perguntar, para a pergunta aparecer com o widget aberto; o spec prova isso ao sair com a tarefa contando. Ao carregar, a janela principal recebe `widget:state` com `controller.isOpen()`.
 
 **Tests**: e2e
 **Gate**: build

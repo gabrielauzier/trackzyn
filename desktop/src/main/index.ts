@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { appendFileSync, mkdirSync } from 'node:fs'
-import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, session, shell, utilityProcess } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, screen, session, shell, utilityProcess } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { APP_ORIGIN, APP_SCHEME, createAppHandler } from './app-protocol'
 import { createConfigStore } from './config-store'
@@ -20,6 +20,9 @@ import { createSwitchServer } from './switch-server'
 import { ImportJournalError, recoverImport } from './export-import'
 import { createTransfer } from './transfer'
 import { createUpdater } from './updater'
+import { createWidgetController } from './widget-controller'
+import { bindWidgetShortcut } from './widget-shortcut'
+import { createWidgetWindow } from './widget-window'
 import { createMainWindow } from './window'
 import { IPC } from '../shared/ipc'
 
@@ -241,22 +244,48 @@ function start() {
     })
     focusClose = registerFocusClose(mainWindow, {
       strings: focusCloseStrings(app.getLocale()),
-      showMessageBox: (options) => (mainWindow ? dialog.showMessageBox(mainWindow, options) : dialog.showMessageBox(options)),
+      showMessageBox: (options) => {
+        // With the widget open the main window is minimized: bring it back so the question is seen (SYNC-08).
+        if (mainWindow?.isMinimized()) mainWindow.restore()
+        return mainWindow ? dialog.showMessageBox(mainWindow, options) : dialog.showMessageBox(options)
+      },
     })
-    trustedHandle(ipcMain, IPC.focusState, (_event, state: unknown) => focusClose?.reportState(state))
+
+    // The focus widget (WIDGET-01 to WIDGET-23): the controller owns it; the shortcut works in both windows.
+    const main = mainWindow
+    const widget: ReturnType<typeof createWidgetController> = createWidgetController({
+      mainWindow: main,
+      store,
+      screen,
+      createWindow: (bounds) => {
+        const win = createWidgetWindow(bounds, { appVersion: app.getVersion() })
+        bindWidgetShortcut(win.webContents, widget, process.platform)
+        return win
+      },
+    })
+    bindWidgetShortcut(main.webContents, widget, process.platform)
+    const fromMain = (event: unknown) => (event as { sender?: unknown }).sender === main.webContents
+
+    // Only the main window reports the focus: its app guard keeps running while the widget is open.
+    trustedHandle(ipcMain, IPC.focusState, (event, state: unknown) => {
+      if (!fromMain(event)) return
+      focusClose?.reportState(state)
+      widget.setFocusState(state)
+    })
     trustedHandle(ipcMain, IPC.focusPauseRequest, () => focusClose?.pauseAnswered())
-    // The widget bridge (WIDGET-22): received here, wired to the widget controller later.
-    trustedHandle(ipcMain, IPC.focusCollapse, () => undefined)
-    trustedHandle(ipcMain, IPC.focusExpand, () => undefined)
-    trustedHandle(ipcMain, IPC.focusChanged, () => undefined)
-    trustedHandle(ipcMain, IPC.widgetResize, () => undefined)
+    trustedHandle(ipcMain, IPC.focusCollapse, (event) => {
+      if (fromMain(event)) widget.open()
+    })
+    trustedHandle(ipcMain, IPC.focusExpand, (_event, reason: unknown) => widget.close(reason === 'task_left' ? 'task_left' : 'expand'))
+    trustedHandle(ipcMain, IPC.focusChanged, (event) => widget.focusChanged((event as { sender?: unknown }).sender))
+    trustedHandle(ipcMain, IPC.widgetResize, (_event, mode: unknown) => widget.resize(mode))
     // A page loaded after the download finished still shows the banner.
     mainWindow.webContents.on('did-finish-load', () => {
       if (exporting) mainWindow?.webContents.send(IPC.exportState, { exporting: true })
       const pending = updater.pending()
       if (pending) mainWindow?.webContents.send(IPC.updateAvailable, pending)
-      // No widget exists yet: a page that loads learns that it is closed.
-      mainWindow?.webContents.send(IPC.widgetState, { open: false })
+      // A page that loads (or reloads) learns whether the widget is open.
+      mainWindow?.webContents.send(IPC.widgetState, { open: widget.isOpen() })
     })
     updater.start()
 
