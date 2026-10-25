@@ -155,6 +155,16 @@ describe('ReportsPage (REPORT-01, REPORT-07, REPORT-12, REPORT-20)', () => {
     print.mockRestore()
   })
 
+  it('shows Exportar PDF only on the Visão geral tab (REPORT-23)', async () => {
+    const { user } = renderWithProviders(<ReportsPage />)
+    expect(await screen.findByRole('button', { name: 'Exportar PDF' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: 'Sessões' }))
+
+    expect(await screen.findByRole('cell', { name: 'Escrever relatório' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Exportar PDF' })).toBeNull()
+  })
+
   it('puts the period and the chosen list on top of the printed overview (REPORT-23)', async () => {
     const { user } = renderWithProviders(<ReportsPage />)
 
