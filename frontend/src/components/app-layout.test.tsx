@@ -8,6 +8,7 @@ import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './app-layout'
 import FocusPage from '@/pages/focus'
 import { renderWithProviders, t } from '@/test/utils'
+import { installPrintStyles } from '@/test/print-styles'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
@@ -211,6 +212,26 @@ describe('app layout sidebar', () => {
     const nav = screen.getByRole('navigation')
     expect(within(nav).queryByRole('link', { name: 'Create new list' })).not.toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'All my lists' })).toBeInTheDocument()
+  })
+})
+
+describe('app layout when printing (REPORT-23)', () => {
+  it('prints without the side menu and the mobile header, which stay on screen', () => {
+    renderWithProviders(<AppLayout />, { route: '/reports' })
+    const sidebar = screen.getByRole('complementary')
+    const header = screen.getByRole('banner')
+    expect(sidebar).toHaveClass('print-hidden')
+    expect(header).toHaveClass('print-hidden')
+
+    const removeScreen = installPrintStyles('screen')
+    expect(getComputedStyle(sidebar).display).not.toBe('none')
+    expect(getComputedStyle(header).display).not.toBe('none')
+    removeScreen()
+
+    const removePrint = installPrintStyles('print')
+    expect(getComputedStyle(sidebar).display).toBe('none')
+    expect(getComputedStyle(header).display).toBe('none')
+    removePrint()
   })
 })
 
