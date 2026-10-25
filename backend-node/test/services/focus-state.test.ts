@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
 import { focusSessions } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
+import { pauseFocus, startFocus } from '../../src/services/focus.ts'
 import { readFocusState } from '../../src/services/focus-state.ts'
 import { migratedDb } from '../support/db.ts'
 import { at, seedFocus } from '../support/focus.ts'
@@ -163,5 +164,27 @@ describe('readFocusState', () => {
     )
     expect(error).toBeInstanceOf(HttpError)
     expect(error).toMatchObject({ statusCode: 404 })
+  })
+})
+
+describe('a session that crosses midnight (Edge Case)', () => {
+  it('stays one session from 23:30 to 00:30 in the workspace zone, its hour counted once', async () => {
+    const taskId = await seed.addTask({ title: 'late', estimate: 120 })
+    // 23:30 on Oct 24 and 00:30 on Oct 25 in America/Sao_Paulo (UTC-3).
+    const before = new Date('2026-10-25T02:30:00Z')
+    const after = new Date('2026-10-25T03:30:00Z')
+    const actor = { userId: seed.userId, workspaceId: seed.workspaceId }
+    const input = (occurredAt: Date) => ({ actionId: randomUUID(), occurredAt, deviceId: 'device-a' })
+
+    await startFocus(db, actor, input(before), { taskId, takeover: false }, before)
+    await pauseFocus(db, actor, input(after), after)
+
+    const rows = await db.select().from(focusSessions).where(eq(focusSessions.userId, seed.userId))
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ taskId, startedAt: before, endedAt: after, endReason: 'pause' })
+    const state = await read(at(after, 1))
+    expect(state.session).toBeNull()
+    expect(state.task).toMatchObject({ id: taskId, spent_seconds: 3600 })
+    expect(state.today.tasks).toEqual([expect.objectContaining({ id: taskId, spent_seconds: 3600 })])
   })
 })
