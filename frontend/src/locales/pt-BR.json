@@ -285,7 +285,8 @@
     "groupWorkspace": "Workspace",
     "newList": "Criar nova lista",
     "allLists": "Todas as minhas listas",
-    "archivedLists": "Listas arquivadas"
+    "archivedLists": "Listas arquivadas",
+    "reports": "Relatórios"
   },
   "privacy": {
     "hide": "Ocultar valores",
@@ -622,6 +623,11 @@
       "duration": "Duração",
       "running": "em andamento",
       "break": "Intervalo"
-    }
+    },
+    "tabs": {
+      "overview": "Visão geral",
+      "sessions": "Sessões"
+    },
+    "loadError": "Não foi possível carregar o relatório."
   }
 }

@@ -285,7 +285,8 @@
     "groupWorkspace": "Workspace",
     "newList": "Create new list",
     "allLists": "All my lists",
-    "archivedLists": "Archived lists"
+    "archivedLists": "Archived lists",
+    "reports": "Reports"
   },
   "privacy": {
     "hide": "Hide values",
@@ -622,6 +623,11 @@
       "duration": "Duration",
       "running": "running",
       "break": "Break"
-    }
+    },
+    "tabs": {
+      "overview": "Overview",
+      "sessions": "Sessions"
+    },
+    "loadError": "Could not load the report."
   }
 }

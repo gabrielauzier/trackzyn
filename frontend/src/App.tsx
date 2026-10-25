@@ -21,6 +21,7 @@ const ArchivedListsPage = lazy(() => import('@/pages/archived-lists'))
 const ListBoardPage = lazy(() => import('@/pages/list-board'))
 const FocusPage = lazy(() => import('@/pages/focus'))
 const FocusWidgetPage = lazy(() => import('@/pages/focus-widget'))
+const ReportsPage = lazy(() => import('@/pages/reports'))
 const FilesPage = lazy(() => import('@/pages/files'))
 const ComponentsShowcasePage = lazy(() => import('@/pages/showcase'))
 const WorkspaceSettingsPage = lazy(() => import('@/pages/workspace-settings'))
@@ -80,6 +81,7 @@ function App() {
                         <Route path="/lists/archived" element={<ArchivedListsPage />} />
                         <Route path="/lists/:listId" element={<ListBoardPage />} />
                         <Route path="/focus/:listId" element={<FocusPage />} />
+                        <Route path="/reports" element={<ReportsPage />} />
                         <Route path="/files" element={<FilesPage />} />
                         <Route path="/components" element={<ComponentsShowcasePage />} />
                         <Route path="/workspace/settings" element={<WorkspaceSettingsPage />} />

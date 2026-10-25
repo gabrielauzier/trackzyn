@@ -1,4 +1,4 @@
-import { Archive, Component, FolderOpen, LayoutGrid, Plus } from 'lucide-react'
+import { Archive, BarChart3, Component, FolderOpen, LayoutGrid, Plus } from 'lucide-react'
 
 /**
  * Sidebar destinations. Lives outside `app-layout.tsx` so the filtering
@@ -20,6 +20,7 @@ export const navItems: NavItem[] = [
   { type: 'link', key: 'newList', path: '/?new=1', icon: Plus, write: true },
   { type: 'link', key: 'allLists', path: '/', icon: LayoutGrid },
   { type: 'link', key: 'archivedLists', path: '/lists/archived', icon: Archive },
+  { type: 'link', key: 'reports', path: '/reports', icon: BarChart3 },
   { type: 'link', key: 'files', path: '/files', icon: FolderOpen },
   { type: 'separator', labelKey: 'nav.groupDevelopers' },
   { type: 'link', key: 'components', path: '/components', icon: Component },

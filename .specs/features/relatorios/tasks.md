@@ -519,9 +519,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: abrir pede o período da segunda até hoje e `Todas as listas`; trocar a lista refaz a consulta com `list_id`; a aba `Sessões` consulta `/api/reports/sessions`
-- [ ] Gate check passes: Full (frontend)
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: abrir pede o período da segunda até hoje e `Todas as listas`; trocar a lista refaz a consulta com `list_id`; a aba `Sessões` consulta `/api/reports/sessions`
+- [x] Gate check passes: Full (frontend)
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: A página espera a resposta de `GET /api/lists`, que traz o fuso do dia já resolvido (o `workspaces.timezone` pode ser nulo), e só então monta os filtros; assim a semana padrão segue o fuso do workspace (o teste usa 02:00 UTC de uma segunda, ainda domingo em São Paulo). Cada aba só consulta quando está aberta, com `retry: false` (um 422 ou 404 não se repete) e `keepPreviousData`. A entrada `Relatórios` fica no grupo Workspace, depois de `Listas arquivadas`, com o ícone `BarChart3`. Uma falha que não seja 422 ou 404 mostra "Não foi possível carregar o relatório.". A página não foi aberta no navegador neste lote.
 
 **Tests**: unit
 **Gate**: full
