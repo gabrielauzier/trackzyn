@@ -128,7 +128,7 @@ Na tela de foco, o cronômetro só aparece enquanto a janela do trackzyn está �
 | WIDGET-03 | P1: Widget sempre visível | Tasks | In Tasks |
 | WIDGET-04 | P1: Widget sempre visível | Tasks | In Tasks |
 | WIDGET-05 | P1: Widget sempre visível | Tasks | In Tasks |
-| WIDGET-06 | P1: Widget sempre visível | Tasks | In Tasks |
+| WIDGET-06 | P1: Widget sempre visível | Tasks | Implementing |
 | WIDGET-07 | P1: Widget sempre visível | Tasks | In Tasks |
 | WIDGET-08 | P1: Widget sempre visível | Tasks | In Tasks |
 | WIDGET-09 | P1: Widget sempre visível | Tasks | In Tasks |

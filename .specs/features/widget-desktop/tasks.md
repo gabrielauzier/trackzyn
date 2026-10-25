@@ -115,9 +115,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes com `BrowserWindow` falso: opções exatas acima; `hardenWebContents` aplicado; URL `app://…/widget`
-- [ ] Gate check passes: Full (desktop)
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Testes com `BrowserWindow` falso: opções exatas acima; `hardenWebContents` aplicado; URL `app://…/widget`
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: A assinatura é `createWidgetWindow(bounds, { appVersion, platform? })`: o widget usa só a posição de `bounds` e sempre abre compacto (300×64); `appVersion` vai no mesmo argumento da janela principal, para `window.trackzyn.appVersion` ser igual nas duas (a spec não diz).
 
 **Tests**: unit
 **Gate**: full
