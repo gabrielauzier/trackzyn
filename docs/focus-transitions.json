@@ -1360,6 +1360,32 @@
         "code": "invalid_transition",
         "sessions": []
       }
+    },
+    {
+      "name": "recover with exactly 120 s without signal answers invalid_transition: stale means more than 120 s",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 720, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 720, "awaiting_extend": false } ] },
+          "stale": null
+        }
+      },
+      "action": { "type": "recover", "at": 12, "decision": "keep" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 10 }
+        ]
+      }
     }
   ]
 }
