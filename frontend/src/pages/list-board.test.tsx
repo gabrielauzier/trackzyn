@@ -382,6 +382,9 @@ describe('ListBoardPage', () => {
     const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
     expect(wrapper).toContainElement(timer)
     expect(timer.textContent).toMatch(/^00:(50:00|49:5\d)$/)
+    expect(wrapper.querySelector('[data-slot="card"]')).toHaveClass('border-2', 'border-primary')
+    const done = document.querySelector<HTMLElement>(`[data-task-id="${DONE_TASK}"] [data-slot="card"]`)!
+    expect(done).not.toHaveClass('border-primary')
   })
 
   it('completes a task out of focus with a move and plays the completion sound once (SOUND-01)', async () => {

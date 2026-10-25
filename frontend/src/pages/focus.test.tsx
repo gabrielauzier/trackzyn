@@ -136,6 +136,19 @@ describe('FocusPage', () => {
     expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument()
   })
 
+  it('shows the task in focus with the highlighted contour, the other tasks without it (FOCUS-02)', async () => {
+    renderFocus()
+
+    expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument()
+    const card = screen.getByRole('timer').parentElement!
+    expect(card).toHaveTextContent(taskA.title)
+    expect(card).toHaveAttribute('data-running', 'true')
+    expect(card).toHaveClass('border-2', 'border-primary')
+    expect(card).not.toHaveClass('border-primary/50')
+    const next = within(screen.getByRole('list', { name: 'Next tasks' })).getByText(taskB.title).closest('li')!
+    expect(next).not.toHaveClass('border-primary')
+  })
+
   it('does not start again when this device already focuses on the list', async () => {
     vi.mocked(focus.get).mockResolvedValue(counting(deviceId()))
     renderFocus()
