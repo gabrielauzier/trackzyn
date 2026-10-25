@@ -68,15 +68,41 @@ describe('GET /api/focus', () => {
     expect(viewers.json().task.id).toBe(taskA)
   })
 
-  it('answers 422 without list_id and 404 for a list of another workspace, with server_now', async () => {
-    const missing = await call('GET', '/api/focus', owner.token, workspaceId)
-    expect(missing.statusCode).toBe(422)
-    expectServerNow(missing.json())
+  it('answers 422 for a list_id that is not a UUID and 404 for a list of another workspace, with server_now', async () => {
+    const invalid = await call('GET', '/api/focus?list_id=nope', owner.token, workspaceId)
+    expect(invalid.statusCode).toBe(422)
+    expectServerNow(invalid.json())
 
     const foreign = await call('GET', `/api/focus?list_id=${listId}`, stranger.token, strangerWorkspaceId)
     expect(foreign.statusCode).toBe(404)
     expect(foreign.json()).toMatchObject({ detail: 'List not found' })
     expectServerNow(foreign.json())
+  })
+})
+
+describe('GET /api/focus without list_id', () => {
+  it('SYNC-08 SYNC-09 answers no session and an empty Today when nothing is open', async () => {
+    const reply = await call('GET', '/api/focus', owner.token, workspaceId)
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({
+      session: null,
+      task: null,
+      today: { pending: 0, done: 0, estimate_minutes: 0, tasks: [] },
+      stale: null,
+    })
+    expectServerNow(reply.json())
+  })
+
+  it('SYNC-08 SYNC-09 answers the open session with the state of its list', async () => {
+    const opened = (await start(taskA)).json()
+    const reply = await call('GET', '/api/focus', owner.token, workspaceId)
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({
+      session: { id: opened.session.id, kind: 'task', task_id: taskA, list_id: listId, device_id: 'A' },
+      task: { id: taskA, title: 'A' },
+      today: { pending: 2, estimate_minutes: 90 },
+      stale: null,
+    })
   })
 })
 

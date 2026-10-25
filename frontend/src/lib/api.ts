@@ -372,8 +372,9 @@ export const tasks = {
 
 // Focus: every answer, errors included, carries the server's clock in `server_now`
 export const focus = {
-  get: async (listId: string): Promise<FocusState> => {
-    const { data } = await api.get('/focus', { params: { list_id: listId } })
+  /** Without `listId`, the state of the list of the open session, if any. */
+  get: async (listId?: string): Promise<FocusState> => {
+    const { data } = await api.get('/focus', { params: listId === undefined ? {} : { list_id: listId } })
     return data
   },
   /** Sends a queued action to `POST /api/focus/<type>`; only a break names its list. */

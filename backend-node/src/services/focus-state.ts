@@ -1,8 +1,8 @@
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type FocusSession, type Workspace, focusSessions, tasks } from '../db/schema.ts'
+import { type FocusSession, type Workspace, focusSessions, tasks, workspaces } from '../db/schema.ts'
 import { buildBoard } from './board.ts'
-import { spentSeconds } from './focus-settle.ts'
+import { settle, spentSeconds } from './focus-settle.ts'
 
 /** A session with no signal for longer than this was left open by a crash (SYNC-11). */
 export const STALE_AFTER_MS = 120_000
@@ -138,4 +138,27 @@ export async function readFocusState(
         ? { session_id: session.id, last_seen_at: session.lastSeenAt.toISOString(), seconds: Math.floor(silentMs / 1000) }
         : null,
   }
+}
+
+/**
+ * The focus of `userId` with no list named, as the app reads it wherever the user is (SYNC-08, SYNC-09,
+ * SYNC-11): the state of the list of the open session, in that session's workspace, or no session.
+ */
+export async function readUserFocusState(tx: Database, userId: string, now: Date): Promise<FocusState> {
+  await settle(tx, userId, now)
+  const session = await openSession(tx, userId)
+  if (!session) {
+    return {
+      server_now: now.toISOString(),
+      session: null,
+      task: null,
+      today: { pending: 0, done: 0, estimate_minutes: 0, tasks: [] },
+      stale: null,
+    }
+  }
+  const [workspace] = await tx
+    .select({ id: workspaces.id, timezone: workspaces.timezone })
+    .from(workspaces)
+    .where(eq(workspaces.id, session.workspaceId))
+  return readFocusState(tx, userId, workspace!, session.listId, now)
 }

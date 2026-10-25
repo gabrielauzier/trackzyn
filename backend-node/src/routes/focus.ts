@@ -16,7 +16,7 @@ import {
   skipFocus,
   startFocus,
 } from '../services/focus.ts'
-import { readFocusState } from '../services/focus-state.ts'
+import { readFocusState, readUserFocusState } from '../services/focus-state.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
 const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
@@ -86,9 +86,12 @@ export function focusRoutes(ctx: AppContext) {
 
     typed.get(
       '/api/focus',
-      { schema: { querystring: z.object({ list_id: uuid }), response }, preValidation: reading },
+      { schema: { querystring: z.object({ list_id: uuid.optional() }), response }, preValidation: reading },
+      // Without a list, the app reads the user's focus wherever the user is (SYNC-08, SYNC-09, SYNC-11).
       async (request) =>
-        readFocusState(ctx.db, request.workspace.user.id, request.workspace.workspace, request.query.list_id.toLowerCase(), new Date()),
+        request.query.list_id === undefined
+          ? readUserFocusState(ctx.db, request.workspace.user.id, new Date())
+          : readFocusState(ctx.db, request.workspace.user.id, request.workspace.workspace, request.query.list_id.toLowerCase(), new Date()),
     )
 
     typed.post(

@@ -99,7 +99,7 @@ stateDiagram-v2
 - **Purpose**: Aplicar cada ação como uma transição, numa transação, de forma idempotente.
 - **Location**: `backend-node/src/services/focus.ts`, `backend-node/src/routes/focus.ts`
 - **Interfaces** (todas as ações: corpo `{action_id, occurred_at, device_id, ...}`; resposta `FocusState`):
-  - `GET /api/focus?list_id=` → `FocusState` (FOCUS-02, -03, SYNC-11)
+  - `GET /api/focus?list_id=` → `FocusState` (FOCUS-02, -03, SYNC-11). Sem `list_id`, o estado da lista da sessão aberta, ou nenhuma sessão: é o que o app lê fora do quadro e da tela de foco (SYNC-08, -09, -11)
   - `POST /api/focus/start {task_id, takeover?: boolean}` (FOCUS-02, -05, SYNC-02, -03, -04)
   - `POST /api/focus/pause` (FOCUS-04)
   - `POST /api/focus/skip {task_id}` (FOCUS-06, -07)
@@ -131,7 +131,7 @@ Cada ação segue os mesmos passos:
   - `queue.ts`: `enqueue(action)`, `flush(send)`, `pending()`, `conflicts()`, `retry(id)`, `discard(id)`; guarda em `localStorage['trackzyn.focus.queue']`; descarta o que passa de 24h (SYNC-06); 409 ou 422 viram conflito (SYNC-07); falha de rede mantém na fila
   - `device-id.ts`: `deviceId()` - UUID em `localStorage['trackzyn.device']`, o mesmo para as janelas do mesmo app
   - `use-focus.ts`: `useFocus(listId)` → `{ state, display, actions }`; envia heartbeat a cada 60 s enquanto a sessão aberta é deste dispositivo
-  - `use-leave-guard.ts`: no navegador, `beforeunload` com a tarefa contando e, em `pagehide`, `fetch('/api/focus/pause', { keepalive: true })` com `occurred_at` do fechamento (SYNC-09); no desktop, `window.trackzyn.reportFocusState({ active, running })`
+  - `use-leave-guard.ts`: no navegador, `beforeunload` com a tarefa contando e, em `pagehide`, `fetch('/api/focus/pause', { keepalive: true })` com `occurred_at` do fechamento (SYNC-09); no desktop, `window.trackzyn.reportFocusState({ active, running })`. Os dois ficam em `components/focus/focus-guard.tsx`, montado no `AppLayout`, para valer em qualquer tela do app enquanto a tarefa conta
 - **Dependencies**: `lib/api.ts`, TanStack Query
 - **Reuses**: QueryClient que já existe
 

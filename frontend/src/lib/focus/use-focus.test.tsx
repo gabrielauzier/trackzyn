@@ -46,6 +46,11 @@ function counting(device: string): FocusState {
 
 const offline = () => Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' })
 
+function sharedWrapper() {
+  const client = createTestQueryClient()
+  return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>
+}
+
 function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
 }
@@ -78,6 +83,17 @@ describe('useFocus', () => {
     await advance(1)
     expect(focus.heartbeat).toHaveBeenCalledTimes(1)
     expect(focus.heartbeat).toHaveBeenCalledWith(deviceId())
+    await advance(60_000)
+    expect(focus.heartbeat).toHaveBeenCalledTimes(2)
+  })
+
+  it('SYNC-10 sends one heartbeat every 60 s when the page and the app guard read the same list', async () => {
+    focus.get.mockImplementation(async () => counting(deviceId()))
+    renderHook(() => [useFocus(LIST), useFocus(LIST)], { wrapper: sharedWrapper() })
+    await advance(0)
+
+    await advance(60_000)
+    expect(focus.heartbeat).toHaveBeenCalledTimes(1)
     await advance(60_000)
     expect(focus.heartbeat).toHaveBeenCalledTimes(2)
   })

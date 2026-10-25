@@ -14,12 +14,16 @@ export const POLL_MS = 15_000
 /** The signal of an open app (SYNC-10). */
 export const HEARTBEAT_MS = 60_000
 
-export const focusQueryKey = (listId: string) => ['focus', listId] as const
+export const focusQueryKey = (listId: string | undefined) => ['focus', listId ?? null] as const
 
 const answered = (state: FocusState) => {
   updateOffset(state.server_now)
   return state
 }
+
+// The query keys whose heartbeat already runs: two hooks on the same list (the page and the app's guard)
+// share one state and send one heartbeat.
+const beating = new Set<string>()
 
 // One flush at a time, so the queued actions reach the server in the order of their clicks.
 let flushing: Promise<unknown> = Promise.resolve()
@@ -33,9 +37,10 @@ function flushInOrder(): Promise<queue.FlushResult> {
  * The focus of the list `listId` (design, `lib/focus`): the server's state, polled every 15 s and when
  * the window gets focus; what the timer shows, every second; and the actions, applied on screen at
  * once and sent through the offline queue (SYNC-05). Every answer corrects the clock (FOCUS-03), and
- * while the open session is this device's, a heartbeat goes out every 60 s (SYNC-10).
+ * while the open session is this device's, a heartbeat goes out every 60 s (SYNC-10). Without `listId`
+ * it follows the list of the open session, wherever the user is in the app.
  */
-export function useFocus(listId: string) {
+export function useFocus(listId?: string) {
   const queryClient = useQueryClient()
   const key = useMemo(() => focusQueryKey(listId), [listId])
   const [conflicts, setConflicts] = useState(() => queue.conflicts())
@@ -80,21 +85,27 @@ export function useFocus(listId: string) {
 
   const ownSession = state?.session !== null && state?.session !== undefined && state.session.device_id === deviceId()
   useEffect(() => {
-    if (!ownSession) return
+    const id = JSON.stringify(key)
+    if (!ownSession || beating.has(id)) return
+    beating.add(id)
     const timer = setInterval(() => {
       focus
         .heartbeat(deviceId())
         .then((next) => queryClient.setQueryData(key, answered(next)))
         .catch(() => undefined)
     }, HEARTBEAT_MS)
-    return () => clearInterval(timer)
+    return () => {
+      clearInterval(timer)
+      beating.delete(id)
+    }
   }, [ownSession, queryClient, key])
 
   const act = useCallback(
     (payload: FocusActionPayload) => {
       const now = serverNow()
-      const action = { ...payload, occurred_at: new Date(now).toISOString(), device_id: deviceId(), list_id: listId } as FocusAction
       const current = queryClient.getQueryData<FocusState>(key)
+      const list = listId ?? current?.session?.list_id ?? ''
+      const action = { ...payload, occurred_at: new Date(now).toISOString(), device_id: deviceId(), list_id: list } as FocusAction
       if (current) {
         try {
           queryClient.setQueryData(key, applyOptimistic(current, action, now))
@@ -116,7 +127,7 @@ export function useFocus(listId: string) {
       skip: (taskId: string) => act({ type: 'skip', task_id: taskId }),
       complete: (taskId: string) => act({ type: 'complete', task_id: taskId }),
       extend: (taskId: string) => act({ type: 'extend', task_id: taskId }),
-      takeBreak: (minutes: number) => act({ type: 'break', minutes, list_id: listId }),
+      takeBreak: (minutes: number) => act({ type: 'break', minutes, list_id: listId ?? '' }),
       endBreak: () => act({ type: 'break/end' }),
       recover: (decision: 'keep' | 'cut') => act({ type: 'recover', decision }),
       retry: (actionId: string) => {

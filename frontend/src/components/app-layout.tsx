@@ -19,6 +19,7 @@ import { ChangePasswordDialog } from '@/components/change-password-dialog'
 import { TwoFactorSetup } from '@/components/two-factor-setup'
 import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
 import { CommandPalette } from '@/components/command-palette'
+import { FocusGuard } from '@/components/focus/focus-guard'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
@@ -339,6 +340,7 @@ export function AppLayout() {
         onClose={() => setPasskeysOpen(false)}
         localAuthEnabled={localAuthEnabled}
       />
+      <FocusGuard />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <UpdateAvailableDialog
         open={updateDialogOpen}

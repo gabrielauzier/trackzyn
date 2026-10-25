@@ -61,6 +61,17 @@ vi.mock('@/lib/api', () => ({
   },
   workspaces: { create: vi.fn() },
   info: { get: async () => ({ features: {} }) },
+  focus: {
+    get: async () => ({
+      server_now: new Date().toISOString(),
+      session: null,
+      task: null,
+      today: { pending: 0, done: 0, estimate_minutes: 0, tasks: [] },
+      stale: null,
+    }),
+    send: vi.fn(),
+    heartbeat: vi.fn(),
+  },
 }))
 vi.mock('@/lib/webauthn', () => ({
   passkeyBlocker: () => null,

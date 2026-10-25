@@ -2,13 +2,17 @@
  * macOS desktop hides the native title bar (`titleBarStyle: hiddenInset`), so
  * the app's own header must be draggable while its controls stay clickable.
  */
-import { screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppLayout } from './app-layout'
 import { renderWithProviders, t } from '@/test/utils'
+import { deviceId } from '@/lib/focus/device-id'
+import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
+import type { FocusState } from '@/types'
 
 const state = vi.hoisted(() => ({
+  focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   user: {
     email: 'synthetic@example.com',
     is_2fa_enabled: true,
@@ -59,6 +63,8 @@ vi.mock('@/lib/api', () => ({
   },
   workspaces: { create: vi.fn() },
   info: { get: async () => ({ features: {} }) },
+  focus: state.focus,
+  authHeaders: () => ({ Authorization: 'Bearer token-123' }),
 }))
 vi.mock('@/lib/webauthn', () => ({
   passkeyBlocker: () => null,
@@ -95,8 +101,40 @@ function installDesktopApi(platform: string) {
   Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
 }
 
+const LIST = '6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b'
+
+function focusState(counting: boolean): FocusState {
+  const task = { id: 'task-a', title: 'Write the report', estimate_minutes: 60, spent_seconds: 600, awaiting_extend: false }
+  return {
+    server_now: new Date().toISOString(),
+    session: counting
+      ? {
+          id: 'session-1',
+          kind: 'task',
+          task_id: task.id,
+          list_id: LIST,
+          device_id: deviceId(),
+          started_at: new Date(Date.now() - 10 * 60_000).toISOString(),
+          deadline_at: new Date(Date.now() + 50 * 60_000).toISOString(),
+          planned_seconds: null,
+        }
+      : null,
+    task,
+    today: { pending: 1, done: 0, estimate_minutes: 60, tasks: [{ ...task, position: 0 }] },
+    stale: null,
+  }
+}
+
+beforeEach(() => {
+  state.focus.get.mockReset()
+  state.focus.send.mockReset()
+  state.focus.get.mockResolvedValue(focusState(false))
+  state.focus.send.mockResolvedValue(focusState(false))
+})
+
 afterEach(() => {
   Reflect.deleteProperty(window, 'trackzyn')
+  vi.unstubAllGlobals()
   state.canWrite = false
 })
 
@@ -160,5 +198,54 @@ describe('app layout sidebar', () => {
     const nav = screen.getByRole('navigation')
     expect(within(nav).queryByRole('link', { name: 'Create new list' })).not.toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'All my lists' })).toBeInTheDocument()
+  })
+})
+
+describe('app layout focus guard', () => {
+  it('SYNC-08 on the board, tells the desktop a task counts and pauses it when the desktop asks before closing', async () => {
+    installDesktopApi('darwin')
+    state.focus.get.mockResolvedValue(focusState(true))
+    renderWithProviders(<AppLayout />, { route: `/lists/${LIST}`, path: '/lists/:listId' })
+
+    const desktop = window.trackzyn as unknown as { reportFocusState: ReturnType<typeof vi.fn>; onPauseRequest: ReturnType<typeof vi.fn> }
+    await waitFor(() => expect(desktop.reportFocusState).toHaveBeenLastCalledWith({ active: true, running: true }))
+    expect(state.focus.get).toHaveBeenCalledWith(LIST)
+
+    const requestPause = desktop.onPauseRequest.mock.calls.at(-1)![0] as () => Promise<void>
+    await requestPause()
+
+    const sent = state.focus.send.mock.calls.map(([entry]) => (entry as QueuedAction).action)
+    expect(sent).toEqual([expect.objectContaining({ type: 'pause', device_id: deviceId() })])
+  })
+
+  it('SYNC-08 on the home, still tells the desktop the task counts', async () => {
+    installDesktopApi('darwin')
+    state.focus.get.mockResolvedValue(focusState(true))
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const desktop = window.trackzyn as unknown as { reportFocusState: ReturnType<typeof vi.fn> }
+    await waitFor(() => expect(desktop.reportFocusState).toHaveBeenLastCalledWith({ active: true, running: true }))
+    expect(state.focus.get).toHaveBeenCalledWith(undefined)
+  })
+
+  it('SYNC-09 on the board, closing the tab shows the browser alert and asks the pause on leaving', async () => {
+    const fetchMock = vi.fn(async () => new Response('{}'))
+    vi.stubGlobal('fetch', fetchMock)
+    state.focus.get.mockResolvedValue(focusState(true))
+    renderWithProviders(<AppLayout />, { route: `/lists/${LIST}`, path: '/lists/:listId' })
+    await waitFor(() => expect(state.focus.get).toHaveBeenCalledWith(LIST))
+
+    await waitFor(() => {
+      const leaving = new Event('beforeunload', { cancelable: true })
+      window.dispatchEvent(leaving)
+      expect(leaving.defaultPrevented).toBe(true)
+    })
+    window.dispatchEvent(new Event('pagehide'))
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('/api/focus/pause')
+    expect(init).toMatchObject({ method: 'POST', keepalive: true })
+    expect(JSON.parse(init.body as string)).toMatchObject({ device_id: deviceId() })
   })
 })
