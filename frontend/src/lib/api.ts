@@ -12,6 +12,9 @@ import type {
   FileSettings,
   FocusState,
   ListsResponse,
+  Overview,
+  ReportQuery,
+  SessionsReport,
   Subtask,
   Task,
   TaskColumn,
@@ -386,6 +389,18 @@ export const focus = {
   /** The signal of an open app (SYNC-10); answers 409 when this device has no open session. */
   heartbeat: async (deviceId: string): Promise<FocusState> => {
     const { data } = await api.post('/focus/heartbeat', { device_id: deviceId })
+    return data
+  },
+}
+
+// Reports: the logged-in user's own time in a period (`from`/`to` are YYYY-MM-DD, both required)
+export const reports = {
+  overview: async (query: ReportQuery): Promise<Overview> => {
+    const { data } = await api.get('/reports/overview', { params: query })
+    return data
+  },
+  sessions: async (query: ReportQuery): Promise<SessionsReport> => {
+    const { data } = await api.get('/reports/sessions', { params: query })
     return data
   },
 }

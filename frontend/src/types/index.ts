@@ -214,3 +214,63 @@ export interface FocusState {
   /** The open session when it has had no signal for more than 120 s (SYNC-11). */
   stale: { session_id: string; last_seen_at: string; seconds: number } | null
 }
+
+/** The period and list filter of both reports; `list_id` absent means every list. */
+export interface ReportQuery {
+  from: string
+  to: string
+  list_id?: string
+}
+
+export type DoneVerdict = 'early' | 'on_time' | 'late'
+
+export interface DoneTaskView {
+  id: string
+  title: string
+  list_id: string
+  /** Total time of the task, every member and its whole history. */
+  spent_seconds: number
+  estimate_minutes: number | null
+  /** Null for a task without estimate. */
+  verdict: DoneVerdict | null
+  /** Spent minus estimate in seconds; 0 without estimate. */
+  diff_seconds: number
+}
+
+/** What `GET /api/reports/overview` answers: the logged-in user's own time in the period. */
+export interface Overview {
+  timezone: string
+  range: { from: string; to: string }
+  tiles: { work_days: number; tasks_done: number; task_seconds: number; avg_seconds_per_task: number | null }
+  /** One item per day of the period. */
+  daily: { date: string; task_seconds: number; break_seconds: number }[]
+  /** Every tied value; empty without activity. Hours 0..23, weekdays ISO 1..7, months `YYYY-MM`. */
+  productive: { hours: number[]; weekdays: number[]; months: string[] }
+  /** Only lists with time in the period, archived ones included. */
+  by_list: { list_id: string; name: string; color: number; is_archived: boolean; seconds: number }[]
+  break_seconds: number
+  done: {
+    /** Most recent day first. */
+    days: { date: string; tasks: DoneTaskView[] }[]
+    /** Two decimals; null when no done task has an estimate. */
+    early_or_on_time_pct: number | null
+    late_pct: number | null
+  }
+}
+
+export interface ReportSession {
+  id: string
+  kind: 'task' | 'break'
+  task_title: string | null
+  list_name: string
+  started_at: string
+  /** Null while the session is open. */
+  ended_at: string | null
+  /** Only the part inside the period. */
+  seconds: number
+}
+
+/** What `GET /api/reports/sessions` answers: each session once, under its local start day, most recent first. */
+export interface SessionsReport {
+  days: { date: string; sessions: ReportSession[] }[]
+}

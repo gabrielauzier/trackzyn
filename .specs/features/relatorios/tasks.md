@@ -247,9 +247,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Tipos batem com as respostas
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend não diminui
+- [x] Tipos batem com as respostas
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend não diminui
+
+**Status**: ✅ Done
+
+**Nota**: Os tipos ficam em `src/types/index.ts`, junto dos outros. `reports.overview` e `reports.sessions` recebem `{ from, to, list_id? }`; sem lista, a query não leva `list_id`. Pela L-007, `api.test.ts` confere as duas requisições no nível HTTP.
 
 **Tests**: none
 **Gate**: build

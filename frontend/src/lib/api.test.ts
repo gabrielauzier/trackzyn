@@ -36,7 +36,7 @@ vi.mock('axios', async (importOriginal) => {
   return { ...actual, default: Object.assign(Object.create(axios) as typeof axios, { create }) }
 })
 
-const { focus, tasks } = await import('@/lib/api')
+const { focus, reports, tasks } = await import('@/lib/api')
 
 const LIST = '6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b'
 const BASE = { occurred_at: '2026-10-24T13:00:00.000Z', device_id: 'device-1', list_id: LIST }
@@ -114,6 +114,29 @@ describe('tasks.get and tasks.update (WIDGET-14, WIDGET-15)', () => {
 
     expect(http.sent).toEqual([
       { method: 'patch', url: '/api/tasks/task-1', body: { notes: 'Call the bank' }, authorization: 'Bearer token-123' },
+    ])
+  })
+})
+
+describe('reports.overview and reports.sessions (REPORT-01, REPORT-07, REPORT-20)', () => {
+  it('asks GET /api/reports/overview with the period and no list_id for every list', async () => {
+    await reports.overview({ from: '2026-10-19', to: '2026-10-25' })
+
+    expect(http.sent).toEqual([
+      { method: 'get', url: '/api/reports/overview?from=2026-10-19&to=2026-10-25', body: undefined, authorization: 'Bearer token-123' },
+    ])
+  })
+
+  it('asks GET /api/reports/sessions with the period and the list_id of the filter', async () => {
+    await reports.sessions({ from: '2026-10-19', to: '2026-10-25', list_id: LIST })
+
+    expect(http.sent).toEqual([
+      {
+        method: 'get',
+        url: `/api/reports/sessions?from=2026-10-19&to=2026-10-25&list_id=${LIST}`,
+        body: undefined,
+        authorization: 'Bearer token-123',
+      },
     ])
   })
 })
