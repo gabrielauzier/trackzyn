@@ -564,5 +564,15 @@
       "notes": "Anotações",
       "expand": "Expandir"
     }
+  },
+  "reports": {
+    "filters": {
+      "list": "Lista",
+      "allLists": "Todas as listas",
+      "archived": "arquivada",
+      "period": "Período",
+      "invalidPeriod": "O período precisa terminar depois do início e ter no máximo 366 dias.",
+      "listDeleted": "A lista foi excluída."
+    }
   }
 }

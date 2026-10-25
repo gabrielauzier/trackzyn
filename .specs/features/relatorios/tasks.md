@@ -307,9 +307,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: lista arquivada aparece rotulada; 422 mantém o período anterior; 404 volta para `Todas as listas` com o aviso
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: lista arquivada aparece rotulada; 422 mantém o período anterior; 404 volta para `Todas as listas` com o aviso
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O estado do filtro fica no hook `use-report-filter.ts` (ao lado do componente, para não misturar hook e componente no mesmo arquivo). `run` envolve a consulta: a resposta aceita vira o último filtro válido; um 422 devolve esse filtro com a mensagem "O período precisa terminar depois do início e ter no máximo 366 dias."; um 404 com lista volta para `Todas as listas` com "A lista foi excluída.". O aviso aparece como `role="alert"` abaixo dos filtros e some na próxima troca. Sem o fuso do workspace, o período inicial usa o dia do navegador.
 
 **Tests**: unit
 **Gate**: quick
