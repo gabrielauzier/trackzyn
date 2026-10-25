@@ -175,10 +175,14 @@ T12
 
 **Done when**:
 
-- [ ] Um teste por AC citado com fakes; minimizar sem foco ativo não abre (Edge Case)
-- [ ] `focus:changed` vindo de uma janela chega só à outra
-- [ ] Gate check passes: Full (desktop)
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Um teste por AC citado com fakes; minimizar sem foco ativo não abre (Edge Case)
+- [x] `focus:changed` vindo de uma janela chega só à outra
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O processo principal não sabe a lista do foco. Por isso o controlador guarda a última URL `app://trackzyn/focus/<id>` da janela principal: `Expandir` mantém a página se ela já está na tela de foco, senão carrega essa URL (sem nenhuma, mantém a página); `task_left` carrega `/lists/<id>` dessa lista, ou `/` sem lista conhecida. A posição é salva com `trackWindowState` (em `move`, com 500 ms, e ao fechar), não só em `moved`, que não existe no Linux. Fechar a janela principal fecha o widget, para o app encerrar (risco do design). `did-fail-load` não fecha o widget: só `render-process-gone`, como pede a task. `open()` não confere o foco ativo, porque `collapseFocus` pode chegar antes do `focus:state`; quem confere são o minimizar e o atalho (`focusActive()`). O widget recebe `widget:state {open: true}` quando a página dele carrega.
 
 **Tests**: unit
 **Gate**: full
