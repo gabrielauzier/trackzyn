@@ -206,9 +206,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes: combinação certa por plataforma; sem foco ativo não abre; outras teclas passam adiante sem `preventDefault`; nada é registrado como atalho global (WIDGET-05)
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Testes: combinação certa por plataforma; sem foco ativo não abre; outras teclas passam adiante sem `preventDefault`; nada é registrado como atalho global (WIDGET-05)
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O atalho compara `input.key` (`f` ou `F`) com Shift, sem Alt e só com o modificador da plataforma (Ctrl fora do macOS, Cmd no macOS). Tecla repetida por segurar não alterna o widget. Sem foco ativo e com o widget fechado, a combinação passa adiante sem `preventDefault`. A WIDGET-05 é provada pelo único ouvinte `before-input-event` e por nenhum arquivo de `main/` usar `globalShortcut`.
 
 **Tests**: unit
 **Gate**: build
