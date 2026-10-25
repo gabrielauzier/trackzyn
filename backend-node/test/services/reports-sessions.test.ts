@@ -164,6 +164,21 @@ describe('sessionsReport', () => {
     expect((await overview(db, seed.userId, workspace, WEEK, now)).tiles.task_seconds).toBe(0)
   })
 
+  it('REPORT-20 lists a session whose start equals its end once, with 0 seconds', async () => {
+    const taskId = await seed.addTask({ title: 'Write' })
+    const instant = SP('2026-10-20T12:00:00')
+    const id = await seed.addSession({ kind: 'task', taskId, startedAt: instant, endedAt: instant })
+
+    expect(await sessionsReport(db, seed.userId, workspace, WEEK, NOW)).toEqual({
+      days: [
+        {
+          date: '2026-10-20',
+          sessions: [{ id, kind: 'task', task_title: 'Write', list_name: 'Work', started_at: instant.toISOString(), ended_at: instant.toISOString(), seconds: 0 }],
+        },
+      ],
+    })
+  })
+
   it('REPORT-22 a period without sessions answers no days', async () => {
     const taskId = await seed.addTask()
     await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-18T10:00:00'), endedAt: SP('2026-10-18T11:00:00') })
