@@ -92,7 +92,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   localStorage.clear()
   bridge = installWidgetBridge()
-  vi.mocked(focus.get).mockResolvedValue(counting())
+  vi.mocked(focus.get).mockImplementation(async () => counting())
   vi.mocked(focus.send).mockResolvedValue(paused())
   vi.mocked(focus.heartbeat).mockResolvedValue(counting())
 })

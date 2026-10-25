@@ -19,7 +19,11 @@ vi.mock('@/lib/api', async (importOriginal) => ({
     listPasskeys: vi.fn(async () => []),
   },
   workspaces: { list: vi.fn(async () => [{ id: 'ws', name: 'Synthetic workspace', role: 'owner', timezone: null }]), create: vi.fn() },
-  admin: { defaultColors: vi.fn(async () => ({ light: null, dark: null })), numberFormat: vi.fn(async () => ({ format: 'auto' })) },
+  admin: {
+    defaultColors: vi.fn(async () => ({ light: null, dark: null })),
+    numberFormat: vi.fn(async () => ({ format: 'auto' })),
+    registrationStatus: vi.fn(async () => ({ enabled: false })),
+  },
   info: { get: vi.fn(async () => ({ features: {} })) },
   lists: { list: vi.fn(), move: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
