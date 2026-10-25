@@ -1056,9 +1056,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes do preload: os membros novos existem e chamam os canais certos; a contagem fixada passa a 15
-- [ ] Gate check passes: Full (desktop)
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Testes do preload: os membros novos existem e chamam os canais certos; a contagem fixada passa a 15
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

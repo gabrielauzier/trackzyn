@@ -10,13 +10,16 @@ export const IPC = {
   openLogs: 'local:open-logs',
   exportState: 'transfer:export-state',
   updateAvailable: 'updater:update-available',
+  focusState: 'focus:state',
+  /** Main to renderer asks the pause; the renderer answers on the same channel once it is done. */
+  focusPauseRequest: 'focus:pause-request',
 } as const
 
 export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** What the renderer sees as `window.trackzyn`. Exactly these thirteen members. */
+/** What the renderer sees as `window.trackzyn`. Exactly these fifteen members. */
 export interface TrackzynApi {
   isDesktop: true
   platform: string
@@ -36,6 +39,10 @@ export interface TrackzynApi {
   openLogs(): Promise<void>
   /** Tells whether an export is running (the interface locks while it does); returns an unsubscribe. */
   onExportState(callback: (state: { exporting: boolean }) => void): () => void
+  /** Tells the main process whether a focus is open and a task is counting, so closing can ask first (SYNC-08). */
+  reportFocusState(state: { active: boolean; running: boolean }): void
+  /** Runs `callback` when closing asks for the pause; the main process waits for it to settle. Returns an unsubscribe. */
+  onPauseRequest(callback: () => Promise<void>): () => void
 }
 
 export const APP_VERSION_ARG = '--trackzyn-app-version='

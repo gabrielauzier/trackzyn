@@ -140,6 +140,9 @@ function start() {
       openExternal: (url) => openExternalSafely(url, (target) => shell.openExternal(target)),
     })
     trustedHandle(ipcMain, IPC.startSso, () => sso.start())
+    // The focus bridge (SYNC-08): received here, not yet read by anything in the main process.
+    trustedHandle(ipcMain, IPC.focusState, () => undefined)
+    trustedHandle(ipcMain, IPC.focusPauseRequest, () => undefined)
     denyAllPermissions(session.defaultSession)
     session.defaultSession.on(
       'will-download',

@@ -29,6 +29,22 @@ const api: TrackzynApi = {
       ipcRenderer.removeListener(IPC.exportState, listener)
     }
   },
+  reportFocusState: (state) => {
+    void ipcRenderer.invoke(IPC.focusState, state).catch(() => undefined)
+  },
+  onPauseRequest: (callback) => {
+    // The answer goes back even if the pause failed: the main process closes either way.
+    const listener = () => {
+      void callback()
+        .catch(() => undefined)
+        .then(() => ipcRenderer.invoke(IPC.focusPauseRequest))
+        .catch(() => undefined)
+    }
+    ipcRenderer.on(IPC.focusPauseRequest, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC.focusPauseRequest, listener)
+    }
+  },
 }
 
 contextBridge.exposeInMainWorld('trackzyn', api)

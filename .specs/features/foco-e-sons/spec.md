@@ -201,7 +201,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | SYNC-05 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-06 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-07 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-08 | P1: Dispositivos, conexão e fechamento | Tasks | In Tasks |
+| SYNC-08 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-09 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-10 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
 | SYNC-11 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
