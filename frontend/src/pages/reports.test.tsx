@@ -144,4 +144,26 @@ describe('ReportsPage (REPORT-01, REPORT-07, REPORT-12, REPORT-20)', () => {
 
     expect(await screen.findByText('Não foi possível carregar o relatório.')).toBeInTheDocument()
   })
+
+  it('opens the print dialog from Exportar PDF (REPORT-23)', async () => {
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {})
+    const { user } = renderWithProviders(<ReportsPage />)
+
+    await user.click(await screen.findByRole('button', { name: 'Exportar PDF' }))
+
+    expect(print).toHaveBeenCalledTimes(1)
+    print.mockRestore()
+  })
+
+  it('puts the period and the chosen list on top of the printed overview (REPORT-23)', async () => {
+    const { user } = renderWithProviders(<ReportsPage />)
+
+    expect(await screen.findByText('Lista: Todas as listas')).toBeInTheDocument()
+    expect(screen.getByText('Período: 19 de out. de 2026 - 25 de out. de 2026')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('combobox', { name: 'Lista' }))
+    await user.click(await screen.findByRole('option', { name: 'Semana' }))
+
+    expect(await screen.findByText('Lista: Semana')).toBeInTheDocument()
+  })
 })

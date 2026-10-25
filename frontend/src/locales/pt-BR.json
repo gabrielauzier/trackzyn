@@ -628,6 +628,12 @@
       "overview": "Visão geral",
       "sessions": "Sessões"
     },
-    "loadError": "Não foi possível carregar o relatório."
+    "loadError": "Não foi possível carregar o relatório.",
+    "exportPdf": "Exportar PDF",
+    "print": {
+      "title": "Relatórios · Visão geral",
+      "period": "Período: {{period}}",
+      "list": "Lista: {{name}}"
+    }
   }
 }

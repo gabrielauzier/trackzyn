@@ -628,6 +628,12 @@
       "overview": "Overview",
       "sessions": "Sessions"
     },
-    "loadError": "Could not load the report."
+    "loadError": "Could not load the report.",
+    "exportPdf": "Export PDF",
+    "print": {
+      "title": "Reports · Overview",
+      "period": "Period: {{period}}",
+      "list": "List: {{name}}"
+    }
   }
 }

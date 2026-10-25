@@ -549,9 +549,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: o botão chama `window.print`; o cabeçalho de impressão mostra o período e a lista
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: o botão chama `window.print`; o cabeçalho de impressão mostra o período e a lista
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: `index.css` ganhou `.print-only` (some na tela e aparece na impressão), `.print-hidden` (some na impressão) e zera a margem do `main` ao imprimir. O menu lateral e o cabeçalho móvel de `app-layout.tsx` levam `print-hidden`, assim como o cabeçalho da página, as abas, o botão e os filtros. O botão `Exportar PDF` só aparece na aba `Visão geral`, porque o PDF é da visão geral. O `print-header` mostra `Relatórios · Visão geral`, `Período: 19 de out. de 2026 - 25 de out. de 2026` e `Lista: <nome>` (ou `Todas as listas`). O layout impresso em Chrome, Safari e Electron ainda precisa ser conferido à mão (risco do design).
 
 **Tests**: unit
 **Gate**: build

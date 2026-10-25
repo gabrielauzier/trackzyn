@@ -108,7 +108,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile header */}
-      <header className={cn('sticky top-0 z-40 flex h-14 items-center gap-3 bg-sidebar border-b border-sidebar-border px-4 lg:hidden', drag, dragHeader && 'pl-20')}>
+      <header className={cn('print-hidden sticky top-0 z-40 flex h-14 items-center gap-3 bg-sidebar border-b border-sidebar-border px-4 lg:hidden', drag, dragHeader && 'pl-20')}>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className={cn('text-sidebar-muted hover:text-sidebar-foreground transition-colors', noDrag)}
@@ -149,7 +149,7 @@ export function AppLayout() {
         <aside
           data-collapsed={collapsed}
           className={cn(
-            'group/sidebar fixed inset-y-0 left-0 z-50 w-60 bg-sidebar border-r border-sidebar-border flex flex-col transform transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none lg:translate-x-0 shrink-0',
+            'print-hidden group/sidebar fixed inset-y-0 left-0 z-50 w-60 bg-sidebar border-r border-sidebar-border flex flex-col transform transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none lg:translate-x-0 shrink-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
             collapsed ? 'lg:w-16' : 'lg:w-60',
           )}

@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { Download } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
 import { DailyChart } from '@/components/reports/daily-chart'
 import { DoneVsEstimate } from '@/components/reports/done-vs-estimate'
 import { OverviewTiles } from '@/components/reports/overview-tiles'
+import { PrintHeader } from '@/components/reports/print-header'
 import { ProductiveCards } from '@/components/reports/productive-cards'
 import { ReportFilters } from '@/components/reports/report-filters'
 import { SessionsTable } from '@/components/reports/sessions-table'
 import { TimeByList } from '@/components/reports/time-by-list'
 import { useReportFilter } from '@/components/reports/use-report-filter'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -33,6 +36,12 @@ function Reports({ timezone }: { timezone: string }) {
   const { t } = useTranslation()
   const { filter, notice, change, run } = useReportFilter(timezone)
   const [tab, setTab] = useState<ReportTab>('overview')
+  const active = useQuery({ queryKey: ['lists', { archived: false }], queryFn: () => lists.list({ archived: false }) })
+  const archived = useQuery({ queryKey: ['lists', { archived: true }], queryFn: () => lists.list({ archived: true }) })
+  const listName =
+    filter.listId === null
+      ? t('reports.filters.allLists')
+      : ([...(active.data?.lists ?? []), ...(archived.data?.lists ?? [])].find((list) => list.id === filter.listId)?.name ?? '')
 
   const overview = useQuery({
     queryKey: ['reports', 'overview', filter],
@@ -51,14 +60,25 @@ function Reports({ timezone }: { timezone: string }) {
 
   return (
     <Tabs value={tab} onValueChange={(value) => setTab(value as ReportTab)} className="gap-4">
-      <TabsList>
-        <TabsTrigger value="overview">{t('reports.tabs.overview')}</TabsTrigger>
-        <TabsTrigger value="sessions">{t('reports.tabs.sessions')}</TabsTrigger>
-      </TabsList>
-      <ReportFilters filter={filter} onChange={change} notice={notice} />
+      <div className="print-hidden flex flex-wrap items-center justify-between gap-3">
+        <TabsList>
+          <TabsTrigger value="overview">{t('reports.tabs.overview')}</TabsTrigger>
+          <TabsTrigger value="sessions">{t('reports.tabs.sessions')}</TabsTrigger>
+        </TabsList>
+        {tab === 'overview' && (
+          <Button type="button" variant="outline" size="sm" onClick={() => window.print()}>
+            <Download size={14} />
+            {t('reports.exportPdf')}
+          </Button>
+        )}
+      </div>
+      <div className="print-hidden">
+        <ReportFilters filter={filter} onChange={change} notice={notice} />
+      </div>
       <TabsContent value="overview" className="flex flex-col gap-4">
         {overview.data ? (
           <>
+            <PrintHeader from={filter.from} to={filter.to} listName={listName} />
             <OverviewTiles tiles={overview.data.tiles} />
             <Card className="p-4">
               <DailyChart daily={overview.data.daily} />
@@ -101,7 +121,9 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <PageHeader section={current?.name ?? ''} title={t('nav.reports')} />
+      <div className="print-hidden">
+        <PageHeader section={current?.name ?? ''} title={t('nav.reports')} />
+      </div>
       {active.data ? <Reports timezone={active.data.timezone} /> : active.isError ? <LoadError /> : <Loading />}
     </div>
   )

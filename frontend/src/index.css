@@ -225,3 +225,20 @@
     animation: none;
   }
 }
+
+/* Exportar PDF (REPORT-23): the printed page keeps the content, without the side menu and the controls. */
+.print-only {
+  display: none;
+}
+
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  main {
+    margin-left: 0 !important;
+  }
+}

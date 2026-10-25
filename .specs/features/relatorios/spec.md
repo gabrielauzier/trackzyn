@@ -157,7 +157,7 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | REPORT-20 | P2: Aba Sessões | Tasks | Implementing |
 | REPORT-21 | P2: Aba Sessões | Tasks | Implementing |
 | REPORT-22 | P2: Aba Sessões | Tasks | Implementing |
-| REPORT-23 | P3: Exportar PDF | Tasks | In Tasks |
+| REPORT-23 | P3: Exportar PDF | Tasks | Implementing |
 
 **Coverage:** 23 total, 23 mapped to tasks, 0 unmapped
 
