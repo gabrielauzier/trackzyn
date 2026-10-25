@@ -290,6 +290,55 @@ describe('app layout focus guard', () => {
   })
 })
 
+describe('app layout focus guard with the widget (WIDGET-03, Edge Case)', () => {
+  const reported = () => (window.trackzyn as unknown as { reportFocusState: ReturnType<typeof vi.fn> }).reportFocusState
+
+  it('on a board with pending tasks and no session, reports no focus, so minimizing does not open the widget', async () => {
+    installDesktopApi('darwin')
+    state.focus.get.mockResolvedValue(focusState(false))
+    renderWithProviders(<AppLayout />, { route: `/lists/${LIST}`, path: '/lists/:listId' })
+
+    await waitFor(() => expect(state.focus.get).toHaveBeenCalledWith(LIST))
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(reported().mock.calls.length).toBeGreaterThan(0)
+    for (const call of reported().mock.calls) expect(call).toEqual([{ active: false, running: false }])
+  })
+
+  it('on the focus screen with a paused task, reports the focus as active and not counting', async () => {
+    installDesktopApi('darwin')
+    state.focus.get.mockResolvedValue(focusState(false))
+    renderWithProviders(<AppLayout />, { route: `/focus/${LIST}`, path: '/focus/:listId' })
+
+    await waitFor(() => expect(reported()).toHaveBeenLastCalledWith({ active: true, running: false }))
+  })
+
+  it('on a board, a session of another device is not a task in focus here', async () => {
+    installDesktopApi('darwin')
+    const elsewhere = focusState(true)
+    elsewhere.session!.device_id = 'other-device'
+    state.focus.get.mockResolvedValue(elsewhere)
+    renderWithProviders(<AppLayout />, { route: `/lists/${LIST}`, path: '/lists/:listId' })
+
+    await waitFor(() => expect(state.focus.get).toHaveBeenCalledWith(LIST))
+    await act(async () => {
+      await Promise.resolve()
+    })
+    for (const call of reported().mock.calls) expect(call).toEqual([{ active: false, running: false }])
+  })
+
+  it('on a board, an own break is a focus in progress', async () => {
+    installDesktopApi('darwin')
+    const onBreak = focusState(true)
+    onBreak.session = { ...onBreak.session!, kind: 'break', task_id: null }
+    state.focus.get.mockResolvedValue(onBreak)
+    renderWithProviders(<AppLayout />, { route: `/lists/${LIST}`, path: '/lists/:listId' })
+
+    await waitFor(() => expect(reported()).toHaveBeenLastCalledWith({ active: true, running: false }))
+  })
+})
+
 describe('app layout on the focus page (SYNC-10)', () => {
   afterEach(() => {
     vi.useRealTimers()

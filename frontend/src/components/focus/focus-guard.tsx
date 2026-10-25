@@ -1,9 +1,11 @@
 import { matchPath, useLocation } from 'react-router-dom'
 
 import { StaleSessionDialog } from '@/components/focus/stale-session-dialog'
+import { deviceId } from '@/lib/focus/device-id'
 import { useDesktopFocusBridge } from '@/lib/focus/use-desktop-bridge'
 import { useFocus } from '@/lib/focus/use-focus'
 import { useLeaveGuard } from '@/lib/focus/use-leave-guard'
+import type { FocusState } from '@/types'
 
 const LIST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -12,6 +14,17 @@ function routeListId(pathname: string): string | undefined {
   const match = matchPath('/lists/:listId', pathname) ?? matchPath('/focus/:listId', pathname)
   const listId = match?.params.listId
   return listId && LIST_ID.test(listId) ? listId : undefined
+}
+
+/**
+ * Whether a task is in focus here: a session of this device (a task or a break), or the focus screen
+ * showing a task, counting or paused. Only then minimizing the desktop window opens the widget
+ * (WIDGET-03, Edge Case).
+ */
+function inFocus(state: FocusState | null, pathname: string): boolean {
+  if (state === null) return false
+  if (state.session !== null && state.session.device_id === deviceId()) return true
+  return matchPath('/focus/:listId', pathname) !== null && state.task !== null
 }
 
 /**
@@ -24,6 +37,6 @@ export function FocusGuard() {
   const { pathname } = useLocation()
   const { state, actions } = useFocus(routeListId(pathname))
   useLeaveGuard(state)
-  useDesktopFocusBridge(state, actions.pause)
+  useDesktopFocusBridge(inFocus(state, pathname) ? state : null, actions.pause)
   return <StaleSessionDialog stale={state?.stale ?? null} onRecover={(decision) => void actions.recover(decision)} />
 }
