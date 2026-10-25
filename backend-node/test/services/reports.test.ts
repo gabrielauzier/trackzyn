@@ -80,6 +80,16 @@ describe('overview', () => {
     expect(report.tiles).toEqual({ work_days: 1, tasks_done: 0, task_seconds: H, avg_seconds_per_task: null })
   })
 
+  it('REPORT-02 counts as worked only the days with a task session, not a break-only day (Assumption)', async () => {
+    await pause(SP('2026-10-20T10:00:00'), SP('2026-10-20T10:10:00'))
+    await task(SP('2026-10-22T09:00:00'), SP('2026-10-22T10:00:00'))
+
+    const report = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(report.daily).toEqual(quietWeek(day('2026-10-20', 0, 10 * M), day('2026-10-22', H)))
+    expect(report.tiles.work_days).toBe(1)
+  })
+
   it('REPORT-10 splits a 23:30-00:30 session into 30min on each day', async () => {
     await task(SP('2026-10-20T23:30:00'), SP('2026-10-21T00:30:00'))
 
