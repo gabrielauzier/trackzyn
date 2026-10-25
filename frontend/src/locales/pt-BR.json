@@ -248,6 +248,11 @@
       "importFailed": "A importação falhou",
       "cleanupWarning": "Alguns arquivos temporários não puderam ser removidos; eles são limpos na próxima vez que o app iniciar.",
       "restart": "A importação não pôde ser desfeita por completo. O app vai reiniciar para terminar com segurança."
+    },
+    "focusClose": {
+      "message": "Há uma tarefa contando.",
+      "pauseAndQuit": "Pausar e sair",
+      "cancel": "Cancelar"
     }
   },
   "files": {

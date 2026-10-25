@@ -1084,9 +1084,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes com fakes: sem tarefa contando fecha direto; `Cancelar` mantém aberto; `Pausar e sair` fecha depois da resposta ou depois de 3 s sem resposta
-- [ ] Gate check passes: Full (desktop)
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Testes com fakes: sem tarefa contando fecha direto; `Cancelar` mantém aberto; `Pausar e sair` fecha depois da resposta ou depois de 3 s sem resposta
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

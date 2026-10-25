@@ -248,6 +248,11 @@
       "importFailed": "The import failed",
       "cleanupWarning": "Some temporary files could not be removed; they are cleaned up the next time the app starts.",
       "restart": "The import could not be undone cleanly. The app will restart to finish it safely."
+    },
+    "focusClose": {
+      "message": "A task is running.",
+      "pauseAndQuit": "Pause and quit",
+      "cancel": "Cancel"
     }
   },
   "files": {

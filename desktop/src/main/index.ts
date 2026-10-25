@@ -8,6 +8,7 @@ import { APP_ORIGIN, APP_SCHEME, createAppHandler } from './app-protocol'
 import { createConfigStore } from './config-store'
 import { createDeepLinkHandler, setupDeepLinks } from './deep-link'
 import { createDownloadHandler } from './downloads'
+import { focusCloseStrings, registerFocusClose } from './focus-close'
 import { type ChildLike, createLocalBackend } from './local-backend'
 import { trustedHandle } from './ipc'
 import { buildMenuTemplate, DOCS_URL, menuStrings, transferStrings } from './menu'
@@ -140,9 +141,6 @@ function start() {
       openExternal: (url) => openExternalSafely(url, (target) => shell.openExternal(target)),
     })
     trustedHandle(ipcMain, IPC.startSso, () => sso.start())
-    // The focus bridge (SYNC-08): received here, not yet read by anything in the main process.
-    trustedHandle(ipcMain, IPC.focusState, () => undefined)
-    trustedHandle(ipcMain, IPC.focusPauseRequest, () => undefined)
     denyAllPermissions(session.defaultSession)
     session.defaultSession.on(
       'will-download',
@@ -172,9 +170,15 @@ function start() {
 
     // The window closing quits the app; the backend gets to close its database first (five seconds at most).
     let quitting = false
+    let focusClose: ReturnType<typeof registerFocusClose> | null = null
     app.on('before-quit', (event) => {
       if (quitting) return
       event.preventDefault()
+      // Quitting from the menu while a task counts goes through the window's close dialog first (SYNC-08).
+      if (mainWindow && focusClose?.running()) {
+        mainWindow.close()
+        return
+      }
       quitting = true
       void stopLocal().finally(() => app.quit())
     })
@@ -235,6 +239,12 @@ function start() {
     mainWindow.on('closed', () => {
       mainWindow = null
     })
+    focusClose = registerFocusClose(mainWindow, {
+      strings: focusCloseStrings(app.getLocale()),
+      showMessageBox: (options) => (mainWindow ? dialog.showMessageBox(mainWindow, options) : dialog.showMessageBox(options)),
+    })
+    trustedHandle(ipcMain, IPC.focusState, (_event, state: unknown) => focusClose?.reportState(state))
+    trustedHandle(ipcMain, IPC.focusPauseRequest, () => focusClose?.pauseAnswered())
     // A page loaded after the download finished still shows the banner.
     mainWindow.webContents.on('did-finish-load', () => {
       if (exporting) mainWindow?.webContents.send(IPC.exportState, { exporting: true })
