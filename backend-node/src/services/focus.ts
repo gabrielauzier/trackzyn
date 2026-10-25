@@ -244,7 +244,7 @@ export function skipFocus(
     const { task, open } = await focusedTask(tx, context, payload.taskId)
     if ((await todayTasks(tx, task.listId)).length <= 1) throw invalidTransition()
     if (open) await endSession(tx, open, context.at, 'skip')
-    await moveTask(tx, task.id, context.workspaceId, { column: 'today', beforeTaskId: null }, context.at)
+    await moveTask(tx, task.id, context.workspaceId, { column: 'today', beforeTaskId: null, byUserId: context.userId }, context.at)
     await startNext(tx, context, task.listId)
     return task.listId
   })
@@ -265,7 +265,7 @@ export function completeFocus(
   return applyAction(db, actor, input, now, async (tx, context) => {
     const { task, open } = await focusedTask(tx, context, payload.taskId)
     if (open) await endSession(tx, open, context.at, 'complete')
-    await moveTask(tx, task.id, context.workspaceId, { column: 'done', beforeTaskId: null }, context.at)
+    await moveTask(tx, task.id, context.workspaceId, { column: 'done', beforeTaskId: null, byUserId: context.userId }, context.at)
     await startNext(tx, context, task.listId)
     return task.listId
   })

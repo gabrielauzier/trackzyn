@@ -79,6 +79,7 @@ export function taskRoutes(ctx: AppContext) {
           title: request.body.title,
           estimateMinutes: request.body.estimate_minutes ?? null,
           column: request.body.column,
+          userId: request.workspace.user.id,
         })
         return reply.code(201).send(toTaskRead(task))
       },
@@ -125,6 +126,7 @@ export function taskRoutes(ctx: AppContext) {
           await moveTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
             column: request.body.column,
             beforeTaskId: request.body.before_task_id?.toLowerCase() ?? null,
+            byUserId: request.workspace.user.id,
           }),
         ),
     )

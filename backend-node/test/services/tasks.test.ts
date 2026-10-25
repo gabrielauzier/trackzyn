@@ -14,12 +14,13 @@ let client: PGlite
 let workspaceId: string
 let otherWorkspaceId: string
 let listId: string
+let userId: string
 
 const NOW = new Date('2026-10-24T15:00:00Z')
 
 beforeEach(async () => {
   ;({ db, client } = await migratedDb())
-  const userId = randomUUID()
+  userId = randomUUID()
   await db.insert(users).values({ id: userId, email: 'a@b.c', hashedPassword: 'x', isActive: true, isSuperuser: false, isVerified: true })
   workspaceId = randomUUID()
   otherWorkspaceId = randomUUID()
@@ -34,7 +35,7 @@ afterEach(async () => {
 })
 
 const add = (title: string, column: TaskColumn = 'backlog', estimateMinutes: number | null = null) =>
-  createTask(db, workspaceId, { listId, title, estimateMinutes, column }, NOW)
+  createTask(db, workspaceId, { listId, title, estimateMinutes, column, userId }, NOW)
 
 async function column(name: TaskColumn) {
   return db
@@ -89,7 +90,7 @@ describe('tasks service', () => {
     const x = await add('x', 'today')
     const y = await add('y', 'today')
 
-    const moved = await moveTask(db, a.id, workspaceId, { column: 'today', beforeTaskId: y.id }, NOW)
+    const moved = await moveTask(db, a.id, workspaceId, { column: 'today', beforeTaskId: y.id, byUserId: userId }, NOW)
     expect(moved).toMatchObject({ column: 'today', position: 1, completedAt: null })
     expect(await column('today')).toEqual([
       { title: 'x', position: 0 },
@@ -101,30 +102,30 @@ describe('tasks service', () => {
       { title: 'c', position: 1 },
     ])
 
-    await moveTask(db, x.id, workspaceId, { column: 'today', beforeTaskId: null }, NOW)
+    await moveTask(db, x.id, workspaceId, { column: 'today', beforeTaskId: null, byUserId: userId }, NOW)
     expect((await column('today')).map((row) => row.title)).toEqual(['a', 'y', 'x'])
   })
 
   it('BOARD-07 moving a task to done records completed_at = now', async () => {
     const task = await add('finish me', 'today')
-    const done = await moveTask(db, task.id, workspaceId, { column: 'done', beforeTaskId: null }, NOW)
+    const done = await moveTask(db, task.id, workspaceId, { column: 'done', beforeTaskId: null, byUserId: userId }, NOW)
     expect(done).toMatchObject({ column: 'done', completedAt: NOW })
   })
 
   it('BOARD-08 moving a task from done to today clears completed_at and keeps the task', async () => {
     const task = await add('reopen me', 'today', 25)
-    await moveTask(db, task.id, workspaceId, { column: 'done', beforeTaskId: null }, NOW)
-    const reopened = await moveTask(db, task.id, workspaceId, { column: 'today', beforeTaskId: null }, NOW)
+    await moveTask(db, task.id, workspaceId, { column: 'done', beforeTaskId: null, byUserId: userId }, NOW)
+    const reopened = await moveTask(db, task.id, workspaceId, { column: 'today', beforeTaskId: null, byUserId: userId }, NOW)
     expect(reopened).toMatchObject({ id: task.id, title: 'reopen me', estimateMinutes: 25, column: 'today', completedAt: null })
   })
 
   it('reordering inside done keeps the original completion time', async () => {
     const first = await add('first', 'today')
     const second = await add('second', 'today')
-    await moveTask(db, first.id, workspaceId, { column: 'done', beforeTaskId: null }, NOW)
-    await moveTask(db, second.id, workspaceId, { column: 'done', beforeTaskId: null }, NOW)
+    await moveTask(db, first.id, workspaceId, { column: 'done', beforeTaskId: null, byUserId: userId }, NOW)
+    await moveTask(db, second.id, workspaceId, { column: 'done', beforeTaskId: null, byUserId: userId }, NOW)
     const later = new Date('2026-10-24T18:00:00Z')
-    const reordered = await moveTask(db, second.id, workspaceId, { column: 'done', beforeTaskId: first.id }, later)
+    const reordered = await moveTask(db, second.id, workspaceId, { column: 'done', beforeTaskId: first.id, byUserId: userId }, later)
     expect(reordered).toMatchObject({ position: 0, completedAt: NOW })
   })
 
@@ -135,8 +136,8 @@ describe('tasks service', () => {
     const d = await add('d', 'today')
 
     await Promise.all([
-      moveTask(db, d.id, workspaceId, { column: 'today', beforeTaskId: a.id }, NOW),
-      moveTask(db, d.id, workspaceId, { column: 'today', beforeTaskId: c.id }, NOW),
+      moveTask(db, d.id, workspaceId, { column: 'today', beforeTaskId: a.id, byUserId: userId }, NOW),
+      moveTask(db, d.id, workspaceId, { column: 'today', beforeTaskId: c.id, byUserId: userId }, NOW),
     ])
     expect(await column('today')).toEqual([
       { title: 'a', position: 0 },
@@ -159,10 +160,10 @@ describe('tasks service', () => {
     const other = await add('other', 'backlog')
     await expect404(getTask(db, task.id, otherWorkspaceId))
     await expect404(updateTask(db, task.id, otherWorkspaceId, { title: 'x' }))
-    await expect404(moveTask(db, task.id, otherWorkspaceId, { column: 'done', beforeTaskId: null }, NOW))
+    await expect404(moveTask(db, task.id, otherWorkspaceId, { column: 'done', beforeTaskId: null, byUserId: userId }, NOW))
     await expect404(deleteTask(db, task.id, otherWorkspaceId))
-    await expect404(createTask(db, otherWorkspaceId, { listId, title: 't', estimateMinutes: null, column: 'today' }, NOW), 'List not found')
-    await expect404(moveTask(db, task.id, workspaceId, { column: 'today', beforeTaskId: other.id }, NOW))
+    await expect404(createTask(db, otherWorkspaceId, { listId, title: 't', estimateMinutes: null, column: 'today', userId }, NOW), 'List not found')
+    await expect404(moveTask(db, task.id, workspaceId, { column: 'today', beforeTaskId: other.id, byUserId: userId }, NOW))
     expect(await getTask(db, task.id, workspaceId)).toMatchObject({ title: 'mine', column: 'today', completedAt: null })
   })
 })

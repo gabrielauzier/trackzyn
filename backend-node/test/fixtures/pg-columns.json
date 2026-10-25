@@ -305,6 +305,12 @@
       "type": "timestamp with time zone",
       "nullable": false,
       "maxLength": null
+    },
+    {
+      "column": "completed_by_user_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
     }
   ],
   "user_passkeys": [

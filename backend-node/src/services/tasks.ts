@@ -36,7 +36,8 @@ async function lockList(tx: Database, listId: string): Promise<void> {
 export async function createTask(
   db: Database,
   workspaceId: string,
-  input: { listId: string; title: string; estimateMinutes: number | null; column: TaskColumn },
+  /** `userId` is who creates the task: a task created in done counts as completed by them (AD-006). */
+  input: { listId: string; title: string; estimateMinutes: number | null; column: TaskColumn; userId: string },
   now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const list = await getList(db, input.listId, workspaceId)
@@ -56,6 +57,7 @@ export async function createTask(
       position: last?.next ?? 0,
       completedAt: input.column === 'done' ? now : null,
       createdAt: now,
+      completedByUserId: input.column === 'done' ? input.userId : null,
     }
     await tx.insert(tasks).values(task)
     return { ...task, subtasks: [] }
@@ -76,14 +78,15 @@ export async function updateTask(
 
 /**
  * Puts the task in `column`, right before `beforeTaskId` (or at the end for null), and renumbers the
- * columns it left and entered from 0 to n-1. Entering `done` records `completed_at = now`; leaving it clears it.
+ * columns it left and entered from 0 to n-1. Entering `done` records `completed_at = now` and
+ * `completed_by_user_id = byUserId` (AD-006); leaving it clears both, and moving inside `done` keeps them.
  * A task that is not in `today` afterwards loses its open focus session, ended at `now` (FOCUS-15).
  */
 export async function moveTask(
   db: Database,
   taskId: string,
   workspaceId: string,
-  target: { column: TaskColumn; beforeTaskId: string | null },
+  target: { column: TaskColumn; beforeTaskId: string | null; byUserId: string },
   now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const task = await findTask(db, taskId, workspaceId)
@@ -112,8 +115,10 @@ export async function moveTask(
     }
     entered.splice(at, 0, current.id)
 
-    const completedAt = target.column !== 'done' ? null : current.column === 'done' ? current.completedAt : now
-    await tx.update(tasks).set({ column: target.column, completedAt }).where(eq(tasks.id, current.id))
+    const stays = current.column === 'done'
+    const completedAt = target.column !== 'done' ? null : stays ? current.completedAt : now
+    const completedByUserId = target.column !== 'done' ? null : stays ? current.completedByUserId : target.byUserId
+    await tx.update(tasks).set({ column: target.column, completedAt, completedByUserId }).where(eq(tasks.id, current.id))
     if (target.column !== 'today') await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
     for (const [position, id] of entered.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
     if (current.column !== target.column) {

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { type User, inWorkspace, ownerViewerStranger } from '../support/roles.ts'
+import { type User, completedBy, inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, createTestApp } from '../support/test-app.ts'
 
 let t: TestApp
@@ -223,6 +223,15 @@ describe('POST /api/focus/complete', () => {
     expect(twice.statusCode).toBe(409)
     expect(twice.json()).toMatchObject({ code: 'invalid_transition' })
     expect((await call('GET', `/api/tasks/${taskA}`, owner.token, workspaceId)).json().completed_at).toBe(body.occurred_at)
+  })
+})
+
+describe('POST /api/focus/complete by another member', () => {
+  it('AD-006 records the member who completed the task in focus, not the owner of the list', async () => {
+    const editor = await invite(t, owner.token, workspaceId, 'editor')
+    expect((await post('start', action({ task_id: taskA, occurred_at: ago(5) }), editor.token)).statusCode).toBe(200)
+    expect((await post('complete', action({ task_id: taskA }), editor.token)).statusCode).toBe(200)
+    expect(await completedBy(t, taskA)).toBe(editor.id)
   })
 })
 

@@ -28,8 +28,8 @@ beforeEach(async () => {
   ])
   const list = await createList(db, { workspaceId, userId, name: 'Work', color: 1 })
   const otherList = await createList(db, { workspaceId: otherWorkspaceId, userId, name: 'Theirs', color: 1 })
-  taskId = (await createTask(db, workspaceId, { listId: list.id, title: 'Write', estimateMinutes: null, column: 'today' })).id
-  otherTaskId = (await createTask(db, otherWorkspaceId, { listId: otherList.id, title: 'Theirs', estimateMinutes: null, column: 'today' })).id
+  taskId = (await createTask(db, workspaceId, { listId: list.id, title: 'Write', estimateMinutes: null, column: 'today', userId })).id
+  otherTaskId = (await createTask(db, otherWorkspaceId, { listId: otherList.id, title: 'Theirs', estimateMinutes: null, column: 'today', userId })).id
 })
 afterEach(async () => {
   await client.close()

@@ -24,7 +24,7 @@ describe('FOCUS-15 the focused task leaves Today', () => {
     const taskId = await seed.addTask({ estimate: 60 })
     const id = await seed.addSession({ taskId, startedAt: T0, deadlineAt: at(T0, 60) })
 
-    await moveTask(db, taskId, seed.workspaceId, { column: 'this_week', beforeTaskId: null }, at(T0, 12, 5))
+    await moveTask(db, taskId, seed.workspaceId, { column: 'this_week', beforeTaskId: null, byUserId: seed.userId }, at(T0, 12, 5))
 
     expect(await seed.session(id)).toMatchObject({ endedAt: at(T0, 12, 5), endReason: 'task_left' })
   })
@@ -33,7 +33,7 @@ describe('FOCUS-15 the focused task leaves Today', () => {
     const taskId = await seed.addTask({ estimate: null })
     const id = await seed.addSession({ taskId, startedAt: T0 })
 
-    await moveTask(db, taskId, seed.workspaceId, { column: 'done', beforeTaskId: null }, at(T0, 7))
+    await moveTask(db, taskId, seed.workspaceId, { column: 'done', beforeTaskId: null, byUserId: seed.userId }, at(T0, 7))
 
     expect(await seed.session(id)).toMatchObject({ endedAt: at(T0, 7), endReason: 'task_left' })
   })
@@ -43,7 +43,7 @@ describe('FOCUS-15 the focused task leaves Today', () => {
     const other = await seed.addTask({ estimate: 30 })
     const id = await seed.addSession({ taskId: focused, startedAt: T0, deadlineAt: at(T0, 60) })
 
-    await moveTask(db, other, seed.workspaceId, { column: 'backlog', beforeTaskId: null }, at(T0, 5))
+    await moveTask(db, other, seed.workspaceId, { column: 'backlog', beforeTaskId: null, byUserId: seed.userId }, at(T0, 5))
 
     expect(await seed.session(id)).toMatchObject({ endedAt: null, endReason: null })
   })
@@ -53,7 +53,7 @@ describe('FOCUS-15 the focused task leaves Today', () => {
     await seed.addTask({ estimate: 30 })
     const id = await seed.addSession({ taskId: focused, startedAt: T0, deadlineAt: at(T0, 60) })
 
-    await moveTask(db, focused, seed.workspaceId, { column: 'today', beforeTaskId: null }, at(T0, 5))
+    await moveTask(db, focused, seed.workspaceId, { column: 'today', beforeTaskId: null, byUserId: seed.userId }, at(T0, 5))
 
     expect(await seed.session(id)).toMatchObject({ endedAt: null, endReason: null })
   })
@@ -62,7 +62,7 @@ describe('FOCUS-15 the focused task leaves Today', () => {
     const taskId = await seed.addTask({ estimate: 30 })
     const id = await seed.addSession({ taskId, startedAt: T0, deadlineAt: at(T0, 30) })
 
-    await moveTask(db, taskId, seed.workspaceId, { column: 'this_week', beforeTaskId: null }, at(T0, 45))
+    await moveTask(db, taskId, seed.workspaceId, { column: 'this_week', beforeTaskId: null, byUserId: seed.userId }, at(T0, 45))
 
     expect(await seed.session(id)).toMatchObject({ endedAt: at(T0, 30), endReason: 'estimate' })
   })

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { type User, inWorkspace, ownerViewerStranger } from '../support/roles.ts'
+import { type User, completedBy, inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, createTestApp } from '../support/test-app.ts'
 
 let t: TestApp
@@ -150,6 +150,26 @@ describe('POST /api/tasks/:id/move', () => {
     expect(Date.parse(done.json().completed_at)).not.toBeNaN()
     const back = await call('POST', `/api/tasks/${taskId}/move`, owner.token, workspaceId, { column: 'today', before_task_id: null })
     expect(back.json()).toMatchObject({ id: taskId, column: 'today', completed_at: null, estimate_minutes: 30 })
+  })
+
+  it('AD-006 records who moved the task to done, keeps it when reordered inside done and clears it on the way back', async () => {
+    const { owner, workspaceId, listId, taskId } = await setup()
+    const editor = await invite(t, owner.token, workspaceId, 'editor')
+    expect(await completedBy(t, taskId)).toBeNull()
+
+    const done = await call('POST', `/api/tasks/${taskId}/move`, editor.token, workspaceId, { column: 'done', before_task_id: null })
+    expect(done.statusCode).toBe(200)
+    expect(await completedBy(t, taskId)).toBe(editor.id)
+
+    const created = await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Already done', column: 'done' })
+    expect(created.statusCode).toBe(201)
+    expect(await completedBy(t, created.json().id)).toBe(owner.id)
+    await call('POST', `/api/tasks/${taskId}/move`, owner.token, workspaceId, { column: 'done', before_task_id: created.json().id })
+    expect(await completedBy(t, taskId)).toBe(editor.id)
+
+    const back = await call('POST', `/api/tasks/${taskId}/move`, owner.token, workspaceId, { column: 'today', before_task_id: null })
+    expect(back.statusCode).toBe(200)
+    expect(await completedBy(t, taskId)).toBeNull()
   })
 
   it('BOARD-03 moves a task before another one and keeps the order on the next read', async () => {

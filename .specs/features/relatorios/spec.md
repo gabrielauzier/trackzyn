@@ -143,7 +143,7 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | REPORT-06 | P2: Visão geral | Tasks | In Tasks |
 | REPORT-07 | P2: Visão geral | Tasks | In Tasks |
 | REPORT-08 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-09 | P2: Visão geral | Tasks | In Tasks |
+| REPORT-09 | P2: Visão geral | Tasks | Implementing |
 | REPORT-10 | P2: Visão geral | Tasks | In Tasks |
 | REPORT-11 | P2: Visão geral | Tasks | In Tasks |
 | REPORT-12 | P2: Visão geral | Tasks | In Tasks |

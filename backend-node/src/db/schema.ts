@@ -153,9 +153,12 @@ export const tasks = pgTable(
     position: integer('position').notNull(),
     completedAt: timestamp('completed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    /** Who moved the task to done (AD-006); the reports count only the reader's completions. */
+    completedByUserId: uuid('completed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
   },
   (t) => [
     index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
+    check('ck_tasks_completed_by_done', sql`${t.column} = 'done' OR ${t.completedByUserId} IS NULL`),
     check('ck_tasks_column', sql`${t.column} IN ('backlog', 'this_week', 'today', 'done')`),
     check('ck_tasks_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
     check('ck_tasks_done_completed_at', sql`(${t.column} = 'done') = (${t.completedAt} IS NOT NULL)`),

@@ -89,11 +89,15 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Concluir pelo quadro e pelo foco grava o id de quem fez a requisição; arrastar de volta limpa
-- [ ] Excluir o usuário deixa a coluna nula; a CHECK recusa valor fora de `done`
-- [ ] Tarefas já concluídas antes da migration ficam com a coluna nula
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Concluir pelo quadro e pelo foco grava o id de quem fez a requisição; arrastar de volta limpa
+- [x] Excluir o usuário deixa a coluna nula; a CHECK recusa valor fora de `done`
+- [x] Tarefas já concluídas antes da migration ficam com a coluna nula
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: A coluna também é gravada ao criar uma tarefa direto em `done` (`POST /api/tasks`), porque isso também é uma conclusão. `moveTask` recebe `byUserId` no alvo e `createTask` recebe `userId`, ambos obrigatórios; os testes que já chamavam essas funções passaram a informar o usuário. Reordenar dentro de `done` mantém quem concluiu.
 
 **Tests**: integration
 **Gate**: full
