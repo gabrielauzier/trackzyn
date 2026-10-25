@@ -238,9 +238,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes com e sem `window.trackzyn` falso
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes com e sem `window.trackzyn` falso
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: `isDesktop` é reexportado de `lib/platform.ts`. `useWidgetOpen` guarda o último `widget:state` num estado do módulo, ouvido uma vez por ponte, para uma tela montada depois da abertura do widget já saber que ele está aberto.
 
 **Tests**: unit
 **Gate**: quick
