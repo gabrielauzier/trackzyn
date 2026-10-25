@@ -367,9 +367,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: três séries com os rótulos certos; `Total` = tarefas + intervalos; vazio mostra o texto
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: três séries com os rótulos certos; `Total` = tarefas + intervalos; vazio mostra o texto
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O gráfico usa o `BarChart` agrupado (não empilhado, como no print) com a paleta padrão, e os valores em horas para o eixo ter marcas redondas; o tooltip e o eixo mostram `formatDuration`. Uma tabela visível só para leitores de tela (`Tempo por dia`) repete os números, como pede a skill `dataviz`, e é por ela que o teste confere `Total` = tarefas + intervalos. Um dia com só intervalo conta como atividade, porque intervalo também é sessão (REPORT-12). O dia aparece como `seg., 19 de out.`.
 
 **Tests**: unit
 **Gate**: quick
