@@ -277,9 +277,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: num domingo, o período começa na segunda anterior; numa segunda, começa e termina no mesmo dia; 1, 2 e 3 valores empatados
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: num domingo, o período começa na segunda anterior; numa segunda, começa e termina no mesmo dia; 1, 2 e 3 valores empatados
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O "hoje" vem de `todayInTimezone` com o fuso do workspace, e `now` tem valor padrão (testado com relógio falso, L-008). Os empates são unidos com `Intl.ListFormat` (`Segunda, quarta e sexta`). Escolhas onde a spec é omissa: a faixa das 23h é `23–24h`; em inglês a hora segue o print (`6–7 PM`, `11 AM–12 PM`) e o dia vem por extenso (`Monday and Wednesday`); o mês segue o `Intl` (`out. de 2026`, `Oct 2026`) e só o dia da semana ganha maiúscula. Sem valores, `—`.
 
 **Tests**: unit
 **Gate**: quick
