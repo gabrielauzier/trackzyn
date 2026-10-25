@@ -4,7 +4,9 @@
  */
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './app-layout'
+import FocusPage from '@/pages/focus'
 import { renderWithProviders, t } from '@/test/utils'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
@@ -13,6 +15,7 @@ import type { FocusState } from '@/types'
 
 const state = vi.hoisted(() => ({
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
+  lists: { list: vi.fn(async () => ({ timezone: 'America/Sao_Paulo', lists: [] })) },
   user: {
     email: 'synthetic@example.com',
     is_2fa_enabled: true,
@@ -64,6 +67,7 @@ vi.mock('@/lib/api', () => ({
   workspaces: { create: vi.fn() },
   info: { get: async () => ({ features: {} }) },
   focus: state.focus,
+  lists: state.lists,
   authHeaders: () => ({ Authorization: 'Bearer token-123' }),
 }))
 vi.mock('@/lib/webauthn', () => ({
@@ -71,6 +75,7 @@ vi.mock('@/lib/webauthn', () => ({
   passkeyFailure: () => 'unknown',
   startPasskeyRegistration: vi.fn(),
 }))
+vi.mock('@/lib/sounds/synth', () => ({ play: vi.fn() }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('next-themes', () => ({ useTheme: () => ({ theme: 'light', setTheme: vi.fn() }) }))
 vi.mock('@/components/command-palette', () => ({ CommandPalette: () => null }))
@@ -275,6 +280,44 @@ describe('app layout focus guard', () => {
     expect(url).toBe('/api/focus/pause')
     expect(init).toMatchObject({ method: 'POST', keepalive: true })
     expect(JSON.parse(init.body as string)).toMatchObject({ device_id: deviceId() })
+  })
+})
+
+describe('app layout on the focus page (SYNC-10)', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('shares the focus read of the page and sends one heartbeat per minute', async () => {
+    vi.useFakeTimers()
+    state.canWrite = true
+    state.focus.get.mockResolvedValue(focusState(true))
+    state.focus.heartbeat.mockResolvedValue(focusState(true))
+    renderWithProviders(
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/focus/:listId" element={<FocusPage />} />
+        </Route>
+      </Routes>,
+      { route: `/focus/${LIST}` },
+    )
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(screen.getByRole('timer')).toBeInTheDocument()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000)
+    })
+    expect(state.focus.heartbeat).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000)
+    })
+    expect(state.focus.heartbeat).toHaveBeenCalledTimes(2)
+
+    expect(state.focus.get).toHaveBeenCalledWith(LIST)
+    expect(state.focus.get).not.toHaveBeenCalledWith(undefined)
+    expect(state.focus.send).not.toHaveBeenCalled()
   })
 })
 
