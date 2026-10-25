@@ -427,9 +427,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: uma lista com 16h 52min e 10min de intervalo → cabeçalho `1 lista, Tempo total: 17h 2min` e fatias de 99% e 1%; duas listas → `2 listas`; porcentagens somam 100
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: uma lista com 16h 52min e 10min de intervalo → cabeçalho `1 lista, Tempo total: 17h 2min` e fatias de 99% e 1%; duas listas → `2 listas`; porcentagens somam 100
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O `DonutChart` arredondava cada fatia sozinha, e três fatias iguais davam 99%. Ganhou a prop opcional `shares` (porcentagens inteiras em ordem); o relatório as calcula pelo maior resto, e as porcentagens somam 100. Cada lista usa a própria cor (`--chart-N`) e `Intervalos` usa o cinza `--muted-foreground`. Escolhas onde a spec é omissa: a fatia `Intervalos` aparece mesmo com 0min, e só com intervalos o cabeçalho diz `0 listas, Tempo total: 10min`. Sem sessão, `Sem atividade no período` no lugar da rosca.
 
 **Tests**: unit
 **Gate**: quick

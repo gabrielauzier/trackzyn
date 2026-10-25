@@ -592,6 +592,14 @@
       "hour": "Most productive hour",
       "weekday": "Most productive day",
       "month": "Most productive month"
+    },
+    "byList": {
+      "title": "Time by list",
+      "breaks": "Breaks",
+      "listCount_zero": "0 lists",
+      "listCount_one": "{{count}} list",
+      "listCount_other": "{{count}} lists",
+      "summary": "{{lists}}, Total time: {{total}}"
     }
   }
 }

@@ -592,6 +592,14 @@
       "hour": "Hora mais produtiva",
       "weekday": "Dia mais produtivo",
       "month": "Mês mais produtivo"
+    },
+    "byList": {
+      "title": "Tempo por lista",
+      "breaks": "Intervalos",
+      "listCount_zero": "0 listas",
+      "listCount_one": "{{count}} lista",
+      "listCount_other": "{{count}} listas",
+      "summary": "{{lists}}, Tempo total: {{total}}"
     }
   }
 }

@@ -17,6 +17,8 @@ export interface DonutChartProps {
   centerLabel?: string
   size?: number
   valueFormatter?: ValueFormatter
+  /** Whole percentages per slice, in order, when they must add up to 100; by default each slice is rounded on its own. */
+  shares?: number[]
 }
 
 /**
@@ -30,6 +32,7 @@ export function DonutChart({
   centerLabel,
   size = 200,
   valueFormatter = defaultFormatter,
+  shares,
 }: DonutChartProps) {
   const total = data.reduce((sum, d) => sum + d.value, 0)
   const colorOf = (d: DonutSlice, i: number) => d.color ?? SERIES_COLORS[i % SERIES_COLORS.length]
@@ -71,7 +74,7 @@ export function DonutChart({
               <span className="flex-1 truncate text-muted-foreground">{d.label}</span>
               <span className="tabular-nums font-medium">{valueFormatter(d.value)}</span>
               <span className="w-12 text-right tabular-nums text-xs text-muted-foreground">
-                {total > 0 ? `${((d.value / total) * 100).toFixed(0)}%` : '—'}
+                {shares ? `${shares[i]}%` : total > 0 ? `${((d.value / total) * 100).toFixed(0)}%` : '—'}
               </span>
             </li>
           ))}
