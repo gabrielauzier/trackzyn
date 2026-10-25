@@ -215,9 +215,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: `from` depois de `to` → 422; período de 367 dias → 422 e de 366 → 200; `list_id` de outro workspace → 404; um `viewer` lê o próprio relatório
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Testes: `from` depois de `to` → 422; período de 367 dias → 422 e de 366 → 200; `list_id` de outro workspace → 404; um `viewer` lê o próprio relatório
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: `from` e `to` são obrigatórios (`YYYY-MM-DD`); o período padrão da REPORT-01 fica com o cliente (T6). O 422 de período vem no formato das outras validações, em `loc: ['query', 'to']`. Os testes de limite (invertido, 367 e 366 dias) rodam nas duas rotas. As rotas usam o padrão de `routes/board.ts` (só leitura), não o de `files.ts`.
 
 **Tests**: integration
 **Gate**: build

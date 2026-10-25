@@ -135,7 +135,7 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REPORT-01 | P2: Visão geral | Tasks | In Tasks |
+| REPORT-01 | P2: Visão geral | Tasks | Implementing |
 | REPORT-02 | P2: Visão geral | Tasks | Implementing |
 | REPORT-03 | P2: Visão geral | Tasks | Implementing |
 | REPORT-04 | P2: Visão geral | Tasks | Implementing |
@@ -147,7 +147,7 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | REPORT-10 | P2: Visão geral | Tasks | Implementing |
 | REPORT-11 | P2: Visão geral | Tasks | Implementing |
 | REPORT-12 | P2: Visão geral | Tasks | Implementing |
-| REPORT-13 | P2: Visão geral | Tasks | In Tasks |
+| REPORT-13 | P2: Visão geral | Tasks | Implementing |
 | REPORT-14 | P2: Antes ou depois da estimativa | Tasks | Implementing |
 | REPORT-15 | P2: Antes ou depois da estimativa | Tasks | Implementing |
 | REPORT-16 | P2: Antes ou depois da estimativa | Tasks | Implementing |
