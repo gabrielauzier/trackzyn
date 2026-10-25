@@ -21,6 +21,11 @@ export function expandFocus(reason?: 'task_left'): Promise<void> {
   return isDesktop() ? getDesktopApi().expandFocus(reason) : Promise.resolve()
 }
 
+/** Grows the widget for the notes field or shrinks it back; nothing in the browser. */
+export function resizeWidget(mode: 'compact' | 'notes'): Promise<void> {
+  return isDesktop() ? getDesktopApi().resizeWidget(mode) : Promise.resolve()
+}
+
 // The last widget state the main process sent. Listened to once per bridge and kept, so a screen that
 // mounts after the widget opened still knows it is open.
 let source: TrackzynApi | null = null

@@ -328,9 +328,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes: abrir pede `notes`; `blur` envia o texto e pede `compact`; texto acima de 10 000 bloqueia
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: abrir pede `notes`; `blur` envia o texto e pede `compact`; texto acima de 10 000 bloqueia
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: As anotações vêm de `useTask` (`GET /api/tasks/:id`), porque o estado do foco não as traz. Salvar invalida `['lists']`, a chave de `useTask`, para o diálogo da tarefa mostrar o mesmo texto. Sem mudança, o `blur` não envia nada e só volta a `compact`. Se o servidor recusa, o erro aparece e o campo fica aberto com o texto (a spec não diz). `resizeWidget` entrou em `lib/desktop/focus-window.ts`, e `api.test.ts` ganhou a prova HTTP de `tasks.get` e `tasks.update` (L-007).
 
 **Tests**: unit
 **Gate**: quick
