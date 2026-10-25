@@ -2,7 +2,7 @@ import type { PGlite } from '@electric-sql/pglite'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
 import { HttpError } from '../../src/http/http-error.ts'
-import type { ReportFilter } from '../../src/services/reports.ts'
+import { type ReportFilter, overview } from '../../src/services/reports.ts'
 import { sessionsReport } from '../../src/services/reports-sessions.ts'
 import { migratedDb } from '../support/db.ts'
 import { seedFocus } from '../support/focus.ts'
@@ -87,6 +87,36 @@ describe('sessionsReport', () => {
     const report = await sessionsReport(db, seed.userId, workspace, WEEK, NOW)
 
     expect(report.days[0]!.sessions[0]).toMatchObject({ id, ended_at: SP('2026-10-25T11:10:00').toISOString(), seconds: 10 * M })
+  })
+
+  it('REPORT-20 lists a session crossing a period edge or midnight once, on its local start day in the period, with only its part inside the period', async () => {
+    const taskId = await seed.addTask({ title: 'Write' })
+    // Before the period until 00:30 of its first day: listed on 2026-10-19 with 30 min.
+    const before = await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-18T23:30:00'), endedAt: SP('2026-10-19T00:30:00') })
+    // Across midnight inside the period: listed once, on the start day, with the whole hour.
+    const across = await seed.addSession({ kind: 'break', startedAt: SP('2026-10-21T23:30:00'), endedAt: SP('2026-10-22T00:30:00'), plannedSeconds: 3600 })
+    // From the last day of the period until after it: listed on 2026-10-25 with 30 min.
+    const after = await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-25T23:30:00'), endedAt: SP('2026-10-26T00:30:00') })
+    const now = SP('2026-10-26T02:00:00')
+
+    const report = await sessionsReport(db, seed.userId, workspace, WEEK, now)
+
+    const row = (id: string, start: string, end: string, seconds: number) => ({
+      id,
+      started_at: SP(start).toISOString(),
+      ended_at: SP(end).toISOString(),
+      seconds,
+    })
+    expect(report.days.map((item) => ({ date: item.date, sessions: item.sessions.map(({ id, started_at, ended_at, seconds }) => ({ id, started_at, ended_at, seconds })) }))).toEqual([
+      { date: '2026-10-25', sessions: [row(after, '2026-10-25T23:30:00', '2026-10-26T00:30:00', 30 * M)] },
+      { date: '2026-10-21', sessions: [row(across, '2026-10-21T23:30:00', '2026-10-22T00:30:00', 60 * M)] },
+      { date: '2026-10-19', sessions: [row(before, '2026-10-18T23:30:00', '2026-10-19T00:30:00', 30 * M)] },
+    ])
+    // The durations add up to the overview's task and break time of the same period.
+    const { tiles, break_seconds } = await overview(db, seed.userId, workspace, WEEK, now)
+    const listed = report.days.flatMap((item) => item.sessions).reduce((total, session) => total + session.seconds, 0)
+    expect(listed).toBe(120 * M)
+    expect(tiles.task_seconds + break_seconds).toBe(listed)
   })
 
   it('REPORT-22 a period without sessions answers no days', async () => {
