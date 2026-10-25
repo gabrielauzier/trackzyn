@@ -229,6 +229,33 @@ describe('app layout focus guard', () => {
     expect(state.focus.get).toHaveBeenCalledWith(undefined)
   })
 
+  const OTHER = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+  const countingElsewhere = (): FocusState => ({ ...focusState(true), task: null, today: { pending: 0, done: 0, estimate_minutes: 0, tasks: [] } })
+
+  it('SYNC-08 on the board of another list, still tells the desktop the task counts on its own list', async () => {
+    installDesktopApi('darwin')
+    state.focus.get.mockResolvedValue(countingElsewhere())
+    renderWithProviders(<AppLayout />, { route: `/lists/${OTHER}`, path: '/lists/:listId' })
+
+    const desktop = window.trackzyn as unknown as { reportFocusState: ReturnType<typeof vi.fn> }
+    await waitFor(() => expect(desktop.reportFocusState).toHaveBeenLastCalledWith({ active: true, running: true }))
+    expect(state.focus.get).toHaveBeenCalledWith(OTHER)
+    expect(state.focus.get).not.toHaveBeenCalledWith(LIST)
+  })
+
+  it('SYNC-09 on the board of another list, closing the tab still shows the browser alert', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}')))
+    state.focus.get.mockResolvedValue(countingElsewhere())
+    renderWithProviders(<AppLayout />, { route: `/lists/${OTHER}`, path: '/lists/:listId' })
+    await waitFor(() => expect(state.focus.get).toHaveBeenCalledWith(OTHER))
+
+    await waitFor(() => {
+      const leaving = new Event('beforeunload', { cancelable: true })
+      window.dispatchEvent(leaving)
+      expect(leaving.defaultPrevented).toBe(true)
+    })
+  })
+
   it('SYNC-09 on the board, closing the tab shows the browser alert and asks the pause on leaving', async () => {
     const fetchMock = vi.fn(async () => new Response('{}'))
     vi.stubGlobal('fetch', fetchMock)

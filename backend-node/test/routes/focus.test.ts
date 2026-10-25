@@ -68,6 +68,16 @@ describe('GET /api/focus', () => {
     expect(viewers.json().task.id).toBe(taskA)
   })
 
+  it('SYNC-08 SYNC-09 read on another list, still answers the session open on its own list', async () => {
+    const other = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Home', color: 2 })).json().id as string
+    const opened = (await start(taskA)).json()
+
+    const reply = await call('GET', `/api/focus?list_id=${other}`, owner.token, workspaceId)
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json().session).toMatchObject({ id: opened.session.id, kind: 'task', task_id: taskA, list_id: listId, device_id: 'A' })
+    expect(reply.json().today).toMatchObject({ pending: 0, tasks: [] })
+  })
+
   it('answers 422 for a list_id that is not a UUID and 404 for a list of another workspace, with server_now', async () => {
     const invalid = await call('GET', '/api/focus?list_id=nope', owner.token, workspaceId)
     expect(invalid.statusCode).toBe(422)
