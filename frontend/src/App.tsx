@@ -20,6 +20,7 @@ const HomePage = lazy(() => import('@/pages/home'))
 const ArchivedListsPage = lazy(() => import('@/pages/archived-lists'))
 const ListBoardPage = lazy(() => import('@/pages/list-board'))
 const FocusPage = lazy(() => import('@/pages/focus'))
+const FocusWidgetPage = lazy(() => import('@/pages/focus-widget'))
 const FilesPage = lazy(() => import('@/pages/files'))
 const ComponentsShowcasePage = lazy(() => import('@/pages/showcase'))
 const WorkspaceSettingsPage = lazy(() => import('@/pages/workspace-settings'))
@@ -57,6 +58,15 @@ function App() {
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/auth/oidc/callback" element={<OIDCCallbackPage />} />
                       <Route path="/register" element={<RegisterPage />} />
+                      {/* The desktop focus widget: its own window, without the sidebar. */}
+                      <Route
+                        path="/widget"
+                        element={
+                          <ProtectedRoute>
+                            <FocusWidgetPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route
                         element={
                           <ProtectedRoute>

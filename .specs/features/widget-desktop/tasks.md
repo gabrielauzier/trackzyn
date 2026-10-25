@@ -358,9 +358,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes: pausar chama `notifyFocusChanged`; evento recebido refaz a consulta; tarefa sumida chama `expandFocus`; avisos da fila offline aparecem no widget
-- [ ] Gate check passes: Full (frontend)
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: pausar chama `notifyFocusChanged`; evento recebido refaz a consulta; tarefa sumida chama `expandFocus`; avisos da fila offline aparecem no widget
+- [x] Gate check passes: Full (frontend)
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O widget não monta o `FocusGuard`. Ele só existe com a janela principal aberta (minimizada), e o guarda dela continua a informar o foco para o diálogo de fechar (SYNC-08) e a perguntar pela sessão travada ao abrir (SYNC-11); duas janelas informando se sobrescreveriam. Um teste prova que o widget não chama `reportFocusState` nem `onPauseRequest`, e `App.test.tsx` prova `/widget` sem o menu lateral e o login sem sessão. Uma tarefa pausada não tem sessão que diga a lista: o widget começa na lista guardada em `localStorage` (`trackzyn.focus.list`, que a tela de foco grava na T11) e segue a lista da sessão aberta. `notifyFocusChanged` sai depois de o servidor responder à ação, para a outra janela ler o estado novo. Os avisos da fila offline (recusas e o aviso das 24h, aqui dentro do widget e não em toast, que não caberia) fazem o widget crescer como nas anotações. `taskLeft` saiu de `pages/focus.tsx` para `lib/focus/task-left.ts`, para as duas telas usarem a mesma regra.
 
 **Tests**: unit
 **Gate**: full

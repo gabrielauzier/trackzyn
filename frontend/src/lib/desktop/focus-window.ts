@@ -26,6 +26,27 @@ export function resizeWidget(mode: 'compact' | 'notes'): Promise<void> {
   return isDesktop() ? getDesktopApi().resizeWidget(mode) : Promise.resolve()
 }
 
+/** Tells the other desktop window that the focus changed here (WIDGET-22); nothing in the browser. */
+export function notifyFocusChanged(): void {
+  if (isDesktop()) getDesktopApi().notifyFocusChanged()
+}
+
+/** Runs `callback` when the other desktop window changed the focus. Returns an unsubscribe. */
+export function onFocusChanged(callback: () => void): () => void {
+  return isDesktop() ? getDesktopApi().onFocusChanged(callback) : () => undefined
+}
+
+const FOCUS_LIST_KEY = 'trackzyn.focus.list'
+
+/** The list of the last focus screen of this app, so the widget shows a paused task of it. */
+export function rememberedFocusList(): string | undefined {
+  try {
+    return localStorage.getItem(FOCUS_LIST_KEY) ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
 // The last widget state the main process sent. Listened to once per bridge and kept, so a screen that
 // mounts after the widget opened still knows it is open.
 let source: TrackzynApi | null = null

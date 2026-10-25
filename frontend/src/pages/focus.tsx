@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { lists as listsApi } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
+import { taskLeft } from '@/lib/focus/task-left'
 import { useFocus } from '@/lib/focus/use-focus'
 import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
 import type { FocusState } from '@/types'
@@ -40,17 +41,6 @@ function shouldStart(state: FocusState, listId: string): boolean {
   if (session === null) return true
   if (session.device_id !== deviceId()) return true
   return session.kind === 'task' && session.list_id !== listId
-}
-
-/**
- * Whether the task the screen showed left Today without being completed: deleted, moved out of Today
- * or its list archived (FOCUS-15).
- */
-function taskLeft(before: FocusState, after: FocusState): boolean {
-  const id = before.task?.id
-  if (!id || after.task?.id === id) return false
-  if (after.today.tasks.some((task) => task.id === id)) return false
-  return after.today.done <= before.today.done
 }
 
 /** `/focus/:listId`: focus on the pending tasks of Today of the list (`03-foco.png`). */

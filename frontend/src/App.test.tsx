@@ -74,3 +74,28 @@ describe('Reopening the app (SYNC-12)', () => {
     expect(focus.send).not.toHaveBeenCalled()
   })
 })
+
+describe('The focus widget route (WIDGET-06)', () => {
+  it('/widget shows the widget alone, without the sidebar or the app guard', async () => {
+    localStorage.setItem('token', 'token-123')
+    vi.mocked(focus.get).mockImplementation(async (listId) => paused(listId))
+    window.history.replaceState(null, '', '/widget')
+
+    render(<App />)
+
+    expect(await screen.findByRole('group', { name: 'Focus widget' })).toBeInTheDocument()
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Your lists' })).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/widget')
+  })
+
+  it('/widget without a session goes to the login', async () => {
+    localStorage.removeItem('token')
+    window.history.replaceState(null, '', '/widget')
+
+    render(<App />)
+
+    await waitFor(() => expect(window.location.pathname).toBe('/login'))
+    expect(screen.queryByRole('group', { name: 'Focus widget' })).not.toBeInTheDocument()
+  })
+})
