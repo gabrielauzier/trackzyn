@@ -37,6 +37,7 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | Antes, no prazo, depois | `No prazo` (verde) quando o gasto fica a até 5% da estimativa, para mais ou para menos; abaixo disso `Xmin antes` (verde); acima `Xmin depois` (vermelho) | Decisão do usuário | y |
 | Listas arquivadas | Contam em `Todas as listas` e aparecem no filtro com o rótulo `arquivada` | Decisão do usuário | y |
 | Sessão que atravessa a meia-noite | Dividida entre os dias | Decisão do usuário | y |
+| Sessão que atravessa a meia-noite na aba Sessões | Também dividida: aparece uma vez em cada dia, com o início e o fim do pedaço daquele dia (23:30–00:00 no dia 25 e 00:00–00:30 no dia 26) e a duração do pedaço; os pedaços fora do período não aparecem | Decisão do usuário em 2026-10-25, substitui a escolha da Nota de T3 (uma vez no dia do início) | y |
 | Fuso dos dias e horas | `workspaces.timezone`; se nulo, o fuso da aplicação | Mesma regra de `listas-e-quadro` | y |
 | Exportar PDF | Diálogo de impressão do sistema com a página formatada | Decisão do usuário | y |
 | Filtro de uma lista excluída | Mostra "A lista foi excluída." e volta para `Todas as listas` | Decisão do usuário | y |

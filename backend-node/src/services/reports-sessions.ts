@@ -9,15 +9,16 @@ export interface SessionRow {
   /** Null for a break, shown as `Intervalo`. */
   task_title: string | null
   list_name: string
+  /** The start of this piece: the session is cut at each local midnight and at the period edges. */
   started_at: string
-  /** Null while the session is open (REPORT-21). */
+  /** The end of this piece; null on the last piece of an open session (REPORT-21). */
   ended_at: string | null
-  /** The part of the session inside the period; an open session counts until now. */
+  /** The length of this piece; an open session counts until now. */
   seconds: number
 }
 
 export interface SessionsReport {
-  /** By the local day the session starts in the period, the most recent day and session first. */
+  /** One row per session and local day it touches in the period, the most recent day and piece first. */
   days: Array<{ date: string; sessions: SessionRow[] }>
 }
 
@@ -32,13 +33,20 @@ export async function sessionsReport(
   const scope = await reportScope(tx, userId, workspace, filter, now)
   const found = (
     (await tx.execute(sql`
-      WITH s AS (${clippedSessions(scope, userId, workspace.id)})
-      SELECT s.id, s.kind, t.title AS task_title, l.name AS list_name,
-             (s.a AT TIME ZONE ${scope.timezone})::date::text AS date,
-             s.started_at, s.ended_at,
-             floor(extract(epoch FROM s.z - s.a))::int AS seconds
-      FROM s JOIN lists l ON l.id = s.list_id LEFT JOIN tasks t ON t.id = s.task_id
-      ORDER BY s.a DESC, s.id`)) as unknown as {
+      WITH s AS (${clippedSessions(scope, userId, workspace.id)}),
+      pieces AS (
+        SELECT s.*, d::date::text AS date,
+               greatest(s.a, d AT TIME ZONE ${scope.timezone}) AS pa,
+               least(s.z, (d + interval '1 day') AT TIME ZONE ${scope.timezone}) AS pz
+        FROM s, LATERAL generate_series(date_trunc('day', s.a AT TIME ZONE ${scope.timezone}),
+                                        s.z AT TIME ZONE ${scope.timezone}, interval '1 day') AS d
+      )
+      SELECT p.id, p.kind, t.title AS task_title, l.name AS list_name, p.date, p.pa AS started_at,
+             CASE WHEN p.pz = coalesce(p.ended_at, ${scope.now}) THEN p.ended_at ELSE p.pz END AS ended_at,
+             floor(extract(epoch FROM p.pz - p.pa))::int AS seconds
+      FROM pieces p JOIN lists l ON l.id = p.list_id LEFT JOIN tasks t ON t.id = p.task_id
+      WHERE p.pz > p.pa OR p.z = p.a
+      ORDER BY p.pa DESC, p.id`)) as unknown as {
       rows: Array<Omit<SessionRow, 'started_at' | 'ended_at'> & { date: string; started_at: string | Date; ended_at: string | Date | null }>
     }
   ).rows

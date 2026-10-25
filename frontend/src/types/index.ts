@@ -263,14 +263,15 @@ export interface ReportSession {
   kind: 'task' | 'break'
   task_title: string | null
   list_name: string
+  /** The start of the piece of this day. */
   started_at: string
-  /** Null while the session is open. */
+  /** The end of the piece of this day; null on the last piece of an open session. */
   ended_at: string | null
-  /** Only the part inside the period. */
+  /** The length of the piece of this day. */
   seconds: number
 }
 
-/** What `GET /api/reports/sessions` answers: each session once, under its local start day, most recent first. */
+/** What `GET /api/reports/sessions` answers: each session cut at local midnight, one piece per day of the period, most recent first. */
 export interface SessionsReport {
   days: { date: string; sessions: ReportSession[] }[]
 }

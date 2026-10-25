@@ -81,6 +81,19 @@ describe('sessionsReport', () => {
     ])
   })
 
+  it('REPORT-21 keeps the null end only on the last piece of an open session that crosses midnight', async () => {
+    const taskId = await seed.addTask({ title: 'Write' })
+    const id = await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-24T23:00:00') })
+    const now = SP('2026-10-25T00:20:00')
+
+    const report = await sessionsReport(db, seed.userId, workspace, WEEK, now)
+
+    expect(report.days.map((item) => ({ date: item.date, sessions: item.sessions.map(({ id, started_at, ended_at, seconds }) => ({ id, started_at, ended_at, seconds })) }))).toEqual([
+      { date: '2026-10-25', sessions: [{ id, started_at: SP('2026-10-25T00:00:00').toISOString(), ended_at: null, seconds: 20 * M }] },
+      { date: '2026-10-24', sessions: [{ id, started_at: SP('2026-10-24T23:00:00').toISOString(), ended_at: SP('2026-10-25T00:00:00').toISOString(), seconds: 60 * M }] },
+    ])
+  })
+
   it('AD-001 shows a due open session ended at its deadline', async () => {
     const id = await seed.addSession({ kind: 'break', startedAt: SP('2026-10-25T11:00:00'), plannedSeconds: 600, deadlineAt: SP('2026-10-25T11:10:00') })
 
@@ -89,13 +102,13 @@ describe('sessionsReport', () => {
     expect(report.days[0]!.sessions[0]).toMatchObject({ id, ended_at: SP('2026-10-25T11:10:00').toISOString(), seconds: 10 * M })
   })
 
-  it('REPORT-20 lists a session crossing a period edge or midnight once, on its local start day in the period, with only its part inside the period', async () => {
+  it('REPORT-20 splits a session at local midnight into one row per day of the period, with the start, end and duration of each piece', async () => {
     const taskId = await seed.addTask({ title: 'Write' })
-    // Before the period until 00:30 of its first day: listed on 2026-10-19 with 30 min.
+    // Before the period until 00:30 of its first day: only the piece of 2026-10-19, 00:00 to 00:30.
     const before = await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-18T23:30:00'), endedAt: SP('2026-10-19T00:30:00') })
-    // Across midnight inside the period: listed once, on the start day, with the whole hour.
+    // Across midnight inside the period: 23:30 to 00:00 on 2026-10-21 and 00:00 to 00:30 on 2026-10-22.
     const across = await seed.addSession({ kind: 'break', startedAt: SP('2026-10-21T23:30:00'), endedAt: SP('2026-10-22T00:30:00'), plannedSeconds: 3600 })
-    // From the last day of the period until after it: listed on 2026-10-25 with 30 min.
+    // From the last day of the period until after it: only the piece of 2026-10-25, 23:30 to 00:00.
     const after = await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-25T23:30:00'), endedAt: SP('2026-10-26T00:30:00') })
     const now = SP('2026-10-26T02:00:00')
 
@@ -108,9 +121,10 @@ describe('sessionsReport', () => {
       seconds,
     })
     expect(report.days.map((item) => ({ date: item.date, sessions: item.sessions.map(({ id, started_at, ended_at, seconds }) => ({ id, started_at, ended_at, seconds })) }))).toEqual([
-      { date: '2026-10-25', sessions: [row(after, '2026-10-25T23:30:00', '2026-10-26T00:30:00', 30 * M)] },
-      { date: '2026-10-21', sessions: [row(across, '2026-10-21T23:30:00', '2026-10-22T00:30:00', 60 * M)] },
-      { date: '2026-10-19', sessions: [row(before, '2026-10-18T23:30:00', '2026-10-19T00:30:00', 30 * M)] },
+      { date: '2026-10-25', sessions: [row(after, '2026-10-25T23:30:00', '2026-10-26T00:00:00', 30 * M)] },
+      { date: '2026-10-22', sessions: [row(across, '2026-10-22T00:00:00', '2026-10-22T00:30:00', 30 * M)] },
+      { date: '2026-10-21', sessions: [row(across, '2026-10-21T23:30:00', '2026-10-22T00:00:00', 30 * M)] },
+      { date: '2026-10-19', sessions: [row(before, '2026-10-19T00:00:00', '2026-10-19T00:30:00', 30 * M)] },
     ])
     // The durations add up to the overview's task and break time of the same period.
     const { tiles, break_seconds } = await overview(db, seed.userId, workspace, WEEK, now)

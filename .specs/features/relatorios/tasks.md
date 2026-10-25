@@ -191,7 +191,7 @@ T14 → T15
 
 **Status**: ✅ Done
 
-**Nota**: Uma sessão entra no dia local em que começa dentro do período (uma sessão que atravessa a meia-noite aparece uma vez, no dia do início). `seconds` é só a parte dentro do período. `started_at` e `ended_at` são os horários reais. Os dias e as sessões vêm do mais recente para o mais antigo. A liquidação, os limites e o filtro de lista são os mesmos da visão geral (`reportScope` e `clippedSessions`).
+**Nota**: Uma sessão é cortada em cada meia-noite local e nos limites do período: aparece uma vez em cada dia local que toca dentro do período, e os pedaços fora dele não aparecem (decisão do usuário em 2026-10-25, ver Assumptions do spec). `started_at`, `ended_at` e `seconds` são os do pedaço daquele dia: 23:30–00:00 no dia 25 e 00:00–00:30 no dia 26. Só o último pedaço de uma sessão aberta tem `ended_at` nulo. Os dias e as sessões vêm do mais recente para o mais antigo. A liquidação, os limites e o filtro de lista são os mesmos da visão geral (`reportScope` e `clippedSessions`).
 
 **Tests**: integration
 **Gate**: full
