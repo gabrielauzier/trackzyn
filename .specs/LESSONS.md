@@ -32,6 +32,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: LIST-03 frontend/src/locales/pt-BR.json (frontend/i18n)
 - last seen: 2026-10-24T16:00:37Z
 
+### L-004 - Guards that must hold while a state lasts (closing with a running task, crash recovery) belong at app level, not on one screen the user can leave.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend/hooks` · harmful: 0
+- features: foco-e-sons
+- evidence: SYNC-08 frontend/src/pages/focus.tsx:70-71 (frontend/hooks)
+- last seen: 2026-10-25T01:15:53Z
+
+### L-005 - Tests of client time sent to the server must use a non-zero clock offset, or a local clock passes for the corrected one.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/time` · harmful: 0
+- features: foco-e-sons
+- evidence: M19 frontend/src/lib/focus/use-focus.tsx:95 (frontend/time)
+- last seen: 2026-10-25T01:15:53Z
+
+### L-006 - A periodic background request must not silently resolve a state the spec says the user decides.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend/sync` · harmful: 0
+- features: foco-e-sons
+- evidence: SYNC-11 use-focus.tsx heartbeat (frontend/sync)
+- last seen: 2026-10-25T01:15:53Z
+
+### L-007 - Page tests that mock the API client never see the request it builds; test each client function's HTTP call (path, query, body) at least once.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/api` · harmful: 0
+- features: foco-e-sons
+- evidence: N12 frontend/src/lib/api.ts:377 (frontend/api)
+- last seen: 2026-10-25T01:53:09Z
+
+### L-008 - Queue tests need several entries to prove ordering, and default arguments such as the clock must be exercised without passing them by hand.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/queue` · harmful: 0
+- features: foco-e-sons
+- evidence: V1 frontend/src/lib/focus/queue.ts:61; V3 queue.ts:93 (frontend/queue)
+- last seen: 2026-10-25T02:32:53Z
+
+### L-009 - When a rule is enforced in several places (read, start, heartbeat, recover), add the exact boundary case for each place, not only the first one.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `boundaries` · harmful: 0
+- features: foco-e-sons
+- evidence: S2 backend-node/src/services/focus.ts:202; S5 optimistic.ts:158 (boundaries)
+- last seen: 2026-10-25T02:32:53Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
