@@ -119,6 +119,15 @@ describe('sessionsReport', () => {
     expect(tiles.task_seconds + break_seconds).toBe(listed)
   })
 
+  it('REPORT-20 leaves out a session starting at midnight right after the last day of the period', async () => {
+    const taskId = await seed.addTask()
+    await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-26T00:00:00'), endedAt: SP('2026-10-26T00:30:00') })
+    const now = SP('2026-10-26T02:00:00')
+
+    expect(await sessionsReport(db, seed.userId, workspace, WEEK, now)).toEqual({ days: [] })
+    expect((await overview(db, seed.userId, workspace, WEEK, now)).tiles.task_seconds).toBe(0)
+  })
+
   it('REPORT-22 a period without sessions answers no days', async () => {
     const taskId = await seed.addTask()
     await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-18T10:00:00'), endedAt: SP('2026-10-18T11:00:00') })
