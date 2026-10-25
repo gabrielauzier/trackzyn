@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, CircleCheck, House, Maximize2, Minimize2 } from 'lucide-react'
+import { ChevronDown, CircleCheck, House, Minimize2 } from 'lucide-react'
 
 import { AddTaskForm } from '@/components/board/add-task-form'
 import { formatDuration } from '@/components/board/format-duration'
@@ -19,6 +19,7 @@ import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { lists as listsApi } from '@/lib/api'
+import { type FocusRouteState, collapseFocus, isDesktop, notifyFocusChanged, rememberFocusList } from '@/lib/desktop/focus-window'
 import { deviceId } from '@/lib/focus/device-id'
 import { taskLeft } from '@/lib/focus/task-left'
 import { useFocus } from '@/lib/focus/use-focus'
@@ -48,28 +49,63 @@ export default function FocusPage() {
   const { listId = '' } = useParams()
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { canWrite } = useWorkspace()
-  const { state, display, actions, conflicts, expired } = useFocus(listId)
-  const [collapsed, setCollapsed] = useState(false)
+  const { state, display, actions: focusActions, conflicts, expired } = useFocus(listId)
   const { playComplete } = useFocusSounds(state, display)
+  // On the desktop, the widget reads the server again once an action here was answered (WIDGET-22).
+  const actions = useMemo(() => {
+    const tell = <T,>(action: Promise<T>) => {
+      void action.finally(() => notifyFocusChanged())
+      return action
+    }
+    return {
+      ...focusActions,
+      start: (taskId: string, takeover?: boolean) => tell(focusActions.start(taskId, takeover)),
+      pause: () => tell(focusActions.pause()),
+      skip: (taskId: string) => tell(focusActions.skip(taskId)),
+      complete: (taskId: string) => tell(focusActions.complete(taskId)),
+      extend: (taskId: string) => tell(focusActions.extend(taskId)),
+      takeBreak: (minutes: number) => tell(focusActions.takeBreak(minutes)),
+      endBreak: () => tell(focusActions.endBreak()),
+      retry: (actionId: string) => tell(focusActions.retry(actionId)),
+    }
+  }, [focusActions])
   // A completion made here plays its sound here, once (SOUND-01).
   const complete = (taskId: string) => {
     playComplete()
     void actions.complete(taskId)
   }
 
+  // The widget opens on this list when the task here is paused.
+  useEffect(() => {
+    if (listId) rememberFocusList(listId)
+  }, [listId])
+
   const { data: allLists } = useQuery({
     queryKey: ['lists', { archived: false }],
     queryFn: () => listsApi.list({ archived: false }),
   })
 
-  // Start once per list, on the first state the server answers.
+  // Start once per list, on the first state the server answers. Coming from `Focar agora` on the
+  // desktop, the focus then goes to the widget (WIDGET-01): once the start was answered, or at once when
+  // a task of this device already counts here.
+  const collapse = isDesktop() && (location.state as FocusRouteState | null)?.collapse === true
   const started = useRef<string | null>(null)
   useEffect(() => {
     if (!state || !canWrite || started.current === listId) return
     started.current = listId
-    if (shouldStart(state, listId)) void actions.start(state.today.tasks[0]!.id)
-  }, [state, canWrite, listId, actions])
+    const toWidget = () => {
+      navigate(location.pathname, { replace: true, state: null })
+      void collapseFocus()
+    }
+    if (shouldStart(state, listId)) {
+      const start = actions.start(state.today.tasks[0]!.id)
+      if (collapse) void start.then(toWidget)
+    } else if (collapse && state.session?.kind === 'task' && state.session.device_id === deviceId() && state.session.list_id === listId) {
+      toWidget()
+    }
+  }, [state, canWrite, listId, actions, collapse, navigate, location.pathname])
 
   // Compared while rendering, against the state the screen showed last.
   const [seen, setSeen] = useState<{ state: FocusState | null; left: boolean }>({ state: null, left: false })
@@ -118,34 +154,29 @@ export default function FocusPage() {
         <Button variant="ghost" size="icon-sm" aria-label={t('focus.page.home')} onClick={() => navigate(board)}>
           <House />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={t('focus.page.collapse')}
-          aria-pressed={collapsed}
-          onClick={() => setCollapsed((value) => !value)}
-        >
-          {collapsed ? <Maximize2 /> : <Minimize2 />}
-        </Button>
+        {/* Only the desktop has the widget to collapse into (WIDGET-02, WIDGET-24). */}
+        {isDesktop() && (
+          <Button variant="ghost" size="icon-sm" aria-label={t('focus.page.collapse')} onClick={() => void collapseFocus()}>
+            <Minimize2 />
+          </Button>
+        )}
       </header>
 
       {!state || !display || !today ? (
         <Skeleton className="h-40 w-full rounded-xl" />
       ) : (
         <>
-          {!collapsed && (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                {t('focus.page.estimate', { estimate: formatDuration(today.estimate_minutes * 60, i18n.language) })}
-              </p>
-              <div className="flex items-center gap-3">
-                <Progress value={percent} aria-label={t('board.progress', { done: today.done, total })} className="h-1.5 flex-1" />
-                <span className="text-xs whitespace-nowrap text-muted-foreground">
-                  {t('board.progress', { done: today.done, total })}
-                </span>
-              </div>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {t('focus.page.estimate', { estimate: formatDuration(today.estimate_minutes * 60, i18n.language) })}
+            </p>
+            <div className="flex items-center gap-3">
+              <Progress value={percent} aria-label={t('board.progress', { done: today.done, total })} className="h-1.5 flex-1" />
+              <span className="text-xs whitespace-nowrap text-muted-foreground">
+                {t('board.progress', { done: today.done, total })}
+              </span>
             </div>
-          )}
+          </div>
 
           {clear ? (
             <div className="flex flex-col items-center gap-2 py-10 text-sm font-medium text-muted-foreground">
@@ -167,25 +198,21 @@ export default function FocusPage() {
             <FocusControls display={display} taskId={task?.id ?? null} pending={today.pending} actions={{ ...actions, complete }} />
           )}
 
-          {!collapsed && (
-            <>
-              {others.length > 0 && (
-                <ul className="space-y-2" aria-label={t('focus.page.next')}>
-                  {others.map((item) => (
-                    <li key={item.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
-                      <span className="min-w-0 truncate">{item.title}</span>
-                      {item.estimate_minutes !== null && (
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {formatDuration(item.estimate_minutes * 60, i18n.language)}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {canWrite && <AddTaskForm listId={listId} column="today" />}
-            </>
+          {others.length > 0 && (
+            <ul className="space-y-2" aria-label={t('focus.page.next')}>
+              {others.map((item) => (
+                <li key={item.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
+                  <span className="min-w-0 truncate">{item.title}</span>
+                  {item.estimate_minutes !== null && (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {formatDuration(item.estimate_minutes * 60, i18n.language)}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
+          {canWrite && <AddTaskForm listId={listId} column="today" />}
 
           <OfflineConflicts conflicts={refused} expired={expired} onRetry={actions.retry} onDiscard={actions.discard} />
         </>

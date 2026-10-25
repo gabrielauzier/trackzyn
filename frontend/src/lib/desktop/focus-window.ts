@@ -11,6 +11,11 @@ export function windowRole(): 'main' | 'widget' {
   return isDesktop() ? getDesktopApi().windowRole : 'main'
 }
 
+/** What the board's `Focar agora` asks: on the desktop, the focus goes to the widget once it started (WIDGET-01). */
+export interface FocusRouteState {
+  collapse?: boolean
+}
+
 /** Opens the focus widget and minimizes the main window; nothing in the browser. */
 export function collapseFocus(): Promise<void> {
   return isDesktop() ? getDesktopApi().collapseFocus() : Promise.resolve()
@@ -37,6 +42,15 @@ export function onFocusChanged(callback: () => void): () => void {
 }
 
 const FOCUS_LIST_KEY = 'trackzyn.focus.list'
+
+/** Keeps the list of the focus screen for the widget, which opens on it with a paused task. */
+export function rememberFocusList(listId: string): void {
+  try {
+    localStorage.setItem(FOCUS_LIST_KEY, listId)
+  } catch {
+    // Without storage the widget follows the open session only.
+  }
+}
 
 /** The list of the last focus screen of this app, so the widget shows a paused task of it. */
 export function rememberedFocusList(): string | undefined {

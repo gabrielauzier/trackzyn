@@ -8,6 +8,7 @@ import { focus, lists } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import { play } from '@/lib/sounds/synth'
 import type { QueuedAction } from '@/lib/focus/queue'
+import type { TrackzynApi } from '@/lib/platform'
 import { renderWithProviders } from '@/test/utils'
 import type { FocusState, ListCard } from '@/types'
 
@@ -86,14 +87,14 @@ function listCard(id: string, name: string): ListCard {
   }
 }
 
-function renderFocus() {
+function renderFocus(route: string | { pathname: string; state: unknown } = `/focus/${LIST}`) {
   return renderWithProviders(
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/lists/:listId" element={<p>Board page</p>} />
       <Route path="/focus/:listId" element={<FocusPage />} />
     </Routes>,
-    { route: `/focus/${LIST}` },
+    { route: route as string },
   )
 }
 
@@ -121,7 +122,8 @@ describe('FocusPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sound settings' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Back to the board' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Collapse' })).toBeInTheDocument()
+    // The collapse icon opens the desktop widget; the browser has none (WIDGET-24).
+    expect(screen.queryByRole('button', { name: 'Collapse' })).not.toBeInTheDocument()
     expect(screen.getByText('Est.: 1hr 30min')).toBeInTheDocument()
     expect(screen.getByText('0/2 Done')).toBeInTheDocument()
     expect(within(screen.getByRole('list', { name: 'Next tasks' })).getByText('DEV-1726')).toBeInTheDocument()
@@ -259,5 +261,96 @@ describe('FocusPage', () => {
     await waitFor(() => expect(sent()).toHaveLength(2))
     expect(sent()[1]).toMatchObject({ type: 'start', task_id: taskA.id, takeover: true })
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+})
+
+describe('FocusPage on the desktop (WIDGET-01, WIDGET-02, WIDGET-22, WIDGET-24)', () => {
+  let bridge: { collapseFocus: ReturnType<typeof vi.fn>; notifyFocusChanged: ReturnType<typeof vi.fn> }
+
+  beforeEach(() => {
+    localStorage.clear()
+    bridge = { collapseFocus: vi.fn(async () => undefined), notifyFocusChanged: vi.fn() }
+    Object.defineProperty(window, 'trackzyn', {
+      value: { isDesktop: true, windowRole: 'main', onWidgetState: vi.fn(() => () => undefined), ...bridge } as unknown as TrackzynApi,
+      configurable: true,
+    })
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'trackzyn')
+    localStorage.clear()
+  })
+
+  const fromFocusNow = { pathname: `/focus/${LIST}`, state: { collapse: true } }
+
+  it('shows the collapse icon, which opens the widget (WIDGET-02)', async () => {
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1725')
+
+    await user.click(screen.getByRole('button', { name: 'Collapse' }))
+    expect(bridge.collapseFocus).toHaveBeenCalledTimes(1)
+  })
+
+  it('opened by Focus now, starts the task and only then opens the widget (WIDGET-01)', async () => {
+    let answer!: (state: FocusState) => void
+    vi.mocked(focus.send).mockImplementation(() => new Promise((resolve) => (answer = resolve)))
+    renderFocus(fromFocusNow)
+
+    await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'start', task_id: taskA.id })]))
+    expect(bridge.collapseFocus).not.toHaveBeenCalled()
+
+    answer(counting(deviceId()))
+    await waitFor(() => expect(bridge.collapseFocus).toHaveBeenCalledTimes(1))
+  })
+
+  it('opened by Focus now with the task already counting here, opens the widget without a new start', async () => {
+    vi.mocked(focus.get).mockResolvedValue(counting(deviceId()))
+    renderFocus(fromFocusNow)
+
+    await waitFor(() => expect(bridge.collapseFocus).toHaveBeenCalledTimes(1))
+    expect(sent()).toEqual([])
+  })
+
+  it('opened by Focus now with nothing to start, stays here', async () => {
+    vi.mocked(focus.get).mockResolvedValue(paused({ task: null, today: { pending: 0, done: 1, estimate_minutes: 0, tasks: [] } }))
+    renderFocus(fromFocusNow)
+
+    expect(await screen.findByText('All clear')).toBeInTheDocument()
+    expect(bridge.collapseFocus).not.toHaveBeenCalled()
+  })
+
+  it('opened from the board link without Focus now, starts and stays here', async () => {
+    renderFocus()
+
+    await waitFor(() => expect(sent()).toHaveLength(1))
+    expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument()
+    expect(bridge.collapseFocus).not.toHaveBeenCalled()
+  })
+
+  it('tells the widget after an action here was answered (WIDGET-22)', async () => {
+    vi.mocked(focus.get).mockResolvedValue(counting(deviceId()))
+    vi.mocked(focus.send).mockResolvedValue(paused())
+    const { user } = renderFocus()
+    await user.click(await screen.findByRole('button', { name: 'Pause' }))
+
+    await waitFor(() => expect(bridge.notifyFocusChanged).toHaveBeenCalledTimes(1))
+    expect(sent()).toEqual([expect.objectContaining({ type: 'pause' })])
+  })
+
+  it('keeps the list for the widget, which opens on it with a paused task', async () => {
+    renderFocus()
+    await screen.findByText('DEV-1725')
+
+    expect(localStorage.getItem('trackzyn.focus.list')).toBe(LIST)
+  })
+})
+
+describe('FocusPage in the browser with Focus now (WIDGET-24)', () => {
+  it('starts the task and has no widget to open', async () => {
+    renderFocus({ pathname: `/focus/${LIST}`, state: { collapse: true } })
+
+    await waitFor(() => expect(sent()).toHaveLength(1))
+    expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument()
+    expect(window.trackzyn).toBeUndefined()
   })
 })

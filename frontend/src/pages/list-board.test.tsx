@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
 import { focus, lists, tasks } from '@/lib/api'
@@ -372,6 +372,24 @@ describe('ListBoardPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Focus now' }))
 
     expect(await screen.findByText('Focus page')).toBeInTheDocument()
+  })
+
+  it('Focus now asks the focus page to go on to the widget (WIDGET-01)', async () => {
+    function FocusProbe() {
+      const { state } = useLocation()
+      return <p>Focus page {JSON.stringify(state)}</p>
+    }
+    const { user } = renderWithProviders(
+      <Routes>
+        <Route path="/lists/:listId" element={<ListBoardPage />} />
+        <Route path="/focus/:listId" element={<FocusProbe />} />
+      </Routes>,
+      { route: `/lists/${WEEK}` },
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Focus now' }))
+
+    expect(await screen.findByText('Focus page {"collapse":true}')).toBeInTheDocument()
   })
 
   it('highlights the card in focus with its time running (FOCUS-16)', async () => {

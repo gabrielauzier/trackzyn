@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import type { FocusRouteState } from '@/lib/desktop/focus-window'
 import type { Board, TaskCardView, TaskColumn } from '@/types'
 
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
@@ -205,7 +206,7 @@ export default function ListBoardPage() {
           listId={listId}
           canWrite={canWrite}
           renderTask={renderTask(column)}
-          onFocusNow={() => navigate(`/focus/${listId}`)}
+          onFocusNow={() => navigate(`/focus/${listId}`, { state: { collapse: true } satisfies FocusRouteState })}
           className="h-full"
         />
       </ColumnDrop>

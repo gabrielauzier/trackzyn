@@ -388,9 +388,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes: sem `window.trackzyn` o ícone não aparece; com ele, o clique chama `collapseFocus`; no desktop, abrir pelo `Focar agora` chama `collapseFocus` depois do `start`
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: sem `window.trackzyn` o ícone não aparece; com ele, o clique chama `collapseFocus`; no desktop, abrir pelo `Focar agora` chama `collapseFocus` depois do `start`
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Decisão do usuário (opção a): o ícone de recolher existe só no desktop e abre o widget; a versão compacta da página saiu, e a FOCUS-01 de `foco-e-sons` foi ajustada no mesmo commit, com o teste dela afirmando que o ícone não aparece no navegador. `Focar agora` navega com `state: { collapse: true }`; no desktop, a tela de foco chama `collapseFocus` depois de o `start` ser respondido, ou na hora quando uma tarefa deste dispositivo já conta nessa lista; sem nada para começar, fica na tela. O estado da rota é limpo depois de recolher. A tela de foco avisa o widget depois de cada ação respondida e grava `trackzyn.focus.list`. Quem ouve `onFocusChanged` na janela principal é o `FocusGuard`, no nível do app (commit `fix(web)` anterior), que também passou a informar o foco como ativo só com uma tarefa em foco.
 
 **Tests**: unit
 **Gate**: build

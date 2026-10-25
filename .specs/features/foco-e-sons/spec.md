@@ -46,6 +46,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 | Sons | 4 sons diferentes gerados por código (Web Audio API), sem arquivos de terceiros: conclusão, progresso, fim da estimativa e fim do intervalo | Decisão do usuário | y |
 | Som de progresso | Toca quando o tempo total gasto na tarefa passa por 10, 20, 30… min, com a sessão aberta | Decisão do usuário (tempo total, não a sessão) | y |
 | Onde tocam os sons | No navegador e no desktop; concluir pelo check do quadro também toca | Decisão do usuário | y |
+| Ícone de recolher | Só no app desktop, onde abre o widget; no navegador não aparece, e não existe versão compacta da página | Decisão do usuário em 2026-10-25, resolvendo o conflito entre FOCUS-01 e WIDGET-24 | y |
 | Sons com vários dispositivos | Progresso, fim da estimativa e fim do intervalo tocam só no dispositivo dono da sessão (`device_id`); o som de conclusão toca só no dispositivo que fez a conclusão (foco, widget ou quadro). Um dispositivo que só acompanha pelo polling não toca nada | Decisão do usuário em 2026-10-24 | y |
 | Desligar os sons | Um interruptor por som, salvo em cada dispositivo | Decisão do usuário | y |
 | Papel `viewer` | Não foca nem registra tempo | Decisão do usuário | y |
@@ -65,7 +66,7 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 
 **Acceptance Criteria**:
 
-1. WHEN o usuário clica `Focar agora` THEN the trackzyn SHALL abrir a tela de foco com o seletor de lista, o título `Hoje`, os ícones de ajustes, home e recolher, `Est.: <soma>`, a barra `x/y Concluídas`, as tarefas pendentes de Hoje e `+ Adicionar tarefa`. (FOCUS-01)
+1. WHEN o usuário clica `Focar agora` THEN the trackzyn SHALL abrir a tela de foco com o seletor de lista, o título `Hoje`, os ícones de ajustes e home (e, só no app desktop, o de recolher, que abre o widget; ver WIDGET-24), `Est.: <soma>`, a barra `x/y Concluídas`, as tarefas pendentes de Hoje e `+ Adicionar tarefa`. (FOCUS-01)
 2. WHEN a tela de foco abre THEN the trackzyn SHALL abrir uma sessão na primeira tarefa pendente de Hoje e mostrar no cartão dela o contorno destacado e o cronômetro `HH:MM:SS` igual à estimativa menos o tempo já gasto. (FOCUS-02)
 3. WHILE uma sessão de tarefa está aberta the trackzyn SHALL diminuir o cronômetro 1 segundo a cada segundo, calculado com `started_at` e `server_now`, mostrando o mesmo valor (±1 s) com o relógio do computador 5 minutos adiantado ou atrasado. (FOCUS-03)
 4. WHEN o usuário clica `Pausar` THEN the trackzyn SHALL encerrar a sessão, parar o cronômetro no valor em que estava e trocar o botão por `Retomar`. (FOCUS-04)
