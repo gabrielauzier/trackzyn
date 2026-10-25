@@ -558,6 +558,11 @@
       "collapse": "Recolher",
       "estimate": "Est.: {{estimate}}",
       "next": "Próximas tarefas"
+    },
+    "widget": {
+      "label": "Widget de foco",
+      "notes": "Anotações",
+      "expand": "Expandir"
     }
   }
 }

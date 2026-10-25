@@ -298,9 +298,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes: sem hover só título e cronômetro; com hover os 6 controles; `awaiting_extend` com hover mostra `Estender`; fila vazia mostra `Tudo limpo`; cada botão chama a ação de `useFocus`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: sem hover só título e cronômetro; com hover os 6 controles; `awaiting_extend` com hover mostra `Estender`; fila vazia mostra `Tudo limpo`; cada botão chama a ação de `useFocus`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Onde a spec não diz, segui a tela de foco: no intervalo, o widget mostra `Intervalo` e o tempo dele e, com o mouse, só `Encerrar intervalo` e `Expandir` (BREAK-04); em `00:00:00`, `Estender`, `Concluir`, `Intervalo`, `Anotações`, `Pular` e `Expandir`, sem `Pausar`/`Retomar` (não há sessão para pausar); sem permissão de escrita, só `Expandir`. Os controles são ícones com `aria-label` (300 px de largura) e somem 150 ms depois de o mouse sair, para não piscar entre botões; o foco vindo do teclado também os mostra, o de um clique não. `BreakPicker` ganhou `iconOnly` e `onOpenChange`: com o seletor aberto os controles ficam e o widget avisa a página para crescer, porque o seletor não cabe em 64 px.
 
 **Tests**: unit
 **Gate**: quick

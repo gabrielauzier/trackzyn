@@ -14,12 +14,20 @@ interface BreakPickerProps {
   /** Called with the break length in minutes, 1 to 120. */
   onPick: (minutes: number) => void
   disabled?: boolean
+  /** Only the icon on the trigger, for the focus widget. */
+  iconOnly?: boolean
+  /** Told when the picker opens and closes (the widget grows for it). */
+  onOpenChange?: (open: boolean) => void
 }
 
 /** `Intervalo`: shortcuts of 5, 10 and 15 min, or any whole number of minutes from 1 to 120 (BREAK-01, BREAK-02). */
-export function BreakPicker({ onPick, disabled }: BreakPickerProps) {
+export function BreakPicker({ onPick, disabled, iconOnly, onOpenChange }: BreakPickerProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [open, setOpenState] = useState(false)
+  const setOpen = (next: boolean) => {
+    setOpenState(next)
+    onOpenChange?.(next)
+  }
   const [typed, setTyped] = useState('')
   const [invalid, setInvalid] = useState(false)
 
@@ -43,9 +51,15 @@ export function BreakPicker({ onPick, disabled }: BreakPickerProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" disabled={disabled}>
-          <Coffee /> {t('focus.break.open')}
-        </Button>
+        {iconOnly ? (
+          <Button variant="ghost" size="icon-sm" disabled={disabled} aria-label={t('focus.break.open')} title={t('focus.break.open')}>
+            <Coffee />
+          </Button>
+        ) : (
+          <Button variant="outline" disabled={disabled}>
+            <Coffee /> {t('focus.break.open')}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="center" className="w-64 space-y-3">
         <div className="grid grid-cols-3 gap-2">

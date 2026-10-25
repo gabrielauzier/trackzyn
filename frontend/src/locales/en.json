@@ -558,6 +558,11 @@
       "collapse": "Collapse",
       "estimate": "Est.: {{estimate}}",
       "next": "Next tasks"
+    },
+    "widget": {
+      "label": "Focus widget",
+      "notes": "Notes",
+      "expand": "Expand"
     }
   }
 }

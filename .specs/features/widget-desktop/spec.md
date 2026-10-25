@@ -129,16 +129,16 @@ Na tela de foco, o cronômetro só aparece enquanto a janela do trackzyn está �
 | WIDGET-04 | P1: Widget sempre visível | Tasks | Implementing |
 | WIDGET-05 | P1: Widget sempre visível | Tasks | Implementing |
 | WIDGET-06 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-07 | P1: Widget sempre visível | Tasks | In Tasks |
-| WIDGET-08 | P1: Widget sempre visível | Tasks | In Tasks |
+| WIDGET-07 | P1: Widget sempre visível | Tasks | Implementing |
+| WIDGET-08 | P1: Widget sempre visível | Tasks | Implementing |
 | WIDGET-09 | P1: Widget sempre visível | Tasks | Implementing |
 | WIDGET-10 | P1: Widget sempre visível | Tasks | Implementing |
 | WIDGET-11 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-12 | P1: Ações pelo widget | Tasks | In Tasks |
-| WIDGET-13 | P1: Ações pelo widget | Tasks | In Tasks |
+| WIDGET-12 | P1: Ações pelo widget | Tasks | Implementing |
+| WIDGET-13 | P1: Ações pelo widget | Tasks | Implementing |
 | WIDGET-14 | P1: Ações pelo widget | Tasks | In Tasks |
 | WIDGET-15 | P1: Ações pelo widget | Tasks | In Tasks |
-| WIDGET-16 | P1: Ações pelo widget | Tasks | In Tasks |
+| WIDGET-16 | P1: Ações pelo widget | Tasks | Implementing |
 | WIDGET-17 | P1: Ações pelo widget | Tasks | Implementing |
 | WIDGET-18 | P1: Voltar ao app e sincronia | Tasks | Implementing |
 | WIDGET-19 | P1: Voltar ao app e sincronia | Tasks | Implementing |
