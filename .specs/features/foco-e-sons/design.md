@@ -232,6 +232,7 @@ interface FocusState {
 | Ação na fila com mais de 24h | Descartada no `flush` | Aviso de SYNC-06 |
 | Reenvio de ação já aplicada | `focus_actions` devolve a resposta guardada | Nada duplica |
 | Sessão sem sinal há mais de 120 s | `GET /api/focus` devolve `stale` | Diálogo `Manter`/`Cortar no último sinal` (SYNC-11) |
+| `heartbeat`, `start` ou `takeover` com a sessão aberta sem sinal há mais de 120 s | 409 `invalid_transition`; só `recover` resolve a sessão, e a tela de foco não começa sozinha | Nada é resolvido sem a escolha do usuário (SYNC-11, decisão "Pergunta ao voltar") |
 | `viewer` | `requireWrite` → 403 | Botões escondidos (FOCUS-17) |
 | Navegador bloqueia o áudio antes do primeiro clique | `AudioContext` retomado no primeiro `pointerdown` | O primeiro som pode não tocar (Edge Case da spec) |
 
