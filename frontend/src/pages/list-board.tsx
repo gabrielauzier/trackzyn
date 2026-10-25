@@ -17,6 +17,9 @@ import {
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
+import { formatClock } from '@/lib/focus/format-clock'
+import { useFocus } from '@/lib/focus/use-focus'
+import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
@@ -86,6 +89,8 @@ export default function ListBoardPage() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
   const [tab, setTab] = useState<TaskColumn>('today')
   const boardKey = ['lists', listId, 'board'] as const
+  const focus = useFocus(listId)
+  const { playComplete } = useFocusSounds(focus.state, focus.display)
 
   const { data: board, error } = useQuery({ queryKey: boardKey, queryFn: () => listsApi.board(listId) })
   const { data: allLists } = useQuery({
@@ -122,6 +127,22 @@ export default function ListBoardPage() {
   const taskColumns = columnsOf(board)
   const move = (id: string, column: TaskColumn, before: string | null) => moveMutation.mutate({ id, column, before })
 
+  // The task of this user's open session, which the board highlights with its time running (FOCUS-16).
+  const session = focus.state?.session
+  const focusedId = session?.kind === 'task' ? session.task_id : null
+  const running = focus.display?.mode === 'countdown' || focus.display?.mode === 'countup'
+
+  // Completing on the board plays the completion sound once (SOUND-01). The task in focus is completed
+  // through focus, so its session ends and the next task of Today starts counting (Edge Case, FOCUS-08).
+  const complete = (id: string) => {
+    playComplete()
+    if (id === focusedId) {
+      void focus.actions.complete(id).finally(() => void queryClient.invalidateQueries({ queryKey: ['lists'] }))
+    } else {
+      move(id, 'done', null)
+    }
+  }
+
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || !canWrite) return
     const activeId = String(active.id)
@@ -133,7 +154,7 @@ export default function ListBoardPage() {
     if (!from || !to) return
     if (to === 'done') {
       // Concluídas is ordered by day, so a task only enters it, at no particular place.
-      if (from !== 'done') move(activeId, 'done', null)
+      if (from !== 'done') complete(activeId)
       return
     }
     let before: string | null
@@ -159,9 +180,15 @@ export default function ListBoardPage() {
         number={index + 1}
         canWrite={canWrite}
         onOpen={(card) => setOpenTaskId(card.id)}
-        onComplete={(card) => move(card.id, 'done', null)}
+        onComplete={(card) => complete(card.id)}
         subtasks={<SubtaskList taskId={task.id} canWrite={canWrite} />}
+        className={task.id === focusedId ? 'border-2 border-primary' : undefined}
       />
+      {task.id === focusedId && running && focus.display && (
+        <span role="timer" aria-label={t('board.inFocus')} className="mt-1 block text-right font-mono text-sm font-semibold tabular-nums">
+          {formatClock(focus.display.seconds)}
+        </span>
+      )}
     </SortableTask>
   )
 
@@ -178,6 +205,7 @@ export default function ListBoardPage() {
           listId={listId}
           canWrite={canWrite}
           renderTask={renderTask(column)}
+          onFocusNow={() => navigate(`/focus/${listId}`)}
           className="h-full"
         />
       </ColumnDrop>

@@ -3,9 +3,12 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { Route, Routes } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
-import { lists, tasks } from '@/lib/api'
+import { focus, lists, tasks } from '@/lib/api'
+import { deviceId } from '@/lib/focus/device-id'
+import type { QueuedAction } from '@/lib/focus/queue'
+import { play } from '@/lib/sounds/synth'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { Board, ListCard, Task, TaskCardView } from '@/types'
+import type { Board, FocusState, ListCard, Task, TaskCardView } from '@/types'
 
 const state = vi.hoisted(() => ({ canWrite: true }))
 
@@ -13,7 +16,10 @@ vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
   tasks: { move: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), remove: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
+  authHeaders: () => ({}),
 }))
+vi.mock('@/lib/sounds/synth', () => ({ play: vi.fn() }))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace', timezone: null }, canWrite: state.canWrite }),
 }))
@@ -77,6 +83,7 @@ function renderBoard(listId = WEEK) {
     <Routes>
       <Route path="/" element={<p>Home page</p>} />
       <Route path="/lists/:listId" element={<ListBoardPage />} />
+      <Route path="/focus/:listId" element={<p>Focus page</p>} />
     </Routes>,
     { route: `/lists/${listId}` },
   )
@@ -149,8 +156,37 @@ function todayTitles() {
   )
 }
 
+const focusTask = { id: TODAY_TASK, title: 'DEV-1725', estimate_minutes: 60, spent_seconds: 0, awaiting_extend: false }
+
+/** The focus of the list: nothing running, or this user's session counting on DEV-1725. */
+function focusState(counting: boolean): FocusState {
+  const now = new Date()
+  return {
+    server_now: now.toISOString(),
+    session: counting
+      ? {
+          id: 'session-1',
+          kind: 'task',
+          task_id: TODAY_TASK,
+          list_id: WEEK,
+          device_id: deviceId(),
+          started_at: now.toISOString(),
+          deadline_at: new Date(now.getTime() + 3000_000).toISOString(),
+          planned_seconds: null,
+        }
+      : null,
+    task: focusTask,
+    today: { pending: 1, done: 0, estimate_minutes: 60, tasks: [{ ...focusTask, position: 0 }] },
+    stale: null,
+  }
+}
+
+const focusActions = () => vi.mocked(focus.send).mock.calls.map(([entry]) => (entry as QueuedAction).action)
+
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(focus.get).mockResolvedValue(focusState(false))
+  vi.mocked(focus.send).mockResolvedValue({ ...focusState(false), task: null, today: { pending: 0, done: 1, estimate_minutes: 0, tasks: [] } })
   state.canWrite = true
   vi.mocked(lists.board).mockImplementation(async (id: string) =>
     id === WORK ? boardOf(WORK, 'Work') : boardOf(WEEK, 'Week'),
@@ -328,6 +364,64 @@ describe('ListBoardPage', () => {
     await waitFor(() =>
       expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }),
     )
+  })
+
+  it('goes to the focus page from Focus now (FOCUS-01)', async () => {
+    const { user } = renderBoard()
+
+    await user.click(await screen.findByRole('button', { name: 'Focus now' }))
+
+    expect(await screen.findByText('Focus page')).toBeInTheDocument()
+  })
+
+  it('highlights the card in focus with its time running (FOCUS-16)', async () => {
+    vi.mocked(focus.get).mockResolvedValue(focusState(true))
+    renderBoard()
+
+    const timer = await screen.findByRole('timer', { name: 'Time in focus' })
+    const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
+    expect(wrapper).toContainElement(timer)
+    expect(timer.textContent).toMatch(/^00:(50:00|49:5\d)$/)
+  })
+
+  it('completes a task out of focus with a move and plays the completion sound once (SOUND-01)', async () => {
+    const { user } = renderBoard()
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Complete DEV-1725' }))
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }))
+    expect(focus.send).not.toHaveBeenCalled()
+    expect(vi.mocked(play).mock.calls).toEqual([['complete']])
+  })
+
+  it('completes the task in focus through focus, so the next task of Today starts (Edge Case, FOCUS-08, SOUND-01)', async () => {
+    vi.mocked(focus.get).mockResolvedValue(focusState(true))
+    const { user } = renderBoard()
+    await screen.findByRole('timer', { name: 'Time in focus' })
+
+    await user.click(screen.getByRole('checkbox', { name: 'Complete DEV-1725' }))
+
+    await waitFor(() => expect(focusActions()).toHaveLength(1))
+    expect(focusActions()[0]).toMatchObject({ type: 'complete', task_id: TODAY_TASK, list_id: WEEK })
+    expect(tasks.move).not.toHaveBeenCalled()
+    expect(vi.mocked(play).mock.calls).toEqual([['complete']])
+  })
+
+  it('completes the task in focus through focus when it is dragged to Done (Edge Case, FOCUS-08)', async () => {
+    vi.mocked(focus.get).mockResolvedValue(focusState(true))
+    layOutColumns()
+    const { user } = renderBoard()
+    await screen.findByRole('timer', { name: 'Time in focus' })
+
+    document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowRight}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(focusActions()).toHaveLength(1))
+    expect(focusActions()[0]).toMatchObject({ type: 'complete', task_id: TODAY_TASK })
+    expect(tasks.move).not.toHaveBeenCalled()
+    expect(vi.mocked(play).mock.calls).toEqual([['complete']])
   })
 
   it('switches to another list from the selector without going home', async () => {

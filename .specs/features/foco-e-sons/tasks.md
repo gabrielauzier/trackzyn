@@ -1026,9 +1026,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes: `Focar agora` navega; check de concluir chama `playComplete` uma vez
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: `Focar agora` navega; check de concluir chama `playComplete` uma vez
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: build

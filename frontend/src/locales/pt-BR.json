@@ -487,7 +487,8 @@
     "back": "Voltar",
     "summary_zero": "Esta lista tem 0 tarefas pendentes, Est.: {{estimate}}",
     "summary_one": "Esta lista tem {{count}} tarefa pendente, Est.: {{estimate}}",
-    "summary_other": "Esta lista tem {{count}} tarefas pendentes, Est.: {{estimate}}"
+    "summary_other": "Esta lista tem {{count}} tarefas pendentes, Est.: {{estimate}}",
+    "inFocus": "Tempo em foco"
   },
   "focus": {
     "sounds": {

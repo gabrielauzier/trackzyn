@@ -487,7 +487,8 @@
     "back": "Back",
     "summary_zero": "This list has 0 pending tasks, Est.: {{estimate}}",
     "summary_one": "This list has {{count}} pending task, Est.: {{estimate}}",
-    "summary_other": "This list has {{count}} pending tasks, Est.: {{estimate}}"
+    "summary_other": "This list has {{count}} pending tasks, Est.: {{estimate}}",
+    "inFocus": "Time in focus"
   },
   "focus": {
     "sounds": {
