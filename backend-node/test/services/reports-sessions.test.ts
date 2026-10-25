@@ -133,6 +133,28 @@ describe('sessionsReport', () => {
     expect(tiles.task_seconds + break_seconds).toBe(listed)
   })
 
+  it('AD-004 splits a session at the local midnight of both daylight saving days of America/New_York', async () => {
+    const ny = { id: seed.workspaceId, timezone: 'America/New_York' }
+    const taskId = await seed.addTask({ title: 'Write' })
+    const pieces = (report: Awaited<ReturnType<typeof sessionsReport>>) =>
+      report.days.map((item) => ({ date: item.date, sessions: item.sessions.map(({ id, started_at, ended_at, seconds }) => ({ id, started_at, ended_at, seconds })) }))
+    const piece = (id: string, start: string, end: string) => ({ id, started_at: new Date(start).toISOString(), ended_at: new Date(end).toISOString(), seconds: 30 * M })
+
+    // 2026-11-01 has 25 hours (02:00 EDT goes back to 01:00 EST): its midnight is 00:00 EST, 05:00Z.
+    const fall = await seed.addSession({ kind: 'task', taskId, startedAt: new Date('2026-11-01T23:30:00-05:00'), endedAt: new Date('2026-11-02T00:30:00-05:00') })
+    expect(pieces(await sessionsReport(db, seed.userId, ny, { from: '2026-11-01', to: '2026-11-02', listId: null }, new Date('2026-11-03T12:00:00Z')))).toEqual([
+      { date: '2026-11-02', sessions: [piece(fall, '2026-11-02T00:00:00-05:00', '2026-11-02T00:30:00-05:00')] },
+      { date: '2026-11-01', sessions: [piece(fall, '2026-11-01T23:30:00-05:00', '2026-11-02T00:00:00-05:00')] },
+    ])
+
+    // 2026-03-08 has 23 hours (02:00 EST jumps to 03:00 EDT): its midnight is 00:00 EDT, 04:00Z.
+    const spring = await seed.addSession({ kind: 'task', taskId, startedAt: new Date('2026-03-08T23:30:00-04:00'), endedAt: new Date('2026-03-09T00:30:00-04:00') })
+    expect(pieces(await sessionsReport(db, seed.userId, ny, { from: '2026-03-08', to: '2026-03-09', listId: null }, new Date('2026-03-10T12:00:00Z')))).toEqual([
+      { date: '2026-03-09', sessions: [piece(spring, '2026-03-09T00:00:00-04:00', '2026-03-09T00:30:00-04:00')] },
+      { date: '2026-03-08', sessions: [piece(spring, '2026-03-08T23:30:00-04:00', '2026-03-09T00:00:00-04:00')] },
+    ])
+  })
+
   it('REPORT-20 leaves out a session starting at midnight right after the last day of the period', async () => {
     const taskId = await seed.addTask()
     await seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-10-26T00:00:00'), endedAt: SP('2026-10-26T00:30:00') })
