@@ -26,7 +26,7 @@ function read(file: string): Config {
   }
 }
 
-/** `userData/config.json`: the mode, the server URL and the window bounds. */
+/** `userData/config.json`: the mode, the server URL, the window bounds and the widget position. */
 export function createConfigStore(file: string) {
   function update(patch: Config) {
     const next = { ...read(file), ...patch }
@@ -63,6 +63,14 @@ export function createConfigStore(file: string) {
     },
     setBounds(bounds: Bounds) {
       update({ bounds })
+    },
+    /** Where the focus widget was last left (WIDGET-10). */
+    getWidgetBounds(): Bounds | null {
+      const value = read(file).widgetBounds
+      return isBounds(value) ? value : null
+    },
+    setWidgetBounds(bounds: Bounds) {
+      update({ widgetBounds: bounds })
     },
   }
 }

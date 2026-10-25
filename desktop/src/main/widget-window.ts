@@ -3,13 +3,8 @@ import { BrowserWindow, shell } from 'electron'
 import { APP_ORIGIN } from './app-protocol'
 import type { Bounds } from './config-store'
 import { hardenWebContents } from './security'
+import { WIDGET_SIZE } from './widget-bounds'
 import { APP_VERSION_ARG, WINDOW_ROLE_ARG } from '../shared/ipc'
-
-/** The widget's two sizes: compact, and grown for the notes field (WIDGET-14). */
-export const WIDGET_SIZE = {
-  compact: { width: 300, height: 64 },
-  notes: { width: 300, height: 240 },
-} as const
 
 /**
  * The focus widget (WIDGET-06): a frameless window above every other one, opened compact at the

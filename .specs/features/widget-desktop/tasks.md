@@ -145,9 +145,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes: sem posição salva → canto superior direito; posição salva visível → ela; posição salva numa tela desconectada → canto superior direito; a chave sobrevive a recriar o `config-store`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Testes: sem posição salva → canto superior direito; posição salva visível → ela; posição salva numa tela desconectada → canto superior direito; a chave sobrevive a recriar o `config-store`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: "Cabe numa tela" segue a WIDGET-11: a posição salva vale enquanto alguma parte do widget compacto (300×64) cai numa tela conectada, com a mesma checagem de interseção de `resolveWindowBounds`; as bordas exatas estão nos testes. O widget sempre abre compacto, mesmo se a posição foi salva com as anotações abertas. `WIDGET_SIZE` passou de `widget-window.ts` para `widget-bounds.ts`, para a lógica pura não importar o Electron.
 
 **Tests**: unit
 **Gate**: quick
