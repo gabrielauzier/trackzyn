@@ -573,6 +573,12 @@
       "period": "Period",
       "invalidPeriod": "The period must end after it starts and have at most 366 days.",
       "listDeleted": "The list was deleted."
+    },
+    "tiles": {
+      "workDays": "Work days",
+      "tasksDone": "Tasks done",
+      "timeWorked": "Time worked",
+      "avgPerTask": "Average per task"
     }
   }
 }

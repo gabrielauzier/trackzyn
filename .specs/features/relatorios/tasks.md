@@ -337,9 +337,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: valores do cenário de REPORT-02; média `null` mostra `—`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: valores do cenário de REPORT-02; média `null` mostra `—`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Cada `StatTile` fica num `role="group"` com o nome do cartão, para o teste ler o valor de cada um. Os tempos usam `formatDuration` (`3h 30min` em pt-BR, `3hr 30min` em inglês).
 
 **Tests**: unit
 **Gate**: quick

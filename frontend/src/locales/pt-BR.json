@@ -573,6 +573,12 @@
       "period": "Período",
       "invalidPeriod": "O período precisa terminar depois do início e ter no máximo 366 dias.",
       "listDeleted": "A lista foi excluída."
+    },
+    "tiles": {
+      "workDays": "Dias trabalhados",
+      "tasksDone": "Tarefas concluídas",
+      "timeWorked": "Tempo trabalhado",
+      "avgPerTask": "Média por tarefa"
     }
   }
 }
