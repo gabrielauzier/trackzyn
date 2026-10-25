@@ -172,4 +172,20 @@ describe('useFocus', () => {
     expect(pending()).toEqual([])
     expect(result.current.state).toEqual(fromServer)
   })
+
+  it('SYNC-05 queues the action with the click time corrected by the server clock offset', async () => {
+    const server = NOW + 5 * 60_000
+    focus.get.mockImplementation(async () => paused(server))
+    focus.send.mockRejectedValue(offline())
+    const { result } = renderHook(() => useFocus(LIST), { wrapper })
+    await advance(0)
+
+    await act(async () => {
+      await result.current.actions.start('task-a')
+    })
+
+    const [queued] = pending()
+    expect(queued.action).toMatchObject({ type: 'start', task_id: 'task-a', occurred_at: iso(server) })
+    expect(result.current.state?.session).toMatchObject({ started_at: iso(server) })
+  })
 })
