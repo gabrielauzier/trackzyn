@@ -339,6 +339,24 @@ describe('app layout focus guard with the widget (WIDGET-03, Edge Case)', () => 
   })
 })
 
+describe('app layout and the widget changing the focus (WIDGET-22)', () => {
+  it('a change from the widget reads the focus and the lists again, wherever the main window is', async () => {
+    installDesktopApi('darwin')
+    state.focus.get.mockResolvedValue(focusState(true))
+    const { queryClient } = renderWithProviders(<AppLayout />, { route: '/' })
+    await waitFor(() => expect(state.focus.get).toHaveBeenCalledTimes(1))
+    const desktop = window.trackzyn as unknown as { onFocusChanged: ReturnType<typeof vi.fn> }
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const changed = desktop.onFocusChanged.mock.calls.at(-1)![0] as () => void
+    act(() => changed())
+
+    await waitFor(() => expect(state.focus.get).toHaveBeenCalledTimes(2))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['focus'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['lists'] })
+  })
+})
+
 describe('app layout on the focus page (SYNC-10)', () => {
   afterEach(() => {
     vi.useRealTimers()

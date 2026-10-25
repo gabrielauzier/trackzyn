@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { matchPath, useLocation } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { StaleSessionDialog } from '@/components/focus/stale-session-dialog'
+import { onFocusChanged } from '@/lib/desktop/focus-window'
 import { deviceId } from '@/lib/focus/device-id'
 import { useDesktopFocusBridge } from '@/lib/focus/use-desktop-bridge'
 import { useFocus } from '@/lib/focus/use-focus'
@@ -31,11 +34,21 @@ function inFocus(state: FocusState | null, pathname: string): boolean {
  * Guards closing while a task of this device counts, wherever the user is in the app (SYNC-08,
  * SYNC-09): the desktop app asks before closing and the browser shows its alert and pauses on leaving.
  * Wherever the app opens, a session left open by a crash asks `Manter` or `Cortar no último sinal`
- * (SYNC-11).
+ * (SYNC-11). On the desktop, a change made in the focus widget reads the focus and the lists again, so
+ * the main window shows it without reloading (WIDGET-22).
  */
 export function FocusGuard() {
   const { pathname } = useLocation()
   const { state, actions } = useFocus(routeListId(pathname))
+  const queryClient = useQueryClient()
+  useEffect(
+    () =>
+      onFocusChanged(() => {
+        void queryClient.invalidateQueries({ queryKey: ['focus'] })
+        void queryClient.invalidateQueries({ queryKey: ['lists'] })
+      }),
+    [queryClient],
+  )
   useLeaveGuard(state)
   useDesktopFocusBridge(inFocus(state, pathname) ? state : null, actions.pause)
   return <StaleSessionDialog stale={state?.stale ?? null} onRecover={(decision) => void actions.recover(decision)} />
