@@ -613,6 +613,15 @@
       "redShare": "Late",
       "bar": "{{green}} early or on time, {{red}} late",
       "empty": "No task done in the period"
+    },
+    "sessions": {
+      "start": "Start",
+      "end": "End",
+      "task": "Task",
+      "list": "List",
+      "duration": "Duration",
+      "running": "running",
+      "break": "Break"
     }
   }
 }

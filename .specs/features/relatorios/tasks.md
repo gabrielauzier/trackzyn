@@ -487,9 +487,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: sessão aberta mostra `em andamento`; intervalo mostra `Intervalo`; vazio mostra o texto
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: sessão aberta mostra `em andamento`; intervalo mostra `Intervalo`; vazio mostra o texto
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Uma tabela por dia, nomeada pelo título do dia (`22 de out. de 2026`), na ordem da resposta. Início e fim aparecem em `HH:mm` no fuso do relatório (prop `timezone`, que a página tira de `Overview.timezone` ou do workspace). A duração é só a parte dentro do período, como a API manda.
 
 **Tests**: unit
 **Gate**: quick

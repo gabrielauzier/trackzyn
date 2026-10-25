@@ -613,6 +613,15 @@
       "redShare": "Depois",
       "bar": "{{green}} antes ou no prazo, {{red}} depois",
       "empty": "Nenhuma tarefa concluída no período"
+    },
+    "sessions": {
+      "start": "Início",
+      "end": "Fim",
+      "task": "Tarefa",
+      "list": "Lista",
+      "duration": "Duração",
+      "running": "em andamento",
+      "break": "Intervalo"
     }
   }
 }
