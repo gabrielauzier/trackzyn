@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 import { serverNow } from '@/lib/focus/clock'
+import { useWidgetOpen } from '@/lib/desktop/focus-window'
 import { deviceId } from '@/lib/focus/device-id'
 import type { Display } from '@/lib/focus/display'
 import { shouldPlayHere } from '@/lib/sounds/gate'
@@ -24,6 +25,8 @@ function emit(kind: SoundKind): void {
  * polling plays nothing.
  */
 export function useFocusSounds(state: FocusState | null, display: Display | null) {
+  // Listens to the widget state from the start, so a widget opened later silences this window (WIDGET-23).
+  useWidgetOpen()
   const previous = useRef<SoundFrame | null>(null)
   const frame = state && display ? frameOf(state, display, serverNow(), deviceId()) : null
 

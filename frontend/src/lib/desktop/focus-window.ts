@@ -44,7 +44,8 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener)
 }
 
-function snapshot(): boolean {
+/** Whether the focus widget is open, as far as this window heard; always `false` in the browser. */
+export function isWidgetOpen(): boolean {
   if (!isDesktop()) return false
   follow(getDesktopApi())
   return open
@@ -52,5 +53,5 @@ function snapshot(): boolean {
 
 /** Whether the focus widget is open; always `false` in the browser. */
 export function useWidgetOpen(): boolean {
-  return useSyncExternalStore(subscribe, snapshot, () => false)
+  return useSyncExternalStore(subscribe, isWidgetOpen, () => false)
 }

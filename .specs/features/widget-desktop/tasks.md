@@ -268,9 +268,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes: widget aberto → widget `true`, principal `false`; widget fechado → principal `true`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: widget aberto → widget `true`, principal `false`; widget fechado → principal `true`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: `shouldPlayHere()` continua sem argumento e lê `isWidgetOpen()`, o mesmo estado de `useWidgetOpen`. `useFocusSounds` chama `useWidgetOpen()` ao montar, para a janela principal já ouvir o `widget:state` antes do primeiro som. O teste antigo da janela principal ganhou `windowRole` e `onWidgetState` no objeto falso; a asserção é a mesma.
 
 **Tests**: unit
 **Gate**: quick
