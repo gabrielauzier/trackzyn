@@ -314,6 +314,17 @@ describe('overview done', () => {
     expect(done.late_pct).toBe(25)
   })
 
+  it('REPORT-02 REPORT-14 counts a completion at local midnight of the first day, and not one 1 ms before it or at midnight after the last day', async () => {
+    const first = await completed(SP('2026-10-19T00:00:00'))
+    await completed(new Date(SP('2026-10-19T00:00:00').getTime() - 1))
+    await completed(SP('2026-10-26T00:00:00'))
+
+    const report = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(report.tiles.tasks_done).toBe(1)
+    expect(report.done.days.map((item) => [item.date, item.tasks.map((t) => t.id)])).toEqual([['2026-10-19', [first]]])
+  })
+
   it('REPORT-15 the 5% tolerance holds exactly at 57 and 63 min of a 60 min estimate, and not one second past them', async () => {
     await finished(SP('2026-10-20T09:00:00'), 60, 57)
     await finished(SP('2026-10-20T10:00:00'), 60, 56, { spentSeconds: 59 })
