@@ -600,6 +600,19 @@
       "listCount_one": "{{count}} lista",
       "listCount_other": "{{count}} listas",
       "summary": "{{lists}}, Tempo total: {{total}}"
+    },
+    "done": {
+      "title": "Tarefas concluídas",
+      "taskCount_zero": "0 tarefas",
+      "taskCount_one": "{{count}} tarefa",
+      "taskCount_other": "{{count}} tarefas",
+      "early": "{{diff}} antes",
+      "onTime": "No prazo",
+      "late": "{{diff}} depois",
+      "greenShare": "Antes ou no prazo",
+      "redShare": "Depois",
+      "bar": "{{green}} antes ou no prazo, {{red}} depois",
+      "empty": "Nenhuma tarefa concluída no período"
     }
   }
 }

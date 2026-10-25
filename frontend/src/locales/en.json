@@ -600,6 +600,19 @@
       "listCount_one": "{{count}} list",
       "listCount_other": "{{count}} lists",
       "summary": "{{lists}}, Total time: {{total}}"
+    },
+    "done": {
+      "title": "Done tasks",
+      "taskCount_zero": "0 tasks",
+      "taskCount_one": "{{count}} task",
+      "taskCount_other": "{{count}} tasks",
+      "early": "{{diff}} early",
+      "onTime": "On time",
+      "late": "{{diff}} late",
+      "greenShare": "Early or on time",
+      "redShare": "Late",
+      "bar": "{{green}} early or on time, {{red}} late",
+      "empty": "No task done in the period"
     }
   }
 }

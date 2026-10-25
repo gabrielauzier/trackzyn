@@ -457,9 +457,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: os 4 selos do cenário de T2; `45,45%` e `54,55%` em pt-BR; sem tarefas com estimativa a barra some
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: os 4 selos do cenário de T2; `45,45%` e `54,55%` em pt-BR; sem tarefas com estimativa a barra some
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Os selos usam os tons de status (`text-status-good` e `text-status-critical`). A diferença do selo é `formatDuration(|diff_seconds|)`. As porcentagens usam `Intl.NumberFormat` com até 2 casas (`45,45%`, `75%`), e a barra é um `role="img"` com as duas partes na largura de cada porcentagem. Escolhas onde a spec é omissa: o dia aparece como `22 de out. de 2026`; a linha não mostra o selo da lista, porque `done` traz só o `list_id`; sem tarefas concluídas no período, aparece "Nenhuma tarefa concluída no período".
 
 **Tests**: unit
 **Gate**: quick
