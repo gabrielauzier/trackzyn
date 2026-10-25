@@ -185,9 +185,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: 3 sessões e 1 intervalo em 2 dias agrupados; sessão aberta com `ended_at` nulo; período vazio → `days` vazio
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Testes: 3 sessões e 1 intervalo em 2 dias agrupados; sessão aberta com `ended_at` nulo; período vazio → `days` vazio
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Uma sessão entra no dia local em que começa dentro do período (uma sessão que atravessa a meia-noite aparece uma vez, no dia do início). `seconds` é só a parte dentro do período. `started_at` e `ended_at` são os horários reais. Os dias e as sessões vêm do mais recente para o mais antigo. A liquidação, os limites e o filtro de lista são os mesmos da visão geral (`reportScope` e `clippedSessions`).
 
 **Tests**: integration
 **Gate**: full
