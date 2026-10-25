@@ -397,9 +397,13 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Testes: hora 18 mostra `18–19h`; dias 1 e 3 mostram `Segunda e quarta`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes: hora 18 mostra `18–19h`; dias 1 e 3 mostram `Segunda e quarta`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: A spec e a task divergem no estado vazio: a REPORT-12 pede `Sem atividade no período` nos mais produtivos, e a task pede `—`. Os dois aparecem: cada cartão mostra `—`, e a linha abaixo dos cartões diz `Sem atividade no período`.
 
 **Tests**: unit
 **Gate**: quick

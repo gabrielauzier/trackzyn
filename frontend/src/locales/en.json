@@ -587,6 +587,11 @@
       "tasks": "Tasks",
       "breaks": "Breaks",
       "total": "Total"
+    },
+    "productive": {
+      "hour": "Most productive hour",
+      "weekday": "Most productive day",
+      "month": "Most productive month"
     }
   }
 }

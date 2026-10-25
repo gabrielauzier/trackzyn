@@ -587,6 +587,11 @@
       "tasks": "Tarefas",
       "breaks": "Intervalos",
       "total": "Total"
+    },
+    "productive": {
+      "hour": "Hora mais produtiva",
+      "weekday": "Dia mais produtivo",
+      "month": "Mês mais produtivo"
     }
   }
 }
