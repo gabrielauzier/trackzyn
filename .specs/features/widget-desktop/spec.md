@@ -114,7 +114,7 @@ Na tela de foco, o cronômetro só aparece enquanto a janela do trackzyn está �
 
 - WHEN o usuário minimiza a janela principal sem tarefa em foco THEN the trackzyn SHALL minimizar a janela normalmente, sem abrir o widget.
 - IF o servidor não responde a uma ação feita no widget THEN the trackzyn SHALL seguir a fila offline de `foco-e-sons` (SYNC-05 a SYNC-07) e mostrar os avisos dela no próprio widget.
-- WHEN o título da tarefa muda enquanto o widget está aberto THEN the trackzyn SHALL mostrar o novo título em até 1 s.
+- WHEN o título da tarefa muda enquanto o widget está aberto THEN the trackzyn SHALL mostrar o novo título em até 1 s quando a mudança vem da janela principal (`focus:changed`), e em até 15 s quando vem de outro dispositivo (polling, AD-003). Como restaurar a janela principal fecha o widget, na prática só o segundo caso acontece.
 - IF o usuário fecha o app com o widget aberto e a tarefa contando THEN the trackzyn SHALL mostrar o diálogo de SYNC-08 antes de fechar.
 
 ---
@@ -123,30 +123,30 @@ Na tela de foco, o cronômetro só aparece enquanto a janela do trackzyn está �
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| WIDGET-01 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-02 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-03 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-04 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-05 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-06 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-07 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-08 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-09 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-10 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-11 | P1: Widget sempre visível | Tasks | Implementing |
-| WIDGET-12 | P1: Ações pelo widget | Tasks | Implementing |
-| WIDGET-13 | P1: Ações pelo widget | Tasks | Implementing |
-| WIDGET-14 | P1: Ações pelo widget | Tasks | Implementing |
-| WIDGET-15 | P1: Ações pelo widget | Tasks | Implementing |
-| WIDGET-16 | P1: Ações pelo widget | Tasks | Implementing |
-| WIDGET-17 | P1: Ações pelo widget | Tasks | Implementing |
-| WIDGET-18 | P1: Voltar ao app e sincronia | Tasks | Implementing |
-| WIDGET-19 | P1: Voltar ao app e sincronia | Tasks | Implementing |
-| WIDGET-20 | P1: Voltar ao app e sincronia | Tasks | Implementing |
-| WIDGET-21 | P1: Voltar ao app e sincronia | Tasks | Implementing |
-| WIDGET-22 | P1: Voltar ao app e sincronia | Tasks | Implementing |
-| WIDGET-23 | P1: Voltar ao app e sincronia | Tasks | Implementing |
-| WIDGET-24 | P1: Voltar ao app e sincronia | Tasks | Implementing |
+| WIDGET-01 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-02 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-03 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-04 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-05 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-06 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-07 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-08 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-09 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-10 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-11 | P1: Widget sempre visível | Tasks | Verified |
+| WIDGET-12 | P1: Ações pelo widget | Tasks | Verified |
+| WIDGET-13 | P1: Ações pelo widget | Tasks | Verified |
+| WIDGET-14 | P1: Ações pelo widget | Tasks | Verified |
+| WIDGET-15 | P1: Ações pelo widget | Tasks | Verified |
+| WIDGET-16 | P1: Ações pelo widget | Tasks | Verified |
+| WIDGET-17 | P1: Ações pelo widget | Tasks | Verified |
+| WIDGET-18 | P1: Voltar ao app e sincronia | Tasks | Verified |
+| WIDGET-19 | P1: Voltar ao app e sincronia | Tasks | Verified |
+| WIDGET-20 | P1: Voltar ao app e sincronia | Tasks | Verified |
+| WIDGET-21 | P1: Voltar ao app e sincronia | Tasks | Verified |
+| WIDGET-22 | P1: Voltar ao app e sincronia | Tasks | Verified |
+| WIDGET-23 | P1: Voltar ao app e sincronia | Tasks | Verified |
+| WIDGET-24 | P1: Voltar ao app e sincronia | Tasks | Verified |
 
 **Coverage:** 24 total, 24 mapped to tasks, 0 unmapped
 

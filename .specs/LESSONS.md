@@ -68,6 +68,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: S2 backend-node/src/services/focus.ts:202; S5 optimistic.ts:158 (boundaries)
 - last seen: 2026-10-25T02:32:53Z
 
+### L-010 - An e2e that skips assertions on one platform does not prove the behavior there; run it under a real window manager or keep the claim to the platforms it ran on.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `desktop/e2e` · harmful: 0
+- features: widget-desktop
+- evidence: T12 desktop/e2e/widget.spec.ts:41,72,113,158 (desktop/e2e)
+- last seen: 2026-10-25T12:29:17Z
+
+### L-011 - Before writing a latency in a spec, trace which channel actually carries the change; a cross-device change follows the polling interval, not the in-app event.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: widget-desktop
+- evidence: widget-desktop Edge Case title within 1 s (specs)
+- last seen: 2026-10-25T12:29:17Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
