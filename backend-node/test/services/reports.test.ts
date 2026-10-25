@@ -215,6 +215,22 @@ describe('overview', () => {
     expect(report.break_seconds).toBe(5 * M)
   })
 
+  it('REPORT-06 orders lists with the same time by name', async () => {
+    // Beta is created before Alfa, so only the name puts Alfa first.
+    await db.update(lists).set({ name: 'Beta' }).where(eq(lists.id, seed.listId))
+    const alfa = await seed.addList()
+    await db.update(lists).set({ name: 'Alfa' }).where(eq(lists.id, alfa))
+    await task(SP('2026-10-20T09:00:00'), SP('2026-10-20T09:30:00'))
+    await task(SP('2026-10-20T10:00:00'), SP('2026-10-20T10:30:00'), { listId: alfa })
+
+    const report = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(report.by_list.map((item) => [item.name, item.seconds])).toEqual([
+      ['Alfa', 30 * M],
+      ['Beta', 30 * M],
+    ])
+  })
+
   it('REPORT-07 with a list filter counts only that list: sessions, breaks, completions and productive times', async () => {
     const other = await seed.addList()
     await task(SP('2026-10-20T09:00:00'), SP('2026-10-20T10:00:00'))
