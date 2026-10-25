@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { lists as listsApi } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
+import { useDesktopFocusBridge } from '@/lib/focus/use-desktop-bridge'
 import { useFocus } from '@/lib/focus/use-focus'
 import { useLeaveGuard } from '@/lib/focus/use-leave-guard'
 import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
@@ -67,6 +68,7 @@ export default function FocusPage() {
     void actions.complete(taskId)
   }
   useLeaveGuard(state)
+  useDesktopFocusBridge(state, actions.pause)
 
   const { data: allLists } = useQuery({
     queryKey: ['lists', { archived: false }],

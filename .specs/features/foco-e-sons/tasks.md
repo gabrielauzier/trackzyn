@@ -1112,9 +1112,11 @@ T34 → T35 → T36
 
 **Done when**:
 
-- [ ] Testes com `window.trackzyn` falso: estado enviado ao pausar e retomar; pedido de pausa chama `pause` e resolve; sem `window.trackzyn` não faz nada
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Testes com `window.trackzyn` falso: estado enviado ao pausar e retomar; pedido de pausa chama `pause` e resolve; sem `window.trackzyn` não faz nada
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: build

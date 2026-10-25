@@ -29,6 +29,8 @@ function installDesktopApi(setServerUrl: SetServerUrl) {
     startLocal: vi.fn(async () => ({ ok: true as const })),
     openLogs: vi.fn(async () => {}),
     onExportState: vi.fn(() => () => {}),
+    reportFocusState: vi.fn(),
+    onPauseRequest: vi.fn(() => () => {}),
   }
   Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
   return api

@@ -7,7 +7,7 @@ export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** Mirrors desktop/src/shared/ipc.ts: exactly these thirteen members. */
+/** Mirrors desktop/src/shared/ipc.ts: exactly these fifteen members. */
 export interface TrackzynApi {
   isDesktop: true
   platform: string
@@ -26,6 +26,10 @@ export interface TrackzynApi {
   openLogs(): Promise<void>
   /** Tells whether an export is running (the interface locks while it does); returns an unsubscribe. */
   onExportState(callback: (state: { exporting: boolean }) => void): () => void
+  /** Tells the desktop whether a focus is open and a task is counting, so closing can ask first (SYNC-08). */
+  reportFocusState(state: { active: boolean; running: boolean }): void
+  /** Runs `callback` when closing the desktop app asks for the pause. Returns an unsubscribe. */
+  onPauseRequest(callback: () => Promise<void>): () => void
 }
 
 declare global {

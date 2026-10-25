@@ -248,6 +248,8 @@ describe('LoginPage', () => {
       startLocal: vi.fn(async () => ({ ok: true as const })),
       openLogs: vi.fn(async () => {}),
       onExportState: vi.fn(() => () => {}),
+      reportFocusState: vi.fn(),
+      onPauseRequest: vi.fn(() => () => {}),
     }
     Object.defineProperty(window, 'trackzyn', { value: desktopApi, configurable: true })
     try {
@@ -303,6 +305,8 @@ describe('LoginPage SSO', () => {
       startLocal: vi.fn(async () => ({ ok: true as const })),
       openLogs: vi.fn(async () => {}),
       onExportState: vi.fn(() => () => {}),
+      reportFocusState: vi.fn(),
+      onPauseRequest: vi.fn(() => () => {}),
     }
     Object.defineProperty(window, 'trackzyn', { value: desktopApi, configurable: true })
     return desktopApi
