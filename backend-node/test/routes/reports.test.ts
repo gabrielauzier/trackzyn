@@ -103,13 +103,14 @@ describe('GET /api/reports/overview', () => {
 
 describe('GET /api/reports/sessions', () => {
   it('REPORT-20 REPORT-21 answers the user sessions with the open one in progress; a viewer gets no days', async () => {
-    const { owner, viewer, workspaceId } = await setup()
+    const { owner, viewer, workspaceId, workDays } = await setup()
     const query = period(date(-1), date(1))
 
     const owners = await call('GET', `/api/reports/sessions?${query}`, owner.token, workspaceId)
     expect(owners.statusCode).toBe(200)
     const sessions = owners.json().days.flatMap((item: { sessions: unknown[] }) => item.sessions)
-    expect(sessions).toHaveLength(1)
+    // The open session is cut at a UTC midnight it crosses: one piece per day it touches.
+    expect(sessions).toHaveLength(workDays)
     expect(sessions[0]).toMatchObject({ kind: 'task', task_title: 'Focus', list_name: 'Work', ended_at: null })
 
     const viewers = await call('GET', `/api/reports/sessions?${query}`, viewer.token, workspaceId)
