@@ -154,6 +154,8 @@ function apply(model: Model, action: FocusAction, atMs: number, nowMs: number, l
       const task = model.today.find((candidate) => candidate.id === action.task_id)
       if (!task) throw refuse()
       if (open) {
+        // A stale session waits for `recover` (SYNC-11).
+        if (open.lastSeenMs !== null && nowMs - open.lastSeenMs > STALE_AFTER_MS) throw refuse()
         const here = open.device_id === device
         if (!here && !action.takeover) throw new FocusRefusal(409, 'focus_elsewhere')
         if (open.kind === 'task' && open.task_id === task.id) {

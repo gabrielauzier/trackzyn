@@ -182,7 +182,8 @@ async function startNext(tx: Database, context: TransitionContext, listId: strin
  * Starts (or resumes) the focus on a pending task of Today (FOCUS-02, FOCUS-05). With a session open on
  * another device it answers `focus_elsewhere` unless `takeover` (SYNC-02); taking over the same task
  * keeps its session and moves it to this device (SYNC-03); another task ends the old session at the same
- * instant (SYNC-04). Starting the task already counting changes nothing (SYNC-01).
+ * instant (SYNC-04). Starting the task already counting changes nothing (SYNC-01). While the open
+ * session has had no signal for more than 120 s, only `recover` resolves it (SYNC-11).
  */
 export function startFocus(
   db: Database,
@@ -197,6 +198,8 @@ export function startFocus(
 
     const open = await openSession(tx, context.userId)
     if (open) {
+      // A session left without signal waits for the user's `Manter` or `Cortar no último sinal` (SYNC-11).
+      if (now.getTime() - open.lastSeenAt.getTime() > STALE_AFTER_MS) throw invalidTransition()
       const here = open.deviceId === context.deviceId
       if (!here && !payload.takeover) throw focusElsewhere(open)
       if (open.kind === 'task' && open.taskId === task.id) {

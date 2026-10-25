@@ -226,6 +226,28 @@ describe('FocusPage', () => {
     expect(focus.send).not.toHaveBeenCalled()
   })
 
+  it('starts nothing while a session left open by a crash waits for Keep or Cut at the last signal (SYNC-11)', async () => {
+    const OTHER_LIST = '22222222-2222-4222-8222-222222222222'
+    const taskX = { id: 'task-x', title: 'DEV-1800', estimate_minutes: null, spent_seconds: 900, awaiting_extend: false }
+    for (const device of [deviceId(), OTHER_DEVICE]) {
+      vi.mocked(focus.send).mockClear()
+      const base = counting(device)
+      vi.mocked(focus.get).mockResolvedValue({
+        ...base,
+        session: { ...base.session!, task_id: taskX.id, list_id: OTHER_LIST, deadline_at: null },
+        task: taskX,
+        stale: { session_id: base.session!.id, last_seen_at: new Date(Date.now() - 300_000).toISOString(), seconds: 300 },
+      })
+      const { unmount } = renderFocus()
+
+      expect(await screen.findByRole('heading', { name: 'Today' })).toBeInTheDocument()
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      expect(focus.send, device).not.toHaveBeenCalled()
+      expect(screen.queryByRole('dialog', { name: 'You are already focusing on another device.' })).not.toBeInTheDocument()
+      unmount()
+    }
+  })
+
   it('asks before taking over a session open on another device, and takes it over (SYNC-02, SYNC-03)', async () => {
     vi.mocked(focus.get).mockResolvedValue(counting(OTHER_DEVICE))
     vi.mocked(focus.send).mockRejectedValueOnce({ response: { status: 409, data: { code: 'focus_elsewhere' } } })

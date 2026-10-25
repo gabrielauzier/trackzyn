@@ -1386,6 +1386,87 @@
           { "task": "a", "started_at": 0, "last_seen_at": 10 }
         ]
       }
+    },
+    {
+      "name": "start on another task from the same device while the open session has no signal for more than 120 s answers invalid_transition and leaves it for the user",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" },
+          { "key": "b" }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
+          "stale": { "last_seen_at": 10, "seconds": 300 }
+        }
+      },
+      "action": { "type": "start", "at": 15, "task": "b" },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 10 }
+        ]
+      }
+    },
+    {
+      "name": "takeover on another task while the open session has no signal for more than 120 s answers invalid_transition and leaves it for the user",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" },
+          { "key": "b" }
+        ],
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
+          "stale": { "last_seen_at": 10, "seconds": 300 }
+        }
+      },
+      "action": { "type": "start", "at": 15, "task": "b", "takeover": true },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "last_seen_at": 10 }
+        ]
+      }
+    },
+    {
+      "name": "takeover on the same task while the open session has no signal for more than 120 s answers invalid_transition and keeps its last signal",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" },
+          { "key": "b" }
+        ],
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "B", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
+          "today": { "pending": 2, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false }, { "key": "b", "spent_seconds": 0, "awaiting_extend": false } ] },
+          "stale": { "last_seen_at": 10, "seconds": 300 }
+        }
+      },
+      "action": { "type": "start", "at": 15, "task": "a", "takeover": true },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "device": "B", "started_at": 0, "last_seen_at": 10 }
+        ]
+      }
     }
   ]
 }

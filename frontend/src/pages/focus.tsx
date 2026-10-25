@@ -28,9 +28,12 @@ import type { FocusState } from '@/types'
  * Whether opening the focus screen starts the first task of Today (FOCUS-02): unless a session of this
  * device already runs on this list (coming back from the board, FOCUS-16) or the estimate of that task
  * is already used up (it waits for `Estender`, Edge Case). A session on another device is asked to be
- * taken over (SYNC-02).
+ * taken over (SYNC-02). Nothing starts while a stale session waits for `Manter` or `Cortar no último
+ * sinal` (SYNC-11).
  */
 function shouldStart(state: FocusState, listId: string): boolean {
+  // A session left open by a crash waits for the user's answer, not for a new start (SYNC-11).
+  if (state.stale !== null) return false
   const first = state.today.tasks[0]
   if (!first || first.awaiting_extend) return false
   const session = state.session
