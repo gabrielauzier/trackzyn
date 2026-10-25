@@ -154,10 +154,14 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Estimativa de 60 min com gastos de 50, 58, 63 e 80 min e uma sem estimativa → `early` (−10 min), `on_time`, `on_time`, `late` (+20 min), sem selo; 75% e 25%
-- [ ] 5 verdes e 6 vermelhos → `45.45` e `54.55`; tarefa concluída no período com tempo de antes usa o tempo total
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Estimativa de 60 min com gastos de 50, 58, 63 e 80 min e uma sem estimativa → `early` (−10 min), `on_time`, `on_time`, `late` (+20 min), sem selo; 75% e 25%
+- [x] 5 verdes e 6 vermelhos → `45.45` e `54.55`; tarefa concluída no período com tempo de antes usa o tempo total
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Os limites de 5% são inclusivos: com estimativa de 60 min, 57:00 e 63:00 ficam `on_time`, e 56:59 e 63:01 não. Dentro do dia, as tarefas vêm da conclusão mais recente para a mais antiga. Sem estimativa, `diff_seconds` é 0. O tempo do selo vem de `spentSeconds`, que soma todos os membros e todo o histórico da tarefa até `now`.
 
 **Tests**: integration
 **Gate**: full

@@ -148,12 +148,12 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | REPORT-11 | P2: Visão geral | Tasks | Implementing |
 | REPORT-12 | P2: Visão geral | Tasks | Implementing |
 | REPORT-13 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-14 | P2: Antes ou depois da estimativa | Tasks | In Tasks |
-| REPORT-15 | P2: Antes ou depois da estimativa | Tasks | In Tasks |
-| REPORT-16 | P2: Antes ou depois da estimativa | Tasks | In Tasks |
-| REPORT-17 | P2: Antes ou depois da estimativa | Tasks | In Tasks |
-| REPORT-18 | P2: Antes ou depois da estimativa | Tasks | In Tasks |
-| REPORT-19 | P2: Antes ou depois da estimativa | Tasks | In Tasks |
+| REPORT-14 | P2: Antes ou depois da estimativa | Tasks | Implementing |
+| REPORT-15 | P2: Antes ou depois da estimativa | Tasks | Implementing |
+| REPORT-16 | P2: Antes ou depois da estimativa | Tasks | Implementing |
+| REPORT-17 | P2: Antes ou depois da estimativa | Tasks | Implementing |
+| REPORT-18 | P2: Antes ou depois da estimativa | Tasks | Implementing |
+| REPORT-19 | P2: Antes ou depois da estimativa | Tasks | Implementing |
 | REPORT-20 | P2: Aba Sessões | Tasks | In Tasks |
 | REPORT-21 | P2: Aba Sessões | Tasks | In Tasks |
 | REPORT-22 | P2: Aba Sessões | Tasks | In Tasks |

@@ -236,3 +236,116 @@ describe('overview', () => {
     expect(elapsed).toBeLessThan(2000)
   })
 })
+
+describe('overview done', () => {
+  /** A task completed by the user at `completedAt` after `spentMinutes` of focus (`spentSeconds` more). */
+  async function finished(
+    completedAt: Date,
+    estimate: number | null,
+    spentMinutes: number,
+    options: { spentSeconds?: number; title?: string; listId?: string; sessionAt?: Date } = {},
+  ) {
+    const id = await seed.addTask({ column: 'done', estimate, title: options.title, listId: options.listId })
+    await db.update(tasks).set({ completedAt, completedByUserId: seed.userId }).where(eq(tasks.id, id))
+    const startedAt = options.sessionAt ?? new Date(completedAt.getTime() - (spentMinutes * 60 + (options.spentSeconds ?? 0)) * 1000)
+    const endedAt = new Date(startedAt.getTime() + (spentMinutes * 60 + (options.spentSeconds ?? 0)) * 1000)
+    if (spentMinutes > 0 || options.spentSeconds) await seed.addSession({ kind: 'task', taskId: id, startedAt, endedAt, ...(options.listId ? { listId: options.listId } : {}) })
+    return id
+  }
+
+  it('REPORT-15 to REPORT-18 an estimate of 60 min against 50, 58, 63 and 80 min, and a task without estimate: 75% and 25%', async () => {
+    const a = await finished(SP('2026-10-20T10:00:00'), 60, 50, { title: 'fifty' })
+    const b = await finished(SP('2026-10-20T12:00:00'), 60, 58, { title: 'fifty-eight' })
+    const c = await finished(SP('2026-10-21T10:00:00'), 60, 63, { title: 'sixty-three' })
+    const d = await finished(SP('2026-10-21T12:00:00'), 60, 80, { title: 'eighty' })
+    const e = await finished(SP('2026-10-21T14:00:00'), null, 30, { title: 'no estimate' })
+
+    const { done } = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    const item = (id: string, title: string, spent: number, estimate: number | null, verdict: string | null, diff: number) => ({
+      id,
+      title,
+      list_id: seed.listId,
+      spent_seconds: spent,
+      estimate_minutes: estimate,
+      verdict,
+      diff_seconds: diff,
+    })
+    // REPORT-14: by day of completion, the most recent day and completion first.
+    expect(done.days).toEqual([
+      {
+        date: '2026-10-21',
+        tasks: [
+          item(e, 'no estimate', 30 * M, null, null, 0),
+          item(d, 'eighty', 80 * M, 60, 'late', 20 * M),
+          item(c, 'sixty-three', 63 * M, 60, 'on_time', 3 * M),
+        ],
+      },
+      {
+        date: '2026-10-20',
+        tasks: [item(b, 'fifty-eight', 58 * M, 60, 'on_time', -2 * M), item(a, 'fifty', 50 * M, 60, 'early', -10 * M)],
+      },
+    ])
+    expect(done.early_or_on_time_pct).toBe(75)
+    expect(done.late_pct).toBe(25)
+  })
+
+  it('REPORT-15 the 5% tolerance holds exactly at 57 and 63 min of a 60 min estimate, and not one second past them', async () => {
+    await finished(SP('2026-10-20T09:00:00'), 60, 57)
+    await finished(SP('2026-10-20T10:00:00'), 60, 56, { spentSeconds: 59 })
+    await finished(SP('2026-10-20T11:00:00'), 60, 63)
+    await finished(SP('2026-10-20T12:00:00'), 60, 63, { spentSeconds: 1 })
+
+    const { done } = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(done.days[0]!.tasks.map((item) => [item.verdict, item.diff_seconds])).toEqual([
+      ['late', 3 * M + 1],
+      ['on_time', 3 * M],
+      ['early', -3 * M - 1],
+      ['on_time', -3 * M],
+    ])
+  })
+
+  it('REPORT-19 5 green and 6 red badges answer 45.45 and 54.55', async () => {
+    for (let n = 0; n < 5; n++) await finished(SP(`2026-10-20T0${n}:30:00`), 60, 40)
+    for (let n = 0; n < 6; n++) await finished(SP(`2026-10-22T1${n}:30:00`), 10, 20)
+
+    const { done } = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(done.early_or_on_time_pct).toBe(45.45)
+    expect(done.late_pct).toBe(54.55)
+  })
+
+  it('REPORT-18 without tasks with an estimate both shares are null; without completions days is empty', async () => {
+    await finished(SP('2026-10-20T10:00:00'), null, 20)
+    const some = await overview(db, seed.userId, workspace, WEEK, NOW)
+    expect(some.done.days).toHaveLength(1)
+    expect(some.done).toMatchObject({ early_or_on_time_pct: null, late_pct: null })
+
+    const none = await overview(db, seed.userId, workspace, { from: '2026-10-12', to: '2026-10-18', listId: null }, NOW)
+    expect(none.done).toEqual({ days: [], early_or_on_time_pct: null, late_pct: null })
+  })
+
+  it('Edge Case a task completed in the period with time before it uses its total time, of every member; Tempo trabalhado only the period', async () => {
+    const id = await finished(SP('2026-10-20T10:00:00'), 60, 50, { sessionAt: SP('2026-10-15T09:00:00') })
+    await seed.addSession({ kind: 'task', taskId: id, userId: await seed.addUser(), startedAt: SP('2026-10-20T08:00:00'), endedAt: SP('2026-10-20T08:20:00') })
+    await seed.addSession({ kind: 'task', taskId: id, startedAt: SP('2026-10-20T09:00:00'), endedAt: SP('2026-10-20T09:10:00') })
+
+    const report = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(report.done.days[0]!.tasks[0]).toMatchObject({ id, spent_seconds: 80 * M, verdict: 'late', diff_seconds: 20 * M })
+    expect(report.tiles).toMatchObject({ tasks_done: 1, task_seconds: 10 * M })
+  })
+
+  it('REPORT-07 REPORT-09 lists only the user own completions of the filtered list', async () => {
+    const other = await seed.addList()
+    const mine = await finished(SP('2026-10-20T10:00:00'), 30, 30, { listId: other })
+    await finished(SP('2026-10-20T11:00:00'), 30, 30)
+    const theirs = await seed.addTask({ column: 'done', listId: other })
+    await db.update(tasks).set({ completedAt: SP('2026-10-20T12:00:00'), completedByUserId: await seed.addUser() }).where(eq(tasks.id, theirs))
+
+    const { done } = await overview(db, seed.userId, workspace, { ...WEEK, listId: other }, NOW)
+
+    expect(done.days.flatMap((item) => item.tasks.map((t) => [t.id, t.list_id]))).toEqual([[mine, other]])
+  })
+})

@@ -2,7 +2,7 @@ import { type SQL, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import type { Workspace } from '../db/schema.ts'
 import { dayTimezone } from './day.ts'
-import { settle } from './focus-settle.ts'
+import { settle, spentSeconds } from './focus-settle.ts'
 import { getList } from './lists.ts'
 
 /** A period of whole days, both ends included, as `YYYY-MM-DD` in the day timezone. */
@@ -24,6 +24,41 @@ export interface Overview {
   /** Task time per list, lists without time left out. */
   by_list: Array<{ list_id: string; name: string; color: number; is_archived: boolean; seconds: number }>
   break_seconds: number
+  done: DoneReport
+}
+
+export type Verdict = 'early' | 'on_time' | 'late'
+
+export interface DoneTask {
+  id: string
+  title: string
+  list_id: string
+  /** All the time of the task, of every member and from before the period too. */
+  spent_seconds: number
+  estimate_minutes: number | null
+  /** Null without an estimate (REPORT-18). */
+  verdict: Verdict | null
+  /** `spent_seconds` minus the estimate; 0 without an estimate. */
+  diff_seconds: number
+}
+
+export interface DoneReport {
+  /** The user's completions in the period by local day, the most recent day first (REPORT-14). */
+  days: Array<{ date: string; tasks: DoneTask[] }>
+  /** Shares of green and red badges among the tasks with an estimate, two decimals; null without any. */
+  early_or_on_time_pct: number | null
+  late_pct: number | null
+}
+
+/** Within 5% of the estimate either way is on time (REPORT-15); below is early, above is late. */
+export const ON_TIME_TOLERANCE = 0.05
+
+export function verdictOf(spentSeconds: number, estimateMinutes: number | null): { verdict: Verdict | null; diff: number } {
+  if (estimateMinutes === null) return { verdict: null, diff: 0 }
+  const estimate = estimateMinutes * 60
+  const diff = spentSeconds - estimate
+  if (Math.abs(diff) <= ON_TIME_TOLERANCE * estimate) return { verdict: 'on_time', diff }
+  return { verdict: diff < 0 ? 'early' : 'late', diff }
 }
 
 export interface ReportScope {
@@ -153,5 +188,51 @@ export async function overview(
     productive: { hours: row.hours ?? [], weekdays: row.weekdays ?? [], months: row.months ?? [] },
     by_list: row.by_list ?? [],
     break_seconds: row.break_seconds,
+    done: await doneReport(tx, userId, workspace.id, scope, now),
   }
+}
+
+/**
+ * The tasks the user completed in the period with their badge against the estimate, from the task's
+ * total time (REPORT-14 to REPORT-19). The red share is 100 minus the green one, so both add up to 100.
+ */
+async function doneReport(tx: Database, userId: string, workspaceId: string, scope: ReportScope, now: Date): Promise<DoneReport> {
+  const found = (
+    (await tx.execute(sql`
+      SELECT t.id, t.title, t.list_id, t.estimate_minutes, (t.completed_at AT TIME ZONE ${scope.timezone})::date::text AS date
+      FROM tasks t JOIN lists l ON l.id = t.list_id
+      WHERE l.workspace_id = ${workspaceId} AND t.completed_by_user_id = ${userId}
+        AND t.completed_at >= ${scope.lo} AND t.completed_at < ${scope.hi} ${scope.listFilter('t')}
+      ORDER BY t.completed_at DESC, t.id`)) as unknown as {
+      rows: Array<{ id: string; title: string; list_id: string; estimate_minutes: number | null; date: string }>
+    }
+  ).rows
+  const spent = await spentSeconds(
+    tx,
+    found.map((row) => row.id),
+    now,
+  )
+
+  const days: DoneReport['days'] = []
+  for (const row of found) {
+    const spentSeconds = spent.get(row.id) ?? 0
+    const { verdict, diff } = verdictOf(spentSeconds, row.estimate_minutes)
+    const view: DoneTask = {
+      id: row.id,
+      title: row.title,
+      list_id: row.list_id,
+      spent_seconds: spentSeconds,
+      estimate_minutes: row.estimate_minutes,
+      verdict,
+      diff_seconds: diff,
+    }
+    const last = days.at(-1)
+    if (last?.date === row.date) last.tasks.push(view)
+    else days.push({ date: row.date, tasks: [view] })
+  }
+
+  const judged = days.flatMap((item) => item.tasks).filter((item) => item.verdict !== null)
+  if (judged.length === 0) return { days, early_or_on_time_pct: null, late_pct: null }
+  const green = Math.round((judged.filter((item) => item.verdict !== 'late').length / judged.length) * 10_000) / 100
+  return { days, early_or_on_time_pct: green, late_pct: Math.round((100 - green) * 100) / 100 }
 }
