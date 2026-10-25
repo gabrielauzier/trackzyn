@@ -80,6 +80,20 @@ describe('overview', () => {
     expect(report.tiles).toEqual({ work_days: 1, tasks_done: 0, task_seconds: H, avg_seconds_per_task: null })
   })
 
+  it('REPORT-02 rounds the average time per task to the nearest second', async () => {
+    // 1h 0min 1s over 2 tasks is 1800.5 s: 1801.
+    await task(SP('2026-10-20T09:00:00'), SP('2026-10-20T10:00:01'))
+    await completed(SP('2026-10-20T10:00:00'))
+    await completed(SP('2026-10-20T11:00:00'))
+    // 10 s over 3 tasks is 3.33 s: 3.
+    const LAST_WEEK: ReportFilter = { from: '2026-10-12', to: '2026-10-18', listId: null }
+    await task(SP('2026-10-13T09:00:00'), SP('2026-10-13T09:00:10'))
+    for (const hour of ['10', '11', '12']) await completed(SP(`2026-10-13T${hour}:00:00`))
+
+    expect((await overview(db, seed.userId, workspace, WEEK, NOW)).tiles).toMatchObject({ tasks_done: 2, task_seconds: H + 1, avg_seconds_per_task: 1801 })
+    expect((await overview(db, seed.userId, workspace, LAST_WEEK, NOW)).tiles).toMatchObject({ tasks_done: 3, task_seconds: 10, avg_seconds_per_task: 3 })
+  })
+
   it('REPORT-02 counts as worked only the days with a task session, not a break-only day (Assumption)', async () => {
     await pause(SP('2026-10-20T10:00:00'), SP('2026-10-20T10:10:00'))
     await task(SP('2026-10-22T09:00:00'), SP('2026-10-22T10:00:00'))
