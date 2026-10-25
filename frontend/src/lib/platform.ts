@@ -7,7 +7,7 @@ export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** Mirrors desktop/src/shared/ipc.ts: exactly these fifteen members. */
+/** Mirrors desktop/src/shared/ipc.ts: exactly these twenty-two members. */
 export interface TrackzynApi {
   isDesktop: true
   platform: string
@@ -30,6 +30,20 @@ export interface TrackzynApi {
   reportFocusState(state: { active: boolean; running: boolean }): void
   /** Runs `callback` when closing the desktop app asks for the pause. Returns an unsubscribe. */
   onPauseRequest(callback: () => Promise<void>): () => void
+  /** Which desktop window this page runs in: the focus widget or the main window. */
+  windowRole: 'main' | 'widget'
+  /** Opens the focus widget and minimizes the main window. */
+  collapseFocus(): Promise<void>
+  /** Closes the widget and brings the main window back: to the focus screen, or to the board with `task_left`. */
+  expandFocus(reason?: 'task_left'): Promise<void>
+  /** Grows the widget for the notes field, or shrinks it back. */
+  resizeWidget(mode: 'compact' | 'notes'): Promise<void>
+  /** Tells the other window that the focus changed here. */
+  notifyFocusChanged(): void
+  /** Runs `callback` when the other window changed the focus. Returns an unsubscribe. */
+  onFocusChanged(callback: () => void): () => void
+  /** Tells whether the focus widget is open. Returns an unsubscribe. */
+  onWidgetState(callback: (state: { open: boolean }) => void): () => void
 }
 
 declare global {

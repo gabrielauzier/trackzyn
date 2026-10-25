@@ -1,7 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { APP_VERSION_ARG, IPC, type TrackzynApi } from '../shared/ipc'
+import { APP_VERSION_ARG, IPC, WINDOW_ROLE_ARG, type TrackzynApi } from '../shared/ipc'
 
 const versionArg = process.argv.find((arg) => arg.startsWith(APP_VERSION_ARG))
+const isWidget = process.argv.includes(`${WINDOW_ROLE_ARG}widget`)
 
 const api: TrackzynApi = {
   isDesktop: true,
@@ -43,6 +44,27 @@ const api: TrackzynApi = {
     ipcRenderer.on(IPC.focusPauseRequest, listener)
     return () => {
       ipcRenderer.removeListener(IPC.focusPauseRequest, listener)
+    }
+  },
+  windowRole: isWidget ? 'widget' : 'main',
+  collapseFocus: () => ipcRenderer.invoke(IPC.focusCollapse),
+  expandFocus: (reason) => ipcRenderer.invoke(IPC.focusExpand, reason),
+  resizeWidget: (mode) => ipcRenderer.invoke(IPC.widgetResize, mode),
+  notifyFocusChanged: () => {
+    void ipcRenderer.invoke(IPC.focusChanged).catch(() => undefined)
+  },
+  onFocusChanged: (callback) => {
+    const listener = () => callback()
+    ipcRenderer.on(IPC.focusChanged, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC.focusChanged, listener)
+    }
+  },
+  onWidgetState: (callback) => {
+    const listener = (_event: unknown, state: { open: boolean }) => callback(state)
+    ipcRenderer.on(IPC.widgetState, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC.widgetState, listener)
     }
   },
 }

@@ -245,11 +245,18 @@ function start() {
     })
     trustedHandle(ipcMain, IPC.focusState, (_event, state: unknown) => focusClose?.reportState(state))
     trustedHandle(ipcMain, IPC.focusPauseRequest, () => focusClose?.pauseAnswered())
+    // The widget bridge (WIDGET-22): received here, wired to the widget controller later.
+    trustedHandle(ipcMain, IPC.focusCollapse, () => undefined)
+    trustedHandle(ipcMain, IPC.focusExpand, () => undefined)
+    trustedHandle(ipcMain, IPC.focusChanged, () => undefined)
+    trustedHandle(ipcMain, IPC.widgetResize, () => undefined)
     // A page loaded after the download finished still shows the banner.
     mainWindow.webContents.on('did-finish-load', () => {
       if (exporting) mainWindow?.webContents.send(IPC.exportState, { exporting: true })
       const pending = updater.pending()
       if (pending) mainWindow?.webContents.send(IPC.updateAvailable, pending)
+      // No widget exists yet: a page that loads learns that it is closed.
+      mainWindow?.webContents.send(IPC.widgetState, { open: false })
     })
     updater.start()
 

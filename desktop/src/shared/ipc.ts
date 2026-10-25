@@ -13,13 +13,19 @@ export const IPC = {
   focusState: 'focus:state',
   /** Main to renderer asks the pause; the renderer answers on the same channel once it is done. */
   focusPauseRequest: 'focus:pause-request',
+  focusCollapse: 'focus:collapse',
+  focusExpand: 'focus:expand',
+  /** Renderer to main says the focus changed; main relays it to the other window on the same channel. */
+  focusChanged: 'focus:changed',
+  widgetState: 'widget:state',
+  widgetResize: 'widget:resize',
 } as const
 
 export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** What the renderer sees as `window.trackzyn`. Exactly these fifteen members. */
+/** What the renderer sees as `window.trackzyn`. Exactly these twenty-two members. */
 export interface TrackzynApi {
   isDesktop: true
   platform: string
@@ -43,6 +49,24 @@ export interface TrackzynApi {
   reportFocusState(state: { active: boolean; running: boolean }): void
   /** Runs `callback` when closing asks for the pause; the main process waits for it to settle. Returns an unsubscribe. */
   onPauseRequest(callback: () => Promise<void>): () => void
+  /** Which window this page runs in: the focus widget or the main window. */
+  windowRole: WindowRole
+  /** Opens the focus widget and minimizes the main window. */
+  collapseFocus(): Promise<void>
+  /** Closes the widget and brings the main window back: to the focus screen, or to the board with `task_left`. */
+  expandFocus(reason?: 'task_left'): Promise<void>
+  /** Grows the widget for the notes field, or shrinks it back. */
+  resizeWidget(mode: 'compact' | 'notes'): Promise<void>
+  /** Tells the other window that the focus changed here. */
+  notifyFocusChanged(): void
+  /** Runs `callback` when the other window changed the focus. Returns an unsubscribe. */
+  onFocusChanged(callback: () => void): () => void
+  /** Tells whether the focus widget is open. Returns an unsubscribe. */
+  onWidgetState(callback: (state: { open: boolean }) => void): () => void
 }
 
+export type WindowRole = 'main' | 'widget'
+
 export const APP_VERSION_ARG = '--trackzyn-app-version='
+/** Present with `widget` on the widget window only; any other value, or none, is the main window. */
+export const WINDOW_ROLE_ARG = '--trackzyn-window-role='

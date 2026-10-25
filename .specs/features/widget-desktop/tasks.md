@@ -85,9 +85,13 @@ T12
 
 **Done when**:
 
-- [ ] Testes do preload: cada membro novo chama o canal certo; `windowRole` é `widget` com o argumento e `main` sem; a contagem fixada passa a 22
-- [ ] Gate check passes: Full (desktop)
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Testes do preload: cada membro novo chama o canal certo; `windowRole` é `widget` com o argumento e `main` sem; a contagem fixada passa a 22
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Os canais `focus:collapse`, `focus:expand`, `focus:changed` e `widget:resize` ficam registrados em `main/index.ts` com handlers vazios até a T12, porque `ipc.test.ts` exige o registro. `widget:state` entrou na lista de canais só de envio, e a janela principal recebe `{ open: false }` ao carregar. `expandFocus` aceita o motivo opcional `task_left` (tabela de erros do design). A ponte também mudou o espelho `frontend/src/lib/platform.ts`, os fakes dos testes do frontend e a lista de `desktop/e2e/security.spec.ts`.
 
 **Tests**: unit
 **Gate**: full

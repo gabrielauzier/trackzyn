@@ -15,20 +15,27 @@ test.afterEach(async () => {
 
 const TRACKZYN_MEMBERS = [
   'appVersion',
+  'collapseFocus',
+  'expandFocus',
   'getMode',
   'getServerUrl',
   'installUpdate',
   'isDesktop',
+  'notifyFocusChanged',
   'onExportState',
+  'onFocusChanged',
   'onPauseRequest',
   'onUpdateAvailable',
+  'onWidgetState',
   'openExternal',
   'openLogs',
   'platform',
   'reportFocusState',
+  'resizeWidget',
   'setServerUrl',
   'startLocal',
   'startSso',
+  'windowRole',
 ]
 
 test('window web preferences are locked down', async () => {
@@ -86,8 +93,8 @@ test('renderer cannot navigate away', async () => {
   expect(page.url()).toBe(before)
 })
 
-// The title is what task 3's proof (C20a) calls; the bridge has grown since (SSO, local mode, export, focus),
-// so the list above is the current one (15 members) and this test fixes that list.
+// The title is what task 3's proof (C20a) calls; the bridge has grown since (SSO, local mode, export, focus, widget),
+// so the list above is the current one (22 members) and this test fixes that list.
 test('window.trackzyn exposes exactly the eight members', async () => {
   const { page } = await launchApp({ serverUrl: server.url })
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()

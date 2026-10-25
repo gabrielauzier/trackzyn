@@ -44,26 +44,33 @@ beforeEach(() => {
 })
 
 describe('preload bridge (SYNC-08)', () => {
-  it('exposes exactly fifteen members, the two focus ones included', async () => {
+  it('exposes exactly twenty-two members, the focus and widget ones included', async () => {
     const api = await loadApi()
     expect(Object.keys(api).sort()).toEqual([
       'appVersion',
+      'collapseFocus',
+      'expandFocus',
       'getMode',
       'getServerUrl',
       'installUpdate',
       'isDesktop',
+      'notifyFocusChanged',
       'onExportState',
+      'onFocusChanged',
       'onPauseRequest',
       'onUpdateAvailable',
+      'onWidgetState',
       'openExternal',
       'openLogs',
       'platform',
       'reportFocusState',
+      'resizeWidget',
       'setServerUrl',
       'startLocal',
       'startSso',
+      'windowRole',
     ])
-    expect(Object.keys(api)).toHaveLength(15)
+    expect(Object.keys(api)).toHaveLength(22)
   })
 
   it('reportFocusState sends the state on focus:state', async () => {
@@ -101,5 +108,72 @@ describe('preload bridge (SYNC-08)', () => {
     bridge.emit('focus:pause-request')
     await vi.waitFor(() => expect(bridge.invoke.mock.calls).toEqual([['focus:pause-request']]))
     unsubscribe()
+  })
+})
+
+describe('preload bridge for the focus widget (WIDGET-22, WIDGET-24)', () => {
+  async function loadWithArgs(args: string[]): Promise<TrackzynApi> {
+    const original = process.argv
+    process.argv = [...original, ...args]
+    try {
+      vi.resetModules()
+      bridge.exposed = null
+      return await loadApi()
+    } finally {
+      process.argv = original
+    }
+  }
+
+  it('windowRole is widget with the widget argument and main without it', async () => {
+    expect((await loadWithArgs(['--trackzyn-window-role=widget'])).windowRole).toBe('widget')
+    expect((await loadWithArgs([])).windowRole).toBe('main')
+    expect((await loadWithArgs(['--trackzyn-window-role=main'])).windowRole).toBe('main')
+    expect((await loadWithArgs(['--trackzyn-window-role=widgets'])).windowRole).toBe('main')
+  })
+
+  it('collapseFocus, expandFocus and resizeWidget invoke their channels with their arguments', async () => {
+    const api = await loadApi()
+    await api.collapseFocus()
+    await api.expandFocus()
+    await api.expandFocus('task_left')
+    await api.resizeWidget('notes')
+    await api.resizeWidget('compact')
+    expect(bridge.invoke.mock.calls).toEqual([
+      ['focus:collapse'],
+      ['focus:expand', undefined],
+      ['focus:expand', 'task_left'],
+      ['widget:resize', 'notes'],
+      ['widget:resize', 'compact'],
+    ])
+  })
+
+  it('notifyFocusChanged sends on focus:changed and swallows a failure', async () => {
+    const api = await loadApi()
+    bridge.invoke.mockRejectedValueOnce(new Error('closed'))
+    expect(api.notifyFocusChanged()).toBeUndefined()
+    expect(bridge.invoke.mock.calls).toEqual([['focus:changed']])
+  })
+
+  it('onFocusChanged runs the callback on focus:changed until unsubscribed', async () => {
+    const api = await loadApi()
+    const callback = vi.fn()
+    const unsubscribe = api.onFocusChanged(callback)
+    bridge.emit('focus:changed')
+    expect(callback).toHaveBeenCalledTimes(1)
+    unsubscribe()
+    bridge.emit('focus:changed')
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('onWidgetState passes the open state from widget:state until unsubscribed', async () => {
+    const api = await loadApi()
+    const callback = vi.fn()
+    const unsubscribe = api.onWidgetState(callback)
+    bridge.emit('widget:state', { open: true })
+    bridge.emit('widget:state', { open: false })
+    expect(callback.mock.calls).toEqual([[{ open: true }], [{ open: false }]])
+    unsubscribe()
+    bridge.emit('widget:state', { open: true })
+    expect(callback).toHaveBeenCalledTimes(2)
   })
 })

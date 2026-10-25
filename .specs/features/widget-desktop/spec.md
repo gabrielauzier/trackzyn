@@ -144,9 +144,9 @@ Na tela de foco, o cronômetro só aparece enquanto a janela do trackzyn está �
 | WIDGET-19 | P1: Voltar ao app e sincronia | Tasks | In Tasks |
 | WIDGET-20 | P1: Voltar ao app e sincronia | Tasks | In Tasks |
 | WIDGET-21 | P1: Voltar ao app e sincronia | Tasks | In Tasks |
-| WIDGET-22 | P1: Voltar ao app e sincronia | Tasks | In Tasks |
+| WIDGET-22 | P1: Voltar ao app e sincronia | Tasks | Implementing |
 | WIDGET-23 | P1: Voltar ao app e sincronia | Tasks | In Tasks |
-| WIDGET-24 | P1: Voltar ao app e sincronia | Tasks | In Tasks |
+| WIDGET-24 | P1: Voltar ao app e sincronia | Tasks | Implementing |
 
 **Coverage:** 24 total, 24 mapped to tasks, 0 unmapped
 
