@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 
 import { StaleSessionDialog } from '@/components/focus/stale-session-dialog'
 import { i18n, renderWithProviders } from '@/test/utils'
@@ -39,6 +39,22 @@ describe('StaleSessionDialog (SYNC-11)', () => {
     expect(onRecover).toHaveBeenCalledTimes(1)
     expect(onRecover).toHaveBeenCalledWith('cut')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('stays open on Escape and on a click on the overlay, without recovering', async () => {
+    const { user, onRecover } = renderDialog()
+
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]')!
+    expect(overlay).not.toBeNull()
+    fireEvent.pointerDown(overlay)
+    fireEvent.pointerUp(overlay)
+    fireEvent.click(overlay)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    expect(onRecover).not.toHaveBeenCalled()
   })
 
   it('stays closed without a stale session', () => {
