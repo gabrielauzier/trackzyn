@@ -45,7 +45,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 ### Phase 1: Consultas
 
 ```
-T1 → T2 → T4
+T16 → T1 → T2 → T4
 T1 → T3 → T4
 ```
 
@@ -74,11 +74,39 @@ T14 → T15
 
 ### Phase 1: Consultas
 
+#### T16: Gravar quem concluiu a tarefa
+
+**What**: Adicionar `tasks.completed_by_user_id` (fk `users.id` `ON DELETE SET NULL`, CHECK que só permite valor em `done`) com uma migration nova, gravá-lo em toda conclusão (`move` para `done` no quadro e `complete` do foco) com o usuário da requisição, e limpá-lo quando a tarefa sai de `done`; atualizar as provas de `test/db/` e regenerar `pg-columns.json` num Postgres 16, como nas features anteriores.
+**Where**: `backend-node/src/services/tasks.ts`
+**Depends on**: None
+**Reuses**: `move` de `services/tasks.ts`, `complete` de `services/focus.ts`, migrations de `listas-e-quadro` T1
+**Requirement**: REPORT-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `supabase-postgres-best-practices`
+
+**Done when**:
+
+- [ ] Concluir pelo quadro e pelo foco grava o id de quem fez a requisição; arrastar de volta limpa
+- [ ] Excluir o usuário deixa a coluna nula; a CHECK recusa valor fora de `done`
+- [ ] Tarefas já concluídas antes da migration ficam com a coluna nula
+- [ ] Gate check passes: Full (backend)
+- [ ] Test count: a contagem do backend só aumenta
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(api): record who completed a task`
+
+---
+
 #### T1: Visão geral no SQL
 
 **What**: `overview(tx, user, workspace, {from, to, listId}, now)`: liquida, fatia as sessões por dia e por hora no fuso do dia e devolve `tiles`, `daily`, `productive` (todos os empatados), `by_list` (com arquivadas) e `break_seconds`.
 **Where**: `backend-node/src/services/reports.ts`
-**Depends on**: None
+**Depends on**: T16
 **Reuses**: `focus-settle.ts`, `services/day.ts`
 **Requirement**: REPORT-02, REPORT-03, REPORT-04, REPORT-05, REPORT-06, REPORT-07, REPORT-08, REPORT-09, REPORT-10, REPORT-11, REPORT-12
 
@@ -476,7 +504,8 @@ T14 → T15
 
 | Task | Depends On (task body) | Diagram Shows | Status |
 | ---- | ---------------------- | ------------- | ------ |
-| T1 | None | - | ✅ Match |
+| T16 | None | - | ✅ Match |
+| T1 | T16 | T16 → T1 | ✅ Match |
 | T2 | T1 | T1 → T2 | ✅ Match |
 | T3 | T1 | T1 → T3 | ✅ Match |
 | T4 | T2, T3 | T2 → T4, T3 → T4 | ✅ Match |
@@ -491,7 +520,7 @@ T14 → T15
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | ---- | --------------------------- | --------------- | --------- | ------ |
-| T1–T3 | Serviços do backend | integration | integration | ✅ OK |
+| T16, T1–T3 | Serviços do backend | integration | integration | ✅ OK |
 | T4 | Rotas do backend | integration | integration | ✅ OK |
 | T5 | Cliente HTTP e tipos | none | none | ✅ OK |
 | T6 | Funções puras do frontend | unit | unit | ✅ OK |

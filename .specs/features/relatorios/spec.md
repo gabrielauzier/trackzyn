@@ -25,6 +25,8 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | --------------------- | -------------- | --------- | ---------- |
 | Prioridade | Visão geral, antes/depois da estimativa e aba Sessões são P2; Exportar PDF é P3 | Decisão do usuário | y |
 | De quem são os dados | Só as sessões e as conclusões do usuário logado, mesmo num workspace com outros membros | Decisão do usuário | y |
+| Quem concluiu a tarefa | Nova coluna `tasks.completed_by_user_id`, gravada ao concluir pelo quadro, pelo foco ou pelo widget e limpa ao sair de Concluídas; tarefas concluídas antes da migration ficam sem dono e não entram nos relatórios | Decisão do usuário em 2026-10-25 (AD-006) | y |
+| Tempo do selo antes/no prazo/depois | Tempo total da tarefa somando as sessões de todos os membros | Decisão do usuário em 2026-10-25: a estimativa é da tarefa | y |
 | Período padrão | Semana atual, de segunda-feira até hoje | Decisão do usuário | y |
 | Período máximo | 366 dias | Decisão do usuário | y |
 | Dias trabalhados | Dias com ao menos uma sessão de tarefa | Decisão do usuário | y |

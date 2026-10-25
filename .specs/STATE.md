@@ -42,6 +42,14 @@
 - **Date**: 2026-10-24
 - **Status**: active
 
+### AD-006
+- **Decision**: `tasks.completed_by_user_id` (fk `users.id`, `ON DELETE SET NULL`) registra quem concluiu a tarefa; é gravado em toda conclusão (quadro, foco, widget) e limpo quando a tarefa sai de Concluídas.
+- **Reason**: Os relatórios contam só as conclusões do usuário logado (REPORT-09), e o banco só guardava quando a tarefa foi concluída, não quem a concluiu. Decisão do usuário em 2026-10-25.
+- **Trade-off**: Uma migration num `tasks` já populado; tarefas concluídas antes dela ficam sem dono e não entram nos relatórios.
+- **Scope**: `listas-e-quadro` (serviço de tarefas), `foco-e-sons` (`complete`), `relatorios`.
+- **Date**: 2026-10-25
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/` (listas-e-quadro → foco-e-sons → widget-desktop → relatorios)

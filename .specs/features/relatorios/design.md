@@ -91,7 +91,14 @@ Tarefas concluídas: `tasks.completed_at` dentro do período, no fuso do dia; o 
 
 ## Data Models
 
-Nenhuma tabela nova.
+Nenhuma tabela nova. Uma coluna nova em `tasks` (AD-006):
+
+```typescript
+completedByUserId: string | null // fk users.id ON DELETE SET NULL; gravada ao entrar em `done`, limpa ao sair
+// CHECK ((column = 'done') OR (completed_by_user_id IS NULL))
+```
+
+`Tarefas concluídas`, `Média por tarefa` e o quadro `done` contam só tarefas com `completed_by_user_id` = usuário logado; o tempo do selo é o total da tarefa, de todos os membros.
 
 ### Overview (resposta)
 
@@ -146,6 +153,7 @@ interface SessionsReport {
 
 | Decision | Choice | Rationale |
 | -------- | ------ | --------- |
+| Quem concluiu | `tasks.completed_by_user_id` (migration nova) | Decisão do usuário (AD-006); sem ela a REPORT-09 não vale para conclusões. Rejeitadas: contar só tarefas com sessão do usuário (perde conclusões pelo quadro) e contar todo o workspace (contraria a REPORT-09) |
 | Onde agregar | SQL no Postgres/PGlite | AD-004; fatiar por dia e hora no fuso com DST é nativo do Postgres |
 | Uma rota para a visão geral inteira | `GET /api/reports/overview` | Liquida e agrega uma vez; a tela carrega numa requisição |
 | `viewer` nos relatórios | Pode ler o próprio relatório | É leitura e só mostra dados do próprio usuário; um `viewer` sem sessões vê o estado vazio |
