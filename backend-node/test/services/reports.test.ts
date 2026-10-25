@@ -326,6 +326,16 @@ describe('overview done', () => {
     expect(done.late_pct).toBe(54.55)
   })
 
+  it('REPORT-19 the red share is 100 minus the green one: 1 green and 31 red answer 3.13 and 96.87', async () => {
+    await finished(SP('2026-10-20T09:30:00'), 60, 40)
+    for (let n = 0; n < 31; n++) await finished(SP(`2026-10-22T10:${String(n).padStart(2, '0')}:00`), 10, 20)
+
+    const { done } = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(done.early_or_on_time_pct).toBe(3.13)
+    expect(done.late_pct).toBe(96.87)
+  })
+
   it('REPORT-18 without tasks with an estimate both shares are null; without completions days is empty', async () => {
     await finished(SP('2026-10-20T10:00:00'), null, 20)
     const some = await overview(db, seed.userId, workspace, WEEK, NOW)
