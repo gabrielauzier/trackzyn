@@ -136,17 +136,17 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | REPORT-01 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-02 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-03 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-04 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-05 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-06 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-07 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-08 | P2: Visão geral | Tasks | In Tasks |
+| REPORT-02 | P2: Visão geral | Tasks | Implementing |
+| REPORT-03 | P2: Visão geral | Tasks | Implementing |
+| REPORT-04 | P2: Visão geral | Tasks | Implementing |
+| REPORT-05 | P2: Visão geral | Tasks | Implementing |
+| REPORT-06 | P2: Visão geral | Tasks | Implementing |
+| REPORT-07 | P2: Visão geral | Tasks | Implementing |
+| REPORT-08 | P2: Visão geral | Tasks | Implementing |
 | REPORT-09 | P2: Visão geral | Tasks | Implementing |
-| REPORT-10 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-11 | P2: Visão geral | Tasks | In Tasks |
-| REPORT-12 | P2: Visão geral | Tasks | In Tasks |
+| REPORT-10 | P2: Visão geral | Tasks | Implementing |
+| REPORT-11 | P2: Visão geral | Tasks | Implementing |
+| REPORT-12 | P2: Visão geral | Tasks | Implementing |
 | REPORT-13 | P2: Visão geral | Tasks | In Tasks |
 | REPORT-14 | P2: Antes ou depois da estimativa | Tasks | In Tasks |
 | REPORT-15 | P2: Antes ou depois da estimativa | Tasks | In Tasks |

@@ -121,12 +121,16 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Teste do cenário de REPORT-02 (2 dias, `3h 30min`, `1h 45min`); sem conclusões → média `null`
-- [ ] Sessão 23:30–00:30 conta 30 min em cada dia; sessão aberta conta até `now`; sessões de outro usuário não entram; dia de mudança de horário em `America/New_York` soma certo
-- [ ] Empate de segunda e quarta devolve as duas; período sem sessões devolve zeros
-- [ ] 10 000 sessões num período de 366 dias respondem em menos de 2 s no PGlite
-- [ ] Gate check passes: Full (backend)
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Teste do cenário de REPORT-02 (2 dias, `3h 30min`, `1h 45min`); sem conclusões → média `null`
+- [x] Sessão 23:30–00:30 conta 30 min em cada dia; sessão aberta conta até `now`; sessões de outro usuário não entram; dia de mudança de horário em `America/New_York` soma certo
+- [x] Empate de segunda e quarta devolve as duas; período sem sessões devolve zeros
+- [x] 10 000 sessões num período de 366 dias respondem em menos de 2 s no PGlite
+- [x] Gate check passes: Full (backend)
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: As sessões são cortadas em cada hora do fuso (`generate_series` LATERAL a partir de `date_trunc('hour', início, fuso)`), e o dia, a hora, o dia da semana (ISO, 1 = segunda) e o mês (`YYYY-MM`) saem do início local de cada hora. Os segundos são truncados por grupo, e `task_seconds` é a soma dos dias. A média é arredondada para o segundo. Com filtro, os intervalos também são filtrados pela lista, e um `list_id` fora do workspace responde 404 no serviço. O teste de 10 000 sessões em 366 dias mediu de 59 a 68 ms no PGlite.
 
 **Tests**: integration
 **Gate**: full
