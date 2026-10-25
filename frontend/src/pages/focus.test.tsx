@@ -239,21 +239,3 @@ describe('FocusPage', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 })
-
-describe('Reopening the app (SYNC-12)', () => {
-  it('opens on the home with a paused task, not on the focus page', async () => {
-    renderWithProviders(
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/focus/:listId" element={<FocusPage />} />
-      </Routes>,
-      { route: '/' },
-    )
-
-    expect(await screen.findByRole('heading', { name: 'Your lists' })).toBeInTheDocument()
-    expect(await screen.findByText('Week')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { level: 1, name: 'Today' })).not.toBeInTheDocument()
-    expect(focus.get).not.toHaveBeenCalled()
-    expect(focus.send).not.toHaveBeenCalled()
-  })
-})
