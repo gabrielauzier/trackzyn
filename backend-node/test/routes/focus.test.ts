@@ -262,13 +262,24 @@ describe('POST /api/focus/break and /api/focus/break/end', () => {
 })
 
 describe('POST /api/focus/heartbeat', () => {
-  it('SYNC-10 refreshes the signal of this device; another device or no session answers 409; resending is harmless', async () => {
+  it('SYNC-10 refreshes the signal of this device; another device, no session or a stale one (SYNC-11) answers 409; resending is harmless', async () => {
     const none = await post('heartbeat', { device_id: 'A' })
     expect(none.statusCode).toBe(409)
     expect(none.json()).toMatchObject({ code: 'invalid_transition' })
 
     await start(taskA, { occurred_at: ago(150) })
-    expect((await call('GET', `/api/focus?list_id=${listId}`, owner.token, workspaceId)).json().stale).not.toBeNull()
+    const stale = (await call('GET', `/api/focus?list_id=${listId}`, owner.token, workspaceId)).json().stale
+    expect(stale).not.toBeNull()
+    // SYNC-11: the signal does not resolve a session left open; the user does.
+    const refused = await post('heartbeat', { device_id: 'A' })
+    expect(refused.statusCode).toBe(409)
+    expect(refused.json()).toMatchObject({ code: 'invalid_transition' })
+    expect((await call('GET', `/api/focus?list_id=${listId}`, owner.token, workspaceId)).json().stale).toMatchObject({
+      session_id: stale.session_id,
+      last_seen_at: stale.last_seen_at,
+    })
+    expect((await post('recover', action({ decision: 'keep' }))).statusCode).toBe(200)
+
     const beat = await post('heartbeat', { device_id: 'A' })
     expect(beat.statusCode).toBe(200)
     expect(beat.json()).toMatchObject({ session: { device_id: 'A' }, stale: null })

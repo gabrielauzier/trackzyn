@@ -340,7 +340,8 @@ export function endBreakFocus(db: Database, actor: FocusActor, input: FocusActio
 
 /**
  * The signal of an open app (SYNC-10): records `now` as the last signal of the open session of this
- * device. Without `action_id`: resending it is harmless. Another device's session, or none, is refused.
+ * device. Without `action_id`: resending it is harmless. Another device's session, none, or one left
+ * without signal for more than 120 s (SYNC-11) is refused.
  */
 export function heartbeatFocus(db: Database, actor: FocusActor, payload: { deviceId: string }, now: Date): Promise<FocusState> {
   return db.transaction(async (transaction) => {
@@ -349,6 +350,8 @@ export function heartbeatFocus(db: Database, actor: FocusActor, payload: { devic
     await settle(tx, actor.userId, now)
     const open = await openSession(tx, actor.userId)
     if (!open || open.deviceId !== payload.deviceId) throw invalidTransition()
+    // A session left without signal waits for the user's `Manter` or `Cortar no último sinal` (SYNC-11).
+    if (now.getTime() - open.lastSeenAt.getTime() > STALE_AFTER_MS) throw invalidTransition()
     await tx.update(focusSessions).set({ lastSeenAt: now }).where(eq(focusSessions.id, open.id))
     return readFocusState(tx, actor.userId, await workspaceOfList(tx, open.listId), open.listId, now)
   })

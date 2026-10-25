@@ -107,7 +107,7 @@ stateDiagram-v2
   - `POST /api/focus/extend {task_id}` (FOCUS-12)
   - `POST /api/focus/break {minutes, list_id}` (BREAK-01, -02)
   - `POST /api/focus/break/end` (BREAK-04)
-  - `POST /api/focus/heartbeat` (SYNC-10) - sem `action_id`; atualiza `last_seen_at` da sessão aberta deste `device_id`
+  - `POST /api/focus/heartbeat` (SYNC-10) - sem `action_id`; atualiza `last_seen_at` da sessão aberta deste `device_id`; responde 409 `invalid_transition` a uma sessão sem sinal há mais de 120 s, que espera a decisão do usuário (SYNC-11)
   - `POST /api/focus/recover {decision: 'keep'|'cut'}` (SYNC-11)
 - **Dependencies**: `focus-settle.ts`, `services/tasks.ts`
 - **Reuses**: guards, `HttpError`
@@ -131,7 +131,7 @@ Cada ação segue os mesmos passos:
   - `queue.ts`: `enqueue(action)`, `flush(send)`, `pending()`, `conflicts()`, `retry(id)`, `discard(id)`; guarda em `localStorage['trackzyn.focus.queue']`; descarta o que passa de 24h (SYNC-06); 409 ou 422 viram conflito (SYNC-07); falha de rede mantém na fila
   - `device-id.ts`: `deviceId()` - UUID em `localStorage['trackzyn.device']`, o mesmo para as janelas do mesmo app
   - `use-focus.ts`: `useFocus(listId)` → `{ state, display, actions }`; envia heartbeat a cada 60 s enquanto a sessão aberta é deste dispositivo
-  - `use-leave-guard.ts`: no navegador, `beforeunload` com a tarefa contando e, em `pagehide`, `fetch('/api/focus/pause', { keepalive: true })` com `occurred_at` do fechamento (SYNC-09); no desktop, `window.trackzyn.reportFocusState({ active, running })`. Os dois ficam em `components/focus/focus-guard.tsx`, montado no `AppLayout`, para valer em qualquer tela do app enquanto a tarefa conta
+  - `use-leave-guard.ts`: no navegador, `beforeunload` com a tarefa contando e, em `pagehide`, `fetch('/api/focus/pause', { keepalive: true })` com `occurred_at` do fechamento (SYNC-09); no desktop, `window.trackzyn.reportFocusState({ active, running })`. Os dois ficam em `components/focus/focus-guard.tsx`, montado no `AppLayout`, para valer em qualquer tela do app enquanto a tarefa conta; o mesmo componente mostra `stale-session-dialog.tsx` onde o app abrir, e o cliente não manda heartbeat enquanto houver `stale` (SYNC-11)
 - **Dependencies**: `lib/api.ts`, TanStack Query
 - **Reuses**: QueryClient que já existe
 

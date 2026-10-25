@@ -211,6 +211,8 @@ function apply(model: Model, action: FocusAction, atMs: number, nowMs: number, l
       return
     case 'heartbeat':
       if (!open || open.device_id !== device) throw refuse()
+      // A session left without signal waits for the user's decision (SYNC-11).
+      if (open.lastSeenMs !== null && nowMs - open.lastSeenMs > STALE_AFTER_MS) throw refuse()
       model.session = { ...open, lastSeenMs: nowMs }
       return
     case 'recover': {

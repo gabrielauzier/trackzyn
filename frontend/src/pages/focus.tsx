@@ -12,7 +12,6 @@ import { FocusControls } from '@/components/focus/focus-controls'
 import { FocusTaskCard } from '@/components/focus/focus-task-card'
 import { OfflineConflicts } from '@/components/focus/offline-conflicts'
 import { SoundSettings } from '@/components/focus/sound-settings'
-import { StaleSessionDialog } from '@/components/focus/stale-session-dialog'
 import { ListBadge } from '@/components/lists/list-badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -207,7 +206,6 @@ export default function FocusPage() {
         }}
         onClose={() => elsewhere && actions.discard(elsewhere.action_id)}
       />
-      <StaleSessionDialog stale={state?.stale ?? null} onRecover={(decision) => void actions.recover(decision)} />
     </div>
   )
 }

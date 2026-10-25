@@ -98,6 +98,18 @@ describe('useFocus', () => {
     expect(focus.heartbeat).toHaveBeenCalledTimes(2)
   })
 
+  it('SYNC-11 sends no heartbeat while the session is stale, so the user still decides', async () => {
+    const stale = { ...counting(deviceId()), stale: { session_id: 'session-1', last_seen_at: iso(NOW - 300_000), seconds: 300 } }
+    focus.get.mockImplementation(async () => stale)
+    const { result } = renderHook(() => useFocus(LIST), { wrapper })
+    await advance(0)
+
+    await advance(120_000)
+
+    expect(focus.heartbeat).not.toHaveBeenCalled()
+    expect(result.current.state?.stale).toEqual(stale.stale)
+  })
+
   it('SYNC-10 sends no heartbeat for a session open on another device', async () => {
     focus.get.mockImplementation(async () => counting('other-device'))
     const { result } = renderHook(() => useFocus(LIST), { wrapper })

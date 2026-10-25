@@ -139,8 +139,8 @@ function outcome(run: () => FocusState) {
 }
 
 describe('applyOptimistic reproduces the server on docs/focus-transitions.json (SYNC-05)', () => {
-  it('reads all 45 cases', () => {
-    expect(table.cases).toHaveLength(45)
+  it('reads all 46 cases', () => {
+    expect(table.cases).toHaveLength(46)
   })
 
   for (const testCase of table.cases) {

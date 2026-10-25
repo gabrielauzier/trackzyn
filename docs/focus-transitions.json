@@ -1226,6 +1226,32 @@
       }
     },
     {
+      "name": "heartbeat on a session with no signal for more than 120 s answers invalid_transition and leaves it for the user",
+      "requirements": ["SYNC-11"],
+      "given": {
+        "tasks": [
+          { "key": "a" }
+        ],
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 10 }
+        ],
+        "state": {
+          "session": { "kind": "task", "task": "a", "device": "A", "started_at": 0, "deadline_at": null, "planned_seconds": null },
+          "task": { "key": "a", "spent_seconds": 900, "awaiting_extend": false },
+          "today": { "pending": 1, "done": 0, "estimate_minutes": 0, "tasks": [ { "key": "a", "spent_seconds": 900, "awaiting_extend": false } ] },
+          "stale": { "last_seen_at": 10, "seconds": 300 }
+        }
+      },
+      "action": { "type": "heartbeat", "at": 15 },
+      "expect": {
+        "status": 409,
+        "code": "invalid_transition",
+        "sessions": [
+          { "task": "a", "started_at": 0, "last_seen_at": 10 }
+        ]
+      }
+    },
+    {
       "name": "recover keep records a fresh signal and keeps the session counting",
       "requirements": ["SYNC-11"],
       "given": {

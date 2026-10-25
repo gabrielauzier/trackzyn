@@ -2,7 +2,7 @@
  * macOS desktop hides the native title bar (`titleBarStyle: hiddenInset`), so
  * the app's own header must be draggable while its controls stay clickable.
  */
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppLayout } from './app-layout'
 import { renderWithProviders, t } from '@/test/utils'
@@ -128,6 +128,7 @@ function focusState(counting: boolean): FocusState {
 beforeEach(() => {
   state.focus.get.mockReset()
   state.focus.send.mockReset()
+  state.focus.heartbeat.mockReset()
   state.focus.get.mockResolvedValue(focusState(false))
   state.focus.send.mockResolvedValue(focusState(false))
 })
@@ -247,5 +248,44 @@ describe('app layout focus guard', () => {
     expect(url).toBe('/api/focus/pause')
     expect(init).toMatchObject({ method: 'POST', keepalive: true })
     expect(JSON.parse(init.body as string)).toMatchObject({ device_id: deviceId() })
+  })
+})
+
+describe('app layout stale session (SYNC-11)', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('opening on the home shows how long the session counted and waits for Keep or Cut at the last signal', async () => {
+    vi.useFakeTimers()
+    const stale = { ...focusState(true), stale: { session_id: 'session-1', last_seen_at: new Date(Date.now() - 754_000).toISOString(), seconds: 754 } }
+    state.canWrite = true
+    state.focus.get.mockResolvedValue(stale)
+    state.focus.heartbeat.mockResolvedValue({ ...stale, stale: null })
+    state.focus.send.mockResolvedValue({ ...stale, stale: null })
+    renderWithProviders(<AppLayout />, { route: '/' })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveTextContent('The task kept counting for 12min since the last signal.')
+
+    // It stays until the user picks: no signal or poll resolves it.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000)
+    })
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(state.focus.heartbeat).not.toHaveBeenCalled()
+    expect(state.focus.send).not.toHaveBeenCalled()
+
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cut at the last signal' }))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    const sent = state.focus.send.mock.calls.map(([entry]) => (entry as QueuedAction).action)
+    expect(sent).toEqual([expect.objectContaining({ type: 'recover', decision: 'cut', device_id: deviceId() })])
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

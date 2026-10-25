@@ -1,5 +1,6 @@
 import { matchPath, useLocation } from 'react-router-dom'
 
+import { StaleSessionDialog } from '@/components/focus/stale-session-dialog'
 import { useDesktopFocusBridge } from '@/lib/focus/use-desktop-bridge'
 import { useFocus } from '@/lib/focus/use-focus'
 import { useLeaveGuard } from '@/lib/focus/use-leave-guard'
@@ -16,11 +17,13 @@ function routeListId(pathname: string): string | undefined {
 /**
  * Guards closing while a task of this device counts, wherever the user is in the app (SYNC-08,
  * SYNC-09): the desktop app asks before closing and the browser shows its alert and pauses on leaving.
+ * Wherever the app opens, a session left open by a crash asks `Manter` or `Cortar no último sinal`
+ * (SYNC-11).
  */
 export function FocusGuard() {
   const { pathname } = useLocation()
   const { state, actions } = useFocus(routeListId(pathname))
   useLeaveGuard(state)
   useDesktopFocusBridge(state, actions.pause)
-  return null
+  return <StaleSessionDialog stale={state?.stale ?? null} onRecover={(decision) => void actions.recover(decision)} />
 }

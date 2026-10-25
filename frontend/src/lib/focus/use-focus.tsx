@@ -37,7 +37,7 @@ function flushInOrder(): Promise<queue.FlushResult> {
  * The focus of the list `listId` (design, `lib/focus`): the server's state, polled every 15 s and when
  * the window gets focus; what the timer shows, every second; and the actions, applied on screen at
  * once and sent through the offline queue (SYNC-05). Every answer corrects the clock (FOCUS-03), and
- * while the open session is this device's, a heartbeat goes out every 60 s (SYNC-10). Without `listId`
+ * while the open session is this device's and not stale, a heartbeat goes out every 60 s (SYNC-10, SYNC-11). Without `listId`
  * it follows the list of the open session, wherever the user is in the app.
  */
 export function useFocus(listId?: string) {
@@ -84,9 +84,11 @@ export function useFocus(listId?: string) {
   }, [sendQueued])
 
   const ownSession = state?.session !== null && state?.session !== undefined && state.session.device_id === deviceId()
+  // A session left without signal waits for the user's decision, so no heartbeat resolves it (SYNC-11).
+  const beats = ownSession && state.stale === null
   useEffect(() => {
     const id = JSON.stringify(key)
-    if (!ownSession || beating.has(id)) return
+    if (!beats || beating.has(id)) return
     beating.add(id)
     const timer = setInterval(() => {
       focus
@@ -98,7 +100,7 @@ export function useFocus(listId?: string) {
       clearInterval(timer)
       beating.delete(id)
     }
-  }, [ownSession, queryClient, key])
+  }, [beats, queryClient, key])
 
   const act = useCallback(
     (payload: FocusActionPayload) => {
