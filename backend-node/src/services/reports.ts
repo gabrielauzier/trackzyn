@@ -117,6 +117,8 @@ interface OverviewRow extends Record<string, unknown> {
   weekdays: number[] | null
   months: string[] | null
   by_list: Overview['by_list'] | null
+  /** The exact (fractional) task seconds of the period, rounded only where reported. */
+  task_exact: number
   break_seconds: number
   tasks_done: number
 }
@@ -124,7 +126,8 @@ interface OverviewRow extends Record<string, unknown> {
 /**
  * The overview of the user's own time in a period (REPORT-01 to REPORT-12). Each session is cut at every
  * hour of the day timezone, which also cuts it at midnight (REPORT-10) and follows daylight saving time;
- * the days, weekdays, months and hours are read from the local start of each hour.
+ * the days, weekdays, months and hours are read from the local start of each hour. Every reported value
+ * is floored once from its exact sum: each day on its own, and the totals from all the slices.
  */
 export async function overview(
   tx: Database,
@@ -167,6 +170,7 @@ export async function overview(
       (SELECT json_agg(v ORDER BY v) FROM months WHERE sec > 0 AND sec = (SELECT max(sec) FROM months)) AS months,
       (SELECT json_agg(json_build_object('list_id', list_id, 'name', name, 'color', color, 'is_archived', is_archived,
                                          'seconds', seconds) ORDER BY seconds DESC, name, list_id) FROM lists_time) AS by_list,
+      (SELECT coalesce(sum(sec), 0)::float8 FROM slices WHERE kind = 'task') AS task_exact,
       (SELECT floor(coalesce(sum(sec), 0))::int FROM slices WHERE kind = 'break') AS break_seconds,
       (SELECT count(*)::int FROM tasks t JOIN lists l ON l.id = t.list_id
        WHERE l.workspace_id = ${workspace.id} AND t.completed_by_user_id = ${userId}
@@ -174,7 +178,9 @@ export async function overview(
   `)) as unknown as { rows: OverviewRow[] }
   const row = result.rows[0]!
 
-  const taskSeconds = row.daily.reduce((total, day) => total + day.task_seconds, 0)
+  // Totals come from the exact sum, rounded once: summing the floored days would lose up to a second
+  // per day a session crosses.
+  const taskSeconds = Math.floor(row.task_exact)
   return {
     timezone: tz,
     range: { from: filter.from, to: filter.to },
@@ -182,7 +188,7 @@ export async function overview(
       work_days: row.daily.filter((day) => day.task_seconds > 0).length,
       tasks_done: row.tasks_done,
       task_seconds: taskSeconds,
-      avg_seconds_per_task: row.tasks_done === 0 ? null : Math.round(taskSeconds / row.tasks_done),
+      avg_seconds_per_task: row.tasks_done === 0 ? null : Math.round(row.task_exact / row.tasks_done),
     },
     daily: row.daily,
     productive: { hours: row.hours ?? [], weekdays: row.weekdays ?? [], months: row.months ?? [] },

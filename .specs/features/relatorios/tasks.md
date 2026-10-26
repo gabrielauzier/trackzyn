@@ -130,7 +130,7 @@ T14 → T15
 
 **Status**: ✅ Done
 
-**Nota**: As sessões são cortadas em cada hora do fuso (`generate_series` LATERAL a partir de `date_trunc('hour', início, fuso)`), e o dia, a hora, o dia da semana (ISO, 1 = segunda) e o mês (`YYYY-MM`) saem do início local de cada hora. Os segundos são truncados por grupo, e `task_seconds` é a soma dos dias. A média é arredondada para o segundo. Com filtro, os intervalos também são filtrados pela lista, e um `list_id` fora do workspace responde 404 no serviço. O teste de 10 000 sessões em 366 dias mediu de 59 a 68 ms no PGlite.
+**Nota**: As sessões são cortadas em cada hora do fuso (`generate_series` LATERAL a partir de `date_trunc('hour', início, fuso)`), e o dia, a hora, o dia da semana (ISO, 1 = segunda) e o mês (`YYYY-MM`) saem do início local de cada hora. Os segundos exatos (com fração) são somados e cada valor é truncado uma vez só: cada dia de `daily` sozinho, e os totais (`task_seconds`, `break_seconds`, cada item de `by_list`) a partir da soma exata de todos os pedaços, não da soma dos dias já truncados; por isso `task_seconds` pode passar a soma dos dias em até (dias − 1) segundos quando uma sessão cruza a meia-noite. A média sai da soma exata e é arredondada para o segundo. Com filtro, os intervalos também são filtrados pela lista, e um `list_id` fora do workspace responde 404 no serviço. O teste de 10 000 sessões em 366 dias mediu de 59 a 68 ms no PGlite.
 
 **Tests**: integration
 **Gate**: full
