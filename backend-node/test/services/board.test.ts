@@ -1,11 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import type { PGlite } from '@electric-sql/pglite'
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
 import { type TaskColumn, focusSessions, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
 import { buildBoard } from '../../src/services/board.ts'
 import { createList } from '../../src/services/lists.ts'
+import { moveTask } from '../../src/services/tasks.ts'
 import { migratedDb } from '../support/db.ts'
 
 // Saturday 2026-10-24, 12:00 in America/Sao_Paulo (UTC-3); the week started on Monday 2026-10-19.
@@ -124,6 +126,19 @@ describe('board service', () => {
     const result = await board()
     expect(result.columns.today.tasks.map((card) => [card.title, card.spent_seconds])).toEqual([['pending', 1620]])
     expect(result.columns.done.days[0]?.tasks.map((card) => [card.title, card.spent_seconds])).toEqual([['done', 1620]])
+  })
+
+  it('BOARD-08 a task reopened from done to today keeps its 10min and 17min sessions and shows 1620 spent seconds', async () => {
+    const id = await task('done', { title: 'reopened', estimate: 60, completedAt: '2026-10-24T14:00:00Z' })
+    await focusSession(id, '2026-10-24T12:00:00Z', 10)
+    await focusSession(id, '2026-10-24T13:00:00Z', 17)
+
+    await moveTask(db, id, workspace.id, { column: 'today', beforeTaskId: null, byUserId: userId }, NOW)
+
+    const result = await board()
+    expect(result.columns.today.tasks.map((card) => [card.title, card.spent_seconds])).toEqual([['reopened', 1620]])
+    expect(result.columns.done.days).toEqual([])
+    expect(await db.select().from(focusSessions).where(eq(focusSessions.taskId, id))).toHaveLength(2)
   })
 
   it('AD-001 settles the reader before summing: a session past its deadline counts up to the deadline and is closed', async () => {
