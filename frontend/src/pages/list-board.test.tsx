@@ -326,6 +326,28 @@ describe('ListBoardPage', () => {
     expect(within(done).queryByText('DEV-1724')).not.toBeInTheDocument()
   })
 
+  it('previews the card in the column it is dragged over, and puts it back on cancel', async () => {
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const inColumn = (column: string) =>
+      document.querySelector(`[data-column="${column}"] [data-task-id="${DONE_TASK}"]`)
+    document.querySelector<HTMLElement>(`[data-task-id="${DONE_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowLeft}{ArrowLeft}')
+
+    await waitFor(() => expect(inColumn('today')).not.toBeNull())
+    expect(inColumn('done')).toBeNull()
+    expect(tasks.move).not.toHaveBeenCalled()
+
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => expect(inColumn('done')).not.toBeNull())
+    expect(inColumn('today')).toBeNull()
+    expect(tasks.move).not.toHaveBeenCalled()
+  })
+
   it('reorders a task one position down within Today', async () => {
     mockTodayOfThree()
     const { user } = renderBoard()
