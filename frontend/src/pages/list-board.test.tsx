@@ -14,7 +14,7 @@ const state = vi.hoisted(() => ({ canWrite: true }))
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
-  tasks: { move: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  tasks: { move: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), remove: vi.fn(), duplicate: vi.fn(), moveToList: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   authHeaders: () => ({}),
@@ -290,6 +290,28 @@ describe('ListBoardPage', () => {
     )
   })
 
+  it('previews a task dragged over Done there, and puts it back on cancel', async () => {
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const inColumn = (column: string) =>
+      document.querySelector(`[data-column="${column}"] [data-task-id="${TODAY_TASK}"]`)
+    document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowRight}')
+
+    await waitFor(() => expect(inColumn('done')).not.toBeNull())
+    expect(inColumn('today')).toBeNull()
+    expect(tasks.move).not.toHaveBeenCalled()
+
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => expect(inColumn('today')).not.toBeNull())
+    expect(inColumn('done')).toBeNull()
+    expect(tasks.move).not.toHaveBeenCalled()
+  })
+
   it('moves a task dragged out of Done back to a pending column', async () => {
     // The server answers the move by reopening the task in Today.
     let reopened = false
@@ -376,6 +398,90 @@ describe('ListBoardPage', () => {
     await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(T3, { column: 'today', before_task_id: T2 }))
     expect(tasks.move).toHaveBeenCalledTimes(1)
     await waitFor(() => expect(todayTitles()).toEqual(['DEV-1725', 'DEV-1727', 'DEV-1726']))
+  })
+
+  describe('quick actions of a card', () => {
+    const inToday = () => within(document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!)
+
+    it('moves the card one column to the left or right with its arrows', async () => {
+      const { user } = renderBoard()
+      await screen.findByText('DEV-1725')
+
+      await user.click(inToday().getByRole('button', { name: 'Move left' }))
+      await waitFor(() =>
+        expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'this_week', before_task_id: null }),
+      )
+
+      await user.click(inToday().getByRole('button', { name: 'Move right' }))
+      await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }))
+    })
+
+    it('shows the subtasks and the notes of the card', async () => {
+      vi.mocked(tasks.get).mockResolvedValue({ ...fullTask, notes: '<p>Ask Ana</p>' })
+      const { user } = renderBoard()
+      await screen.findByText('DEV-1725')
+
+      await user.click(inToday().getByRole('button', { name: 'Show notes' }))
+
+      expect(await screen.findByRole('textbox', { name: 'Notes' })).toHaveTextContent('Ask Ana')
+      await user.click(screen.getByRole('button', { name: 'Close notes' }))
+      expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
+    })
+
+    it('duplicates the card from the more actions menu', async () => {
+      vi.mocked(tasks.duplicate).mockResolvedValue(fullTask)
+      const { user } = renderBoard()
+      await screen.findByText('DEV-1725')
+
+      await user.click(inToday().getByRole('button', { name: 'More actions' }))
+      await user.click(await screen.findByRole('menuitem', { name: 'Duplicate' }))
+
+      await waitFor(() => expect(tasks.duplicate).toHaveBeenCalledWith(TODAY_TASK))
+    })
+
+    it('changes the list of the card, offering only the other lists', async () => {
+      vi.mocked(tasks.moveToList).mockResolvedValue({ ...fullTask, list_id: WORK })
+      const { user } = renderBoard()
+      await screen.findByText('DEV-1725')
+
+      await user.click(inToday().getByRole('button', { name: 'More actions' }))
+      // The submenu opens with the arrow key, as Radix's own pointer logic needs real pointer travel.
+      ;(await screen.findByRole('menuitem', { name: 'Change list' })).focus()
+      await user.keyboard('{ArrowRight}')
+
+      expect(screen.queryByRole('menuitem', { name: 'Week' })).not.toBeInTheDocument()
+      const work = await screen.findByRole('menuitem', { name: 'Work' })
+      work.focus()
+      await user.keyboard('{Enter}')
+
+      await waitFor(() => expect(tasks.moveToList).toHaveBeenCalledWith(TODAY_TASK, WORK))
+    })
+
+    it('asks for confirmation before deleting the card', async () => {
+      vi.mocked(tasks.remove).mockResolvedValue(undefined)
+      const { user } = renderBoard()
+      await screen.findByText('DEV-1725')
+
+      await user.click(inToday().getByRole('button', { name: 'More actions' }))
+      await user.click(await screen.findByRole('menuitem', { name: 'Delete task' }))
+
+      const confirm = await screen.findByRole('dialog', { name: 'Delete task' })
+      expect(tasks.remove).not.toHaveBeenCalled()
+      await user.click(within(confirm).getByRole('button', { name: 'Delete' }))
+
+      await waitFor(() => expect(tasks.remove).toHaveBeenCalledWith(TODAY_TASK))
+    })
+
+    it('gives a viewer the subtasks and the notes, but no moving, duplicating or deleting', async () => {
+      state.canWrite = false
+      renderBoard()
+      await screen.findByText('DEV-1725')
+
+      expect(inToday().getByRole('button', { name: 'Show subtasks' })).toBeInTheDocument()
+      expect(inToday().getByRole('button', { name: 'Show notes' })).toBeInTheDocument()
+      expect(inToday().queryByRole('button', { name: 'Move left' })).not.toBeInTheDocument()
+      expect(inToday().queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument()
+    })
   })
 
   it('completes a task from its check', async () => {

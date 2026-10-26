@@ -86,6 +86,33 @@ describe('SubtaskList', () => {
     expect(subtasks.create).not.toHaveBeenCalled()
   })
 
+  it('shows a new subtask before the server answers, and takes it back when the server refuses', async () => {
+    let refuse: (error: Error) => void = () => {}
+    vi.mocked(subtasks.create).mockReturnValue(new Promise((_resolve, reject) => (refuse = reject)))
+    const { user } = renderWithProviders(<SubtaskList taskId={TASK} canWrite />)
+    await screen.findByText('1/2 Subtasks')
+
+    await user.type(screen.getByLabelText('New subtask'), 'Review')
+    await user.click(screen.getByRole('button', { name: 'Add subtask' }))
+
+    expect(await screen.findByText('Review')).toBeInTheDocument()
+    expect(screen.getByText('1/3 Subtasks')).toBeInTheDocument()
+    expect(screen.getByLabelText('New subtask')).toHaveValue('')
+
+    refuse(new Error('boom'))
+
+    await waitFor(() => expect(screen.queryByText('Review')).not.toBeInTheDocument())
+    expect(screen.getByText('1/2 Subtasks')).toBeInTheDocument()
+    expect(screen.getByLabelText('New subtask')).toHaveValue('Review')
+  })
+
+  it('leaves out the counter when the card already shows it', async () => {
+    renderWithProviders(<SubtaskList taskId={TASK} canWrite showSummary={false} />)
+
+    expect(await screen.findByRole('checkbox', { name: 'Draft' })).toBeInTheDocument()
+    expect(screen.queryByText('1/2 Subtasks')).not.toBeInTheDocument()
+  })
+
   it('adds a subtask', async () => {
     const { user } = renderWithProviders(<SubtaskList taskId={TASK} canWrite />)
     await screen.findByText('1/2 Subtasks')

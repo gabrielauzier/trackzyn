@@ -109,6 +109,12 @@ Element.prototype.getAnimations = vi.fn(() => [])
 
 window.scrollTo = vi.fn()
 
+// ProseMirror (the note editor) measures the text range of the selection and asks where a point lands.
+// jsdom has no layout for either.
+Range.prototype.getClientRects = () => ({ length: 0, item: () => null, [Symbol.iterator]: [][Symbol.iterator] }) as unknown as DOMRectList
+Range.prototype.getBoundingClientRect = () => DOMRect.fromRect({})
+document.elementFromPoint = () => null
+
 // Recharts measures text through a canvas context. jsdom has no canvas backend
 // and logs a noisy "not implemented" error for every chart that renders.
 HTMLCanvasElement.prototype.getContext = vi.fn(

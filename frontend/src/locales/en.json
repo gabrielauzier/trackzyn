@@ -494,7 +494,23 @@
     "summary_zero": "This list has 0 pending tasks, Est.: {{estimate}}",
     "summary_one": "This list has {{count}} pending task, Est.: {{estimate}}",
     "summary_other": "This list has {{count}} pending tasks, Est.: {{estimate}}",
-    "inFocus": "Time in focus"
+    "inFocus": "Time in focus",
+    "showNotes": "Show notes",
+    "closeNotes": "Close notes",
+    "moveLeft": "Move left",
+    "moveRight": "Move right",
+    "moreActions": "More actions",
+    "changeList": "Change list",
+    "noOtherLists": "No other lists",
+    "duplicateTask": "Duplicate",
+    "noteFormatting": "Text formatting",
+    "noteBold": "Bold",
+    "noteItalic": "Italic",
+    "noteUnderline": "Underline",
+    "noteBulletList": "Bulleted list",
+    "noteOrderedList": "Numbered list",
+    "noteUndo": "Undo",
+    "noteRedo": "Redo"
   },
   "focus": {
     "sounds": {

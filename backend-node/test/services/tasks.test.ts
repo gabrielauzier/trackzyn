@@ -6,7 +6,7 @@ import type { Database } from '../../src/db/client.ts'
 import { type TaskColumn, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
 import { createList } from '../../src/services/lists.ts'
-import { createTask, deleteTask, getTask, moveTask, updateTask } from '../../src/services/tasks.ts'
+import { createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../../src/services/tasks.ts'
 import { migratedDb } from '../support/db.ts'
 
 let db: Database
@@ -165,5 +165,56 @@ describe('tasks service', () => {
     await expect404(createTask(db, otherWorkspaceId, { listId, title: 't', estimateMinutes: null, column: 'today', userId }, NOW), 'List not found')
     await expect404(moveTask(db, task.id, workspaceId, { column: 'today', beforeTaskId: other.id, byUserId: userId }, NOW))
     expect(await getTask(db, task.id, workspaceId)).toMatchObject({ title: 'mine', column: 'today', completedAt: null })
+  })
+
+  it('duplicates a task at the end of its column with notes, estimate and undone subtasks', async () => {
+    const original = await add('Write', 'today', 45)
+    await add('Other', 'today')
+    await updateTask(db, original.id, workspaceId, { notes: '<p>Draft</p>' })
+    await db.insert(subtasks).values([
+      { id: randomUUID(), taskId: original.id, title: 'Outline', done: true, position: 0 },
+      { id: randomUUID(), taskId: original.id, title: 'Review', done: false, position: 1 },
+    ])
+
+    const copy = await duplicateTask(db, original.id, workspaceId, NOW)
+
+    expect(copy).toMatchObject({ title: 'Write', notes: '<p>Draft</p>', estimateMinutes: 45, column: 'today', position: 2, completedAt: null })
+    expect(copy.id).not.toBe(original.id)
+    expect(copy.subtasks.map((subtask) => [subtask.title, subtask.done, subtask.position])).toEqual([
+      ['Outline', false, 0],
+      ['Review', false, 1],
+    ])
+    expect((await getTask(db, original.id, workspaceId)).subtasks.map((subtask) => subtask.done)).toEqual([true, false])
+  })
+
+  it('duplicates a completed task into backlog, as not done', async () => {
+    const task = await add('Write', 'today')
+    await moveTask(db, task.id, workspaceId, { column: 'done', beforeTaskId: null, byUserId: userId }, NOW)
+
+    const copy = await duplicateTask(db, task.id, workspaceId, NOW)
+
+    expect(copy).toMatchObject({ column: 'backlog', completedAt: null, completedByUserId: null })
+  })
+
+  it('moves a task to another list at the end of the same column and renumbers the column it left', async () => {
+    const other = (await createList(db, { workspaceId, userId, name: 'Home', color: 2 })).id
+    await createTask(db, workspaceId, { listId: other, title: 'Existing', estimateMinutes: null, column: 'today', userId }, NOW)
+    const a = await add('a', 'today')
+    const b = await add('b', 'today')
+
+    const moved = await moveTaskToList(db, a.id, workspaceId, other, NOW)
+
+    expect(moved).toMatchObject({ listId: other, column: 'today', position: 1 })
+    expect(await column('today')).toEqual([{ title: 'b', position: 0 }])
+    expect((await getTask(db, b.id, workspaceId)).listId).toBe(listId)
+  })
+
+  it('leaves a task alone when it is moved to the list it is already in, and 404s for a list of another workspace', async () => {
+    const task = await add('a', 'today')
+    const foreign = (await createList(db, { workspaceId: otherWorkspaceId, userId, name: 'Theirs', color: 3 })).id
+
+    expect(await moveTaskToList(db, task.id, workspaceId, listId, NOW)).toMatchObject({ listId, position: 0 })
+    await expect404(moveTaskToList(db, task.id, workspaceId, foreign, NOW), 'List not found')
+    expect((await getTask(db, task.id, workspaceId)).listId).toBe(listId)
   })
 })

@@ -363,6 +363,16 @@ export const tasks = {
     const { data } = await api.patch(`/tasks/${id}`, payload)
     return data
   },
+  /** A copy of the task, with its notes and subtasks, at the end of its column. */
+  duplicate: async (id: string): Promise<Task> => {
+    const { data } = await api.post(`/tasks/${id}/duplicate`)
+    return data
+  },
+  /** Moves the task to another list, at the end of the same column. */
+  moveToList: async (id: string, listId: string): Promise<Task> => {
+    const { data } = await api.post(`/tasks/${id}/move-to-list`, { list_id: listId })
+    return data
+  },
   /** Put the task in `column`, right before `beforeTaskId`, or at the end when null. */
   move: async (id: string, payload: { column: TaskColumn; before_task_id: string | null }): Promise<Task> => {
     const { data } = await api.post(`/tasks/${id}/move`, payload)

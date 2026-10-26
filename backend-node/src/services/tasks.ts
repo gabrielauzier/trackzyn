@@ -134,3 +134,76 @@ export async function deleteTask(db: Database, taskId: string, workspaceId: stri
   const task = await findTask(db, taskId, workspaceId)
   await db.delete(tasks).where(eq(tasks.id, task.id))
 }
+
+/**
+ * A copy of the task in the same list and column, at the end of it, with the same notes, estimate and
+ * subtasks (none of them done). A copy of a completed task starts in backlog: it has not been done yet.
+ */
+export async function duplicateTask(db: Database, taskId: string, workspaceId: string, now: Date = new Date()): Promise<TaskWithSubtasks> {
+  const source = await getTask(db, taskId, workspaceId)
+  const column: TaskColumn = source.column === 'done' ? 'backlog' : source.column
+  return db.transaction(async (tx) => {
+    await lockList(tx as Database, source.listId)
+    const [last] = await tx
+      .select({ next: sql<number>`coalesce(max(${tasks.position}) + 1, 0)::int` })
+      .from(tasks)
+      .where(and(eq(tasks.listId, source.listId), eq(tasks.column, column)))
+    const copy: Task = {
+      id: randomUUID(),
+      listId: source.listId,
+      title: source.title,
+      notes: source.notes,
+      estimateMinutes: source.estimateMinutes,
+      column,
+      position: last?.next ?? 0,
+      completedAt: null,
+      createdAt: now,
+      completedByUserId: null,
+    }
+    await tx.insert(tasks).values(copy)
+    const copies: Subtask[] = source.subtasks.map((subtask, position) => ({
+      id: randomUUID(),
+      taskId: copy.id,
+      title: subtask.title,
+      done: false,
+      position,
+    }))
+    if (copies.length > 0) await tx.insert(subtasks).values(copies)
+    return { ...copy, subtasks: copies }
+  })
+}
+
+/**
+ * Moves the task to another list of the workspace, to the end of the same column, and renumbers the column
+ * it left. Its open focus session ends (FOCUS-15), as for any task that leaves Today.
+ */
+export async function moveTaskToList(
+  db: Database,
+  taskId: string,
+  workspaceId: string,
+  targetListId: string,
+  now: Date = new Date(),
+): Promise<TaskWithSubtasks> {
+  const task = await findTask(db, taskId, workspaceId)
+  const target = await getList(db, targetListId, workspaceId)
+  if (target.id === task.listId) return getTask(db, task.id, workspaceId)
+  await db.transaction(async (tx) => {
+    // Both lists are locked in a fixed order, so two moves in opposite directions cannot wait on each other.
+    for (const id of [task.listId, target.id].sort()) await lockList(tx as Database, id)
+    const [current] = await tx.select().from(tasks).where(eq(tasks.id, task.id))
+    if (!current) throw notFound()
+    const [last] = await tx
+      .select({ next: sql<number>`coalesce(max(${tasks.position}) + 1, 0)::int` })
+      .from(tasks)
+      .where(and(eq(tasks.listId, target.id), eq(tasks.column, current.column)))
+    await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0 }).where(eq(tasks.id, current.id))
+    await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
+    const left = await tx
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(eq(tasks.listId, current.listId), eq(tasks.column, current.column)))
+      .orderBy(asc(tasks.position), asc(tasks.createdAt))
+    for (const [position, row] of left.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, row.id))
+  })
+  return getTask(db, task.id, workspaceId)
+}
