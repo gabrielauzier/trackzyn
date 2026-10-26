@@ -139,8 +139,8 @@ function outcome(run: () => FocusState) {
 }
 
 describe('applyOptimistic reproduces the server on docs/focus-transitions.json (SYNC-05)', () => {
-  it('reads all 51 cases', () => {
-    expect(table.cases).toHaveLength(51)
+  it('reads all 52 cases', () => {
+    expect(table.cases).toHaveLength(52)
   })
 
   for (const testCase of table.cases) {
@@ -228,6 +228,28 @@ describe('applyOptimistic on a state older than the action, as offline', () => {
     const state = applyOptimistic(lastSignalAt10, start, ms(12))
 
     expect(state.session).toMatchObject({ kind: 'task', task_id: 'task-b', device_id: 'A', started_at: iso(12) })
+    expect(state.stale).toBeNull()
+  })
+
+  // Same reason as above: the shared heartbeat case at exactly 120 s gives no stale, so this check is set by hand.
+  it('SYNC-10 SYNC-11 heartbeat with the last signal exactly 120 s before now records the signal: stale means more than 120 s', () => {
+    const lastSignalAt10: FocusState = {
+      server_now: iso(12),
+      session: { id: 's', kind: 'task', task_id: 'task-a', list_id: LIST, device_id: 'A', started_at: iso(0), deadline_at: null, planned_seconds: null },
+      task: { id: 'task-a', title: 'a', estimate_minutes: null, spent_seconds: 720, awaiting_extend: false },
+      today: {
+        pending: 1,
+        done: 0,
+        estimate_minutes: 0,
+        tasks: [{ id: 'task-a', title: 'a', estimate_minutes: null, spent_seconds: 720, awaiting_extend: false, position: 0 }],
+      },
+      stale: { session_id: 's', last_seen_at: iso(10), seconds: 120 },
+    }
+    const heartbeat: FocusAction = { type: 'heartbeat', occurred_at: iso(12), device_id: 'A', list_id: LIST }
+
+    const state = applyOptimistic(lastSignalAt10, heartbeat, ms(12))
+
+    expect(state.session).toMatchObject({ kind: 'task', task_id: 'task-a', device_id: 'A', started_at: iso(0) })
     expect(state.stale).toBeNull()
   })
 })
