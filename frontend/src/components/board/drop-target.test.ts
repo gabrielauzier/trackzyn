@@ -35,6 +35,11 @@ describe('dropTarget', () => {
     expect(dropTarget(board, 't2', 'column:backlog')).toEqual({ column: 'backlog', before: null })
   })
 
+  it('sends a task dropped on the This week area to the end of This week (BOARD-03)', () => {
+    expect(dropTarget(board, 't1', 'column:this_week')).toEqual({ column: 'this_week', before: null })
+    expect(dropTarget(board, 'w1', 'column:this_week')).toEqual({ column: 'this_week', before: null })
+  })
+
   it('reorders a task down within the same column, before the card that follows the target', () => {
     expect(dropTarget(board, 't1', 't2')).toEqual({ column: 'today', before: 't3' })
     expect(dropTarget(board, 't1', 't3')).toEqual({ column: 'today', before: null })
