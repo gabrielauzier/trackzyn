@@ -101,6 +101,29 @@ function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: st
   return { ...board, columns }
 }
 
+/** The board with `taskId` among today's completions, as the server will show it once the task is done. */
+function placeInDone(board: Board, taskId: string): Board {
+  const moved = findCard(board, columnsOf(board).get(taskId) ?? 'backlog', taskId)?.task
+  if (!moved) return board
+  const without = (tasks: TaskCardView[]) => tasks.filter((task) => task.id !== taskId)
+  const { backlog, this_week, today, done } = board.columns
+  const days = done.days.map((day) => ({ ...day, tasks: without(day.tasks) }))
+  // The first day is today's only when something was completed today; otherwise today gets a day of its own.
+  const todayDate = new Date().toLocaleDateString('en-CA')
+  const [first, ...rest] = days
+  const withToday =
+    first?.date === todayDate ? [{ ...first, tasks: [moved, ...first.tasks] }, ...rest] : [{ date: todayDate, tasks: [moved] }, ...days]
+  return {
+    ...board,
+    columns: {
+      backlog: { ...backlog, tasks: without(backlog.tasks) },
+      this_week: { ...this_week, tasks: without(this_week.tasks) },
+      today: { ...today, tasks: without(today.tasks) },
+      done: { ...done, days: withToday },
+    },
+  }
+}
+
 export default function ListBoardPage() {
   const { listId = '' } = useParams()
   const { t, i18n } = useTranslation()
@@ -195,14 +218,14 @@ export default function ListBoardPage() {
     if (overId === activeId) return
     const to = columnUnder(overId)
     if (!to) return
-    if (to === 'done') {
-      // Dropping into Concluídas completes the task rather than placing it, so it is not previewed.
-      setPreview(null)
-      insertedAt.current = null
-      return
-    }
     if (taskColumns.get(activeId) === to) {
       if (overId !== insertedAt.current) insertedAt.current = null
+      return
+    }
+    if (to === 'done') {
+      // Concluídas is ordered by day: the card shows up among today's, wherever it is dropped.
+      insertedAt.current = null
+      setPreview(placeInDone(board, activeId))
       return
     }
     const before = overId.startsWith(COLUMN_PREFIX) ? null : overId
@@ -222,7 +245,11 @@ export default function ListBoardPage() {
     if (!current || !to) return
     if (to === 'done') {
       // Concluídas is ordered by day, so a task only enters it, at no particular place.
-      if (origin !== 'done') complete(activeId)
+      if (origin !== 'done') {
+        // The preview ends with the drag; the board keeps the card in Concluídas until the server confirms it.
+        queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeInDone(previous, activeId))
+        complete(activeId)
+      }
       return
     }
     // Moved into this column during the drag, and not dragged to another card since: it is where the preview put it.
@@ -256,7 +283,7 @@ export default function ListBoardPage() {
         canWrite={canWrite}
         onOpen={(card) => setOpenTaskId(card.id)}
         onComplete={(card) => complete(card.id)}
-        subtasks={<SubtaskList taskId={task.id} canWrite={canWrite} />}
+        subtasks={<SubtaskList taskId={task.id} canWrite={canWrite} showSummary={false} />}
         className={task.id === focusedId ? 'border-2 border-primary' : undefined}
       />
       {task.id === focusedId && running && focus.display && (

@@ -290,6 +290,28 @@ describe('ListBoardPage', () => {
     )
   })
 
+  it('previews a task dragged over Done there, and puts it back on cancel', async () => {
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const inColumn = (column: string) =>
+      document.querySelector(`[data-column="${column}"] [data-task-id="${TODAY_TASK}"]`)
+    document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowRight}')
+
+    await waitFor(() => expect(inColumn('done')).not.toBeNull())
+    expect(inColumn('today')).toBeNull()
+    expect(tasks.move).not.toHaveBeenCalled()
+
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => expect(inColumn('today')).not.toBeNull())
+    expect(inColumn('done')).toBeNull()
+    expect(tasks.move).not.toHaveBeenCalled()
+  })
+
   it('moves a task dragged out of Done back to a pending column', async () => {
     // The server answers the move by reopening the task in Today.
     let reopened = false
