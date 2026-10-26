@@ -78,6 +78,26 @@ describe('the offline focus queue', () => {
     expect(pending()).toEqual([])
   })
 
+  it('SYNC-05 SYNC-07 a retried action goes back in the order of its click, before the later ones still queued', async () => {
+    const first = enqueue(pause(3 * MIN))
+    const refused = enqueue(pause(2 * MIN))
+    const later = enqueue(pause(MIN))
+    await flush(async (entry) => {
+      if (entry.action_id === first.action_id) return answered
+      if (entry.action_id === refused.action_id) return Promise.reject(refusal(409, 'invalid_transition'))
+      return Promise.reject(offline())
+    }, NOW)
+    expect(pending()).toEqual([later])
+    expect(conflicts().map((entry) => entry.action_id)).toEqual([refused.action_id])
+
+    retry(refused.action_id)
+
+    expect(pending()).toEqual([refused, later])
+    const send = vi.fn<Send>(async () => answered)
+    await flush(send, NOW)
+    expect(send.mock.calls.map(([entry]) => entry.action_id)).toEqual([refused.action_id, later.action_id])
+  })
+
   it('SYNC-07 discard drops a conflict without sending it', async () => {
     const refused = enqueue(pause(MIN))
     await flush(async () => Promise.reject(refusal(409, 'invalid_transition')), NOW)
