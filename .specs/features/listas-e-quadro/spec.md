@@ -138,41 +138,41 @@ O trackzyn ainda é só a base do launchkit: não tem onde registrar uma tarefa,
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| LIST-01 | P1: Listas na home | Tasks | Implementing |
-| LIST-02 | P1: Listas na home | Tasks | Implementing |
-| LIST-03 | P1: Listas na home | Tasks | Implementing |
-| LIST-04 | P1: Listas na home | Tasks | Implementing |
-| LIST-05 | P1: Listas na home | Tasks | Implementing |
-| LIST-06 | P1: Listas na home | Tasks | Implementing |
-| LIST-07 | P1: Listas na home | Tasks | Implementing |
-| LIST-08 | P1: Listas na home | Tasks | Implementing |
-| LIST-09 | P1: Listas na home | Tasks | Implementing |
-| LIST-10 | P1: Listas na home | Tasks | Implementing |
-| LIST-11 | P1: Listas na home | Tasks | Implementing |
-| BOARD-01 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-02 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-03 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-04 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-05 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-06 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-07 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-08 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-09 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-10 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-11 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-12 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-13 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-14 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-15 | P1: Quadro da lista | Tasks | Implementing |
-| BOARD-16 | P1: Quadro da lista | Tasks | Implementing |
-| TASK-01 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-02 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-03 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-04 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-05 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-06 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-07 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
-| TASK-08 | P1: Tarefas, subtarefas e anotações | Tasks | Implementing |
+| LIST-01 | P1: Listas na home | Tasks | Verified |
+| LIST-02 | P1: Listas na home | Tasks | Verified |
+| LIST-03 | P1: Listas na home | Tasks | Verified |
+| LIST-04 | P1: Listas na home | Tasks | Verified |
+| LIST-05 | P1: Listas na home | Tasks | Verified |
+| LIST-06 | P1: Listas na home | Tasks | Verified |
+| LIST-07 | P1: Listas na home | Tasks | Verified |
+| LIST-08 | P1: Listas na home | Tasks | Verified |
+| LIST-09 | P1: Listas na home | Tasks | Verified |
+| LIST-10 | P1: Listas na home | Tasks | Verified |
+| LIST-11 | P1: Listas na home | Tasks | Verified |
+| BOARD-01 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-02 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-03 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-04 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-05 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-06 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-07 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-08 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-09 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-10 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-11 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-12 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-13 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-14 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-15 | P1: Quadro da lista | Tasks | Verified |
+| BOARD-16 | P1: Quadro da lista | Tasks | Verified |
+| TASK-01 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
+| TASK-02 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
+| TASK-03 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
+| TASK-04 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
+| TASK-05 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
+| TASK-06 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
+| TASK-07 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
+| TASK-08 | P1: Tarefas, subtarefas e anotações | Tasks | Verified |
 
 **Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 
