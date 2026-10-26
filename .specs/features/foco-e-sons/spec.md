@@ -165,48 +165,48 @@ Com listas e quadro, o usuário sabe o que fazer, mas não tem como medir quanto
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| FOCUS-01 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-02 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-03 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-04 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-05 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-06 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-07 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-08 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-09 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-10 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-11 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-12 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-13 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-14 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-15 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-16 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-17 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| FOCUS-18 | P1: Focar nas tarefas de Hoje | Tasks | Implementing |
-| BREAK-01 | P1: Intervalos | Tasks | Implementing |
-| BREAK-02 | P1: Intervalos | Tasks | Implementing |
-| BREAK-03 | P1: Intervalos | Tasks | Implementing |
-| BREAK-04 | P1: Intervalos | Tasks | Implementing |
-| BREAK-05 | P1: Intervalos | Tasks | Implementing |
-| SOUND-01 | P1: Sons | Tasks | Implementing |
-| SOUND-02 | P1: Sons | Tasks | Implementing |
-| SOUND-03 | P1: Sons | Tasks | Implementing |
-| SOUND-04 | P1: Sons | Tasks | Implementing |
-| SOUND-05 | P1: Sons | Tasks | Implementing |
-| SOUND-06 | P1: Sons | Tasks | Implementing |
-| SOUND-07 | P1: Sons | Tasks | Implementing |
-| SYNC-01 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-02 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-03 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-04 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-05 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-06 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-07 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-08 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-09 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-10 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-11 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
-| SYNC-12 | P1: Dispositivos, conexão e fechamento | Tasks | Implementing |
+| FOCUS-01 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-02 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-03 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-04 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-05 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-06 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-07 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-08 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-09 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-10 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-11 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-12 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-13 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-14 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-15 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-16 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-17 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| FOCUS-18 | P1: Focar nas tarefas de Hoje | Tasks | Verified |
+| BREAK-01 | P1: Intervalos | Tasks | Verified |
+| BREAK-02 | P1: Intervalos | Tasks | Verified |
+| BREAK-03 | P1: Intervalos | Tasks | Verified |
+| BREAK-04 | P1: Intervalos | Tasks | Verified |
+| BREAK-05 | P1: Intervalos | Tasks | Verified |
+| SOUND-01 | P1: Sons | Tasks | Verified |
+| SOUND-02 | P1: Sons | Tasks | Verified |
+| SOUND-03 | P1: Sons | Tasks | Verified |
+| SOUND-04 | P1: Sons | Tasks | Verified |
+| SOUND-05 | P1: Sons | Tasks | Verified |
+| SOUND-06 | P1: Sons | Tasks | Verified |
+| SOUND-07 | P1: Sons | Tasks | Verified |
+| SYNC-01 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-02 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-03 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-04 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-05 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-06 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-07 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-08 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-09 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-10 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-11 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
+| SYNC-12 | P1: Dispositivos, conexão e fechamento | Tasks | Verified |
 
 **Coverage:** 42 total, 42 mapped to tasks, 0 unmapped
 
