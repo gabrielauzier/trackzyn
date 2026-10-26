@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { updateOffset } from '@/lib/focus/clock'
 import type { FocusAction } from '@/lib/focus/optimistic'
 import { conflicts, discard, enqueue, flush, pending, retry, type QueuedAction } from '@/lib/focus/queue'
 import type { FocusState } from '@/types'
@@ -26,6 +27,7 @@ describe('the offline focus queue', () => {
   })
 
   afterEach(() => {
+    updateOffset(new Date(Date.now()).toISOString())
     vi.useRealTimers()
   })
 
@@ -56,6 +58,20 @@ describe('the offline focus queue', () => {
     expect(send.mock.calls.map(([entry]) => entry.action_id)).toEqual([recent.action_id])
     expect(pending()).toEqual([])
     expect(conflicts()).toEqual([])
+  })
+
+  it('SYNC-06 judges the 24h limit by the server clock when the local clock is 5 min behind', async () => {
+    const SERVER_NOW = NOW + 5 * MIN
+    updateOffset(new Date(SERVER_NOW).toISOString())
+    const onServer = (msAgo: number): FocusAction => ({ ...pause(0), occurred_at: new Date(SERVER_NOW - msAgo).toISOString() })
+    const stale = enqueue(onServer((24 * 60 + 1) * MIN))
+    const recent = enqueue(onServer((23 * 60 + 59) * MIN))
+    const send = vi.fn<Send>(async () => answered)
+
+    const result = await flush(send)
+
+    expect(result.expired.map((entry) => entry.action_id)).toEqual([stale.action_id])
+    expect(send.mock.calls.map(([entry]) => entry.action_id)).toEqual([recent.action_id])
   })
 
   it.each([
