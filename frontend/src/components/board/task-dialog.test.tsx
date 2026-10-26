@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 
 import { TaskDialog } from '@/components/board/task-dialog'
 import { tasks } from '@/lib/api'
-import { renderWithProviders } from '@/test/utils'
+import { placeCaretAtEnd, renderWithProviders } from '@/test/utils'
 import type { Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
@@ -46,7 +46,7 @@ describe('TaskDialog', () => {
 
     expect(screen.getByRole('dialog', { name: 'Edit task' })).toBeInTheDocument()
     expect(screen.getByLabelText('Estimate (min)')).toHaveValue('90')
-    expect(screen.getByLabelText('Notes')).toHaveValue('First pass')
+    expect(screen.getByLabelText('Notes')).toHaveTextContent('First pass')
     expect(await screen.findByRole('checkbox', { name: 'Outline' })).toBeInTheDocument()
   })
 
@@ -79,11 +79,12 @@ describe('TaskDialog', () => {
     const { user } = await renderDialog()
 
     await user.clear(screen.getByLabelText('Estimate (min)'))
-    await user.type(screen.getByLabelText('Notes'), ' done')
+    placeCaretAtEnd(screen.getByLabelText('Notes'))
+    await user.paste('!')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() =>
-      expect(tasks.update).toHaveBeenCalledWith(TASK, { estimate_minutes: null, notes: 'First pass done' }),
+      expect(tasks.update).toHaveBeenCalledWith(TASK, { estimate_minutes: null, notes: '<p>First pass!</p>' }),
     )
   })
 
@@ -132,7 +133,7 @@ describe('TaskDialog', () => {
     await renderDialog(false)
 
     expect(screen.getByLabelText('Title')).toBeDisabled()
-    expect(screen.getByLabelText('Notes')).toBeDisabled()
+    expect(screen.getByLabelText('Notes')).toHaveAttribute('contenteditable', 'false')
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Delete task' })).not.toBeInTheDocument()
   })

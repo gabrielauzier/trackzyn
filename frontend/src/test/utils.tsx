@@ -95,3 +95,19 @@ export function t(key: string, options?: Record<string, unknown>): string {
 }
 
 export { i18n }
+
+/** Puts the caret at the end of a contenteditable, which user-event cannot do with the keyboard. */
+export function placeCaretAtEnd(element: HTMLElement) {
+  element.focus()
+  const selection = window.getSelection()!
+  selection.selectAllChildren(element)
+  selection.collapseToEnd()
+  document.dispatchEvent(new Event('selectionchange'))
+}
+
+/** Selects everything in a contenteditable, so the next paste replaces it. */
+export function selectContents(element: HTMLElement) {
+  element.focus()
+  window.getSelection()!.selectAllChildren(element)
+  document.dispatchEvent(new Event('selectionchange'))
+}

@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react'
 
 import { WidgetNotes } from '@/components/focus/widget-notes'
 import type { TrackzynApi } from '@/lib/platform'
-import { renderWithProviders } from '@/test/utils'
+import { placeCaretAtEnd, renderWithProviders, selectContents } from '@/test/utils'
 import type { Task } from '@/types'
 
 const api = vi.hoisted(() => ({ tasks: { get: vi.fn(), update: vi.fn() } }))
@@ -48,10 +48,10 @@ describe('WidgetNotes (WIDGET-14)', () => {
   it('grows the widget and shows the notes of the task in focus', async () => {
     renderNotes()
 
-    expect(await field()).toHaveValue('Ask Ana for the numbers')
+    expect(await field()).toHaveTextContent('Ask Ana for the numbers')
     expect(api.tasks.get).toHaveBeenCalledWith('task-a')
     expect(bridge.resizeWidget.mock.calls).toEqual([['notes']])
-    expect(await field()).toHaveFocus()
+    await waitFor(async () => expect(await field()).toHaveFocus())
   })
 })
 
@@ -59,12 +59,12 @@ describe('WidgetNotes saving (WIDGET-15)', () => {
   it('on blur sends the text, then shrinks the widget back and closes', async () => {
     const { user, onClose } = renderNotes()
     const notes = await field()
-    await user.clear(notes)
-    await user.type(notes, 'Numbers from Ana arrived')
+    selectContents(notes)
+    await user.paste('Numbers from Ana arrived')
     await user.tab()
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
-    expect(api.tasks.update.mock.calls).toEqual([['task-a', { notes: 'Numbers from Ana arrived' }]])
+    expect(api.tasks.update.mock.calls).toEqual([['task-a', { notes: '<p>Numbers from Ana arrived</p>' }]])
     expect(bridge.resizeWidget.mock.calls).toEqual([['notes'], ['compact']])
   })
 
@@ -72,7 +72,8 @@ describe('WidgetNotes saving (WIDGET-15)', () => {
     const { user, queryClient } = renderNotes()
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
     const notes = await field()
-    await user.type(notes, '!')
+    placeCaretAtEnd(notes)
+    await user.paste('!')
     await user.tab()
 
     await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['lists'] }))
@@ -80,7 +81,8 @@ describe('WidgetNotes saving (WIDGET-15)', () => {
 
   it('without a change, sends nothing and still shrinks back', async () => {
     const { user, onClose } = renderNotes()
-    await field()
+    const notes = await field()
+    await waitFor(() => expect(notes).toHaveFocus())
     await user.tab()
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
@@ -88,24 +90,23 @@ describe('WidgetNotes saving (WIDGET-15)', () => {
     expect(bridge.resizeWidget.mock.calls).toEqual([['notes'], ['compact']])
   })
 
-  it('saves exactly 10 000 characters', async () => {
+  it('saves exactly 10 000 characters of stored text', async () => {
     const { user, onClose } = renderNotes()
     const notes = await field()
-    await user.clear(notes)
-    await user.click(notes)
-    await user.paste('a'.repeat(10_000))
+    selectContents(notes)
+    // The limit counts the stored text, which has the paragraph tags in it: <p> and </p> take 7.
+    await user.paste('a'.repeat(9_993))
     await user.tab()
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
-    expect(api.tasks.update).toHaveBeenCalledWith('task-a', { notes: 'a'.repeat(10_000) })
+    expect(api.tasks.update).toHaveBeenCalledWith('task-a', { notes: `<p>${'a'.repeat(9_993)}</p>` })
   })
 
   it('blocks more than 10 000 characters: says so, sends nothing and stays open', async () => {
     const { user, onClose } = renderNotes()
     const notes = await field()
-    await user.clear(notes)
-    await user.click(notes)
-    await user.paste('a'.repeat(10_001))
+    selectContents(notes)
+    await user.paste('a'.repeat(9_994))
     await user.tab()
 
     expect(await screen.findByText('Use at most 10,000 characters')).toBeInTheDocument()
@@ -119,11 +120,12 @@ describe('WidgetNotes saving (WIDGET-15)', () => {
     api.tasks.update.mockRejectedValue(new Error('offline'))
     const { user, onClose } = renderNotes()
     const notes = await field()
-    await user.type(notes, '!')
+    placeCaretAtEnd(notes)
+    await user.paste('!')
     await user.tab()
 
     expect(await screen.findByRole('alert')).toBeInTheDocument()
-    expect(notes).toHaveValue('Ask Ana for the numbers!')
+    expect(notes).toHaveTextContent('Ask Ana for the numbers!')
     expect(onClose).not.toHaveBeenCalled()
     expect(bridge.resizeWidget.mock.calls).toEqual([['notes']])
   })
