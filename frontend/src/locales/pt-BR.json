@@ -510,7 +510,10 @@
     "noteBulletList": "Lista com marcadores",
     "noteOrderedList": "Lista numerada",
     "noteUndo": "Desfazer",
-    "noteRedo": "Refazer"
+    "noteRedo": "Refazer",
+    "renameSubtaskHint": "Clique duas vezes para renomear",
+    "moveSubtaskUp": "Mover {{title}} para cima",
+    "moveSubtaskDown": "Mover {{title}} para baixo"
   },
   "focus": {
     "sounds": {

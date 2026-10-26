@@ -510,7 +510,10 @@
     "noteBulletList": "Bulleted list",
     "noteOrderedList": "Numbered list",
     "noteUndo": "Undo",
-    "noteRedo": "Redo"
+    "noteRedo": "Redo",
+    "renameSubtaskHint": "Double-click to rename",
+    "moveSubtaskUp": "Move {{title}} up",
+    "moveSubtaskDown": "Move {{title}} down"
   },
   "focus": {
     "sounds": {
