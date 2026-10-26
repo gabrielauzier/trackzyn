@@ -30,8 +30,11 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
 import { formatDuration } from '@/components/board/format-duration'
 import { SubtaskList } from '@/components/board/subtask-list'
+import { QuickNote } from '@/components/board/quick-note'
 import { TaskCard } from '@/components/board/task-card'
+import { TaskCardMenu } from '@/components/board/task-card-menu'
 import { TaskDialog } from '@/components/board/task-dialog'
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { ListBadge } from '@/components/lists/list-badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -133,6 +136,7 @@ export default function ListBoardPage() {
   const isMobile = useIsMobile()
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
   const [tab, setTab] = useState<TaskColumn>('today')
+  const [deleting, setDeleting] = useState<TaskCardView | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
   // While a card is dragged over another column the board shows it there already, before it is dropped.
   const [preview, setPreview] = useState<Board | null>(null)
@@ -154,6 +158,25 @@ export default function ListBoardPage() {
       tasksApi.move(id, { column, before_task_id: before }),
     onError: (e) => toast.error(extractApiError(e, t('common.error'))),
     onSettled: () => void queryClient.invalidateQueries({ queryKey: ['lists'] }),
+  })
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['lists'] })
+  const onActionError = (e: unknown) => toast.error(extractApiError(e, t('common.error')))
+  const duplicateMutation = useMutation({
+    mutationFn: (id: string) => tasksApi.duplicate(id),
+    onError: onActionError,
+    onSettled: () => void refresh(),
+  })
+  const changeListMutation = useMutation({
+    mutationFn: ({ id, listId: target }: { id: string; listId: string }) => tasksApi.moveToList(id, target),
+    onError: onActionError,
+    onSettled: () => void refresh(),
+  })
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => tasksApi.remove(id),
+    onSuccess: () => setDeleting(null),
+    onError: onActionError,
+    onSettled: () => void refresh(),
   })
 
   const sensors = useSensors(
@@ -274,6 +297,19 @@ export default function ListBoardPage() {
   const draggedColumn = draggedId ? taskColumns.get(draggedId) : undefined
   const draggedCard = draggedId && draggedColumn ? findCard(shown, draggedColumn, draggedId) : null
 
+  // The quick actions' arrows go one column over, as a drag would; into Concluídas it completes the task.
+  const step = (task: TaskCardView, column: TaskColumn, direction: 'left' | 'right') => {
+    const target = COLUMNS[COLUMNS.indexOf(column) + (direction === 'left' ? -1 : 1)]
+    if (!target) return
+    if (target === 'done') {
+      queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeInDone(previous, task.id))
+      complete(task.id)
+      return
+    }
+    queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeTask(previous, task.id, target, null))
+    move(task.id, target, null)
+  }
+
   const renderTask = (column: TaskColumn) => (task: TaskCardView, index: number) => (
     <SortableTask key={task.id} id={task.id} canWrite={canWrite}>
       <TaskCard
@@ -284,6 +320,18 @@ export default function ListBoardPage() {
         onOpen={(card) => setOpenTaskId(card.id)}
         onComplete={(card) => complete(card.id)}
         subtasks={<SubtaskList taskId={task.id} canWrite={canWrite} showSummary={false} />}
+        notes={(close) => <QuickNote taskId={task.id} canWrite={canWrite} onClose={close} />}
+        actions={{
+          onMove: (card, direction) => step(card, column, direction),
+          menu: (
+            <TaskCardMenu
+              lists={otherLists}
+              onDuplicate={() => duplicateMutation.mutate(task.id)}
+              onChangeList={(target) => changeListMutation.mutate({ id: task.id, listId: target })}
+              onDelete={() => setDeleting(task)}
+            />
+          ),
+        }}
         className={task.id === focusedId ? 'border-2 border-primary' : undefined}
       />
       {task.id === focusedId && running && focus.display && (
@@ -389,6 +437,14 @@ export default function ListBoardPage() {
         </DragOverlay>
       </DndContext>
 
+      <DeleteConfirmationDialog
+        open={deleting !== null}
+        title={t('board.deleteTask')}
+        description={t('board.deleteTaskDescription', { title: deleting?.title ?? '' })}
+        isPending={deleteMutation.isPending}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
+      />
       <TaskDialog taskId={openTaskId} canWrite={canWrite} onClose={() => setOpenTaskId(null)} />
     </div>
   )

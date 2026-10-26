@@ -34,7 +34,9 @@ export function NoteEditor({
 }: NoteEditorProps) {
   const { t } = useTranslation()
   const shown = useRef(value)
-  shown.current = value
+  useEffect(() => {
+    shown.current = value
+  }, [value])
   const editor = useEditor({
     // Only the formatting of the toolbar: whatever else is pasted in is dropped.
     extensions: [
