@@ -179,7 +179,7 @@ export async function overview(
   const row = result.rows[0]!
 
   // Totals come from the exact sum, rounded once: summing the floored days would lose up to a second
-  // per day a session crosses.
+  // per day a session crosses. The average comes from the displayed total, so it never exceeds it.
   const taskSeconds = Math.floor(row.task_exact)
   return {
     timezone: tz,
@@ -188,7 +188,7 @@ export async function overview(
       work_days: row.daily.filter((day) => day.task_seconds > 0).length,
       tasks_done: row.tasks_done,
       task_seconds: taskSeconds,
-      avg_seconds_per_task: row.tasks_done === 0 ? null : Math.round(row.task_exact / row.tasks_done),
+      avg_seconds_per_task: row.tasks_done === 0 ? null : Math.round(taskSeconds / row.tasks_done),
     },
     daily: row.daily,
     productive: { hours: row.hours ?? [], weekdays: row.weekdays ?? [], months: row.months ?? [] },

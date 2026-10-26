@@ -127,6 +127,23 @@ describe('overview', () => {
     expect(report.by_list).toEqual([{ list_id: seed.listId, name: 'Work', color: 1, is_archived: false, seconds: H }])
   })
 
+  it('REPORT-02 REPORT-04 floors a fractional total, derives the average from it, and floors the break total from the exact sum', async () => {
+    // 1799.4 s on the 20th and 1800.6 s on the 21st: 3600.6 s floors to 3600, not 3601.
+    await task(SP('2026-10-20T23:30:00.600'), SP('2026-10-21T00:30:01.200'))
+    await completed(SP('2026-10-21T00:30:00'))
+    // 1799.4 s on the 22nd and 1800.6 s on the 23rd: the days floor to 1799 and 1800 (3599), the exact sum to 3600.
+    await pause(SP('2026-10-22T23:30:00.600'), SP('2026-10-23T00:30:00.600'))
+
+    const report = await overview(db, seed.userId, workspace, WEEK, NOW)
+
+    expect(report.daily).toEqual(
+      quietWeek(day('2026-10-20', 30 * M - 1), day('2026-10-21', 30 * M + 1), day('2026-10-22', 0, 30 * M - 1), day('2026-10-23', 0, 30 * M)),
+    )
+    // With one task the average equals the displayed total (3600), not the rounded exact sum (3601).
+    expect(report.tiles).toEqual({ work_days: 2, tasks_done: 1, task_seconds: H, avg_seconds_per_task: H })
+    expect(report.break_seconds).toBe(H)
+  })
+
   it('REPORT-11 counts an open session until now, and a due one until its deadline (AD-001)', async () => {
     await task(SP('2026-10-25T11:15:00'), null)
 

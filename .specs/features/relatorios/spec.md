@@ -32,6 +32,7 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 | Dias trabalhados | Dias com ao menos uma sessão de tarefa | Decisão do usuário | y |
 | Tempo trabalhado | Soma das sessões de tarefa, sem os intervalos | Fato da fonte: no print, 16h 52min é o tempo das tarefas e os 10min de intervalo aparecem à parte | y |
 | Média por tarefa | Tempo trabalhado dividido pelas tarefas concluídas no período | Fato da fonte: 16h 52min ÷ 12 = 1h 24min, como no print | y |
+| Arredondamento dos totais | `Tempo trabalhado` e os intervalos são a soma exata dos segundos, truncada uma vez; cada dia do gráfico é truncado à parte; a média é o `Tempo trabalhado` exibido dividido pelas tarefas concluídas, arredondada, e nunca passa do total com uma tarefa só | Decisão do usuário em 2026-10-26 | y |
 | Tempo por lista | Uma fatia por lista e uma de `Intervalos`; o total soma tarefas e intervalos | Fato da fonte: 17h 2min = 16h 52min + 10min, como no print | y |
 | Empate em mais produtivo | Mostra todos os empatados (`Segunda e quarta`) | Decisão do usuário | y |
 | Antes, no prazo, depois | `No prazo` (verde) quando o gasto fica a até 5% da estimativa, para mais ou para menos; abaixo disso `Xmin antes` (verde); acima `Xmin depois` (vermelho) | Decisão do usuário | y |
