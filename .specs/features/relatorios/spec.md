@@ -137,29 +137,29 @@ Com o foco, cada segundo de trabalho fica registrado como sessão, mas o usuári
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REPORT-01 | P2: Visão geral | Tasks | Implementing |
-| REPORT-02 | P2: Visão geral | Tasks | Implementing |
-| REPORT-03 | P2: Visão geral | Tasks | Implementing |
-| REPORT-04 | P2: Visão geral | Tasks | Implementing |
-| REPORT-05 | P2: Visão geral | Tasks | Implementing |
-| REPORT-06 | P2: Visão geral | Tasks | Implementing |
-| REPORT-07 | P2: Visão geral | Tasks | Implementing |
-| REPORT-08 | P2: Visão geral | Tasks | Implementing |
-| REPORT-09 | P2: Visão geral | Tasks | Implementing |
-| REPORT-10 | P2: Visão geral | Tasks | Implementing |
-| REPORT-11 | P2: Visão geral | Tasks | Implementing |
-| REPORT-12 | P2: Visão geral | Tasks | Implementing |
-| REPORT-13 | P2: Visão geral | Tasks | Implementing |
-| REPORT-14 | P2: Antes ou depois da estimativa | Tasks | Implementing |
-| REPORT-15 | P2: Antes ou depois da estimativa | Tasks | Implementing |
-| REPORT-16 | P2: Antes ou depois da estimativa | Tasks | Implementing |
-| REPORT-17 | P2: Antes ou depois da estimativa | Tasks | Implementing |
-| REPORT-18 | P2: Antes ou depois da estimativa | Tasks | Implementing |
-| REPORT-19 | P2: Antes ou depois da estimativa | Tasks | Implementing |
-| REPORT-20 | P2: Aba Sessões | Tasks | Implementing |
-| REPORT-21 | P2: Aba Sessões | Tasks | Implementing |
-| REPORT-22 | P2: Aba Sessões | Tasks | Implementing |
-| REPORT-23 | P3: Exportar PDF | Tasks | Implementing |
+| REPORT-01 | P2: Visão geral | Tasks | Verified |
+| REPORT-02 | P2: Visão geral | Tasks | Verified |
+| REPORT-03 | P2: Visão geral | Tasks | Verified |
+| REPORT-04 | P2: Visão geral | Tasks | Verified |
+| REPORT-05 | P2: Visão geral | Tasks | Verified |
+| REPORT-06 | P2: Visão geral | Tasks | Verified |
+| REPORT-07 | P2: Visão geral | Tasks | Verified |
+| REPORT-08 | P2: Visão geral | Tasks | Verified |
+| REPORT-09 | P2: Visão geral | Tasks | Verified |
+| REPORT-10 | P2: Visão geral | Tasks | Verified |
+| REPORT-11 | P2: Visão geral | Tasks | Verified |
+| REPORT-12 | P2: Visão geral | Tasks | Verified |
+| REPORT-13 | P2: Visão geral | Tasks | Verified |
+| REPORT-14 | P2: Antes ou depois da estimativa | Tasks | Verified |
+| REPORT-15 | P2: Antes ou depois da estimativa | Tasks | Verified |
+| REPORT-16 | P2: Antes ou depois da estimativa | Tasks | Verified |
+| REPORT-17 | P2: Antes ou depois da estimativa | Tasks | Verified |
+| REPORT-18 | P2: Antes ou depois da estimativa | Tasks | Verified |
+| REPORT-19 | P2: Antes ou depois da estimativa | Tasks | Verified |
+| REPORT-20 | P2: Aba Sessões | Tasks | Verified |
+| REPORT-21 | P2: Aba Sessões | Tasks | Verified |
+| REPORT-22 | P2: Aba Sessões | Tasks | Verified |
+| REPORT-23 | P3: Exportar PDF | Tasks | Verified |
 
 **Coverage:** 23 total, 23 mapped to tasks, 0 unmapped
 

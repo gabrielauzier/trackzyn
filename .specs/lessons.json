@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 12,
+  "next_id": 17,
   "lessons": [
     {
       "id": "L-001",
@@ -202,6 +202,96 @@
       ],
       "created": "2026-10-25T12:29:17Z",
       "last_seen": "2026-10-25T12:29:17Z"
+    },
+    {
+      "id": "L-012",
+      "key": "surviving_mutant::jsdom ignores media print so assert the print classes on the hidden and print only elements or run a print emulated e2e for every print requirement",
+      "text": "jsdom ignores @media print, so assert the print classes on the hidden and print-only elements (or run a print-emulated e2e) for every print requirement.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/print",
+      "status": "candidate",
+      "features": [
+        "relatorios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M30 frontend/src/components/app-layout.tsx:152; M31 print-header.tsx:16 (frontend/print)"
+      ],
+      "created": "2026-10-25T14:23:31Z",
+      "last_seen": "2026-10-25T14:23:31Z"
+    },
+    {
+      "id": "L-013",
+      "key": "surviving_mutant::when a metric counts only one kind of record add a fixture where only the other kind exists on that day",
+      "text": "When a metric counts only one kind of record, add a fixture where only the other kind exists on that day.",
+      "signal": "surviving_mutant",
+      "scope": "backend/reports",
+      "status": "candidate",
+      "features": [
+        "relatorios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M16 backend-node/src/services/reports.ts:182 (backend/reports)"
+      ],
+      "created": "2026-10-25T14:23:32Z",
+      "last_seen": "2026-10-25T14:23:32Z"
+    },
+    {
+      "id": "L-014",
+      "key": "surviving_mutant::complementary rounded percentages need a half way case like 1 of 32 to prove which side is derived from the other",
+      "text": "Complementary rounded percentages need a half-way case (like 1 of 32) to prove which side is derived from the other.",
+      "signal": "surviving_mutant",
+      "scope": "backend/reports",
+      "status": "candidate",
+      "features": [
+        "relatorios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M2 backend-node/src/services/reports.ts:237 (backend/reports)"
+      ],
+      "created": "2026-10-25T14:23:32Z",
+      "last_seen": "2026-10-25T14:23:32Z"
+    },
+    {
+      "id": "L-015",
+      "key": "gate_fail::tests that build data relative to now must pin the clock or derive expectations from the same day boundaries prove them at 00 05 utc with sub second fake times",
+      "text": "Tests that build data relative to now must pin the clock or derive expectations from the same day boundaries; prove them at 00:05 UTC with sub-second fake times.",
+      "signal": "gate_fail",
+      "scope": "tests/time",
+      "status": "candidate",
+      "features": [
+        "relatorios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/test/routes/reports.test.ts:55,:112 (tests/time)"
+      ],
+      "created": "2026-10-26T00:39:28Z",
+      "last_seen": "2026-10-26T00:39:28Z"
+    },
+    {
+      "id": "L-016",
+      "key": "ac_gap::floor each reported value once from the exact sum summing already floored parts drifts below the real total",
+      "text": "Floor each reported value once from the exact sum; summing already-floored parts drifts below the real total.",
+      "signal": "ac_gap",
+      "scope": "backend/aggregation",
+      "status": "candidate",
+      "features": [
+        "relatorios"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/services/reports.ts:148,177 (backend/aggregation)"
+      ],
+      "created": "2026-10-26T00:39:28Z",
+      "last_seen": "2026-10-26T00:39:28Z"
     }
   ]
 }

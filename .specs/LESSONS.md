@@ -80,6 +80,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: widget-desktop Edge Case title within 1 s (specs)
 - last seen: 2026-10-25T12:29:17Z
 
+### L-012 - jsdom ignores @media print, so assert the print classes on the hidden and print-only elements (or run a print-emulated e2e) for every print requirement.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/print` · harmful: 0
+- features: relatorios
+- evidence: M30 frontend/src/components/app-layout.tsx:152; M31 print-header.tsx:16 (frontend/print)
+- last seen: 2026-10-25T14:23:31Z
+
+### L-013 - When a metric counts only one kind of record, add a fixture where only the other kind exists on that day.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend/reports` · harmful: 0
+- features: relatorios
+- evidence: M16 backend-node/src/services/reports.ts:182 (backend/reports)
+- last seen: 2026-10-25T14:23:32Z
+
+### L-014 - Complementary rounded percentages need a half-way case (like 1 of 32) to prove which side is derived from the other.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend/reports` · harmful: 0
+- features: relatorios
+- evidence: M2 backend-node/src/services/reports.ts:237 (backend/reports)
+- last seen: 2026-10-25T14:23:32Z
+
+### L-015 - Tests that build data relative to now must pin the clock or derive expectations from the same day boundaries; prove them at 00:05 UTC with sub-second fake times.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `tests/time` · harmful: 0
+- features: relatorios
+- evidence: backend-node/test/routes/reports.test.ts:55,:112 (tests/time)
+- last seen: 2026-10-26T00:39:28Z
+
+### L-016 - Floor each reported value once from the exact sum; summing already-floored parts drifts below the real total.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `backend/aggregation` · harmful: 0
+- features: relatorios
+- evidence: backend-node/src/services/reports.ts:148,177 (backend/aggregation)
+- last seen: 2026-10-26T00:39:28Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

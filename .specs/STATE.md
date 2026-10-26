@@ -52,11 +52,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/` (listas-e-quadro → foco-e-sons → widget-desktop → relatorios)
-- **Phase / Task**: Tasks - 89 tasks escritas e validadas; aguardando aprovação
-- **Completed**: none
+- **Feature**: `.specs/features/` (listas-e-quadro, foco-e-sons, widget-desktop, relatorios)
+- **Phase / Task**: Execute concluído nas 4 features
+- **Completed**: listas-e-quadro T1–T26 (FAIL com risco aceito, gabrielauzier/trackzyn#1); foco-e-sons T1–T36 (FAIL com risco aceito, gabrielauzier/trackzyn#2); widget-desktop T1–T12 (PASS); relatorios T16, T1–T15 (PASS)
 - **In-progress** (file:line): none
-- **Next step**: Aprovar os 4 `tasks.md` e as skills por task, e começar o Execute por `listas-e-quadro` T1
+- **Next step**: resolver as issues #1 e #2 e rodar o Verifier de novo; rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
 - **Blockers**: none
-- **Uncommitted files**: `.specs/`
+- **Uncommitted files**: none
 - **Branch**: v2
