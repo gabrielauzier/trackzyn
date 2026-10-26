@@ -45,13 +45,14 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onComplete, s
       {actions && (
         <div
           className={cn(
-            'absolute top-1.5 right-1.5 z-10 flex items-center gap-0.5 rounded-md bg-card/95 opacity-0 transition-opacity',
+            'absolute top-1.5 right-1.5 z-10 flex max-w-[calc(100%-0.75rem)] items-center justify-end rounded-md bg-card/95 opacity-0 transition-opacity',
             'group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100',
           )}
         >
           <Button
             variant="ghost"
             size="icon-sm"
+            className="size-6"
             aria-label={t('board.showSubtasks')}
             aria-expanded={expanded}
             onClick={() => setExpanded((value) => !value)}
@@ -61,6 +62,7 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onComplete, s
           <Button
             variant="ghost"
             size="icon-sm"
+            className="size-6"
             aria-label={t('board.showNotes')}
             aria-expanded={notesOpen}
             onClick={() => setNotesOpen((value) => !value)}
@@ -72,6 +74,7 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onComplete, s
               <Button
                 variant="ghost"
                 size="icon-sm"
+                className="size-6"
                 aria-label={t('board.moveLeft')}
                 disabled={column === 'backlog'}
                 onClick={() => actions.onMove(task, 'left')}
@@ -81,6 +84,7 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onComplete, s
               <Button
                 variant="ghost"
                 size="icon-sm"
+                className="size-6"
                 aria-label={t('board.moveRight')}
                 disabled={done}
                 onClick={() => actions.onMove(task, 'right')}

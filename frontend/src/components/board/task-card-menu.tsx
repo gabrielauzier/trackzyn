@@ -26,7 +26,7 @@ export function TaskCardMenu({ lists, onDuplicate, onChangeList, onDelete }: Tas
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={t('board.moreActions')}>
+        <Button variant="ghost" size="icon-sm" className="size-6" aria-label={t('board.moreActions')}>
           <MoreVertical size={14} />
         </Button>
       </DropdownMenuTrigger>

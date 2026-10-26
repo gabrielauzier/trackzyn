@@ -104,7 +104,7 @@ function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: st
   return { ...board, columns }
 }
 
-/** The board with `taskId` among today's completions, as the server will show it once the task is done. */
+/** The board with `taskId` last among today's completions, as the server lists them once the task is done. */
 function placeInDone(board: Board, taskId: string): Board {
   const moved = findCard(board, columnsOf(board).get(taskId) ?? 'backlog', taskId)?.task
   if (!moved) return board
@@ -115,7 +115,7 @@ function placeInDone(board: Board, taskId: string): Board {
   const todayDate = new Date().toLocaleDateString('en-CA')
   const [first, ...rest] = days
   const withToday =
-    first?.date === todayDate ? [{ ...first, tasks: [moved, ...first.tasks] }, ...rest] : [{ date: todayDate, tasks: [moved] }, ...days]
+    first?.date === todayDate ? [{ ...first, tasks: [...first.tasks, moved] }, ...rest] : [{ date: todayDate, tasks: [moved] }, ...days]
   return {
     ...board,
     columns: {
