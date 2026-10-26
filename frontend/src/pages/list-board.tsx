@@ -14,7 +14,7 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { formatClock } from '@/lib/focus/format-clock'
@@ -23,6 +23,7 @@ import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
+import { COLUMN_PREFIX, dropTarget, type PendingColumn } from '@/components/board/drop-target'
 import { formatDuration } from '@/components/board/format-duration'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { TaskCard } from '@/components/board/task-card'
@@ -41,20 +42,6 @@ import type { FocusRouteState } from '@/lib/desktop/focus-window'
 import type { Board, TaskCardView, TaskColumn } from '@/types'
 
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
-type PendingColumn = Exclude<TaskColumn, 'done'>
-
-const COLUMN_PREFIX = 'column:'
-
-/** Every card's column, read from the board. */
-function columnsOf(board: Board): Map<string, TaskColumn> {
-  const map = new Map<string, TaskColumn>()
-  for (const column of ['backlog', 'this_week', 'today'] as const) {
-    for (const task of board.columns[column].tasks) map.set(task.id, column)
-  }
-  for (const day of board.columns.done.days) for (const task of day.tasks) map.set(task.id, 'done')
-  return map
-}
-
 /** The board with `taskId` moved into a pending column, right before `beforeId` (or last). */
 function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: string | null): Board {
   let moved: TaskCardView | undefined
@@ -125,7 +112,6 @@ export default function ListBoardPage() {
     )
   }
 
-  const taskColumns = columnsOf(board)
   const move = (id: string, column: TaskColumn, before: string | null) => moveMutation.mutate({ id, column, before })
 
   // The task of this user's open session, which the board highlights with its time running (FOCUS-16).
@@ -147,28 +133,13 @@ export default function ListBoardPage() {
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || !canWrite) return
     const activeId = String(active.id)
-    const overId = String(over.id)
-    const from = taskColumns.get(activeId)
-    const to = overId.startsWith(COLUMN_PREFIX)
-      ? (overId.slice(COLUMN_PREFIX.length) as TaskColumn)
-      : taskColumns.get(overId)
-    if (!from || !to) return
-    if (to === 'done') {
-      // Concluídas is ordered by day, so a task only enters it, at no particular place.
-      if (from !== 'done') complete(activeId)
+    const target = dropTarget(board, activeId, String(over.id))
+    if (!target) return
+    if (target.column === 'done') {
+      complete(activeId)
       return
     }
-    let before: string | null
-    if (overId.startsWith(COLUMN_PREFIX)) {
-      before = null
-    } else if (from === to) {
-      if (activeId === overId) return
-      const ids = board.columns[to].tasks.map((task) => task.id)
-      const order = arrayMove(ids, ids.indexOf(activeId), ids.indexOf(overId))
-      before = order[order.indexOf(activeId) + 1] ?? null
-    } else {
-      before = overId
-    }
+    const { column: to, before } = target
     queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeTask(previous, activeId, to, before))
     move(activeId, to, before)
   }
