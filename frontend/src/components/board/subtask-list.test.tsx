@@ -8,7 +8,7 @@ import type { Subtask, Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
   tasks: { get: vi.fn() },
-  subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn(), move: vi.fn() },
 }))
 
 const TASK = '11111111-1111-4111-8111-111111111111'
@@ -42,6 +42,7 @@ beforeEach(() => {
   vi.mocked(subtasks.create).mockResolvedValue(subtask(S2, 'Review', false, 2))
   vi.mocked(subtasks.update).mockResolvedValue(subtask(S2, 'Draft', true, 1))
   vi.mocked(subtasks.remove).mockResolvedValue(undefined)
+  vi.mocked(subtasks.move).mockResolvedValue(subtask(S2, 'Draft', false, 0))
 })
 
 describe('SubtaskList', () => {
@@ -113,6 +114,38 @@ describe('SubtaskList', () => {
     expect(screen.queryByText('1/2 Subtasks')).not.toBeInTheDocument()
   })
 
+  it('moves a subtask up and down, with the first unable to go up and the last unable to go down', async () => {
+    const { user } = renderWithProviders(<SubtaskList taskId={TASK} canWrite />)
+    await screen.findByText('1/2 Subtasks')
+
+    expect(screen.getByRole('button', { name: 'Move Outline up' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Move Draft down' })).toBeDisabled()
+
+    // The server answers the move with the new order when the list is read again.
+    vi.mocked(tasks.get).mockResolvedValue(taskWith([subtask(S2, 'Draft', false, 0), subtask(S1, 'Outline', true, 1)]))
+    await user.click(screen.getByRole('button', { name: 'Move Draft up' }))
+
+    expect(subtasks.move).toHaveBeenCalledWith(S2, S1)
+    await waitFor(() =>
+      expect(screen.getAllByRole('checkbox').map((box) => box.getAttribute('aria-label'))).toEqual(['Draft', 'Outline']),
+    )
+  })
+
+  it('moves a subtask down before the one after the next, or last', async () => {
+    const S3 = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+    vi.mocked(tasks.get).mockResolvedValue(
+      taskWith([subtask(S1, 'Outline', true, 0), subtask(S2, 'Draft', false, 1), subtask(S3, 'Review', false, 2)]),
+    )
+    const { user } = renderWithProviders(<SubtaskList taskId={TASK} canWrite />)
+    await screen.findByText('1/3 Subtasks')
+
+    await user.click(screen.getByRole('button', { name: 'Move Outline down' }))
+    expect(subtasks.move).toHaveBeenLastCalledWith(S1, S3)
+
+    await user.click(screen.getByRole('button', { name: 'Move Draft down' }))
+    expect(subtasks.move).toHaveBeenLastCalledWith(S2, null)
+  })
+
   it('adds a subtask', async () => {
     const { user } = renderWithProviders(<SubtaskList taskId={TASK} canWrite />)
     await screen.findByText('1/2 Subtasks')
@@ -141,7 +174,7 @@ describe('SubtaskList', () => {
     const { user } = renderWithProviders(<SubtaskList taskId={TASK} canWrite />)
     await screen.findByText('1/2 Subtasks')
 
-    await user.click(screen.getByRole('button', { name: 'Rename Draft' }))
+    await user.dblClick(screen.getByRole('button', { name: 'Rename Draft' }))
     const input = screen.getByLabelText('Subtask title')
     await user.clear(input)
     await user.click(screen.getByRole('button', { name: 'Save' }))

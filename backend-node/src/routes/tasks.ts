@@ -5,7 +5,7 @@ import type { AppContext } from '../context.ts'
 import { type Subtask, TASK_COLUMNS } from '../db/schema.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
-import { createSubtask, deleteSubtask, updateSubtask } from '../services/subtasks.ts'
+import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -196,6 +196,27 @@ export function taskRoutes(ctx: AppContext) {
             title: request.body.title,
             done: request.body.done,
           }),
+        ),
+    )
+
+    typed.post(
+      '/api/subtasks/:subtask_id/move',
+      {
+        schema: {
+          params: subtaskParams,
+          body: z.object({ before_subtask_id: uuid.nullable() }),
+          response: { 200: subtaskReadSchema },
+        },
+        preValidation: writing,
+      },
+      async (request) =>
+        toSubtaskRead(
+          await moveSubtask(
+            ctx.db,
+            request.params.subtask_id.toLowerCase(),
+            request.workspace.workspace.id,
+            request.body.before_subtask_id?.toLowerCase() ?? null,
+          ),
         ),
     )
 
