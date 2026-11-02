@@ -50,13 +50,21 @@
 - **Date**: 2026-10-25
 - **Status**: active
 
+### AD-007
+- **Decision**: Tokens de acesso (`tkz_`) são negados por padrão: um hook `onRequest` global autentica o token e só deixa passar a rota que declara `config.tokenScope`. Toda rota nova, pública ou não, responde 403 a um token até declarar um escopo. O JWT de sessão não passa por esse caminho.
+- **Reason**: Um token de longa duração vazado não pode alcançar senha, admin ou outros tokens, e esquecer de configurar uma rota nova precisa falhar fechado. Arquitetura escolhida pelo usuário em 2026-11-02.
+- **Trade-off**: Abrir uma rota a tokens exige declará-la e atualizar o teste que compara as rotas com a tabela de escopos da spec.
+- **Scope**: `tokens-de-acesso`; todas as rotas de `backend-node/src/routes`.
+- **Date**: 2026-11-02
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `.specs/features/` (listas-e-quadro, foco-e-sons, widget-desktop, relatorios)
-- **Phase / Task**: Execute concluído; as 4 features com Verifier PASS
-- **Completed**: listas-e-quadro (débito da issue #1 pago), foco-e-sons (débito da issue #2 pago), widget-desktop, relatorios
+- **Feature**: `.specs/features/tokens-de-acesso`
+- **Phase / Task**: Design aprovado; `tasks.md` escrito, aguardando aprovação; depois vem Execute
+- **Completed**: listas-e-quadro, foco-e-sons, widget-desktop e relatorios com Verifier PASS; spec e design de tokens-de-acesso aprovados
 - **In-progress** (file:line): none
-- **Next step**: fechar as issues #1 e #2; rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
+- **Next step**: aprovar `tasks.md` e começar por T1. Das features anteriores, seguem pendentes: fechar as issues #1 e #2, rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
 - **Blockers**: none
-- **Uncommitted files**: none
+- **Uncommitted files**: `.specs/features/tokens-de-acesso/` e `.specs/STATE.md`
 - **Branch**: v2
