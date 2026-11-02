@@ -330,12 +330,14 @@ T28
 
 **Done when**:
 
-- [ ] Sem o cabeçalho, usa o workspace do token mesmo que o padrão do usuário seja outro
-- [ ] Cabeçalho igual é aceito; diferente dá 403 `Token is bound to another workspace`
-- [ ] Membro removido e workspace arquivado dão 404 `Workspace not found`
-- [ ] Rebaixar o dono a `viewer` faz a requisição seguinte de escrita dar 403 `Read-only role`
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Sem o cabeçalho, usa o workspace do token mesmo que o padrão do usuário seja outro
+- [x] Cabeçalho igual é aceito; diferente dá 403 `Token is bound to another workspace`
+- [x] Membro removido e workspace arquivado dão 404 `Workspace not found`
+- [x] Rebaixar o dono a `viewer` faz a requisição seguinte de escrita dar 403 `Read-only role`
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

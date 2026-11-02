@@ -296,17 +296,17 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | AUTH-08 | Edge Cases | Tasks | Implementing |
 | AUTH-09 | Edge Cases | Tasks | Implementing |
 | AUTH-10 | Edge Cases | Tasks | Implementing |
-| SCOPE-01 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| SCOPE-02 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| SCOPE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
+| SCOPE-02 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-03 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-04 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-05 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-07 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| SCOPE-08 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| SCOPE-07 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
+| SCOPE-08 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-09 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-10 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| SCOPE-11 | Edge Cases | Tasks | In Tasks |
+| SCOPE-11 | Edge Cases | Tasks | Implementing |
 | RATE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | OBS-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | API-01 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
