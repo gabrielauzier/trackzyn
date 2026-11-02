@@ -552,11 +552,13 @@ T28
 
 **Done when**:
 
-- [ ] Tarefa criada por token traz `created_via` com o nome; criada por sessão traz `null`
-- [ ] Revogar o token mantém o nome; apagar o token deixa `null` e mantém a tarefa
-- [ ] Editar e mover mantêm o valor; a cópia duplicada fica `null`, inclusive quando duplicada por token
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Tarefa criada por token traz `created_via` com o nome; criada por sessão traz `null`
+- [x] Revogar o token mantém o nome; apagar o token deixa `null` e mantém a tarefa
+- [x] Editar e mover mantêm o valor; a cópia duplicada fica `null`, inclusive quando duplicada por token
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

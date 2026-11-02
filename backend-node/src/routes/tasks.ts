@@ -32,6 +32,7 @@ const taskReadSchema = z.object({
   completed_at: z.string().nullable(),
   created_at: z.string(),
   subtasks: z.array(subtaskReadSchema),
+  created_via: z.string().nullable(),
 })
 
 const taskParams = z.object({ task_id: uuid })
@@ -76,6 +77,7 @@ function toTaskRead(task: TaskWithSubtasks) {
     completed_at: task.completedAt?.toISOString() ?? null,
     created_at: task.createdAt.toISOString(),
     subtasks: task.subtasks.map(toSubtaskRead),
+    created_via: task.createdVia,
   }
 }
 

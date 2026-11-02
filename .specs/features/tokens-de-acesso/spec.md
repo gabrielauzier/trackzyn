@@ -341,11 +341,11 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | MCP-11 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
 | MCP-12 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
 | ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | In Tasks |
+| ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | In Tasks |
-| ORIGIN-04 | P1: Ver a origem da tarefa | Tasks | In Tasks |
+| ORIGIN-04 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-05 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | In Tasks |
+| ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-07 | P1: Ver a origem da tarefa | Tasks | In Tasks |
 
 **Coverage:** 85 total, 85 mapped to tasks, 0 unmapped

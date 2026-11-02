@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type Subtask, type Task, type TaskColumn, focusSessions, lists, subtasks, tasks } from '../db/schema.ts'
+import { type Subtask, type Task, type TaskColumn, focusSessions, lists, personalAccessTokens, subtasks, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { endOpenSessions } from './focus-settle.ts'
 import { getList } from './lists.ts'
 
-export type TaskWithSubtasks = Task & { subtasks: Subtask[] }
+/** `createdVia` is the name of the token that created the task, while that token exists (ORIGIN-02, ORIGIN-05). */
+export type TaskWithSubtasks = Task & { subtasks: Subtask[]; createdVia: string | null }
 
 const notFound = () => new HttpError(404, 'Task not found')
 
@@ -23,9 +24,16 @@ export async function findTask(db: Database, taskId: string, workspaceId: string
 }
 
 export async function getTask(db: Database, taskId: string, workspaceId: string): Promise<TaskWithSubtasks> {
-  const task = await findTask(db, taskId, workspaceId)
-  const found = await db.select().from(subtasks).where(eq(subtasks.taskId, task.id)).orderBy(asc(subtasks.position))
-  return { ...task, subtasks: found }
+  const [row] = await db
+    .select({ task: tasks, createdVia: personalAccessTokens.name })
+    .from(tasks)
+    .innerJoin(lists, eq(lists.id, tasks.listId))
+    .leftJoin(personalAccessTokens, eq(personalAccessTokens.id, tasks.createdViaTokenId))
+    .where(and(eq(tasks.id, taskId), eq(lists.workspaceId, workspaceId)))
+    .limit(1)
+  if (!row) throw notFound()
+  const found = await db.select().from(subtasks).where(eq(subtasks.taskId, row.task.id)).orderBy(asc(subtasks.position))
+  return { ...row.task, subtasks: found, createdVia: row.createdVia }
 }
 
 /** Serialises every change to the order of a list's tasks (two moves at once: the last one wins). */
@@ -80,7 +88,7 @@ export async function createTask(
     await tx.insert(tasks).values(task)
     const created: Subtask[] = (input.subtasks ?? []).map((title, position) => ({ id: randomUUID(), taskId: task.id, title, done: false, position }))
     if (created.length > 0) await tx.insert(subtasks).values(created)
-    return { ...task, subtasks: created }
+    return getTask(tx as Database, task.id, workspaceId)
   })
 }
 
@@ -190,7 +198,7 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       position,
     }))
     if (copies.length > 0) await tx.insert(subtasks).values(copies)
-    return { ...copy, subtasks: copies }
+    return { ...copy, subtasks: copies, createdVia: null }
   })
 }
 
