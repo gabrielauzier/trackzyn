@@ -139,6 +139,12 @@ describe('lists service', () => {
     expect((await getList(db, list.id, workspaceId)).name).toBe('New')
   })
 
+  it('LIST-07 persists the new name and color when both change together', async () => {
+    const list = await create('Old', 1)
+    await updateList(db, list.id, workspaceId, { name: 'New', color: 5 })
+    expect(await getList(db, list.id, workspaceId)).toMatchObject({ name: 'New', color: 5 })
+  })
+
   it('LIST-08 archives a list out of the default listing, keeps its tasks, and unarchives it', async () => {
     const list = await create('Work')
     await create('Other')

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { updateOffset } from '@/lib/focus/clock'
 import type { FocusAction } from '@/lib/focus/optimistic'
 import { conflicts, discard, enqueue, flush, pending, retry, type QueuedAction } from '@/lib/focus/queue'
 import type { FocusState } from '@/types'
@@ -26,6 +27,7 @@ describe('the offline focus queue', () => {
   })
 
   afterEach(() => {
+    updateOffset(new Date(Date.now()).toISOString())
     vi.useRealTimers()
   })
 
@@ -58,6 +60,20 @@ describe('the offline focus queue', () => {
     expect(conflicts()).toEqual([])
   })
 
+  it('SYNC-06 judges the 24h limit by the server clock when the local clock is 5 min behind', async () => {
+    const SERVER_NOW = NOW + 5 * MIN
+    updateOffset(new Date(SERVER_NOW).toISOString())
+    const onServer = (msAgo: number): FocusAction => ({ ...pause(0), occurred_at: new Date(SERVER_NOW - msAgo).toISOString() })
+    const stale = enqueue(onServer((24 * 60 + 1) * MIN))
+    const recent = enqueue(onServer((23 * 60 + 59) * MIN))
+    const send = vi.fn<Send>(async () => answered)
+
+    const result = await flush(send)
+
+    expect(result.expired.map((entry) => entry.action_id)).toEqual([stale.action_id])
+    expect(send.mock.calls.map(([entry]) => entry.action_id)).toEqual([recent.action_id])
+  })
+
   it.each([
     [409, 'invalid_transition'],
     [422, 'invalid_time'],
@@ -76,6 +92,26 @@ describe('the offline focus queue', () => {
     await flush(send, NOW)
     expect(send).toHaveBeenCalledWith(refused)
     expect(pending()).toEqual([])
+  })
+
+  it('SYNC-05 SYNC-07 a retried action goes back in the order of its click, before the later ones still queued', async () => {
+    const first = enqueue(pause(3 * MIN))
+    const refused = enqueue(pause(2 * MIN))
+    const later = enqueue(pause(MIN))
+    await flush(async (entry) => {
+      if (entry.action_id === first.action_id) return answered
+      if (entry.action_id === refused.action_id) return Promise.reject(refusal(409, 'invalid_transition'))
+      return Promise.reject(offline())
+    }, NOW)
+    expect(pending()).toEqual([later])
+    expect(conflicts().map((entry) => entry.action_id)).toEqual([refused.action_id])
+
+    retry(refused.action_id)
+
+    expect(pending()).toEqual([refused, later])
+    const send = vi.fn<Send>(async () => answered)
+    await flush(send, NOW)
+    expect(send.mock.calls.map(([entry]) => entry.action_id)).toEqual([refused.action_id, later.action_id])
   })
 
   it('SYNC-07 discard drops a conflict without sending it', async () => {
