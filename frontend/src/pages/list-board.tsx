@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -10,10 +10,13 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
+  pointerWithin,
   useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -46,6 +49,14 @@ import type { Board, TaskCardView, TaskColumn } from '@/types'
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
 /** The drag overlay's card is only a picture of the dragged one, so its actions do nothing. */
 const noop = () => {}
+
+/** The card or column under the pointer (cards first); the keyboard has no pointer, so the closest corners. */
+const collisionDetection: CollisionDetection = (args) => {
+  const hits = pointerWithin(args)
+  if (hits.length === 0) return closestCorners(args)
+  const cards = hits.filter((hit) => !String(hit.id).startsWith(COLUMN_PREFIX))
+  return cards.length > 0 ? cards : hits
+}
 
 function findCard(board: Board, column: TaskColumn, id: string): { task: TaskCardView; column: TaskColumn; number: number } | null {
   const tasks = column === 'done' ? board.columns.done.days.flatMap((day) => day.tasks) : board.columns[column].tasks
@@ -88,6 +99,11 @@ export default function ListBoardPage() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
   const [tab, setTab] = useState<TaskColumn>('today')
   const [draggedId, setDraggedId] = useState<string | null>(null)
+  // While a card is dragged over another column the board shows it there already, before it is dropped.
+  const [preview, setPreview] = useState<Board | null>(null)
+  const dragOrigin = useRef<TaskColumn | null>(null)
+  // The card the dragged one was slotted before when it entered the column it is over now.
+  const insertedAt = useRef<string | null>(null)
   const boardKey = ['lists', listId, 'board'] as const
   const focus = useFocus(listId)
   const { playComplete } = useFocusSounds(focus.state, focus.display)
@@ -124,6 +140,8 @@ export default function ListBoardPage() {
     )
   }
 
+  const shown = preview ?? board
+  const taskColumns = columnsOf(shown)
   const move = (id: string, column: TaskColumn, before: string | null) => moveMutation.mutate({ id, column, before })
 
   // The task of this user's open session, which the board highlights with its time running (FOCUS-16).
@@ -142,25 +160,76 @@ export default function ListBoardPage() {
     }
   }
 
-  const onDragStart = ({ active }: DragStartEvent) => setDraggedId(String(active.id))
-
-  const onDragEnd = ({ active, over }: DragEndEvent) => {
+  const endDrag = () => {
     setDraggedId(null)
+    setPreview(null)
+    dragOrigin.current = null
+    insertedAt.current = null
+  }
+
+  const columnUnder = (overId: string) =>
+    overId.startsWith(COLUMN_PREFIX) ? (overId.slice(COLUMN_PREFIX.length) as TaskColumn) : taskColumns.get(overId)
+
+  const onDragStart = ({ active }: DragStartEvent) => {
+    setDraggedId(String(active.id))
+    dragOrigin.current = taskColumns.get(String(active.id)) ?? null
+  }
+
+  const onDragOver = ({ active, over }: DragOverEvent) => {
     if (!over || !canWrite) return
     const activeId = String(active.id)
-    const target = dropTarget(board, activeId, String(over.id))
-    if (!target) return
-    if (target.column === 'done') {
-      complete(activeId)
+    const overId = String(over.id)
+    // Once previewed, the dragged card sits under the pointer, so it is also what the pointer is over.
+    if (overId === activeId) return
+    const to = columnUnder(overId)
+    if (!to) return
+    if (to === 'done') {
+      // Dropping into Concluídas completes the task rather than placing it, so it is not previewed.
+      setPreview(null)
+      insertedAt.current = null
       return
     }
-    const { column: to, before } = target
+    if (taskColumns.get(activeId) === to) {
+      if (overId !== insertedAt.current) insertedAt.current = null
+      return
+    }
+    const before = overId.startsWith(COLUMN_PREFIX) ? null : overId
+    insertedAt.current = before
+    setPreview(placeTask(board, activeId, to, before))
+  }
+
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    const origin = dragOrigin.current
+    const inserted = insertedAt.current
+    endDrag()
+    if (!over || !canWrite || !origin) return
+    const activeId = String(active.id)
+    const overId = String(over.id)
+    const current = taskColumns.get(activeId)
+    const to = overId === activeId ? current : columnUnder(overId)
+    if (!current || !to) return
+    if (to === 'done') {
+      // Concluídas is ordered by day, so a task only enters it, at no particular place.
+      if (origin !== 'done') complete(activeId)
+      return
+    }
+    // Moved into this column during the drag, and not dragged to another card since: it is where the preview put it.
+    const placed = current !== origin && (overId === activeId || overId.startsWith(COLUMN_PREFIX) || overId === inserted)
+    let before: string | null
+    if (placed) {
+      const ids = shown.columns[to].tasks.map((task) => task.id)
+      before = ids[ids.indexOf(activeId) + 1] ?? null
+    } else {
+      const target = dropTarget(shown, activeId, overId)
+      if (!target || target.column === 'done') return
+      before = target.before
+    }
     queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeTask(previous, activeId, to, before))
     move(activeId, to, before)
   }
 
-  const draggedColumn = draggedId ? columnsOf(board).get(draggedId) : undefined
-  const draggedCard = draggedId && draggedColumn ? findCard(board, draggedColumn, draggedId) : null
+  const draggedColumn = draggedId ? taskColumns.get(draggedId) : undefined
+  const draggedCard = draggedId && draggedColumn ? findCard(shown, draggedColumn, draggedId) : null
 
   const renderTask = (column: TaskColumn) => (task: TaskCardView, index: number) => (
     <SortableTask key={task.id} id={task.id} canWrite={canWrite}>
@@ -184,14 +253,14 @@ export default function ListBoardPage() {
 
   const renderColumn = (column: TaskColumn) =>
     column === 'done' ? (
-      <ColumnDrop column="done" ids={board.columns.done.days.flatMap((day) => day.tasks.map((task) => task.id))}>
-        <DoneColumn done={board.columns.done} renderTask={renderTask('done')} className="h-full" />
+      <ColumnDrop column="done" ids={shown.columns.done.days.flatMap((day) => day.tasks.map((task) => task.id))}>
+        <DoneColumn done={shown.columns.done} renderTask={renderTask('done')} className="h-full" />
       </ColumnDrop>
     ) : (
-      <ColumnDrop column={column} ids={board.columns[column].tasks.map((task) => task.id)}>
+      <ColumnDrop column={column} ids={shown.columns[column].tasks.map((task) => task.id)}>
         <BoardColumn
           column={column}
-          view={board.columns[column]}
+          view={shown.columns[column]}
           listId={listId}
           canWrite={canWrite}
           renderTask={renderTask(column)}
@@ -236,10 +305,11 @@ export default function ListBoardPage() {
         </p>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCorners}
+      <DndContext sensors={sensors} collisionDetection={collisionDetection}
         onDragStart={onDragStart}
+        onDragOver={onDragOver}
         onDragEnd={onDragEnd}
-        onDragCancel={() => setDraggedId(null)}
+        onDragCancel={endDrag}
       >
         {isMobile ? (
           <Tabs value={tab} onValueChange={(value) => setTab(value as TaskColumn)}>
