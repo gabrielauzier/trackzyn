@@ -18,4 +18,11 @@ export const TOKEN_ROUTES: ReadonlyArray<{ method: string; url: string; scope: T
   { method: 'DELETE', url: '/api/subtasks/:subtask_id', scope: 'tasks:delete' },
 ]
 
+/** Open to any valid token: each tool checks its own scope (MCP-02), which is why they stay out of the table. */
+export const MCP_ROUTES: ReadonlyArray<{ method: string; url: string; scope: 'any' }> = [
+  { method: 'POST', url: '/api/mcp', scope: 'any' },
+  { method: 'GET', url: '/api/mcp', scope: 'any' },
+  { method: 'DELETE', url: '/api/mcp', scope: 'any' },
+]
+
 export const routeKey = (route: { method: string; url: string }) => `${route.method} ${route.url}`

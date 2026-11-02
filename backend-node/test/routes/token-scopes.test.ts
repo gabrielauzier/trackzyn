@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { TOKEN_SCOPES, type TokenScope } from '../../src/db/schema.ts'
 import { invite, ownerViewerStranger } from '../support/roles.ts'
-import { TOKEN_ROUTES, routeKey } from '../support/token-routes.ts'
+import { MCP_ROUTES, TOKEN_ROUTES, routeKey } from '../support/token-routes.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
 import { mintToken } from '../support/tokens.ts'
 
@@ -66,7 +66,7 @@ afterAll(async () => {
   await t.close()
 })
 
-const inTable = new Set(TOKEN_ROUTES.map(routeKey))
+const inTable = new Set([...TOKEN_ROUTES, ...MCP_ROUTES].map(routeKey))
 const send = (method: Method, url: string, token: string, payload?: object) =>
   t.app.inject({ method, url, headers: bearer(token), payload })
 
@@ -74,10 +74,10 @@ describe('the routes open to tokens', () => {
   it('SCOPE-04 the routes that declare a scope are exactly the table of the spec', () => {
     const declared = registered
       .filter((route) => route.tokenScope !== undefined && route.method !== 'HEAD')
-      .map((route) => ({ method: route.method as string, url: route.url, scope: route.tokenScope as TokenScope }))
+      .map((route) => ({ method: route.method as string, url: route.url, scope: route.tokenScope as TokenScope | 'any' }))
     const byKey = (a: { method: string; url: string }, b: { method: string; url: string }) => routeKey(a).localeCompare(routeKey(b))
 
-    expect(declared.toSorted(byKey)).toEqual(TOKEN_ROUTES.toSorted(byKey))
+    expect(declared.toSorted(byKey)).toEqual([...TOKEN_ROUTES, ...MCP_ROUTES].toSorted(byKey))
     expect(TOKEN_ROUTES).toHaveLength(14)
   })
 

@@ -615,14 +615,16 @@ T28
 
 **Done when**:
 
-- [ ] O `Client` do SDK, com `StreamableHTTPClientTransport`, conclui `initialize` contra o app ouvindo numa porta real, não por `inject`
-- [ ] Sem token e com JWT, a resposta é 401 com `WWW-Authenticate: Bearer`
-- [ ] `Origin` diferente de `FRONTEND_URL` dá 403; sem `Origin`, passa
-- [ ] `GET` e `DELETE` dão 405
-- [ ] Duas requisições seguidas não dependem de estado anterior
-- [ ] Com o flag desligado, `/api/mcp` responde 404
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] O `Client` do SDK, com `StreamableHTTPClientTransport`, conclui `initialize` contra o app ouvindo numa porta real, não por `inject`
+- [x] Sem token e com JWT, a resposta é 401 com `WWW-Authenticate: Bearer`
+- [x] `Origin` diferente de `FRONTEND_URL` dá 403; sem `Origin`, passa
+- [x] `GET` e `DELETE` dão 405
+- [x] Duas requisições seguidas não dependem de estado anterior
+- [x] Com o flag desligado, `/api/mcp` responde 404
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

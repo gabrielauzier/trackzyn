@@ -17,6 +17,7 @@ import { focusRoutes } from './routes/focus.ts'
 import { healthRoutes } from './routes/health.ts'
 import { infoRoutes } from './routes/info.ts'
 import { listRoutes } from './routes/lists.ts'
+import { mcpRoutes } from './routes/mcp.ts'
 import { oidcRoutes } from './routes/oidc.ts'
 import { passkeyRoutes } from './routes/passkeys.ts'
 import { reportRoutes } from './routes/reports.ts'
@@ -85,6 +86,7 @@ export async function buildApp(
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
   if (ctx.config.personalTokensEnabled) await app.register(accessTokenRoutes(ctx))
+  if (ctx.config.personalTokensEnabled) await app.register(mcpRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
   afterRoutes?.(app)
