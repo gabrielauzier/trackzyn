@@ -53,10 +53,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/` (listas-e-quadro, foco-e-sons, widget-desktop, relatorios)
-- **Phase / Task**: Execute concluído nas 4 features
-- **Completed**: listas-e-quadro T1–T26 (FAIL com risco aceito, gabrielauzier/trackzyn#1); foco-e-sons T1–T36 (FAIL com risco aceito, gabrielauzier/trackzyn#2); widget-desktop T1–T12 (PASS); relatorios T16, T1–T15 (PASS)
+- **Phase / Task**: Execute concluído; as 4 features com Verifier PASS
+- **Completed**: listas-e-quadro (débito da issue #1 pago), foco-e-sons (débito da issue #2 pago), widget-desktop, relatorios
 - **In-progress** (file:line): none
-- **Next step**: resolver as issues #1 e #2 e rodar o Verifier de novo; rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
+- **Next step**: fechar as issues #1 e #2; rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: v2

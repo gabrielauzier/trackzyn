@@ -19,7 +19,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { formatClock } from '@/lib/focus/format-clock'
@@ -28,6 +28,7 @@ import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
+import { COLUMN_PREFIX, columnsOf, dropTarget, type PendingColumn } from '@/components/board/drop-target'
 import { formatDuration } from '@/components/board/format-duration'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { QuickNote } from '@/components/board/quick-note'
@@ -49,11 +50,7 @@ import type { FocusRouteState } from '@/lib/desktop/focus-window'
 import type { Board, TaskCardView, TaskColumn } from '@/types'
 
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
-type PendingColumn = Exclude<TaskColumn, 'done'>
-
-const COLUMN_PREFIX = 'column:'
-
-/** Every card's column, read from the board. */
+/** The drag overlay's card is only a picture of the dragged one, so its actions do nothing. */
 const noop = () => {}
 
 /** The card or column under the pointer (cards first); the keyboard has no pointer, so the closest corners. */
@@ -68,15 +65,6 @@ function findCard(board: Board, column: TaskColumn, id: string): { task: TaskCar
   const tasks = column === 'done' ? board.columns.done.days.flatMap((day) => day.tasks) : board.columns[column].tasks
   const index = tasks.findIndex((task) => task.id === id)
   return index < 0 ? null : { task: tasks[index], column, number: index + 1 }
-}
-
-function columnsOf(board: Board): Map<string, TaskColumn> {
-  const map = new Map<string, TaskColumn>()
-  for (const column of ['backlog', 'this_week', 'today'] as const) {
-    for (const task of board.columns[column].tasks) map.set(task.id, column)
-  }
-  for (const day of board.columns.done.days) for (const task of day.tasks) map.set(task.id, 'done')
-  return map
 }
 
 /** The board with `taskId` moved into a pending column, right before `beforeId` (or last). */
@@ -277,18 +265,14 @@ export default function ListBoardPage() {
     }
     // Moved into this column during the drag, and not dragged to another card since: it is where the preview put it.
     const placed = current !== origin && (overId === activeId || overId.startsWith(COLUMN_PREFIX) || overId === inserted)
-    const ids = shown.columns[to].tasks.map((task) => task.id)
     let before: string | null
     if (placed) {
+      const ids = shown.columns[to].tasks.map((task) => task.id)
       before = ids[ids.indexOf(activeId) + 1] ?? null
-    } else if (overId.startsWith(COLUMN_PREFIX)) {
-      before = null
-    } else if (current === to) {
-      if (activeId === overId) return
-      const order = arrayMove(ids, ids.indexOf(activeId), ids.indexOf(overId))
-      before = order[order.indexOf(activeId) + 1] ?? null
     } else {
-      before = overId
+      const target = dropTarget(shown, activeId, overId)
+      if (!target || target.column === 'done') return
+      before = target.before
     }
     queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeTask(previous, activeId, to, before))
     move(activeId, to, before)

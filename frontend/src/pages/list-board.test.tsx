@@ -312,6 +312,71 @@ describe('ListBoardPage', () => {
     expect(tasks.move).not.toHaveBeenCalled()
   })
 
+  it('moves a task dropped on the empty Backlog area to the end of Backlog', async () => {
+    // The server answers the move by keeping the task in Backlog.
+    let moved = false
+    vi.mocked(tasks.move).mockImplementation(async () => {
+      moved = true
+      return { ...fullTask, column: 'backlog' }
+    })
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      if (!moved) return board
+      board.columns.backlog.tasks = [card(TODAY_TASK, 'DEV-1725')]
+      board.columns.today.tasks = []
+      return board
+    })
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    // The first step lands on the Today column itself; This week and Backlog are empty,
+    // so the next two land on their column areas.
+    await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
+    await user.keyboard(' ')
+
+    await waitFor(() =>
+      expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'backlog', before_task_id: null }),
+    )
+    expect(tasks.move).toHaveBeenCalledTimes(1)
+    const backlog = document.querySelector<HTMLElement>('[data-column="backlog"]')!
+    expect(await within(backlog).findByText('DEV-1725')).toBeInTheDocument()
+  })
+
+  it('moves a task dropped on the empty This week area to the end of This week', async () => {
+    // The server answers the move by keeping the task in This week.
+    let moved = false
+    vi.mocked(tasks.move).mockImplementation(async () => {
+      moved = true
+      return { ...fullTask, column: 'this_week' }
+    })
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      if (!moved) return board
+      board.columns.this_week.tasks = [card(TODAY_TASK, 'DEV-1725')]
+      board.columns.today.tasks = []
+      return board
+    })
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    // The first step lands on the Today column itself; This week is empty, so the next lands on its area.
+    await user.keyboard('{ArrowLeft}{ArrowLeft}')
+    await user.keyboard(' ')
+
+    await waitFor(() =>
+      expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'this_week', before_task_id: null }),
+    )
+    expect(tasks.move).toHaveBeenCalledTimes(1)
+    const thisWeek = document.querySelector<HTMLElement>('[data-column="this_week"]')!
+    expect(await within(thisWeek).findByText('DEV-1725')).toBeInTheDocument()
+  })
+
   it('moves a task dragged out of Done back to a pending column', async () => {
     // The server answers the move by reopening the task in Today.
     let reopened = false
