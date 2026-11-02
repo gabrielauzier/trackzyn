@@ -41,8 +41,19 @@ export async function buildApp(
   app.setSerializerCompiler(serializerCompiler)
 
   await app.register(swagger, {
-    openapi: { info: { title: ctx.config.appName, version: '0.1.0' } },
-    transform: jsonSchemaTransform,
+    openapi: {
+      info: { title: ctx.config.appName, version: '0.1.0' },
+      components: { securitySchemes: { personalAccessToken: { type: 'http', scheme: 'bearer', bearerFormat: 'tkz_...' } } },
+    },
+    transform: (input) => {
+      const transformed = jsonSchemaTransform(input)
+      const scope = input.route.config?.tokenScope
+      if (!scope) return transformed
+      return {
+        ...transformed,
+        schema: { ...transformed.schema, security: [{ personalAccessToken: [] }], description: `Requires the token scope \`${scope}\`.` },
+      }
+    },
   })
   await app.register(formbody)
   // One byte over the limit marks the file as truncated, which the upload route reports as too large.

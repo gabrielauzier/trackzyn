@@ -319,7 +319,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | API-08 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | API-09 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | API-10 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-11 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| API-11 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-01 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | IDEM-02 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | IDEM-03 | P1: Criar tarefas pela API REST | Tasks | In Tasks |

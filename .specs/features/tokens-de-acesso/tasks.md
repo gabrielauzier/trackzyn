@@ -394,10 +394,12 @@ T28
 
 **Done when**:
 
-- [ ] `/api/openapi.json` traz o esquema `personalAccessToken`
-- [ ] Cada rota da tabela traz o escopo na descrição e `security`; as demais não trazem
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] `/api/openapi.json` traz o esquema `personalAccessToken`
+- [x] Cada rota da tabela traz o escopo na descrição e `security`; as demais não trazem
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
