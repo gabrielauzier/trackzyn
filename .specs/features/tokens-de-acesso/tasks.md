@@ -134,13 +134,15 @@ T28
 
 **Done when**:
 
-- [ ] O valor casa com `^tkz_[A-Za-z0-9_-]{43}$`, e dois valores gerados nunca coincidem
-- [ ] A linha guarda o SHA-256 e os 4 últimos caracteres, nunca o valor
-- [ ] `authenticate` devolve nulo para token inexistente, malformado, revogado, expirado e de dono inativo
-- [ ] `expires_at` igual ao instante atual conta como expirado (AUTH-10)
-- [ ] `tokenStatus` prioriza `revoked` sobre `expired`
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] O valor casa com `^tkz_[A-Za-z0-9_-]{43}$`, e dois valores gerados nunca coincidem
+- [x] A linha guarda o SHA-256 e os 4 últimos caracteres, nunca o valor
+- [x] `authenticate` devolve nulo para token inexistente, malformado, revogado, expirado e de dono inativo
+- [x] `expires_at` igual ao instante atual conta como expirado (AUTH-10)
+- [x] `tokenStatus` prioriza `revoked` sobre `expired`
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
