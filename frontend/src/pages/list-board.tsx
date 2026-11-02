@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { ChevronDown, ChevronLeft } from 'lucide-react'
 import {
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   closestCorners,
@@ -13,6 +14,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
@@ -23,7 +25,7 @@ import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
-import { COLUMN_PREFIX, dropTarget, type PendingColumn } from '@/components/board/drop-target'
+import { COLUMN_PREFIX, columnsOf, dropTarget, type PendingColumn } from '@/components/board/drop-target'
 import { formatDuration } from '@/components/board/format-duration'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { TaskCard } from '@/components/board/task-card'
@@ -42,6 +44,15 @@ import type { FocusRouteState } from '@/lib/desktop/focus-window'
 import type { Board, TaskCardView, TaskColumn } from '@/types'
 
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
+/** The drag overlay's card is only a picture of the dragged one, so its actions do nothing. */
+const noop = () => {}
+
+function findCard(board: Board, column: TaskColumn, id: string): { task: TaskCardView; column: TaskColumn; number: number } | null {
+  const tasks = column === 'done' ? board.columns.done.days.flatMap((day) => day.tasks) : board.columns[column].tasks
+  const index = tasks.findIndex((task) => task.id === id)
+  return index < 0 ? null : { task: tasks[index], column, number: index + 1 }
+}
+
 /** The board with `taskId` moved into a pending column, right before `beforeId` (or last). */
 function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: string | null): Board {
   let moved: TaskCardView | undefined
@@ -76,6 +87,7 @@ export default function ListBoardPage() {
   const isMobile = useIsMobile()
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
   const [tab, setTab] = useState<TaskColumn>('today')
+  const [draggedId, setDraggedId] = useState<string | null>(null)
   const boardKey = ['lists', listId, 'board'] as const
   const focus = useFocus(listId)
   const { playComplete } = useFocusSounds(focus.state, focus.display)
@@ -130,7 +142,10 @@ export default function ListBoardPage() {
     }
   }
 
+  const onDragStart = ({ active }: DragStartEvent) => setDraggedId(String(active.id))
+
   const onDragEnd = ({ active, over }: DragEndEvent) => {
+    setDraggedId(null)
     if (!over || !canWrite) return
     const activeId = String(active.id)
     const target = dropTarget(board, activeId, String(over.id))
@@ -143,6 +158,9 @@ export default function ListBoardPage() {
     queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeTask(previous, activeId, to, before))
     move(activeId, to, before)
   }
+
+  const draggedColumn = draggedId ? columnsOf(board).get(draggedId) : undefined
+  const draggedCard = draggedId && draggedColumn ? findCard(board, draggedColumn, draggedId) : null
 
   const renderTask = (column: TaskColumn) => (task: TaskCardView, index: number) => (
     <SortableTask key={task.id} id={task.id} canWrite={canWrite}>
@@ -218,7 +236,11 @@ export default function ListBoardPage() {
         </p>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={closestCorners}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => setDraggedId(null)}
+      >
         {isMobile ? (
           <Tabs value={tab} onValueChange={(value) => setTab(value as TaskColumn)}>
             <TabsList className="w-full">
@@ -243,6 +265,15 @@ export default function ListBoardPage() {
             ))}
           </div>
         )}
+        {/* The card follows the pointer in an overlay: in place, it snapped back as soon as the pointer
+            was over another column's SortableContext, and looked like it had vanished. */}
+        <DragOverlay>
+          {draggedCard && (
+            <div data-task-id={draggedCard.task.id}>
+              <TaskCard task={draggedCard.task} column={draggedCard.column} number={draggedCard.number} canWrite={canWrite} onOpen={noop} onComplete={noop} />
+            </div>
+          )}
+        </DragOverlay>
       </DndContext>
 
       <TaskDialog taskId={openTaskId} canWrite={canWrite} onClose={() => setOpenTaskId(null)} />
@@ -280,7 +311,7 @@ function SortableTask({ id, canWrite, children }: { id: string; canWrite: boolea
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         transition,
       }}
-      className={isDragging ? 'relative z-10 opacity-80' : undefined}
+      className={isDragging ? 'opacity-40' : undefined}
       {...dragProps}
     >
       {children}
