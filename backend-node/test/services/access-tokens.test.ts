@@ -1,10 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto'
 import type { PGlite } from '@electric-sql/pglite'
 import { eq } from 'drizzle-orm'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { personalAccessTokens, users, workspaces } from '../../src/db/schema.ts'
-import { authenticate, displayHint, generateToken, tokenStatus } from '../../src/services/access-tokens.ts'
+import { type TokenScope, type User, personalAccessTokens, users, workspaceMembers, workspaces } from '../../src/db/schema.ts'
+import { authenticate, createToken, displayHint, generateToken, tokenStatus } from '../../src/services/access-tokens.ts'
 import { migratedDb } from '../support/db.ts'
 
 const NOW = new Date('2026-11-02T12:00:00.000Z')
@@ -138,5 +138,144 @@ describe('authenticate', () => {
   it('AUTH-05 returns null when the owner is inactive', async () => {
     const token = await addToken({ userId: await addUser(false) })
     expect(await authenticate(db, token.plaintext, NOW)).toBeNull()
+  })
+})
+
+describe('createToken', () => {
+  const DAY_MS = 86_400_000
+  let user: User
+  let workspaceId: string
+
+  async function userRow(): Promise<User> {
+    const id = await addUser()
+    const [row] = await db.select().from(users).where(eq(users.id, id))
+    return row as User
+  }
+
+  async function join(id: string, role: 'owner' | 'editor' | 'viewer') {
+    await db.insert(workspaceMembers).values({ id: randomUUID(), workspaceId, userId: id, role, joinedAt: NOW })
+  }
+
+  const create = (who: User, overrides: { name?: string; scopes?: TokenScope[]; expiresInDays?: number; workspaceId?: string } = {}, now = NOW) =>
+    createToken(
+      db,
+      who,
+      { name: 'n8n', workspaceId, scopes: ['lists:read', 'tasks:create'], expiresInDays: 90, ...overrides },
+      now,
+    )
+
+  /** `count` tokens of `user` straight in the table, each with its own name. */
+  async function seedTokens(count: number, state: { expiresAt?: Date; revokedAt?: Date } = {}) {
+    await db.insert(personalAccessTokens).values(
+      Array.from({ length: count }, () => {
+        const { tokenHash, lastFour } = generateToken()
+        return {
+          id: randomUUID(),
+          userId: user.id,
+          workspaceId,
+          name: `seed-${randomUUID()}`,
+          tokenHash,
+          lastFour,
+          scopes: ['lists:read' as const],
+          createdAt: NOW,
+          expiresAt: state.expiresAt ?? LATER,
+          revokedAt: state.revokedAt ?? null,
+        }
+      }),
+    )
+  }
+
+  const stored = async (who: User) => db.select().from(personalAccessTokens).where(eq(personalAccessTokens.userId, who.id))
+
+  beforeEach(async () => {
+    user = await userRow()
+    workspaceId = await addWorkspace()
+    await join(user.id, 'owner')
+  })
+
+  it('TOKEN-03 returns the row and the value, and the value authenticates as the user', async () => {
+    const { row, plaintext } = await create(user, { name: 'CI' })
+    expect(row).toMatchObject({ userId: user.id, workspaceId, name: 'CI', scopes: ['lists:read', 'tasks:create'], createdAt: NOW, lastUsedAt: null, revokedAt: null })
+    expect(plaintext).toMatch(/^tkz_[A-Za-z0-9_-]{43}$/)
+    expect((await authenticate(db, plaintext, NOW))?.user.id).toBe(user.id)
+  })
+
+  it.each([30, 90, 365])('TOKEN-03 expires %i days after creation', async (expiresInDays) => {
+    const { row } = await create(user, { expiresInDays })
+    expect(row.expiresAt).toEqual(new Date(NOW.getTime() + expiresInDays * DAY_MS))
+  })
+
+  it('TOKEN-05 stores the SHA-256 and the last four characters, never the value', async () => {
+    const { plaintext } = await create(user)
+    const [row] = await stored(user)
+    expect(row?.tokenHash).toBe(createHash('sha256').update(plaintext).digest('hex'))
+    expect(row?.lastFour).toBe(plaintext.slice(-4))
+    expect(JSON.stringify(row)).not.toContain(plaintext)
+  })
+
+  it('TOKEN-08 refuses the name of an active token of the same user', async () => {
+    await create(user, { name: 'CI' })
+    await expect(create(user, { name: 'CI' })).rejects.toMatchObject({ statusCode: 409, detail: 'Token name already in use' })
+    expect(await stored(user)).toHaveLength(1)
+  })
+
+  it('TOKEN-08 accepts the name of a revoked or an expired token, and of another user', async () => {
+    const revoked = await create(user, { name: 'Revoked' })
+    await db.update(personalAccessTokens).set({ revokedAt: NOW }).where(eq(personalAccessTokens.id, revoked.row.id))
+    expect((await create(user, { name: 'Revoked' })).row.name).toBe('Revoked')
+
+    const expired = await create(user, { name: 'Expired' })
+    await db.update(personalAccessTokens).set({ expiresAt: NOW }).where(eq(personalAccessTokens.id, expired.row.id))
+    expect((await create(user, { name: 'Expired' })).row.name).toBe('Expired')
+
+    const other = await userRow()
+    await join(other.id, 'editor')
+    await create(user, { name: 'Shared' })
+    expect((await create(other, { name: 'Shared' })).row.name).toBe('Shared')
+  })
+
+  it('TOKEN-09 accepts the 50th active token and refuses the 51st', async () => {
+    await seedTokens(49)
+    await create(user, { name: 'fiftieth' })
+    await expect(create(user, { name: 'fifty-first' })).rejects.toMatchObject({ statusCode: 409, detail: 'Token limit reached' })
+    expect(await stored(user)).toHaveLength(50)
+  })
+
+  it('TOKEN-09 does not count revoked or expired tokens', async () => {
+    await seedTokens(49)
+    await seedTokens(1, { revokedAt: NOW })
+    await seedTokens(1, { expiresAt: NOW })
+    expect((await create(user, { name: 'fiftieth' })).row.name).toBe('fiftieth')
+  })
+
+  it('TOKEN-10 answers 404 for a workspace the user does not belong to, or that does not exist', async () => {
+    const stranger = await userRow()
+    await expect(create(stranger)).rejects.toMatchObject({ statusCode: 404, detail: 'Workspace not found' })
+    await expect(create(user, { workspaceId: randomUUID() })).rejects.toMatchObject({ statusCode: 404, detail: 'Workspace not found' })
+    expect(await stored(stranger)).toEqual([])
+  })
+
+  it('accepts the manager of the workspace, who has no membership row', async () => {
+    const manager = await userRow()
+    await db.update(workspaces).set({ managedByUserId: manager.id }).where(eq(workspaces.id, workspaceId))
+    expect((await create(manager, { scopes: ['tasks:delete'] })).row.workspaceId).toBe(workspaceId)
+  })
+
+  it.each<TokenScope>(['tasks:create', 'tasks:write', 'tasks:delete'])('TOKEN-11 refuses %s to a viewer', async (scope) => {
+    const viewer = await userRow()
+    await join(viewer.id, 'viewer')
+    await expect(create(viewer, { scopes: ['lists:read', scope] })).rejects.toMatchObject({ statusCode: 403, detail: 'Read-only role' })
+    expect(await stored(viewer)).toEqual([])
+  })
+
+  it('TOKEN-11 accepts read scopes from a viewer and every scope from an editor', async () => {
+    const viewer = await userRow()
+    await join(viewer.id, 'viewer')
+    expect((await create(viewer, { scopes: ['lists:read', 'tasks:read'] })).row.scopes).toEqual(['lists:read', 'tasks:read'])
+
+    const editor = await userRow()
+    await join(editor.id, 'editor')
+    const all: TokenScope[] = ['lists:read', 'tasks:read', 'tasks:create', 'tasks:write', 'tasks:delete']
+    expect((await create(editor, { scopes: all })).row.scopes).toEqual(all)
   })
 })

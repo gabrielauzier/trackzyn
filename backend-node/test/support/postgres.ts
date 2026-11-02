@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { sql } from 'drizzle-orm'
 import pg from 'pg'
 import { type Database, connectPostgres } from '../../src/db/client.ts'
 import { applyMigrations } from '../../src/db/migrate.ts'
@@ -19,6 +20,9 @@ export async function migratedPostgres(): Promise<{ db: Database; close(): Promi
   url.pathname = `/${name}`
   const handle = connectPostgres(url.toString())
   await applyMigrations(handle.db)
+  // Opens the whole pool (10 connections): otherwise the first caller of a race finishes while the
+  // others are still connecting, and a missing lock goes unnoticed.
+  await Promise.all(Array.from({ length: 10 }, () => handle.db.execute(sql`select pg_sleep(0.05)`)))
   return {
     db: handle.db,
     close: async () => {

@@ -166,13 +166,15 @@ T28
 
 **Done when**:
 
-- [ ] Nome repetido entre ativos dá 409 `Token name already in use`; repetir o nome de um revogado ou expirado é aceito
-- [ ] O 51º token ativo dá 409 `Token limit reached`
-- [ ] Workspace de que o usuário não é membro dá 404 `Workspace not found`
-- [ ] Um `viewer` que pede escopo de escrita recebe 403 `Read-only role`; só leitura é aceito
-- [ ] Criações simultâneas nunca passam de 50 ativos nem repetem nome (TOKEN-15, TOKEN-16), provado com `Promise.all` no Postgres de T29
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Nome repetido entre ativos dá 409 `Token name already in use`; repetir o nome de um revogado ou expirado é aceito
+- [x] O 51º token ativo dá 409 `Token limit reached`
+- [x] Workspace de que o usuário não é membro dá 404 `Workspace not found`
+- [x] Um `viewer` que pede escopo de escrita recebe 403 `Read-only role`; só leitura é aceito
+- [x] Criações simultâneas nunca passam de 50 ativos nem repetem nome (TOKEN-15, TOKEN-16), provado com `Promise.all` no Postgres de T29
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full, com `TEST_POSTGRES_URL` definida
