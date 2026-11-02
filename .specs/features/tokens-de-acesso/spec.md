@@ -268,7 +268,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | TOKEN-04 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-05 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-06 | P1: Gerar um token | Tasks | In Tasks |
-| TOKEN-07 | P1: Gerar um token | Tasks | In Tasks |
+| TOKEN-07 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-08 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-09 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-10 | P1: Gerar um token | Tasks | Implementing |
@@ -281,7 +281,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | MANAGE-01 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-02 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-03 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-04 | P1: Ver e revogar tokens | Tasks | In Tasks |
+| MANAGE-04 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-05 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-06 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-07 | P1: Ver e revogar tokens | Tasks | In Tasks |
@@ -294,7 +294,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | AUTH-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-07 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-08 | Edge Cases | Tasks | Implementing |
-| AUTH-09 | Edge Cases | Tasks | In Tasks |
+| AUTH-09 | Edge Cases | Tasks | Implementing |
 | AUTH-10 | Edge Cases | Tasks | Implementing |
 | SCOPE-01 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-02 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |

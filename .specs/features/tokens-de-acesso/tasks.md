@@ -229,13 +229,15 @@ T28
 
 **Done when**:
 
-- [ ] `POST` responde 201 com id, token completo e `expires_at`, para 30, 90 e 365 dias
-- [ ] Nome vazio ou com 101 caracteres, `scopes` vazio, escopo desconhecido e `expires_in_days` igual a 60 dão 422 no formato atual
-- [ ] `GET` nunca devolve o valor completo
-- [ ] `DELETE` responde 204
-- [ ] As três rotas respondem 401 sem sessão e com JWT expirado
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do backend só aumenta
+- [x] `POST` responde 201 com id, token completo e `expires_at`, para 30, 90 e 365 dias
+- [x] Nome vazio ou com 101 caracteres, `scopes` vazio, escopo desconhecido e `expires_in_days` igual a 60 dão 422 no formato atual
+- [x] `GET` nunca devolve o valor completo
+- [x] `DELETE` responde 204
+- [x] As três rotas respondem 401 sem sessão e com JWT expirado
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: build

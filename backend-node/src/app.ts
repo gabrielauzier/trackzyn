@@ -7,6 +7,7 @@ import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fast
 import type { AppContext } from './context.ts'
 import { decorateRequest } from './plugins/auth.ts'
 import { registerErrorHandling } from './plugins/errors.ts'
+import { accessTokenRoutes } from './routes/access-tokens.ts'
 import { adminRoutes } from './routes/admin.ts'
 import { authRoutes } from './routes/auth.ts'
 import { boardRoutes } from './routes/board.ts'
@@ -68,6 +69,7 @@ export async function buildApp(
   await app.register(boardRoutes(ctx))
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
+  await app.register(accessTokenRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
 
