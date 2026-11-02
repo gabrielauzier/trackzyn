@@ -198,12 +198,14 @@ T28
 
 **Done when**:
 
-- [ ] A lista traz só os tokens do usuário, com todos os campos de MANAGE-01 e nenhum com hash ou valor
-- [ ] Revogar de novo não altera `revoked_at`; revogar um expirado preenche `revoked_at`
-- [ ] Revogar token de outro usuário dá 404
-- [ ] Um token com 90 dias do fim é apagado na próxima escrita; com 89 dias, fica
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] A lista traz só os tokens do usuário, com todos os campos de MANAGE-01 e nenhum com hash ou valor
+- [x] Revogar de novo não altera `revoked_at`; revogar um expirado preenche `revoked_at`
+- [x] Revogar token de outro usuário dá 404
+- [x] Um token com 90 dias do fim é apagado na próxima escrita; com 89 dias, fica
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

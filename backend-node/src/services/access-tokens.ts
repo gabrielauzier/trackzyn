@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { and, eq, gt, isNull } from 'drizzle-orm'
+import { and, desc, eq, gt, isNull, lte, or } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type AccessToken, type TokenScope, type User, personalAccessTokens, users } from '../db/schema.ts'
+import { type AccessToken, type TokenScope, type User, personalAccessTokens, users, workspaces } from '../db/schema.ts'
 import { HttpError, forbidden } from '../http/http-error.ts'
 import { getMembership, isWorkspaceManager } from './workspaces.ts'
 
@@ -12,6 +12,7 @@ const TOKEN_PATTERN = /^tkz_[A-Za-z0-9_-]{43}$/
 const MAX_ACTIVE_TOKENS = 50
 const WRITE_SCOPES: readonly TokenScope[] = ['tasks:create', 'tasks:write', 'tasks:delete']
 const DAY_MS = 86_400_000
+const PURGE_AFTER_DAYS = 90
 
 export type TokenStatus = 'active' | 'expired' | 'revoked'
 
@@ -21,6 +22,21 @@ export interface TokenPrincipal {
   user: User
   workspaceId: string
   scopes: TokenScope[]
+}
+
+/** What the owner sees of a token: never its value or its hash. */
+export interface AccessTokenView {
+  id: string
+  name: string
+  workspaceId: string
+  workspaceName: string
+  scopes: TokenScope[]
+  displayHint: string
+  createdAt: Date
+  expiresAt: Date
+  lastUsedAt: Date | null
+  revokedAt: Date | null
+  status: TokenStatus
 }
 
 export function hashToken(plaintext: string): string {
@@ -78,6 +94,7 @@ export async function createToken(
 
   return db.transaction(async (tx) => {
     await tx.select({ id: users.id }).from(users).where(eq(users.id, user.id)).for('update')
+    await purgeEnded(tx as Database, user.id, now)
     const active = await tx
       .select({ name: personalAccessTokens.name })
       .from(personalAccessTokens)
@@ -102,4 +119,56 @@ export async function createToken(
     await tx.insert(personalAccessTokens).values(row)
     return { row, plaintext }
   })
+}
+
+/** The tokens of `userId`, newest first. */
+export async function listTokens(db: Database, userId: string, now: Date = new Date()): Promise<AccessTokenView[]> {
+  const found = await db
+    .select({ token: personalAccessTokens, workspaceName: workspaces.name })
+    .from(personalAccessTokens)
+    .innerJoin(workspaces, eq(workspaces.id, personalAccessTokens.workspaceId))
+    .where(eq(personalAccessTokens.userId, userId))
+    .orderBy(desc(personalAccessTokens.createdAt), personalAccessTokens.id)
+  return found.map(({ token, workspaceName }) => ({
+    id: token.id,
+    name: token.name,
+    workspaceId: token.workspaceId,
+    workspaceName,
+    scopes: token.scopes,
+    displayHint: displayHint(token),
+    createdAt: token.createdAt,
+    expiresAt: token.expiresAt,
+    lastUsedAt: token.lastUsedAt,
+    revokedAt: token.revokedAt,
+    status: tokenStatus(token, now),
+  }))
+}
+
+/** Marks the token as revoked and keeps the row (the task badge still shows it); a second call changes nothing. */
+export async function revokeToken(db: Database, userId: string, tokenId: string, now: Date = new Date()): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [token] = await tx
+      .select({ id: personalAccessTokens.id })
+      .from(personalAccessTokens)
+      .where(and(eq(personalAccessTokens.id, tokenId), eq(personalAccessTokens.userId, userId)))
+    if (!token) throw new HttpError(404, 'Token not found')
+    await tx
+      .update(personalAccessTokens)
+      .set({ revokedAt: now })
+      .where(and(eq(personalAccessTokens.id, token.id), isNull(personalAccessTokens.revokedAt)))
+    await purgeEnded(tx as Database, userId, now)
+  })
+}
+
+/** Deletes the tokens of `userId` that ended 90 days ago or more; their tasks stay, without the origin (MANAGE-08). */
+export async function purgeEnded(tx: Database, userId: string, now: Date): Promise<void> {
+  const cutoff = new Date(now.getTime() - PURGE_AFTER_DAYS * DAY_MS)
+  await tx
+    .delete(personalAccessTokens)
+    .where(
+      and(
+        eq(personalAccessTokens.userId, userId),
+        or(lte(personalAccessTokens.revokedAt, cutoff), lte(personalAccessTokens.expiresAt, cutoff)),
+      ),
+    )
 }

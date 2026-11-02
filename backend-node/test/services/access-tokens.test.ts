@@ -3,12 +3,14 @@ import type { PGlite } from '@electric-sql/pglite'
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { type TokenScope, type User, personalAccessTokens, users, workspaceMembers, workspaces } from '../../src/db/schema.ts'
-import { authenticate, createToken, displayHint, generateToken, tokenStatus } from '../../src/services/access-tokens.ts'
+import { type TokenScope, type User, lists, personalAccessTokens, tasks, users, workspaceMembers, workspaces } from '../../src/db/schema.ts'
+import { authenticate, createToken, displayHint, generateToken, listTokens, revokeToken, tokenStatus } from '../../src/services/access-tokens.ts'
 import { migratedDb } from '../support/db.ts'
 
 const NOW = new Date('2026-11-02T12:00:00.000Z')
 const LATER = new Date('2027-01-01T00:00:00.000Z')
+const DAY_MS = 86_400_000
+const daysAgo = (days: number) => new Date(NOW.getTime() - days * DAY_MS)
 
 let db: Database
 let client: PGlite
@@ -142,7 +144,6 @@ describe('authenticate', () => {
 })
 
 describe('createToken', () => {
-  const DAY_MS = 86_400_000
   let user: User
   let workspaceId: string
 
@@ -277,5 +278,122 @@ describe('createToken', () => {
     await join(editor.id, 'editor')
     const all: TokenScope[] = ['lists:read', 'tasks:read', 'tasks:create', 'tasks:write', 'tasks:delete']
     expect((await create(editor, { scopes: all })).row.scopes).toEqual(all)
+  })
+
+  it('MANAGE-08 deletes the tokens that ended 90 days ago on the next creation, and keeps the ones at 89 days', async () => {
+    await seedTokens(1, { revokedAt: daysAgo(90) })
+    await seedTokens(1, { expiresAt: daysAgo(90) })
+    await seedTokens(1, { revokedAt: daysAgo(89) })
+    await seedTokens(1, { expiresAt: daysAgo(89) })
+
+    await create(user)
+
+    const left = await stored(user)
+    expect(left).toHaveLength(3)
+    expect(left.filter((token) => token.name === 'n8n')).toHaveLength(1)
+    expect(left.filter((token) => token.revokedAt?.getTime() === daysAgo(89).getTime())).toHaveLength(1)
+    expect(left.filter((token) => token.expiresAt.getTime() === daysAgo(89).getTime())).toHaveLength(1)
+  })
+})
+
+describe('listTokens', () => {
+  it('MANAGE-01 returns every field of the token, and no hash or value', async () => {
+    const token = await addToken()
+    await db.update(personalAccessTokens).set({ lastUsedAt: NOW }).where(eq(personalAccessTokens.id, token.id))
+
+    expect(await listTokens(db, token.userId, NOW)).toEqual([
+      {
+        id: token.id,
+        name: 'n8n',
+        workspaceId: token.workspaceId,
+        workspaceName: 'Shared',
+        scopes: ['lists:read', 'tasks:create'],
+        displayHint: `tkz_…${token.plaintext.slice(-4)}`,
+        createdAt: NOW,
+        expiresAt: LATER,
+        lastUsedAt: NOW,
+        revokedAt: null,
+        status: 'active',
+      },
+    ])
+  })
+
+  it('MANAGE-01 returns only the tokens of the user', async () => {
+    const mine = await addToken()
+    await addToken()
+    expect((await listTokens(db, mine.userId, NOW)).map((token) => token.id)).toEqual([mine.id])
+  })
+
+  it('MANAGE-03 computes the status of each token', async () => {
+    const userId = await addUser()
+    const active = await addToken({ userId })
+    const expired = await addToken({ userId, expiresAt: NOW })
+    const revoked = await addToken({ userId, revokedAt: NOW })
+    const status = Object.fromEntries((await listTokens(db, userId, NOW)).map((token) => [token.id, token.status]))
+    expect(status).toEqual({ [active.id]: 'active', [expired.id]: 'expired', [revoked.id]: 'revoked' })
+  })
+})
+
+describe('revokeToken', () => {
+  const readRow = async (id: string) => (await db.select().from(personalAccessTokens).where(eq(personalAccessTokens.id, id)))[0]
+
+  it('MANAGE-04 marks the token as revoked and keeps the row', async () => {
+    const token = await addToken()
+    await revokeToken(db, token.userId, token.id, NOW)
+    expect((await readRow(token.id))?.revokedAt).toEqual(NOW)
+  })
+
+  it('MANAGE-05 does not change revoked_at when revoked again', async () => {
+    const token = await addToken()
+    await revokeToken(db, token.userId, token.id, NOW)
+    await revokeToken(db, token.userId, token.id, new Date(NOW.getTime() + 1000))
+    expect((await readRow(token.id))?.revokedAt).toEqual(NOW)
+  })
+
+  it('MANAGE-05 fills revoked_at of an expired token', async () => {
+    const token = await addToken({ expiresAt: daysAgo(1) })
+    await revokeToken(db, token.userId, token.id, NOW)
+    expect((await readRow(token.id))?.revokedAt).toEqual(NOW)
+  })
+
+  it('MANAGE-06 answers 404 for the token of another user and leaves it alone', async () => {
+    const token = await addToken()
+    await expect(revokeToken(db, await addUser(), token.id, NOW)).rejects.toMatchObject({ statusCode: 404 })
+    expect((await readRow(token.id))?.revokedAt).toBeNull()
+  })
+
+  it('MANAGE-08 deletes the tokens of the user that ended 90 days ago, and keeps the ones at 89 days and the ones of others', async () => {
+    const userId = await addUser()
+    const target = await addToken({ userId })
+    const revoked90 = await addToken({ userId, revokedAt: daysAgo(90) })
+    const expired90 = await addToken({ userId, expiresAt: daysAgo(90) })
+    const revoked89 = await addToken({ userId, revokedAt: daysAgo(89) })
+    const expired89 = await addToken({ userId, expiresAt: daysAgo(89) })
+    const others = await addToken({ revokedAt: daysAgo(90) })
+
+    await revokeToken(db, userId, target.id, NOW)
+
+    expect(await readRow(revoked90.id)).toBeUndefined()
+    expect(await readRow(expired90.id)).toBeUndefined()
+    expect(await readRow(revoked89.id)).toBeDefined()
+    expect(await readRow(expired89.id)).toBeDefined()
+    expect(await readRow(target.id)).toBeDefined()
+    expect(await readRow(others.id)).toBeDefined()
+  })
+
+  it('MANAGE-08 keeps the tasks of a deleted token, without the origin', async () => {
+    const userId = await addUser()
+    const ended = await addToken({ userId, revokedAt: daysAgo(90) })
+    const target = await addToken({ userId })
+    const listId = randomUUID()
+    const taskId = randomUUID()
+    await db.insert(lists).values({ id: listId, workspaceId: ended.workspaceId, name: 'Work', color: 1, position: 0, createdAt: NOW })
+    await db.insert(tasks).values({ id: taskId, listId, title: 'From a token', column: 'backlog', position: 0, createdAt: NOW, createdViaTokenId: ended.id })
+
+    await revokeToken(db, userId, target.id, NOW)
+
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId))
+    expect(task?.title).toBe('From a token')
+    expect(task?.createdViaTokenId).toBeNull()
   })
 })

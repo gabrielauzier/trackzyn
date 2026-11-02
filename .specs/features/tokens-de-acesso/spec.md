@@ -278,14 +278,14 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | TOKEN-14 | P1: Gerar um token | Tasks | In Tasks |
 | TOKEN-15 | Edge Cases | Tasks | Implementing |
 | TOKEN-16 | Edge Cases | Tasks | Implementing |
-| MANAGE-01 | P1: Ver e revogar tokens | Tasks | In Tasks |
+| MANAGE-01 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-02 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-03 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-04 | P1: Ver e revogar tokens | Tasks | In Tasks |
-| MANAGE-05 | P1: Ver e revogar tokens | Tasks | In Tasks |
-| MANAGE-06 | P1: Ver e revogar tokens | Tasks | In Tasks |
+| MANAGE-05 | P1: Ver e revogar tokens | Tasks | Implementing |
+| MANAGE-06 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-07 | P1: Ver e revogar tokens | Tasks | In Tasks |
-| MANAGE-08 | P1: Ver e revogar tokens | Tasks | In Tasks |
+| MANAGE-08 | P1: Ver e revogar tokens | Tasks | Implementing |
 | AUTH-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-02 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-03 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
