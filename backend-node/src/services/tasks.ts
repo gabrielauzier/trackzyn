@@ -37,31 +37,50 @@ export async function createTask(
   db: Database,
   workspaceId: string,
   /** `userId` is who creates the task: a task created in done counts as completed by them (AD-006). */
-  input: { listId: string; title: string; estimateMinutes: number | null; column: TaskColumn; userId: string },
+  input: {
+    listId: string
+    title: string
+    estimateMinutes: number | null
+    column: TaskColumn
+    userId: string
+    id?: string
+    notes?: string
+    /** Titles, in the order the subtasks must keep. */
+    subtasks?: string[]
+    createdViaTokenId?: string
+    /** Answers 409 for an archived list. An automation cannot see that the list left the screen (API-09). */
+    rejectArchived?: boolean
+  },
   now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const list = await getList(db, input.listId, workspaceId)
   return db.transaction(async (tx) => {
     await lockList(tx as Database, list.id)
+    // Read under the lock: the list may have been archived since `getList`.
+    if (input.rejectArchived && (await getList(tx as Database, list.id, workspaceId)).isArchived) {
+      throw new HttpError(409, 'List is archived')
+    }
     const [last] = await tx
       .select({ next: sql<number>`coalesce(max(${tasks.position}) + 1, 0)::int` })
       .from(tasks)
       .where(and(eq(tasks.listId, list.id), eq(tasks.column, input.column)))
     const task: Task = {
-      id: randomUUID(),
+      id: input.id ?? randomUUID(),
       listId: list.id,
       title: input.title,
-      notes: '',
+      notes: input.notes ?? '',
       estimateMinutes: input.estimateMinutes,
       column: input.column,
       position: last?.next ?? 0,
       completedAt: input.column === 'done' ? now : null,
       createdAt: now,
       completedByUserId: input.column === 'done' ? input.userId : null,
-      createdViaTokenId: null,
+      createdViaTokenId: input.createdViaTokenId ?? null,
     }
     await tx.insert(tasks).values(task)
-    return { ...task, subtasks: [] }
+    const created: Subtask[] = (input.subtasks ?? []).map((title, position) => ({ id: randomUUID(), taskId: task.id, title, done: false, position }))
+    if (created.length > 0) await tx.insert(subtasks).values(created)
+    return { ...task, subtasks: created }
   })
 }
 

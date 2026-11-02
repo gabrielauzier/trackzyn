@@ -3,7 +3,7 @@ import type { PGlite } from '@electric-sql/pglite'
 import { and, asc, eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { type TaskColumn, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
+import { type TaskColumn, lists, personalAccessTokens, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
 import { createList } from '../../src/services/lists.ts'
 import { createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../../src/services/tasks.ts'
@@ -216,5 +216,91 @@ describe('tasks service', () => {
     expect(await moveTaskToList(db, task.id, workspaceId, listId, NOW)).toMatchObject({ listId, position: 0 })
     await expect404(moveTaskToList(db, task.id, workspaceId, foreign, NOW), 'List not found')
     expect((await getTask(db, task.id, workspaceId)).listId).toBe(listId)
+  })
+})
+
+describe('createTask for a token', () => {
+  const full = (changes: Partial<Parameters<typeof createTask>[2]> = {}) =>
+    createTask(db, workspaceId, { listId, title: 'Full', estimateMinutes: null, column: 'backlog', userId, ...changes }, NOW)
+
+  const storedSubtasks = (taskId: string) =>
+    db.select({ title: subtasks.title, position: subtasks.position }).from(subtasks).where(eq(subtasks.taskId, taskId)).orderBy(asc(subtasks.position))
+
+  it('API-05 creates the subtasks with positions 0..n-1 in the order sent, not done', async () => {
+    const task = await full({ subtasks: ['zeta', 'alpha', 'mid'] })
+    expect(await storedSubtasks(task.id)).toEqual([
+      { title: 'zeta', position: 0 },
+      { title: 'alpha', position: 1 },
+      { title: 'mid', position: 2 },
+    ])
+    expect(task.subtasks.map((subtask) => [subtask.title, subtask.position, subtask.done])).toEqual([
+      ['zeta', 0, false],
+      ['alpha', 1, false],
+      ['mid', 2, false],
+    ])
+  })
+
+  it('API-04 stores the notes and API-03 the estimate', async () => {
+    const task = await full({ notes: 'remember this', estimateMinutes: 87 })
+    const [row] = await db.select().from(tasks).where(eq(tasks.id, task.id))
+    expect(row).toMatchObject({ notes: 'remember this', estimateMinutes: 87 })
+  })
+
+  it('uses the given id', async () => {
+    const id = randomUUID()
+    expect((await full({ id })).id).toBe(id)
+    expect(await db.select({ id: tasks.id }).from(tasks)).toEqual([{ id }])
+  })
+
+  it('ORIGIN-01 records the token that created the task', async () => {
+    const tokenId = randomUUID()
+    await db.insert(personalAccessTokens).values({
+      id: tokenId,
+      userId,
+      workspaceId,
+      name: 'n8n',
+      tokenHash: 'a'.repeat(64),
+      lastFour: 'abcd',
+      scopes: ['tasks:create'],
+      createdAt: NOW,
+      expiresAt: new Date('2027-01-01T00:00:00Z'),
+    })
+    const task = await full({ createdViaTokenId: tokenId })
+    const [row] = await db.select().from(tasks).where(eq(tasks.id, task.id))
+    expect(row?.createdViaTokenId).toBe(tokenId)
+  })
+
+  it('API-07 a subtask the column refuses leaves neither the task nor any subtask', async () => {
+    await expect(full({ title: 'Rolled back', subtasks: ['fits', 'x'.repeat(256), 'fits too'] })).rejects.toThrow()
+    expect(await db.select().from(tasks)).toEqual([])
+    expect(await db.select().from(subtasks)).toEqual([])
+    // The list stays usable: nothing is left locked or half written.
+    expect((await full({ title: 'Next' })).position).toBe(0)
+  })
+
+  it('API-09 refuses an archived list with rejectArchived and keeps creating without it', async () => {
+    await db.update(lists).set({ isArchived: true }).where(eq(lists.id, listId))
+    const error = await full({ rejectArchived: true }).then(
+      () => null,
+      (caught: unknown) => caught,
+    )
+    expect(error).toBeInstanceOf(HttpError)
+    expect(error).toMatchObject({ statusCode: 409, detail: 'List is archived' })
+    expect(await db.select().from(tasks)).toEqual([])
+
+    expect(await full()).toMatchObject({ listId, title: 'Full' })
+  })
+
+  it('API-10 creating in done records the completion for the owner of the token', async () => {
+    const task = await full({ column: 'done' })
+    const [row] = await db.select().from(tasks).where(eq(tasks.id, task.id))
+    expect(row).toMatchObject({ completedByUserId: userId, completedAt: NOW })
+  })
+
+  it('without the new fields the notes are empty and no subtask or origin is stored', async () => {
+    const task = await full()
+    const [row] = await db.select().from(tasks).where(eq(tasks.id, task.id))
+    expect(row).toMatchObject({ notes: '', createdViaTokenId: null })
+    expect(await storedSubtasks(task.id)).toEqual([])
   })
 })

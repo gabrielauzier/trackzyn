@@ -311,14 +311,14 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | OBS-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | API-01 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | API-02 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-03 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-04 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-05 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| API-03 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| API-04 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| API-05 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-06 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-07 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| API-07 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-08 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-09 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-10 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| API-09 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| API-10 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-11 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-01 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | IDEM-02 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
@@ -340,7 +340,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | MCP-10 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
 | MCP-11 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
 | MCP-12 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
-| ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | In Tasks |
+| ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | In Tasks |
 | ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | In Tasks |
 | ORIGIN-04 | P1: Ver a origem da tarefa | Tasks | In Tasks |

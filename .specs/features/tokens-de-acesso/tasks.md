@@ -455,12 +455,14 @@ T28
 
 **Done when**:
 
-- [ ] As subtarefas ficam com `position` 0..n-1 na ordem enviada
-- [ ] Uma falha forçada na gravação de uma subtarefa não deixa tarefa nem subtarefa no banco
-- [ ] `rejectArchived` dá 409 `List is archived`; sem a opção, o comportamento atual continua
-- [ ] Criar em `done` grava `completed_by_user_id` do dono
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] As subtarefas ficam com `position` 0..n-1 na ordem enviada
+- [x] Uma falha forçada na gravação de uma subtarefa não deixa tarefa nem subtarefa no banco
+- [x] `rejectArchived` dá 409 `List is archived`; sem a opção, o comportamento atual continua
+- [x] Criar em `done` grava `completed_by_user_id` do dono
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
