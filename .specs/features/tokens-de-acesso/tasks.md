@@ -255,11 +255,15 @@ T28
 
 **Done when**:
 
-- [ ] O job do CI sobe o Postgres 16 e `test_workflow_jobs.py` confirma o serviço e a variável
-- [ ] Um teste de fumaça prova que duas transações reais esperam uma pela outra numa trava `FOR UPDATE`
-- [ ] Sem `TEST_POSTGRES_URL`, os testes não são coletados e a suíte de PGlite segue igual
-- [ ] Com a variável definida localmente, os testes rodam num Postgres 16 limpo
-- [ ] Gate check passes: Full com `TEST_POSTGRES_URL` definida + `python3 -m unittest discover .github/ci`
+- [x] O job do CI sobe o Postgres 16 e `test_workflow_jobs.py` confirma o serviço e a variável
+- [x] Um teste de fumaça prova que duas transações reais esperam uma pela outra numa trava `FOR UPDATE`
+- [x] Sem `TEST_POSTGRES_URL`, os testes não são coletados e a suíte de PGlite segue igual
+- [x] Com a variável definida localmente, os testes rodam num Postgres 16 limpo
+- [x] Gate check passes: Full com `TEST_POSTGRES_URL` definida + `python3 -m unittest discover .github/ci`
+
+**Status**: ✅ Done
+
+**Nota**: SPEC_DEVIATION: localmente os testes rodaram num Postgres 14.18, porque o daemon do Docker estava parado e não havia um 16. O CI usa `postgres:16`. Sem a variável, `vitest.config.ts` exclui `test/postgres/**`, então esses testes não aparecem nem como pulados. O helper cria um banco novo a cada teste e o apaga no fim.
 
 **Tests**: integration
 **Gate**: full

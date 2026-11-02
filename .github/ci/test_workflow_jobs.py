@@ -32,6 +32,14 @@ class NodeBackendJobsTest(unittest.TestCase):
         self.assertIn("image: redis:8-alpine", block)
         self.assertIn("REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports['6379'] }}/0", block)
 
+    def test_backend_node_tests_job_has_a_postgres_service_and_passes_test_postgres_url(self):
+        block = job_block("backend-node-tests")
+        self.assertIn("image: postgres:16", block)
+        self.assertIn(
+            "TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/postgres",
+            block,
+        )
+
 
 
 
