@@ -6,7 +6,7 @@ import { type Subtask, TASK_COLUMNS } from '../db/schema.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
 import { createSubtask, deleteSubtask, updateSubtask } from '../services/subtasks.ts'
-import { type TaskWithSubtasks, createTask, deleteTask, getTask, moveTask, updateTask } from '../services/tasks.ts'
+import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
 const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
@@ -128,6 +128,32 @@ export function taskRoutes(ctx: AppContext) {
             beforeTaskId: request.body.before_task_id?.toLowerCase() ?? null,
             byUserId: request.workspace.user.id,
           }),
+        ),
+    )
+
+    typed.post(
+      '/api/tasks/:task_id/duplicate',
+      { schema: { params: taskParams, response: { 201: taskReadSchema } }, preValidation: writing },
+      async (request, reply) =>
+        reply
+          .code(201)
+          .send(toTaskRead(await duplicateTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id))),
+    )
+
+    typed.post(
+      '/api/tasks/:task_id/move-to-list',
+      {
+        schema: { params: taskParams, body: z.object({ list_id: uuid }), response: { 200: taskReadSchema } },
+        preValidation: writing,
+      },
+      async (request) =>
+        toTaskRead(
+          await moveTaskToList(
+            ctx.db,
+            request.params.task_id.toLowerCase(),
+            request.workspace.workspace.id,
+            request.body.list_id.toLowerCase(),
+          ),
         ),
     )
 

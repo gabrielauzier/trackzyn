@@ -7,7 +7,7 @@ import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
 import { play } from '@/lib/sounds/synth'
-import { renderWithProviders } from '@/test/utils'
+import { renderWithProviders, selectContents } from '@/test/utils'
 import type { FocusState } from '@/types'
 
 vi.mock('@/lib/api', () => ({
@@ -195,11 +195,13 @@ describe('FocusWidgetPage', () => {
     await screen.findByText('DEV-1725')
     await hover()
     await user.click(screen.getByRole('button', { name: 'Notes' }))
-    await user.type(await screen.findByRole('textbox', { name: 'Notes' }), 'Numbers')
+    const notes = await screen.findByRole('textbox', { name: 'Notes' })
+    selectContents(notes)
+    await user.paste('Numbers')
     await user.tab()
 
     await waitFor(() => expect(bridge.notifyFocusChanged).toHaveBeenCalledTimes(1))
-    expect(tasks.update).toHaveBeenCalledWith(taskA.id, { notes: 'Numbers' })
+    expect(tasks.update).toHaveBeenCalledWith(taskA.id, { notes: '<p>Numbers</p>' })
     expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
   })
 

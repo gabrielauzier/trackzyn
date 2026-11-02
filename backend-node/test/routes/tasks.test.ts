@@ -265,3 +265,30 @@ describe('subtask routes', () => {
     expect((await getTask(owner, workspaceId, taskId)).json().subtasks).toMatchObject([{ title: 'Outline', done: false }])
   })
 })
+
+describe('duplicate and move to another list', () => {
+  it('duplicates a task and moves it to another list, answering 403 to a viewer and 404 to a stranger', async () => {
+    const { owner, viewer, stranger, workspaceId, listId, taskId } = await setup()
+    const other = await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Home', color: 2 })
+    const otherId = other.json().id as string
+
+    const copy = await call('POST', `/api/tasks/${taskId}/duplicate`, owner.token, workspaceId)
+    expect(copy.statusCode).toBe(201)
+    expect(copy.json()).toMatchObject({ list_id: listId, title: 'Write', column: 'today', position: 1 })
+    expect(copy.json().subtasks.map((subtask: { title: string }) => subtask.title)).toEqual(['Outline'])
+
+    const moved = await call('POST', `/api/tasks/${taskId}/move-to-list`, owner.token, workspaceId, { list_id: otherId })
+    expect(moved.statusCode).toBe(200)
+    expect(moved.json()).toMatchObject({ list_id: otherId, column: 'today' })
+
+    for (const [path, body] of [
+      [`/api/tasks/${taskId}/duplicate`, undefined],
+      [`/api/tasks/${taskId}/move-to-list`, { list_id: listId }],
+    ] as const) {
+      expect((await call('POST', path, viewer.token, workspaceId, body)).json()).toEqual(READ_ONLY)
+      expect((await call('POST', path, stranger.token, workspaceId, body)).statusCode).toBe(404)
+    }
+    expect((await getTask(owner, workspaceId, taskId)).json().list_id).toBe(otherId)
+  })
+})
+

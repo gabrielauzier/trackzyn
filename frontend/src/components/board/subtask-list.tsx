@@ -4,16 +4,40 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { subtasks as subtasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
-import { useTask } from '@/components/board/use-task'
+import { taskKey, useTask } from '@/components/board/use-task'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import type { Subtask } from '@/types'
+import type { Board, Subtask, Task } from '@/types'
 
 interface SubtaskListProps {
   taskId: string
   /** False for a `viewer`: the list is read-only. */
   canWrite: boolean
+  /** The x/y counter; a card already shows it in its own row. */
+  showSummary?: boolean
+}
+
+/** A subtask the server has not confirmed yet; it cannot be changed until it has an id of its own. */
+const PENDING_PREFIX = 'pending-'
+const isPending = (subtask: Subtask) => subtask.id.startsWith(PENDING_PREFIX)
+
+/** The board's cards carry the x/y counter of their subtasks, so they follow the change before the server confirms it. */
+function withCounter(board: Board, taskId: string, change: { done: number; total: number }): Board {
+  const card = <T extends { id: string; subtasks: { done: number; total: number } }>(task: T): T =>
+    task.id === taskId
+      ? { ...task, subtasks: { done: task.subtasks.done + change.done, total: task.subtasks.total + change.total } }
+      : task
+  const { backlog, this_week, today, done } = board.columns
+  return {
+    ...board,
+    columns: {
+      backlog: { ...backlog, tasks: backlog.tasks.map(card) },
+      this_week: { ...this_week, tasks: this_week.tasks.map(card) },
+      today: { ...today, tasks: today.tasks.map(card) },
+      done: { ...done, days: done.days.map((day) => ({ ...day, tasks: day.tasks.map(card) })) },
+    },
+  }
 }
 
 /** Returns the translation key of what is wrong with a subtask title, or null. */
@@ -24,7 +48,7 @@ function titleError(title: string): string | null {
   return null
 }
 
-export function SubtaskList({ taskId, canWrite }: SubtaskListProps) {
+export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskListProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { data: task } = useTask(taskId)
@@ -33,30 +57,74 @@ export function SubtaskList({ taskId, canWrite }: SubtaskListProps) {
   const [serverError, setServerError] = useState<string | null>(null)
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['lists'] })
+  // Refetching while another change is still in flight would drop it from the list until it is confirmed.
+  const settle = () => {
+    if (queryClient.isMutating() <= 1) void refresh()
+  }
   const onError = (e: unknown) => setServerError(extractApiError(e, t('common.error')))
+
+  // Client first: the change shows at once and is undone if the server refuses it.
+  const apply = async (change: (subtasks: Subtask[]) => Subtask[]) => {
+    await queryClient.cancelQueries({ queryKey: taskKey(taskId) })
+    const previous = queryClient.getQueryData<Task>(taskKey(taskId))
+    if (!previous) return { previous }
+    const next = change(previous.subtasks)
+    queryClient.setQueryData<Task>(taskKey(taskId), { ...previous, subtasks: next })
+    const count = (subtasks: Subtask[]) => ({ done: subtasks.filter((item) => item.done).length, total: subtasks.length })
+    const [before, after] = [count(previous.subtasks), count(next)]
+    queryClient.setQueriesData<Board>({ queryKey: ['lists'], predicate: (query) => query.queryKey[2] === 'board' }, (board) =>
+      board && withCounter(board, taskId, { done: after.done - before.done, total: after.total - before.total }),
+    )
+    return { previous }
+  }
+  const undo = (context?: { previous?: Task }) => {
+    if (context?.previous) queryClient.setQueryData(taskKey(taskId), context.previous)
+  }
 
   const create = useMutation({
     mutationFn: (title: string) => subtasksApi.create(taskId, title),
-    onSuccess: () => {
+    onMutate: (title) => {
       setNewTitle('')
       setServerError(null)
-      void refresh()
+      return apply((subtasks) => [
+        ...subtasks,
+        {
+          id: `${PENDING_PREFIX}${crypto.randomUUID()}`,
+          task_id: taskId,
+          title,
+          done: false,
+          position: Math.max(0, ...subtasks.map((item) => item.position)) + 1,
+        },
+      ])
     },
-    onError,
+    onError: (e, title, context) => {
+      undo(context)
+      setNewTitle((current) => current || title)
+      onError(e)
+    },
+    onSettled: settle,
   })
   const update = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: { title?: string; done?: boolean } }) =>
       subtasksApi.update(id, payload),
-    onSuccess: () => {
+    onMutate: ({ id, payload }) => {
       setServerError(null)
-      void refresh()
+      return apply((subtasks) => subtasks.map((item) => (item.id === id ? { ...item, ...payload } : item)))
     },
-    onError,
+    onError: (e, _variables, context) => {
+      undo(context)
+      onError(e)
+    },
+    onSettled: settle,
   })
   const remove = useMutation({
     mutationFn: (id: string) => subtasksApi.remove(id),
-    onSuccess: () => void refresh(),
-    onError,
+    onMutate: (id) => apply((subtasks) => subtasks.filter((item) => item.id !== id)),
+    onError: (e, _id, context) => {
+      undo(context)
+      onError(e)
+    },
+    onSettled: settle,
   })
 
   const items = task?.subtasks ?? []
@@ -71,13 +139,15 @@ export function SubtaskList({ taskId, canWrite }: SubtaskListProps) {
 
   return (
     <div className="space-y-2 text-sm">
-      <p className="text-xs text-muted-foreground">{t('board.subtaskSummary', { done, total: items.length })}</p>
+      {showSummary && (
+        <p className="text-xs text-muted-foreground">{t('board.subtaskSummary', { done, total: items.length })}</p>
+      )}
       <ul className="space-y-1">
         {items.map((item) => (
           <SubtaskRow
             key={item.id}
             subtask={item}
-            canWrite={canWrite}
+            canWrite={canWrite && !isPending(item)}
             onToggle={(value) => update.mutate({ id: item.id, payload: { done: value } })}
             onRename={(title) => update.mutate({ id: item.id, payload: { title } })}
             onDelete={() => remove.mutate(item.id)}
@@ -96,7 +166,7 @@ export function SubtaskList({ taskId, canWrite }: SubtaskListProps) {
             />
             {newError && <p className="text-xs text-destructive">{t(newError)}</p>}
           </div>
-          <Button type="submit" variant="ghost" size="icon-sm" aria-label={t('board.addSubtask')} disabled={create.isPending}>
+          <Button type="submit" variant="ghost" size="icon-sm" aria-label={t('board.addSubtask')}>
             <Plus size={14} />
           </Button>
         </form>

@@ -7,8 +7,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
-import { cn } from '@/lib/utils'
 import { isValidEstimate, toEstimate } from '@/components/board/estimate'
+import { NoteEditor } from '@/components/board/note-editor'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { useTask } from '@/components/board/use-task'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
@@ -146,15 +146,12 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
             <FormItem>
               <FormLabel>{t('board.notes')}</FormLabel>
               <FormControl>
-                <textarea
-                  rows={5}
-                  disabled={!canWrite}
-                  className={cn(
-                    'border-input dark:bg-input/30 placeholder:text-muted-foreground w-full rounded-md border bg-card px-3 py-2 text-base shadow-xs outline-none md:text-sm',
-                    'focus-visible:border-ring focus-visible:ring-ring/30 focus-visible:ring-[2px]',
-                    'aria-invalid:border-destructive disabled:cursor-not-allowed disabled:opacity-50',
-                  )}
-                  {...field}
+                <NoteEditor
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  editable={canWrite}
+                  aria-label={t('board.notes')}
                 />
               </FormControl>
               <FormMessage />

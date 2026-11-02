@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { NoteEditor } from '@/components/board/note-editor'
 import { useTask } from '@/components/board/use-task'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { resizeWidget } from '@/lib/desktop/focus-window'
-import { cn } from '@/lib/utils'
 
 const NOTES_MAX = 10_000
 
@@ -60,24 +60,19 @@ export function WidgetNotes({ taskId, onClose }: WidgetNotesProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-1 px-3 pb-3 [-webkit-app-region:no-drag]">
-      <label htmlFor="widget-notes" className="sr-only">
-        {t('focus.widget.notes')}
-      </label>
-      <textarea
+      <NoteEditor
         id="widget-notes"
         autoFocus
         value={value}
+        aria-label={t('focus.widget.notes')}
         aria-invalid={error !== null}
         aria-describedby={error ? 'widget-notes-error' : undefined}
-        onChange={(event) => {
-          setText(event.target.value)
+        onChange={(notes) => {
+          setText(notes)
           setError(null)
         }}
         onBlur={onBlur}
-        className={cn(
-          'border-input dark:bg-input/30 min-h-0 w-full flex-1 resize-none rounded-md border bg-card px-2 py-1.5 text-sm outline-none',
-          'focus-visible:border-ring focus-visible:ring-ring/30 focus-visible:ring-[2px] aria-invalid:border-destructive',
-        )}
+        className="min-h-0 flex-1 overflow-y-auto"
       />
       {error && (
         <p id="widget-notes-error" role="alert" className="text-xs text-destructive">
