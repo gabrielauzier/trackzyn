@@ -7,6 +7,7 @@ import {
   integer,
   json,
   pgTable,
+  primaryKey,
   smallint,
   text,
   timestamp,
@@ -136,6 +137,36 @@ export const lists = pgTable(
   (t) => [index('ix_lists_workspace_id').on(t.workspaceId, t.position)],
 )
 
+export const TOKEN_SCOPES = ['lists:read', 'tasks:read', 'tasks:create', 'tasks:write', 'tasks:delete'] as const
+export type TokenScope = (typeof TOKEN_SCOPES)[number]
+
+/** Long-lived API tokens (`tkz_`), each bound to one workspace; denied by default on every route (AD-007). */
+export const personalAccessTokens = pgTable(
+  'personal_access_tokens',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    /** SHA-256 hex of the token; the value itself is never stored. */
+    tokenHash: varchar('token_hash', { length: 64 }).notNull(),
+    lastFour: varchar('last_four', { length: 4 }).notNull(),
+    scopes: json('scopes').$type<TokenScope[]>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('ix_personal_access_tokens_hash').on(t.tokenHash),
+    index('ix_personal_access_tokens_user').on(t.userId),
+  ],
+)
+
 export const TASK_COLUMNS = ['backlog', 'this_week', 'today', 'done'] as const
 export type TaskColumn = (typeof TASK_COLUMNS)[number]
 
@@ -155,9 +186,13 @@ export const tasks = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
     /** Who moved the task to done (AD-006); the reports count only the reader's completions. */
     completedByUserId: uuid('completed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    /** The token that created the task; purging the token keeps the task. */
+    createdViaTokenId: uuid('created_via_token_id').references(() => personalAccessTokens.id, { onDelete: 'set null' }),
   },
   (t) => [
     index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
+    // Partial, so the SET NULL of a purge does not scan tasks.
+    index('ix_tasks_created_via_token').on(t.createdViaTokenId).where(sql`${t.createdViaTokenId} IS NOT NULL`),
     check('ck_tasks_completed_by_done', sql`${t.column} = 'done' OR ${t.completedByUserId} IS NULL`),
     check('ck_tasks_column', sql`${t.column} IN ('backlog', 'this_week', 'today', 'done')`),
     check('ck_tasks_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
@@ -245,6 +280,21 @@ export const focusActions = pgTable(
   (t) => [index('ix_focus_actions_user_applied').on(t.userId, t.appliedAt)],
 )
 
+/** No foreign key to tasks: a key whose task is gone must answer 410, not vanish (IDEM-04). */
+export const taskIdempotencyKeys = pgTable(
+  'task_idempotency_keys',
+  {
+    tokenId: uuid('token_id')
+      .notNull()
+      .references(() => personalAccessTokens.id, { onDelete: 'cascade' }),
+    key: varchar('key', { length: 255 }).notNull(),
+    requestHash: varchar('request_hash', { length: 64 }).notNull(),
+    taskId: uuid('task_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.tokenId, t.key] })],
+)
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Workspace = typeof workspaces.$inferSelect
@@ -256,3 +306,4 @@ export type Task = typeof tasks.$inferSelect
 export type Subtask = typeof subtasks.$inferSelect
 export type FocusSession = typeof focusSessions.$inferSelect
 export type FocusAction = typeof focusActions.$inferSelect
+export type AccessToken = typeof personalAccessTokens.$inferSelect

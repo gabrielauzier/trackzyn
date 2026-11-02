@@ -104,11 +104,13 @@ T28
 
 **Done when**:
 
-- [ ] Excluir o usuário ou o workspace apaga os tokens e, com eles, as chaves de idempotência
-- [ ] Apagar um token deixa `tasks.created_via_token_id` nulo e mantém a tarefa
-- [ ] Excluir uma tarefa mantém a linha de `task_idempotency_keys`
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Excluir o usuário ou o workspace apaga os tokens e, com eles, as chaves de idempotência
+- [x] Apagar um token deixa `tasks.created_via_token_id` nulo e mantém a tarefa
+- [x] Excluir uma tarefa mantém a linha de `task_idempotency_keys`
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

@@ -58,6 +58,7 @@ export async function createTask(
       completedAt: input.column === 'done' ? now : null,
       createdAt: now,
       completedByUserId: input.column === 'done' ? input.userId : null,
+      createdViaTokenId: null,
     }
     await tx.insert(tasks).values(task)
     return { ...task, subtasks: [] }
@@ -159,6 +160,7 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       completedAt: null,
       createdAt: now,
       completedByUserId: null,
+      createdViaTokenId: null,
     }
     await tx.insert(tasks).values(copy)
     const copies: Subtask[] = source.subtasks.map((subtask, position) => ({

@@ -291,8 +291,8 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | AUTH-03 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | AUTH-04 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | AUTH-05 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| AUTH-06 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| AUTH-07 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| AUTH-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
+| AUTH-07 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-08 | Edge Cases | Tasks | In Tasks |
 | AUTH-09 | Edge Cases | Tasks | In Tasks |
 | AUTH-10 | Edge Cases | Tasks | In Tasks |
@@ -344,7 +344,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | In Tasks |
 | ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | In Tasks |
 | ORIGIN-04 | P1: Ver a origem da tarefa | Tasks | In Tasks |
-| ORIGIN-05 | P1: Ver a origem da tarefa | Tasks | In Tasks |
+| ORIGIN-05 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | In Tasks |
 | ORIGIN-07 | P1: Ver a origem da tarefa | Tasks | In Tasks |
 

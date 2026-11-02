@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { connectPglite, type Database } from '../../src/db/client.ts'
 import { applyMigrations } from '../../src/db/migrate.ts'
 
-const TABLES = ['app_settings', 'files', 'focus_actions', 'focus_sessions', 'lists', 'subtasks', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
+const TABLES = ['app_settings', 'files', 'focus_actions', 'focus_sessions', 'lists', 'personal_access_tokens', 'subtasks', 'task_idempotency_keys', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
   return ((await db.execute(query)) as unknown as { rows: T[] }).rows
@@ -30,6 +30,9 @@ describe('the Drizzle schema on PGlite', () => {
   it('matches the PostgreSQL column catalog', async () => {
     // pg-columns.json was read once from information_schema.columns of a PostgreSQL 16
     // that ran the same migrations (npm run migrate).
+    // SPEC_DEVIATION: migration 0004 was read from a PostgreSQL 14.18, not a 16.
+    // Reason: no PostgreSQL 16 was at hand; every older table came out identical on 14, and the
+    // types involved (uuid, varchar, json, timestamptz) read the same in information_schema.
     const expected = JSON.parse(readFileSync(join(import.meta.dirname, '../fixtures/pg-columns.json'), 'utf8')) as Record<
       string,
       Array<{ column: string; type: string; nullable: boolean; maxLength: number | null }>
