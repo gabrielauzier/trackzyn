@@ -84,6 +84,17 @@ describe('useLeaveGuard (SYNC-09)', () => {
     expect(body.action_id).toMatch(/^[0-9a-f-]{36}$/)
   })
 
+  it('with the local clock 5 minutes behind the server, pagehide asks the pause at the closing time on the server clock', () => {
+    updateOffset(iso(NOW + 5 * 60_000))
+    renderHook(() => useLeaveGuard(state('counting')))
+    vi.setSystemTime(NOW + 7000)
+
+    window.dispatchEvent(new Event('pagehide'))
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(init.body as string).occurred_at).toBe(iso(NOW + 5 * 60_000 + 7000))
+  })
+
   it('with the task paused, does nothing', () => {
     renderHook(() => useLeaveGuard(state('paused')))
 
