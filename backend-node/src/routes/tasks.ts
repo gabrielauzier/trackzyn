@@ -1,11 +1,13 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 import { type Subtask, TASK_COLUMNS } from '../db/schema.ts'
+import { HttpError } from '../http/http-error.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
+import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -38,6 +40,26 @@ const title = z.string().min(1).max(255)
 const estimateMinutes = z.number().int().min(1).max(1440).nullable()
 const column = z.enum(TASK_COLUMNS)
 
+/** What creating a task accepts, in REST and in MCP. Feed its output to `toTaskIntake`. */
+export const createTaskBody = z.object({
+  list_id: uuid,
+  title,
+  estimate_minutes: estimateMinutes.optional(),
+  column: column.default('backlog'),
+  notes: z.string().max(10_000).optional(),
+  subtasks: z.array(title).max(50).optional(),
+})
+
+/** In the handler and not in the schema: with the session JWT the header is not even read (IDEM-08). */
+function idempotencyKey(request: FastifyRequest): string | undefined {
+  const key = request.headers['idempotency-key'] as string | undefined
+  if (key === undefined) return undefined
+  const loc = ['header', 'idempotency-key']
+  if (key === '') throw new HttpError(422, [{ type: 'string_too_short', loc, msg: 'String should have at least 1 characters' }])
+  if (key.length > 255) throw new HttpError(422, [{ type: 'string_too_long', loc, msg: 'String should have at most 255 characters' }])
+  return key
+}
+
 function toSubtaskRead(subtask: Subtask) {
   return { id: subtask.id, task_id: subtask.taskId, title: subtask.title, done: subtask.done, position: subtask.position }
 }
@@ -68,20 +90,22 @@ export function taskRoutes(ctx: AppContext) {
       '/api/tasks',
       {
         schema: {
-          body: z.object({ list_id: uuid, title, estimate_minutes: estimateMinutes.optional(), column }),
+          body: createTaskBody,
           response: { 201: taskReadSchema },
         },
         config: { tokenScope: 'tasks:create' },
         preValidation: writing,
       },
       async (request, reply) => {
-        const task = await createTask(ctx.db, request.workspace.workspace.id, {
-          listId: request.body.list_id.toLowerCase(),
-          title: request.body.title,
-          estimateMinutes: request.body.estimate_minutes ?? null,
-          column: request.body.column,
-          userId: request.workspace.user.id,
-        })
+        const workspaceId = request.workspace.workspace.id
+        const input = toTaskIntake(request.body)
+        const principal = request.tokenPrincipal
+        if (!principal) {
+          const task = await createTask(ctx.db, workspaceId, { ...input, userId: request.workspace.user.id })
+          return reply.code(201).send(toTaskRead(task))
+        }
+        const { task, replayed } = await createTaskFromToken(ctx.db, workspaceId, principal, input, idempotencyKey(request))
+        if (replayed) reply.header('Idempotency-Replayed', 'true')
         return reply.code(201).send(toTaskRead(task))
       },
     )

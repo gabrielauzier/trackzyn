@@ -518,15 +518,17 @@ T28
 
 **Done when**:
 
-- [ ] Só `list_id` e `title` criam no fim de `backlog`; com `column`, no fim dessa coluna
-- [ ] 51 subtarefas, notas com 10 001 caracteres, estimativa 0 e 1441 dão 422 sem criar nada
-- [ ] Lista de outro workspace dá 404
-- [ ] O reenvio responde 201 com `Idempotency-Replayed: true`
-- [ ] Chave vazia ou com 256 caracteres dá 422
-- [ ] Com JWT, `Idempotency-Key` é ignorado: dois envios criam duas tarefas, e uma chave inválida não dá 422
-- [ ] A sessão de login também envia `notes` e `subtasks`; os testes atuais da rota passam sem mudança
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Só `list_id` e `title` criam no fim de `backlog`; com `column`, no fim dessa coluna
+- [x] 51 subtarefas, notas com 10 001 caracteres, estimativa 0 e 1441 dão 422 sem criar nada
+- [x] Lista de outro workspace dá 404
+- [x] O reenvio responde 201 com `Idempotency-Replayed: true`
+- [x] Chave vazia ou com 256 caracteres dá 422
+- [x] Com JWT, `Idempotency-Key` é ignorado: dois envios criam duas tarefas, e uma chave inválida não dá 422
+- [x] A sessão de login também envia `notes` e `subtasks`; os testes atuais da rota passam sem mudança
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

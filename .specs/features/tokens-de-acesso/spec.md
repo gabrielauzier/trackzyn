@@ -309,14 +309,14 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | SCOPE-11 | Edge Cases | Tasks | Implementing |
 | RATE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | OBS-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| API-01 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| API-02 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| API-01 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| API-02 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-03 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-04 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-05 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-06 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| API-06 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-07 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-08 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| API-08 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-09 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-10 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-11 | P1: Criar tarefas pela API REST | Tasks | Implementing |
@@ -324,10 +324,10 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | IDEM-02 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-03 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-04 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-05 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| IDEM-05 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-06 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-07 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-08 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| IDEM-08 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | MCP-01 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
 | MCP-02 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
 | MCP-03 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
