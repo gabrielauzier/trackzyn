@@ -14,6 +14,7 @@ const taskCard = z.object({
   spent_seconds: z.number(),
   position: z.number(),
   subtasks: z.object({ done: z.number(), total: z.number() }),
+  created_via: z.string().nullable(),
 })
 const column = z.object({ tasks: z.array(taskCard), estimate_minutes: z.number() })
 const progressColumn = column.extend({ done: z.number(), total: z.number() })

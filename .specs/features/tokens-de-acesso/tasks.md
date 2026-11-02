@@ -582,10 +582,14 @@ T28
 
 **Done when**:
 
-- [ ] O quadro traz `created_via` em todas as colunas, inclusive `done`
-- [ ] Somas e contadores do quadro seguem iguais, com os testes atuais sem mudança
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do backend só aumenta
+- [x] O quadro traz `created_via` em todas as colunas, inclusive `done`
+- [x] Somas e contadores do quadro seguem iguais, com os testes atuais sem mudança
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do backend só aumenta
+
+**Nota**: SPEC_DEVIATION: "com os testes atuais sem mudança" não cabe junto com ORIGIN-02 em dois testes que comparam o cartão inteiro com `toEqual`: `test/routes/board.test.ts` e `test/services/board.test.ts`. Os dois ganharam só `created_via: null`, o que deixa a comparação mais rígida; as somas e os contadores não mudaram. O mesmo ocorreu em T14, no TASK-01 de `test/routes/tasks.test.ts`.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: build

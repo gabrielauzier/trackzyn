@@ -3,7 +3,7 @@ import type { PGlite } from '@electric-sql/pglite'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { type TaskColumn, focusSessions, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
+import { type TaskColumn, focusSessions, personalAccessTokens, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
 import { buildBoard } from '../../src/services/board.ts'
 import { createList } from '../../src/services/lists.ts'
@@ -96,7 +96,7 @@ describe('board service', () => {
       { id: randomUUID(), taskId: id, title: 'c', done: false, position: 2 },
     ])
     const [card] = (await board()).columns.today.tasks
-    expect(card).toEqual({ id, title: 'with subtasks', estimate_minutes: 87, spent_seconds: 0, position: expect.any(Number), subtasks: { done: 1, total: 3 } })
+    expect(card).toEqual({ id, title: 'with subtasks', estimate_minutes: 87, spent_seconds: 0, position: expect.any(Number), subtasks: { done: 1, total: 3 }, created_via: null })
   })
 
   const focusSession = (taskId: string, startedAt: string, minutes: number, open = false) =>
@@ -211,5 +211,76 @@ describe('board service', () => {
     )
     expect(error).toBeInstanceOf(HttpError)
     expect(error).toMatchObject({ statusCode: 404, detail: 'List not found' })
+  })
+})
+
+describe('buildBoard with the origin of the tasks', () => {
+  async function viaToken(name: string) {
+    const id = randomUUID()
+    await db.insert(personalAccessTokens).values({
+      id,
+      userId,
+      workspaceId: workspace.id,
+      name,
+      tokenHash: id.replaceAll('-', '').padEnd(64, '0'),
+      lastFour: 'abcd',
+      scopes: ['tasks:create'],
+      createdAt: NOW,
+      expiresAt: new Date('2027-01-01T00:00:00Z'),
+    })
+    return id
+  }
+  const fromToken = async (column: TaskColumn, tokenId: string, completedAt?: string) => {
+    const id = await task(column, { title: `${column} via token`, estimate: 10, completedAt })
+    await db.update(tasks).set({ createdViaTokenId: tokenId }).where(eq(tasks.id, id))
+    return id
+  }
+  const origins = (views: Array<{ title: string; created_via: string | null }>) => views.map((view) => [view.title, view.created_via])
+
+  it('ORIGIN-02 answers created_via in every column, with today and the earlier day of done, and null without a token', async () => {
+    const n8n = await viaToken('n8n')
+    const agent = await viaToken('agent')
+    await fromToken('backlog', n8n)
+    await fromToken('this_week', agent)
+    await fromToken('today', n8n)
+    await fromToken('done', agent)
+    await fromToken('done', n8n, '2026-10-22T15:00:00Z')
+    await task('today', { title: 'by hand' })
+
+    const { columns } = await board()
+
+    expect(origins(columns.backlog.tasks)).toEqual([['backlog via token', 'n8n']])
+    expect(origins(columns.this_week.tasks)).toEqual([['this_week via token', 'agent']])
+    expect(origins(columns.today.tasks)).toEqual([
+      ['today via token', 'n8n'],
+      ['by hand', null],
+    ])
+    expect(columns.done.days.map((day) => [day.date, origins(day.tasks)])).toEqual([
+      ['2026-10-24', [['done via token', 'agent']]],
+      ['2026-10-22', [['done via token', 'n8n']]],
+    ])
+  })
+
+  it('counts and sums do not change for a task with an origin and subtasks', async () => {
+    const id = await fromToken('today', await viaToken('n8n'))
+    await task('today', { title: 'by hand', estimate: 5 })
+    await db.insert(subtasks).values([
+      { id: randomUUID(), taskId: id, title: 'a', done: true, position: 0 },
+      { id: randomUUID(), taskId: id, title: 'b', done: false, position: 1 },
+    ])
+
+    const result = await board()
+
+    expect(result.pending).toEqual({ count: 2, estimate_minutes: 15 })
+    expect(result.columns.today).toMatchObject({ estimate_minutes: 15, done: 0, total: 2 })
+    expect(result.columns.today.tasks[0]).toMatchObject({ id, subtasks: { done: 1, total: 2 }, created_via: 'n8n' })
+  })
+
+  it('ORIGIN-05 a task whose token was deleted stays on the board with null', async () => {
+    const tokenId = await viaToken('n8n')
+    const id = await fromToken('backlog', tokenId)
+    await db.delete(personalAccessTokens).where(eq(personalAccessTokens.id, tokenId))
+
+    expect((await board()).columns.backlog.tasks).toMatchObject([{ id, created_via: null }])
   })
 })
