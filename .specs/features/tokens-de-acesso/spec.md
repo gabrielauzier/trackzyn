@@ -320,13 +320,13 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | API-09 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-10 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-11 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-01 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| IDEM-02 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| IDEM-03 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| IDEM-04 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| IDEM-01 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| IDEM-02 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| IDEM-03 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| IDEM-04 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-05 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| IDEM-06 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
-| IDEM-07 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
+| IDEM-06 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| IDEM-07 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-08 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | MCP-01 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
 | MCP-02 | P1: Conectar uma IA por MCP | Tasks | In Tasks |

@@ -486,13 +486,15 @@ T28
 
 **Done when**:
 
-- [ ] 10 chamadas simultâneas com a mesma chave criam uma tarefa e devolvem o mesmo id, provado no Postgres de T29
-- [ ] Mesma chave com corpo diferente dá 409; tarefa excluída dá 410
-- [ ] Com 24h exatas, a chave ainda vale ou não conforme `created_at + 24h`, testado nos dois lados do limite com `now` injetado
-- [ ] Dois tokens com a mesma chave criam duas tarefas
-- [ ] Sem chave, cada chamada cria uma tarefa
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] 10 chamadas simultâneas com a mesma chave criam uma tarefa e devolvem o mesmo id, provado no Postgres de T29
+- [x] Mesma chave com corpo diferente dá 409; tarefa excluída dá 410
+- [x] Com 24h exatas, a chave ainda vale ou não conforme `created_at + 24h`, testado nos dois lados do limite com `now` injetado
+- [x] Dois tokens com a mesma chave criam duas tarefas
+- [x] Sem chave, cada chamada cria uma tarefa
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full, com `TEST_POSTGRES_URL` definida
