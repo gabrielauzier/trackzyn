@@ -423,11 +423,13 @@ T28
 
 **Done when**:
 
-- [ ] No modo local, `/api/tokens` responde 404 com o token de sessão local
-- [ ] `/api/info` traz `personal_tokens: false` no modo local e `true` no servidor
-- [ ] Sem a variável, o padrão é ligado
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do backend só aumenta
+- [x] No modo local, `/api/tokens` responde 404 com o token de sessão local
+- [x] `/api/info` traz `personal_tokens: false` no modo local e `true` no servidor
+- [x] Sem a variável, o padrão é ligado
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: build

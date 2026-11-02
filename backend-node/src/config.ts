@@ -23,6 +23,8 @@ export interface Config {
   storageMaxFileSizeMb: number
   storageAllowedExtensions: string
   registrationEnabled: boolean
+  /** False in the desktop local mode: no token routes and no token hook. */
+  personalTokensEnabled: boolean
   oidcEnabled: boolean
   oidcProviderName: string
   oidcDiscoveryUrl: string
@@ -163,6 +165,7 @@ export function loadConfig(env: Source = process.env, options: LoadConfigOptions
     storageMaxFileSizeMb: int('STORAGE_MAX_FILE_SIZE_MB', 10),
     storageAllowedExtensions: text('STORAGE_ALLOWED_EXTENSIONS', 'jpg,jpeg,png,webp,gif,heic,pdf'),
     registrationEnabled: bool('REGISTRATION_ENABLED', true),
+    personalTokensEnabled: bool('PERSONAL_TOKENS_ENABLED', true),
     oidcEnabled,
     oidcProviderName: text('OIDC_PROVIDER_NAME', 'OIDC'),
     oidcDiscoveryUrl,

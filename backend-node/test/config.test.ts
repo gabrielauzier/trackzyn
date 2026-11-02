@@ -30,6 +30,11 @@ describe('loadConfig', () => {
     }
   })
 
+  it('TOKEN-13 personal tokens default to enabled and can be turned off', () => {
+    expect(loadConfig({}, NO_FILES).personalTokensEnabled).toBe(true)
+    expect(loadConfig({ PERSONAL_TOKENS_ENABLED: 'false' }, NO_FILES).personalTokensEnabled).toBe(false)
+  })
+
   it('local auth can be disabled when OIDC is complete, and defaults to enabled', () => {
     expect(loadConfig({}, NO_FILES).localAuthEnabled).toBe(true)
     const config = loadConfig(

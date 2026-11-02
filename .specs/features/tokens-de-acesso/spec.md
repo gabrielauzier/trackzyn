@@ -274,7 +274,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | TOKEN-10 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-11 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-12 | P1: Gerar um token | Tasks | In Tasks |
-| TOKEN-13 | P1: Gerar um token | Tasks | In Tasks |
+| TOKEN-13 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-14 | P1: Gerar um token | Tasks | In Tasks |
 | TOKEN-15 | Edge Cases | Tasks | Implementing |
 | TOKEN-16 | Edge Cases | Tasks | Implementing |

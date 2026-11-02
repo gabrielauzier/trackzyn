@@ -65,6 +65,21 @@ describe('the local server', () => {
     expect(lines).toContain('There are 0 users')
   })
 
+  it('TOKEN-13 has no token routes and says so in /api/info', async () => {
+    const server = await start()
+    const url = `http://127.0.0.1:${server.port}`
+    const headers = { 'X-Trackzyn-Local-Token': TOKEN }
+
+    for (const [method, path] of [['GET', '/api/tokens'], ['POST', '/api/tokens'], ['DELETE', '/api/tokens/00000000-0000-4000-8000-000000000000']]) {
+      const reply = await fetch(`${url}${path}`, { method, headers })
+      expect(reply.status, `${method} ${path}`).toBe(404)
+      expect(await reply.json()).toEqual({ detail: 'Not Found' })
+    }
+
+    const info = (await (await fetch(`${url}/api/info`, { headers })).json()) as { features: Record<string, unknown> }
+    expect(info.features.personal_tokens).toBe(false)
+  })
+
   it('reports how many migrations it applied', async () => {
     const first = await start()
     // A new database runs every migration file.

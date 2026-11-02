@@ -66,7 +66,7 @@ export async function buildApp(
 
   decorateRequest(app)
   registerErrorHandling(app)
-  registerTokenAuth(app, ctx)
+  if (ctx.config.personalTokensEnabled) registerTokenAuth(app, ctx)
 
   await app.register(healthRoutes)
   await app.register(adminRoutes(ctx))
@@ -84,7 +84,7 @@ export async function buildApp(
   await app.register(boardRoutes(ctx))
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
-  await app.register(accessTokenRoutes(ctx))
+  if (ctx.config.personalTokensEnabled) await app.register(accessTokenRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
   afterRoutes?.(app)

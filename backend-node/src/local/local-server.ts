@@ -73,6 +73,7 @@ export async function startLocalServer(options: LocalServerOptions): Promise<Loc
       PORT: String(options.port ?? 0),
       STORAGE_LOCAL_PATH: options.filesDir,
       FRONTEND_URL: 'app://trackzyn',
+      PERSONAL_TOKENS_ENABLED: 'false',
     },
     { envFiles: [], secretsDirs: [] },
   )
