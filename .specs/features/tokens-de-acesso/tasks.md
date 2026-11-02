@@ -361,12 +361,16 @@ T28
 
 **Done when**:
 
-- [ ] O teste compara as rotas com `tokenScope` à tabela da spec e falha se houver qualquer diferença
-- [ ] Toda rota registrada fora da tabela responde 403 a um token válido
-- [ ] Cada rota da tabela dá 403 `Missing scope` sem o escopo e não dá 403 com ele
-- [ ] `GET /api/lists` devolve `preview` vazio sem `tasks:read` e preenchido com ele; com JWT, segue preenchido
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] O teste compara as rotas com `tokenScope` à tabela da spec e falha se houver qualquer diferença
+- [x] Toda rota registrada fora da tabela responde 403 a um token válido
+- [x] Cada rota da tabela dá 403 `Missing scope` sem o escopo e não dá 403 com ele
+- [x] `GET /api/lists` devolve `preview` vazio sem `tasks:read` e preenchido com ele; com JWT, segue preenchido
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Nota**: SPEC_DEVIATION: o teste que percorre as rotas deixa de fora `OPTIONS *`, do `@fastify/cors`. O hook desse plugin responde a todo `OPTIONS` antes do hook de token, sem dados. Pôr o hook de token antes dele tiraria os cabeçalhos CORS dos erros de token. O teste exige que `OPTIONS *` seja a única rota `OPTIONS`.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

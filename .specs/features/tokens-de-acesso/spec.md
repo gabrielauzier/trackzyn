@@ -299,13 +299,13 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | SCOPE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-02 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-03 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-04 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| SCOPE-04 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-05 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-07 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-08 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-09 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| SCOPE-10 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| SCOPE-09 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
+| SCOPE-10 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-11 | Edge Cases | Tasks | Implementing |
 | RATE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | OBS-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |

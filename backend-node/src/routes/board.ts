@@ -42,6 +42,7 @@ export function boardRoutes(ctx: AppContext) {
           params: z.object({ list_id: z.string().regex(UUID_PATTERN, 'Input should be a valid UUID') }),
           response: { 200: boardSchema },
         },
+        config: { tokenScope: 'tasks:read' },
         preValidation: [requireUser, workspaceContext(ctx)],
       },
       async (request) => buildBoard(ctx.db, request.params.list_id.toLowerCase(), request.workspace.workspace, request.workspace.user.id),

@@ -71,6 +71,7 @@ export function taskRoutes(ctx: AppContext) {
           body: z.object({ list_id: uuid, title, estimate_minutes: estimateMinutes.optional(), column }),
           response: { 201: taskReadSchema },
         },
+        config: { tokenScope: 'tasks:create' },
         preValidation: writing,
       },
       async (request, reply) => {
@@ -87,7 +88,7 @@ export function taskRoutes(ctx: AppContext) {
 
     typed.get(
       '/api/tasks/:task_id',
-      { schema: { params: taskParams, response: { 200: taskReadSchema } }, preValidation: reading },
+      { schema: { params: taskParams, response: { 200: taskReadSchema } }, config: { tokenScope: 'tasks:read' }, preValidation: reading },
       async (request) => toTaskRead(await getTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id)),
     )
 
@@ -99,6 +100,7 @@ export function taskRoutes(ctx: AppContext) {
           body: z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: z.string().max(10_000).optional() }),
           response: { 200: taskReadSchema },
         },
+        config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
       async (request) =>
@@ -119,6 +121,7 @@ export function taskRoutes(ctx: AppContext) {
           body: z.object({ column, before_task_id: uuid.nullable() }),
           response: { 200: taskReadSchema },
         },
+        config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
       async (request) =>
@@ -133,7 +136,7 @@ export function taskRoutes(ctx: AppContext) {
 
     typed.post(
       '/api/tasks/:task_id/duplicate',
-      { schema: { params: taskParams, response: { 201: taskReadSchema } }, preValidation: writing },
+      { schema: { params: taskParams, response: { 201: taskReadSchema } }, config: { tokenScope: 'tasks:write' }, preValidation: writing },
       async (request, reply) =>
         reply
           .code(201)
@@ -144,6 +147,7 @@ export function taskRoutes(ctx: AppContext) {
       '/api/tasks/:task_id/move-to-list',
       {
         schema: { params: taskParams, body: z.object({ list_id: uuid }), response: { 200: taskReadSchema } },
+        config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
       async (request) =>
@@ -159,7 +163,7 @@ export function taskRoutes(ctx: AppContext) {
 
     typed.delete(
       '/api/tasks/:task_id',
-      { schema: { params: taskParams }, preValidation: writing },
+      { schema: { params: taskParams }, config: { tokenScope: 'tasks:delete' }, preValidation: writing },
       async (request, reply) => {
         await deleteTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id)
         return reply.code(204).send()
@@ -168,7 +172,11 @@ export function taskRoutes(ctx: AppContext) {
 
     typed.post(
       '/api/tasks/:task_id/subtasks',
-      { schema: { params: taskParams, body: z.object({ title }), response: { 201: subtaskReadSchema } }, preValidation: writing },
+      {
+        schema: { params: taskParams, body: z.object({ title }), response: { 201: subtaskReadSchema } },
+        config: { tokenScope: 'tasks:write' },
+        preValidation: writing,
+      },
       async (request, reply) => {
         const subtask = await createSubtask(
           ctx.db,
@@ -188,6 +196,7 @@ export function taskRoutes(ctx: AppContext) {
           body: z.object({ title: title.optional(), done: z.boolean().optional() }),
           response: { 200: subtaskReadSchema },
         },
+        config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
       async (request) =>
@@ -207,6 +216,7 @@ export function taskRoutes(ctx: AppContext) {
           body: z.object({ before_subtask_id: uuid.nullable() }),
           response: { 200: subtaskReadSchema },
         },
+        config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
       async (request) =>
@@ -222,7 +232,7 @@ export function taskRoutes(ctx: AppContext) {
 
     typed.delete(
       '/api/subtasks/:subtask_id',
-      { schema: { params: subtaskParams }, preValidation: writing },
+      { schema: { params: subtaskParams }, config: { tokenScope: 'tasks:delete' }, preValidation: writing },
       async (request, reply) => {
         await deleteSubtask(ctx.db, request.params.subtask_id.toLowerCase(), request.workspace.workspace.id)
         return reply.code(204).send()

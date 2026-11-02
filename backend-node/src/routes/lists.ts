@@ -62,12 +62,16 @@ export function listRoutes(ctx: AppContext) {
           querystring: z.object({ archived: z.enum(['true', 'false']).default('false') }),
           response: { 200: z.object({ timezone: z.string(), lists: z.array(listCardSchema) }) },
         },
+        config: { tokenScope: 'lists:read' },
         preValidation: reading,
       },
       async (request) => {
         const workspace = request.workspace.workspace
         const cards = await listLists(ctx.db, workspace.id, { archived: request.query.archived === 'true' })
-        return { timezone: await dayTimezone(ctx.db, workspace), lists: cards.map(toListCard) }
+        // The preview shows task titles, which `lists:read` alone does not reach (SCOPE-09).
+        const principal = request.tokenPrincipal
+        const visible = principal && !principal.scopes.includes('tasks:read') ? cards.map((card) => ({ ...card, preview: [] })) : cards
+        return { timezone: await dayTimezone(ctx.db, workspace), lists: visible.map(toListCard) }
       },
     )
 
@@ -89,7 +93,7 @@ export function listRoutes(ctx: AppContext) {
     // Reason: spec LIST-09 requires `GET /api/lists/:id` to answer 404 after a delete, so the route exists.
     typed.get(
       '/api/lists/:list_id',
-      { schema: { params: listParams, response: { 200: listReadSchema } }, preValidation: reading },
+      { schema: { params: listParams, response: { 200: listReadSchema } }, config: { tokenScope: 'lists:read' }, preValidation: reading },
       async (request) =>
         toListRead(await getList(ctx.db, request.params.list_id.toLowerCase(), request.workspace.workspace.id)),
     )
