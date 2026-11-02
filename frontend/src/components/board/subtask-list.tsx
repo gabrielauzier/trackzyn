@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import { subtasks as subtasksApi } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { extractApiError } from '@/lib/api-errors'
 import { taskKey, useTask } from '@/components/board/use-task'
 import { Button } from '@/components/ui/button'
@@ -127,6 +128,24 @@ export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskLis
     onSettled: settle,
   })
 
+  const move = useMutation({
+    mutationFn: ({ id, before }: { id: string; before: string | null }) => subtasksApi.move(id, before),
+    onMutate: ({ id, before }) =>
+      apply((subtasks) => {
+        const moved = subtasks.find((item) => item.id === id)
+        if (!moved) return subtasks
+        const others = subtasks.filter((item) => item.id !== id)
+        const at = before === null ? others.length : others.findIndex((item) => item.id === before)
+        others.splice(at < 0 ? others.length : at, 0, moved)
+        return others.map((item, position) => ({ ...item, position }))
+      }),
+    onError: (e, _variables, context) => {
+      undo(context)
+      onError(e)
+    },
+    onSettled: settle,
+  })
+
   const items = task?.subtasks ?? []
   const done = items.filter((item) => item.done).length
 
@@ -142,12 +161,20 @@ export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskLis
       {showSummary && (
         <p className="text-xs text-muted-foreground">{t('board.subtaskSummary', { done, total: items.length })}</p>
       )}
-      <ul className="space-y-1">
-        {items.map((item) => (
+      <ul className="space-y-0.5">
+        {items.map((item, index) => (
           <SubtaskRow
             key={item.id}
             subtask={item}
             canWrite={canWrite && !isPending(item)}
+            // A subtask goes up before the one above it, and down before the one two below (or last).
+            // One that is next to a subtask the server has not confirmed waits for it.
+            onMoveUp={index > 0 && !isPending(items[index - 1]) ? () => move.mutate({ id: item.id, before: items[index - 1].id }) : undefined}
+            onMoveDown={
+              index < items.length - 1 && !isPending(items[index + 1]) && !isPending(items[index + 2] ?? item)
+                ? () => move.mutate({ id: item.id, before: items[index + 2]?.id ?? null })
+                : undefined
+            }
             onToggle={(value) => update.mutate({ id: item.id, payload: { done: value } })}
             onRename={(title) => update.mutate({ id: item.id, payload: { title } })}
             onDelete={() => remove.mutate(item.id)}
@@ -162,7 +189,7 @@ export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskLis
               placeholder={t('board.newSubtask')}
               value={newTitle}
               onChange={(event) => setNewTitle(event.target.value)}
-              className="h-8"
+              className="h-7"
             />
             {newError && <p className="text-xs text-destructive">{t(newError)}</p>}
           </div>
@@ -186,9 +213,12 @@ interface SubtaskRowProps {
   onToggle: (done: boolean) => void
   onRename: (title: string) => void
   onDelete: () => void
+  /** Undefined when the subtask cannot go up (it is first) or down (it is last). */
+  onMoveUp?: () => void
+  onMoveDown?: () => void
 }
 
-function SubtaskRow({ subtask, canWrite, onToggle, onRename, onDelete }: SubtaskRowProps) {
+function SubtaskRow({ subtask, canWrite, onToggle, onRename, onDelete, onMoveUp, onMoveDown }: SubtaskRowProps) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(subtask.title)
@@ -212,7 +242,8 @@ function SubtaskRow({ subtask, canWrite, onToggle, onRename, onDelete }: Subtask
               aria-label={t('board.subtaskTitle')}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="h-8"
+              onKeyDown={(event) => event.key === 'Escape' && setEditing(false)}
+              className="h-7"
             />
             {error && <p className="text-xs text-destructive">{t(error)}</p>}
           </div>
@@ -224,39 +255,67 @@ function SubtaskRow({ subtask, canWrite, onToggle, onRename, onDelete }: Subtask
     )
   }
 
+  const edit = () => {
+    setTitle(subtask.title)
+    setEditing(true)
+  }
+  const label = <span className={cn('flex-1 truncate', subtask.done && 'text-muted-foreground line-through')}>{subtask.title}</span>
+
   return (
-    <li className="flex items-center gap-2">
+    <li className="group/row flex min-h-7 items-center gap-2 rounded-sm px-1 hover:bg-muted/50 focus-within:bg-muted/50">
       <Checkbox
         checked={subtask.done}
         disabled={!canWrite}
         aria-label={subtask.title}
         onCheckedChange={(checked) => onToggle(checked === true)}
       />
-      <span className={subtask.done ? 'flex-1 truncate text-muted-foreground line-through' : 'flex-1 truncate'}>
-        {subtask.title}
-      </span>
+      {canWrite ? (
+        // Renamed in place: double-click the title, or Enter on it.
+        <button
+          type="button"
+          className="min-w-0 flex-1 cursor-text text-left outline-none focus-visible:underline"
+          aria-label={t('board.renameSubtask', { title: subtask.title })}
+          title={t('board.renameSubtaskHint')}
+          onDoubleClick={edit}
+          onKeyDown={(event) => event.key === 'Enter' && edit()}
+        >
+          <span className={cn('block truncate', subtask.done && 'text-muted-foreground line-through')}>{subtask.title}</span>
+        </button>
+      ) : (
+        label
+      )}
       {canWrite && (
-        <>
+        <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(hover:none)]:opacity-100">
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={t('board.renameSubtask', { title: subtask.title })}
-            onClick={() => {
-              setTitle(subtask.title)
-              setEditing(true)
-            }}
+            className="size-6"
+            aria-label={t('board.moveSubtaskUp', { title: subtask.title })}
+            disabled={!onMoveUp}
+            onClick={onMoveUp}
           >
-            <Pencil size={14} />
+            <ArrowUp size={14} />
           </Button>
           <Button
             variant="ghost"
             size="icon-sm"
+            className="size-6"
+            aria-label={t('board.moveSubtaskDown', { title: subtask.title })}
+            disabled={!onMoveDown}
+            onClick={onMoveDown}
+          >
+            <ArrowDown size={14} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="size-6"
             aria-label={t('board.deleteSubtask', { title: subtask.title })}
             onClick={onDelete}
           >
             <Trash2 size={14} />
           </Button>
-        </>
+        </div>
       )}
     </li>
   )

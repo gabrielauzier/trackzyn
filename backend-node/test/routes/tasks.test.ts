@@ -230,6 +230,20 @@ describe('subtask routes', () => {
     ])
   })
 
+  it('moves a subtask before another one, answering 403 to a viewer and 404 to a stranger', async () => {
+    const { owner, viewer, stranger, workspaceId, taskId, subtaskId } = await setup()
+    const added = (await call('POST', `/api/tasks/${taskId}/subtasks`, owner.token, workspaceId, { title: 'Draft' })).json()
+
+    const moved = await call('POST', `/api/subtasks/${added.id}/move`, owner.token, workspaceId, { before_subtask_id: subtaskId })
+    expect(moved.statusCode).toBe(200)
+    expect(moved.json()).toMatchObject({ id: added.id, position: 0 })
+    expect((await getTask(owner, workspaceId, taskId)).json().subtasks.map((s: { title: string }) => s.title)).toEqual(['Draft', 'Outline'])
+
+    const body = { before_subtask_id: null }
+    expect((await call('POST', `/api/subtasks/${added.id}/move`, viewer.token, workspaceId, body)).json()).toEqual(READ_ONLY)
+    expect((await call('POST', `/api/subtasks/${added.id}/move`, stranger.token, workspaceId, body)).statusCode).toBe(404)
+  })
+
   it('TASK-07 answers 422 for an empty subtask title or one of 256 characters', async () => {
     const { owner, workspaceId, taskId, subtaskId } = await setup()
     for (const title of ['', 'x'.repeat(256)]) {

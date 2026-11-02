@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type Subtask, lists, subtasks, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
@@ -45,4 +45,34 @@ export async function updateSubtask(
 export async function deleteSubtask(db: Database, subtaskId: string, workspaceId: string): Promise<void> {
   const subtask = await findSubtask(db, subtaskId, workspaceId)
   await db.delete(subtasks).where(eq(subtasks.id, subtask.id))
+}
+
+/**
+ * Puts the subtask right before `beforeSubtaskId` (or last for null) among the subtasks of its task and
+ * renumbers them from 0 to n-1. Two moves at once are serialised on the task: the last one wins.
+ */
+export async function moveSubtask(
+  db: Database,
+  subtaskId: string,
+  workspaceId: string,
+  beforeSubtaskId: string | null,
+): Promise<Subtask> {
+  const subtask = await findSubtask(db, subtaskId, workspaceId)
+  await db.transaction(async (tx) => {
+    await tx.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, subtask.taskId)).for('update')
+    const others = (
+      await tx
+        .select({ id: subtasks.id })
+        .from(subtasks)
+        .where(eq(subtasks.taskId, subtask.taskId))
+        .orderBy(asc(subtasks.position))
+    )
+      .map((row) => row.id)
+      .filter((id) => id !== subtask.id)
+    const at = beforeSubtaskId === null || beforeSubtaskId === subtask.id ? others.length : others.indexOf(beforeSubtaskId)
+    if (at < 0) throw new HttpError(404, 'Subtask not found')
+    others.splice(at, 0, subtask.id)
+    for (const [position, id] of others.entries()) await tx.update(subtasks).set({ position }).where(eq(subtasks.id, id))
+  })
+  return { ...subtask, position: (await findSubtask(db, subtask.id, workspaceId)).position }
 }

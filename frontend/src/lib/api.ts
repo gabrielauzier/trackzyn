@@ -424,6 +424,11 @@ export const subtasks = {
     const { data } = await api.patch(`/subtasks/${id}`, payload)
     return data
   },
+  /** Put the subtask right before `beforeSubtaskId`, or at the end when null. */
+  move: async (id: string, beforeSubtaskId: string | null): Promise<Subtask> => {
+    const { data } = await api.post(`/subtasks/${id}/move`, { before_subtask_id: beforeSubtaskId })
+    return data
+  },
   remove: async (id: string): Promise<void> => {
     await api.delete(`/subtasks/${id}`)
   },
