@@ -295,16 +295,18 @@ T28
 
 **Done when**:
 
-- [ ] Todo caso inválido dá o mesmo 401 com `WWW-Authenticate: Bearer`
-- [ ] A requisição seguinte à revogação já dá 401
-- [ ] `GET /api/users/me`, `/api/tokens`, `/api/admin/*`, `/api/health` e `/api/info` dão 403 `Route not available for tokens` com token válido
-- [ ] Rota de teste com `tokenScope` responde 403 `Missing scope: x` sem o escopo e passa com ele
-- [ ] A 60ª requisição em 60 s passa; a 61ª dá 429 com `Retry-After: 60`; outro token não é afetado
-- [ ] `last_used_at` só é regravado depois de 60 s
-- [ ] Um teste captura o log: tem `token_id` e `user_id`, e não tem o valor do token
-- [ ] A suíte de JWT que já existe passa sem mudança
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Todo caso inválido dá o mesmo 401 com `WWW-Authenticate: Bearer`
+- [x] A requisição seguinte à revogação já dá 401
+- [x] `GET /api/users/me`, `/api/tokens`, `/api/admin/*`, `/api/health` e `/api/info` dão 403 `Route not available for tokens` com token válido
+- [x] Rota de teste com `tokenScope` responde 403 `Missing scope: x` sem o escopo e passa com ele
+- [x] A 60ª requisição em 60 s passa; a 61ª dá 429 com `Retry-After: 60`; outro token não é afetado
+- [x] `last_used_at` só é regravado depois de 60 s
+- [x] Um teste captura o log: tem `token_id` e `user_id`, e não tem o valor do token
+- [x] A suíte de JWT que já existe passa sem mudança
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

@@ -284,12 +284,12 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | MANAGE-04 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-05 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-06 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-07 | P1: Ver e revogar tokens | Tasks | In Tasks |
+| MANAGE-07 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-08 | P1: Ver e revogar tokens | Tasks | Implementing |
 | AUTH-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-02 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-03 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-04 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| AUTH-04 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-05 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | AUTH-07 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
@@ -298,17 +298,17 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | AUTH-10 | Edge Cases | Tasks | Implementing |
 | SCOPE-01 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-02 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| SCOPE-03 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| SCOPE-03 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-04 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| SCOPE-05 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| SCOPE-06 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| SCOPE-05 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
+| SCOPE-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | SCOPE-07 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-08 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-09 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-10 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
 | SCOPE-11 | Edge Cases | Tasks | In Tasks |
-| RATE-01 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
-| OBS-01 | P1: Autenticar e limitar pelo token | Tasks | In Tasks |
+| RATE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
+| OBS-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
 | API-01 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | API-02 | P1: Criar tarefas pela API REST | Tasks | In Tasks |
 | API-03 | P1: Criar tarefas pela API REST | Tasks | In Tasks |

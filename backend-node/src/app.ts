@@ -7,6 +7,7 @@ import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fast
 import type { AppContext } from './context.ts'
 import { decorateRequest } from './plugins/auth.ts'
 import { registerErrorHandling } from './plugins/errors.ts'
+import { registerTokenAuth } from './plugins/token-auth.ts'
 import { accessTokenRoutes } from './routes/access-tokens.ts'
 import { adminRoutes } from './routes/admin.ts'
 import { authRoutes } from './routes/auth.ts'
@@ -31,6 +32,8 @@ export async function buildApp(
   options: FastifyServerOptions = {},
   /** Runs right after Fastify is created, before any plugin: global hooks added here see every request. */
   beforeRoutes?: (app: FastifyInstance) => void,
+  /** Runs after every route: a route added here gets the same hooks and error handling as the others. */
+  afterRoutes?: (app: FastifyInstance) => void,
 ): Promise<FastifyInstance> {
   const app = Fastify({ ...options })
   beforeRoutes?.(app)
@@ -52,6 +55,7 @@ export async function buildApp(
 
   decorateRequest(app)
   registerErrorHandling(app)
+  registerTokenAuth(app, ctx)
 
   await app.register(healthRoutes)
   await app.register(adminRoutes(ctx))
@@ -72,6 +76,7 @@ export async function buildApp(
   await app.register(accessTokenRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
+  afterRoutes?.(app)
 
   await app.ready()
   return app

@@ -13,6 +13,7 @@ const MAX_ACTIVE_TOKENS = 50
 const WRITE_SCOPES: readonly TokenScope[] = ['tasks:create', 'tasks:write', 'tasks:delete']
 const DAY_MS = 86_400_000
 const PURGE_AFTER_DAYS = 90
+const LAST_USED_INTERVAL_MS = 60_000
 
 export type TokenStatus = 'active' | 'expired' | 'revoked'
 
@@ -22,6 +23,7 @@ export interface TokenPrincipal {
   user: User
   workspaceId: string
   scopes: TokenScope[]
+  lastUsedAt: Date | null
 }
 
 /** What the owner sees of a token: never its value or its hash. */
@@ -75,7 +77,14 @@ export async function authenticate(db: Database, plaintext: string, now: Date = 
     user: row.user,
     workspaceId: row.token.workspaceId,
     scopes: row.token.scopes,
+    lastUsedAt: row.token.lastUsedAt,
   }
+}
+
+/** Writes `last_used_at` at most once a minute: an agent in a loop must not cause a write per request (MANAGE-07). */
+export async function recordTokenUse(db: Database, principal: TokenPrincipal, now: Date): Promise<void> {
+  if (principal.lastUsedAt && now.getTime() - principal.lastUsedAt.getTime() <= LAST_USED_INTERVAL_MS) return
+  await db.update(personalAccessTokens).set({ lastUsedAt: now }).where(eq(personalAccessTokens.id, principal.tokenId))
 }
 
 /**

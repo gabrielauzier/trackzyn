@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyServerOptions } from 'fastify'
 import { buildApp } from '../../src/app.ts'
 import { type Config, loadConfig } from '../../src/config.ts'
 import type { AppContext } from '../../src/context.ts'
@@ -23,7 +23,16 @@ export interface TestApp {
  * The application on an in-memory PostgreSQL (PGlite) and in-memory ports: no Redis, no
  * external database. `env` overrides settings the way environment variables would.
  */
-export async function createTestApp(env: Record<string, string> = {}): Promise<TestApp> {
+export async function createTestApp(
+  env: Record<string, string> = {},
+  options: {
+    server?: FastifyServerOptions
+    /** Sees every route as it is registered, through `onRoute`. */
+    beforeRoutes?: (app: FastifyInstance) => void
+    /** Adds routes only the test needs. */
+    routes?: (app: FastifyInstance, ctx: AppContext) => void
+  } = {},
+): Promise<TestApp> {
   const client = new PGlite()
   const db = drizzle(client) as unknown as Database
   await applyMigrations(db)
@@ -34,7 +43,7 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<T
   )
   const storage = new LocalStorageProvider(mkdtempSync(join(tmpdir(), 'trackzyn-node-files-')))
   const ctx: AppContext = { config, db, keyValueStore: new MemoryStore(), jobQueue: new InProcessQueue(), storage }
-  const app = await buildApp(ctx)
+  const app = await buildApp(ctx, options.server, options.beforeRoutes, (fastify) => options.routes?.(fastify, ctx))
   return {
     app,
     ctx,
