@@ -64,7 +64,7 @@
 - **Phase / Task**: Execute concluído; Verifier PASS na iteração 3
 - **Completed**: as 5 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso)
 - **In-progress** (file:line): none
-- **Next step**: enviar a `v2` ao GitHub para o CI rodar o Postgres 16 e o `RedisStore`, que nunca rodaram nesta máquina; testar um cliente MCP real. Das features anteriores, seguem pendentes: fechar as issues #1 e #2, rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
+- **Next step**: revisar o PR para a `v2`; o Postgres 16 e o `RedisStore` ainda não rodaram, porque `ci.yml` só dispara na `main`; testar um cliente MCP real. Das features anteriores, seguem pendentes: fechar as issues #1 e #2, rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: v2
+- **Branch**: feat/personal-access-tokens
