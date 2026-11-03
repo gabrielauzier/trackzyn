@@ -238,6 +238,9 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 - WHEN `expires_at` é igual ao instante da requisição THEN the trackzyn SHALL tratar o token como expirado. (AUTH-10)
 - WHEN duas criações simultâneas levariam o usuário a mais de 50 tokens ativos THEN the trackzyn SHALL aceitar só as que couberem no limite e responder 409 `Token limit reached` às demais. (TOKEN-15)
 - WHEN duas criações simultâneas usam o mesmo nome THEN the trackzyn SHALL aceitar uma e responder 409 `Token name already in use` à outra. (TOKEN-16)
+- IF `name` contém o caractere NUL THEN the trackzyn SHALL responder 422 sem criar o token. (TOKEN-17)
+- IF `title`, `notes` ou o título de uma subtarefa contém o caractere NUL THEN the trackzyn SHALL responder 422 sem gravar nada. (API-12)
+- IF `POST /api/mcp` recebe um lote JSON-RPC (corpo em array) THEN the trackzyn SHALL responder HTTP 400 com o erro JSON-RPC `-32600` sem executar nenhuma chamada, para o lote não contornar RATE-01. (MCP-13)
 - IF o token foi rebaixado de papel entre duas requisições THEN the trackzyn SHALL aplicar o papel atual já na requisição seguinte, sem cache. (SCOPE-11)
 
 ---
@@ -246,7 +249,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 
 | Dimensão | Cobertura |
 | -------- | --------- |
-| Validação e limites | TOKEN-07, API-06, IDEM-05 |
+| Validação e limites | TOKEN-07, TOKEN-17, API-06, API-12, IDEM-05, MCP-13 |
 | Falhas e falha parcial | API-07, MCP-06 |
 | Idempotência e retentativa | IDEM-01 a IDEM-08, MANAGE-05 |
 | Autorização e limite de requisições | AUTH-01 a AUTH-10, SCOPE-01 a SCOPE-11, RATE-01 |
@@ -278,6 +281,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | TOKEN-14 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-15 | Edge Cases | Tasks | Implementing |
 | TOKEN-16 | Edge Cases | Tasks | Implementing |
+| TOKEN-17 | Edge Cases | Tasks | Implementing |
 | MANAGE-01 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-02 | P1: Ver e revogar tokens | Tasks | Implementing |
 | MANAGE-03 | P1: Ver e revogar tokens | Tasks | Implementing |
@@ -320,6 +324,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | API-09 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-10 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | API-11 | P1: Criar tarefas pela API REST | Tasks | Implementing |
+| API-12 | Edge Cases | Tasks | Implementing |
 | IDEM-01 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-02 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-03 | P1: Criar tarefas pela API REST | Tasks | Implementing |
@@ -340,6 +345,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | MCP-10 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-11 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-12 | P1: Conectar uma IA por MCP | Tasks | Implementing |
+| MCP-13 | Edge Cases | Tasks | Implementing |
 | ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | Implementing |
@@ -348,7 +354,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-07 | P1: Ver a origem da tarefa | Tasks | Implementing |
 
-**Coverage:** 85 total, 85 mapped to tasks, 0 unmapped
+**Coverage:** 88 total, 88 mapped to tasks, 0 unmapped
 
 ---
 

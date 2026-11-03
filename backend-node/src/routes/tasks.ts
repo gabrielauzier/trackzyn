@@ -6,6 +6,7 @@ import { type Subtask, TASK_COLUMNS } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
+import { withoutNul } from './schemas.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
@@ -37,7 +38,8 @@ const taskReadSchema = z.object({
 
 export const taskParams = z.object({ task_id: uuid })
 const subtaskParams = z.object({ subtask_id: uuid })
-const title = z.string().min(1).max(255)
+const title = withoutNul(z.string().min(1).max(255))
+const notes = withoutNul(z.string().max(10_000))
 const estimateMinutes = z.number().int().min(1).max(1440).nullable()
 const column = z.enum(TASK_COLUMNS)
 
@@ -47,11 +49,11 @@ export const createTaskBody = z.object({
   title,
   estimate_minutes: estimateMinutes.optional(),
   column: column.default('backlog'),
-  notes: z.string().max(10_000).optional(),
+  notes: notes.optional(),
   subtasks: z.array(title).max(50).optional(),
 })
 
-export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: z.string().max(10_000).optional() })
+export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: notes.optional() })
 export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
 export const addSubtaskBody = z.object({ title })
 

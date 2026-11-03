@@ -70,6 +70,10 @@ export function mcpRoutes(ctx: AppContext) {
         preValidation: [workspaceContext(ctx)],
       },
       async (request, reply) => {
+        // A batch is one request to the limit of the hook but many calls: one token could run 100 per request (RATE-01).
+        if (Array.isArray(request.body)) {
+          return reply.code(400).send({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Batch requests are not supported' } })
+        }
         await answer(ctx, request, reply)
         return reply
       },

@@ -6,6 +6,7 @@ import { TOKEN_SCOPES } from '../db/schema.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { type AccessTokenView, createToken, listTokens, revokeToken } from '../services/access-tokens.ts'
 import { UUID_PATTERN } from '../services/users.ts'
+import { withoutNul } from './schemas.ts'
 
 const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
 
@@ -50,7 +51,7 @@ export function accessTokenRoutes(ctx: AppContext) {
       {
         schema: {
           body: z.object({
-            name: z.string().min(1).max(100),
+            name: withoutNul(z.string().min(1).max(100)),
             workspace_id: uuid,
             scopes: z.array(z.enum(TOKEN_SCOPES)).min(1),
             expires_in_days: z.literal([30, 90, 365]),

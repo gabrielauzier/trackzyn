@@ -136,6 +136,32 @@ describe('POST /api/tasks with a token', () => {
   })
 })
 
+describe('NUL characters', () => {
+  it.each([
+    ['title', { title: 'a\u0000b' }, ['body', 'title']],
+    ['notes', { title: 'A', notes: 'a\u0000b' }, ['body', 'notes']],
+    ['a subtask', { title: 'A', subtasks: ['ok', 'a\u0000b'] }, ['body', 'subtasks', 1]],
+  ])('API-12 %s with one answers 422 and creates nothing', async (_field, fields, loc) => {
+    const { post, listId, stored } = await setup()
+    const reply = await post({ list_id: listId, ...fields })
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json().detail[0].loc).toEqual(loc)
+    expect(await stored()).toEqual([])
+  })
+
+  it.each([
+    ['title', { title: 'a\u0000b' }],
+    ['notes', { notes: 'a\u0000b' }],
+  ])('API-12 editing %s with one answers 422 and changes nothing', async (_field, payload) => {
+    const { post, listId, token } = await setup()
+    const created = await post({ list_id: listId, title: 'A', notes: 'before' })
+    const reply = await t.app.inject({ method: 'PATCH', url: `/api/tasks/${created.json().id}`, headers: bearer(token.value), payload })
+    expect(reply.statusCode).toBe(422)
+    const after = await t.app.inject({ method: 'GET', url: `/api/tasks/${created.json().id}`, headers: bearer(token.value) })
+    expect(after.json()).toMatchObject({ title: 'A', notes: 'before' })
+  })
+})
+
 describe('Idempotency-Key', () => {
   it('IDEM-01, IDEM-02 a replay answers 201 with the same task and the header; the board shows one task', async () => {
     const { owner, workspaceId, listId, post } = await setup()

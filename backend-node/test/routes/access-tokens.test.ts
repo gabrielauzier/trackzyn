@@ -67,6 +67,14 @@ describe('POST /api/tokens', () => {
     })
   })
 
+  it('TOKEN-17 answers 422 for a name with a NUL character and creates nothing', async () => {
+    const countBefore = ((await list(owner.token)).json() as unknown[]).length
+    const reply = await post(owner.token, validBody({ name: 'a\u0000b' }))
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json().detail[0].loc).toEqual(['body', 'name'])
+    expect((await list(owner.token)).json()).toHaveLength(countBefore)
+  })
+
   it('TOKEN-07 answers 422 in the current format for a name of 101 characters', async () => {
     const reply = await post(owner.token, validBody({ name: 'n'.repeat(101) }))
     expect(reply.statusCode).toBe(422)

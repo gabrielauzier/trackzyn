@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { personalAccessTokens, taskIdempotencyKeys, tasks } from '../../src/db/schema.ts'
-import { callTool, connect, listen, toolNames } from '../support/mcp.ts'
+import { callTool, connect, listen, post, toolNames } from '../support/mcp.ts'
 import { completedBy, invite, inWorkspace, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
 import { mintToken } from '../support/tokens.ts'
@@ -103,6 +103,23 @@ describe('create_task', () => {
 })
 
 describe('failures', () => {
+  it('MCP-13 a JSON-RPC batch answers 400 and runs none of its calls', async () => {
+    const { listId, token } = await setup()
+    const message = (id: number) => ({ jsonrpc: '2.0', id, method: 'tools/call', params: { name: 'create_task', arguments: { list_id: listId, title: `Batch ${id}` } } })
+    const reply = await post(url, [message(1), message(2)], { authorization: `Bearer ${token.value}` })
+    expect(reply.status).toBe(400)
+    expect(await reply.json()).toEqual({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Batch requests are not supported' } })
+    expect(await t.ctx.db.select().from(tasks).where(eq(tasks.listId, listId))).toEqual([])
+  })
+
+  it('API-12 a title with a NUL character is a tool error, like the 422 of the route', async () => {
+    const { client, listId } = await setup()
+    const result = await callTool(client, 'create_task', { list_id: listId, title: 'a\u0000b' })
+    expect(result.isError).toBe(true)
+    expect(result.text).toContain('title')
+    expect(await t.ctx.db.select().from(tasks).where(eq(tasks.listId, listId))).toEqual([])
+  })
+
   it.each([
     ['an empty title', { title: '' }],
     ['a title over the limit', { title: 'x'.repeat(256) }],
