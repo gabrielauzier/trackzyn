@@ -313,7 +313,7 @@ export interface TokenPrincipal {
 | AUTH-01 a -05, -08, -10, SCOPE-03 a -06, RATE-01, OBS-01 | Hook |
 | SCOPE-01, -02, -07, -08, -10, -11 | Guards (sem cache: o papel é lido a cada requisição) |
 | SCOPE-09, API-11 | Rotas de listas e `transform` do OpenAPI |
-| API-01 a -06, -08, IDEM-05, -08 | `POST /api/tasks` e `createTask` |
+| API-01 a -06, -08, -12, TOKEN-17, IDEM-05, -08 | `POST /api/tasks` e `createTask` |
 | API-07, -09, -10, IDEM-01 a -04, -06, -07, ORIGIN-01 | `task-intake` |
 | ORIGIN-02, -04 a -06 | Origem nas respostas e FK `SET NULL` |
-| MCP-01 a -11 | Servidor MCP |
+| MCP-01 a -11, -13, -14 | Servidor MCP |

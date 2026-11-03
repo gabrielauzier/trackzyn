@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/tokens-de-acesso/design.md`
-**Status**: In Progress
+**Status**: Done
 
 ---
 
@@ -1098,3 +1098,9 @@ Execution is strictly sequential: uma tarefa por vez, na ordem. São 29 tarefas,
 | T22 a T27 | Componente | unit | unit | ✅ OK |
 | T28 | Documentação | none | none | ✅ OK |
 | T29 | CI e helper de concorrência | integration | integration | ✅ OK |
+
+---
+
+## Correções da verificação
+
+Fora das 29 tarefas, a verificação gerou os commits `2908c7c` (MCP-07), `9ba0b78` (MCP-13, TOKEN-17, API-12), `5014b78` (rótulo de revogação), `f1ca14a` (precisão da spec) e `2d92cb9` (testes do sensor e MCP-14).

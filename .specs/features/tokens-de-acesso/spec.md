@@ -204,8 +204,8 @@ Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas 
 6. IF uma ferramenta falha por validação, escopo, papel ou recurso inexistente THEN the trackzyn SHALL devolver `isError: true` com o mesmo texto de erro da rota REST equivalente. (MCP-06)
 7. IF um `POST /api/mcp` vem sem token válido THEN the trackzyn SHALL responder HTTP 401 com `WWW-Authenticate: Bearer`. (MCP-07)
 8. IF `POST /api/mcp` recebe o JWT de sessão THEN the trackzyn SHALL responder HTTP 401. (MCP-08)
-9. IF uma requisição a `/api/mcp` não recusada antes por token inválido (MCP-07, MCP-08) traz um cabeçalho `Origin` diferente de `FRONTEND_URL` THEN the trackzyn SHALL responder HTTP 403, para barrar DNS rebinding. (MCP-09)
-10. WHEN um cliente envia `GET` ou `DELETE /api/mcp` sem cair em MCP-09 THEN the trackzyn SHALL responder HTTP 405, pois o servidor não abre fluxo de eventos. (MCP-10)
+9. IF uma requisição a `/api/mcp` não recusada antes por token inválido (MCP-07, MCP-08, AUTH-02) traz um cabeçalho `Origin` diferente de `FRONTEND_URL` THEN the trackzyn SHALL responder HTTP 403, para barrar DNS rebinding. (MCP-09)
+10. WHEN um cliente envia `GET` ou `DELETE /api/mcp` sem cair em MCP-09 nem em AUTH-02 THEN the trackzyn SHALL responder HTTP 405, pois o servidor não abre fluxo de eventos. (MCP-10)
 11. The trackzyn SHALL atender cada requisição MCP sem guardar estado de sessão entre elas. (MCP-11)
 12. WHEN o token mostrado na criação é exibido THEN the trackzyn SHALL mostrar junto a URL de `/api/mcp` e um exemplo de configuração com o cabeçalho `Authorization`. (MCP-12)
 
@@ -268,95 +268,95 @@ Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TOKEN-01 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-02 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-03 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-04 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-05 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-06 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-07 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-08 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-09 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-10 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-11 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-12 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-13 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-14 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-15 | Edge Cases | Tasks | Implementing |
-| TOKEN-16 | Edge Cases | Tasks | Implementing |
-| TOKEN-17 | Edge Cases | Tasks | Implementing |
-| MANAGE-01 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-02 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-03 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-04 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-05 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-06 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-07 | P1: Ver e revogar tokens | Tasks | Implementing |
-| MANAGE-08 | P1: Ver e revogar tokens | Tasks | Implementing |
-| AUTH-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-02 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-03 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-04 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-05 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-07 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| AUTH-08 | Edge Cases | Tasks | Implementing |
-| AUTH-09 | Edge Cases | Tasks | Implementing |
-| AUTH-10 | Edge Cases | Tasks | Implementing |
-| SCOPE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-02 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-03 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-04 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-05 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-06 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-07 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-08 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-09 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-10 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| SCOPE-11 | Edge Cases | Tasks | Implementing |
-| RATE-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| OBS-01 | P1: Autenticar e limitar pelo token | Tasks | Implementing |
-| API-01 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-02 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-03 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-04 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-05 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-06 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-07 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-08 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-09 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-10 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-11 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| API-12 | Edge Cases | Tasks | Implementing |
-| IDEM-01 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-02 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-03 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-04 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-05 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-06 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-07 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| IDEM-08 | P1: Criar tarefas pela API REST | Tasks | Implementing |
-| MCP-01 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-02 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-03 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-04 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-05 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-06 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-07 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-08 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-09 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-10 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-11 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-12 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-13 | Edge Cases | Tasks | Implementing |
-| MCP-14 | Edge Cases | Tasks | Implementing |
-| ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-04 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-05 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-07 | P1: Ver a origem da tarefa | Tasks | Implementing |
+| TOKEN-01 | P1: Gerar um token | Validate | Verified |
+| TOKEN-02 | P1: Gerar um token | Validate | Verified |
+| TOKEN-03 | P1: Gerar um token | Validate | Verified |
+| TOKEN-04 | P1: Gerar um token | Validate | Verified |
+| TOKEN-05 | P1: Gerar um token | Validate | Verified |
+| TOKEN-06 | P1: Gerar um token | Validate | Verified |
+| TOKEN-07 | P1: Gerar um token | Validate | Verified |
+| TOKEN-08 | P1: Gerar um token | Validate | Verified |
+| TOKEN-09 | P1: Gerar um token | Validate | Verified |
+| TOKEN-10 | P1: Gerar um token | Validate | Verified |
+| TOKEN-11 | P1: Gerar um token | Validate | Verified |
+| TOKEN-12 | P1: Gerar um token | Validate | Verified |
+| TOKEN-13 | P1: Gerar um token | Validate | Verified |
+| TOKEN-14 | P1: Gerar um token | Validate | Verified |
+| TOKEN-15 | Edge Cases | Validate | Verified |
+| TOKEN-16 | Edge Cases | Validate | Verified |
+| TOKEN-17 | Edge Cases | Validate | Verified |
+| MANAGE-01 | P1: Ver e revogar tokens | Validate | Verified |
+| MANAGE-02 | P1: Ver e revogar tokens | Validate | Verified |
+| MANAGE-03 | P1: Ver e revogar tokens | Validate | Verified |
+| MANAGE-04 | P1: Ver e revogar tokens | Validate | Verified |
+| MANAGE-05 | P1: Ver e revogar tokens | Validate | Verified |
+| MANAGE-06 | P1: Ver e revogar tokens | Validate | Verified |
+| MANAGE-07 | P1: Ver e revogar tokens | Validate | Verified |
+| MANAGE-08 | P1: Ver e revogar tokens | Validate | Verified |
+| AUTH-01 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| AUTH-02 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| AUTH-03 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| AUTH-04 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| AUTH-05 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| AUTH-06 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| AUTH-07 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| AUTH-08 | Edge Cases | Validate | Verified |
+| AUTH-09 | Edge Cases | Validate | Verified |
+| AUTH-10 | Edge Cases | Validate | Verified |
+| SCOPE-01 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-02 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-03 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-04 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-05 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-06 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-07 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-08 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-09 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-10 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| SCOPE-11 | Edge Cases | Validate | Verified |
+| RATE-01 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| OBS-01 | P1: Autenticar e limitar pelo token | Validate | Verified |
+| API-01 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-02 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-03 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-04 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-05 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-06 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-07 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-08 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-09 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-10 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-11 | P1: Criar tarefas pela API REST | Validate | Verified |
+| API-12 | Edge Cases | Validate | Verified |
+| IDEM-01 | P1: Criar tarefas pela API REST | Validate | Verified |
+| IDEM-02 | P1: Criar tarefas pela API REST | Validate | Verified |
+| IDEM-03 | P1: Criar tarefas pela API REST | Validate | Verified |
+| IDEM-04 | P1: Criar tarefas pela API REST | Validate | Verified |
+| IDEM-05 | P1: Criar tarefas pela API REST | Validate | Verified |
+| IDEM-06 | P1: Criar tarefas pela API REST | Validate | Verified |
+| IDEM-07 | P1: Criar tarefas pela API REST | Validate | Verified |
+| IDEM-08 | P1: Criar tarefas pela API REST | Validate | Verified |
+| MCP-01 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-02 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-03 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-04 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-05 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-06 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-07 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-08 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-09 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-10 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-11 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-12 | P1: Conectar uma IA por MCP | Validate | Verified |
+| MCP-13 | Edge Cases | Validate | Verified |
+| MCP-14 | Edge Cases | Validate | Verified |
+| ORIGIN-01 | P1: Ver a origem da tarefa | Validate | Verified |
+| ORIGIN-02 | P1: Ver a origem da tarefa | Validate | Verified |
+| ORIGIN-03 | P1: Ver a origem da tarefa | Validate | Verified |
+| ORIGIN-04 | P1: Ver a origem da tarefa | Validate | Verified |
+| ORIGIN-05 | P1: Ver a origem da tarefa | Validate | Verified |
+| ORIGIN-06 | P1: Ver a origem da tarefa | Validate | Verified |
+| ORIGIN-07 | P1: Ver a origem da tarefa | Validate | Verified |
 
 **Coverage:** 89 total, 89 mapped to tasks, 0 unmapped
 

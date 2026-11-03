@@ -129,7 +129,7 @@ describe('failures', () => {
     expect(JSON.parse((await callTool(client, 'get_task', { task_id: task.id })).text).subtasks).toEqual([])
   })
 
-  it('MCP-06 an idempotency_key with a NUL character is a tool error and creates nothing', async () => {
+  it('MCP-14 an idempotency_key with a NUL character is a tool error and creates nothing', async () => {
     const { create, stored } = await setup()
     const result = await create({ title: 'A', idempotency_key: 'a\u0000b' })
     expect(result.isError).toBe(true)

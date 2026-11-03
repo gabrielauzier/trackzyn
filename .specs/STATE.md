@@ -61,10 +61,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/tokens-de-acesso`
-- **Phase / Task**: Design aprovado; `tasks.md` escrito, aguardando aprovação; depois vem Execute
-- **Completed**: listas-e-quadro, foco-e-sons, widget-desktop e relatorios com Verifier PASS; spec e design de tokens-de-acesso aprovados
+- **Phase / Task**: Execute concluído; Verifier PASS na iteração 3
+- **Completed**: as 5 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso)
 - **In-progress** (file:line): none
-- **Next step**: aprovar `tasks.md` e começar por T1. Das features anteriores, seguem pendentes: fechar as issues #1 e #2, rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
+- **Next step**: enviar a `v2` ao GitHub para o CI rodar o Postgres 16 e o `RedisStore`, que nunca rodaram nesta máquina; testar um cliente MCP real. Das features anteriores, seguem pendentes: fechar as issues #1 e #2, rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
 - **Blockers**: none
-- **Uncommitted files**: `.specs/features/tokens-de-acesso/` e `.specs/STATE.md`
+- **Uncommitted files**: none
 - **Branch**: v2
