@@ -832,12 +832,14 @@ T28
 
 **Done when**:
 
-- [ ] Abre com o workspace atual, `lists:read` e `tasks:create` marcados e 90 dias
-- [ ] O aviso de ORIGIN-07 aparece no formulário
-- [ ] Nome repetido, limite e `Read-only role` mostram a mensagem no formulário, que continua aberto
-- [ ] Sem nenhum escopo, o envio fica desabilitado
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Abre com o workspace atual, `lists:read` e `tasks:create` marcados e 90 dias
+- [x] O aviso de ORIGIN-07 aparece no formulário
+- [x] Nome repetido, limite e `Read-only role` mostram a mensagem no formulário, que continua aberto
+- [x] Sem nenhum escopo, o envio fica desabilitado
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

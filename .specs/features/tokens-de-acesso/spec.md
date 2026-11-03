@@ -263,7 +263,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | TOKEN-01 | P1: Gerar um token | Tasks | In Tasks |
-| TOKEN-02 | P1: Gerar um token | Tasks | In Tasks |
+| TOKEN-02 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-03 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-04 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-05 | P1: Gerar um token | Tasks | Implementing |
@@ -346,7 +346,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | ORIGIN-04 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-05 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-07 | P1: Ver a origem da tarefa | Tasks | In Tasks |
+| ORIGIN-07 | P1: Ver a origem da tarefa | Tasks | Implementing |
 
 **Coverage:** 85 total, 85 mapped to tasks, 0 unmapped
 

@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { KeyRound, Plus } from 'lucide-react'
+import { useWorkspace } from '@/contexts/workspace-context'
 import { accessTokens } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import type { AccessToken } from '@/types'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { AccessToken, AccessTokenScope } from '@/types'
 
 interface AccessTokensDialogProps {
   open: boolean
@@ -18,6 +23,26 @@ const STATUS_KEYS: Record<AccessToken['status'], string> = {
   active: 'accessTokens.statusActive',
   expired: 'accessTokens.statusExpired',
   revoked: 'accessTokens.statusRevoked',
+}
+
+const SCOPE_KEYS: Record<AccessTokenScope, string> = {
+  'lists:read': 'accessTokens.scopeListsRead',
+  'tasks:read': 'accessTokens.scopeTasksRead',
+  'tasks:create': 'accessTokens.scopeTasksCreate',
+  'tasks:write': 'accessTokens.scopeTasksWrite',
+  'tasks:delete': 'accessTokens.scopeTasksDelete',
+}
+const SCOPES = Object.keys(SCOPE_KEYS) as AccessTokenScope[]
+const DEFAULT_SCOPES: AccessTokenScope[] = ['lists:read', 'tasks:create']
+const VALIDITIES = [30, 90, 365] as const
+type Validity = (typeof VALIDITIES)[number]
+
+/** The API answers in English; these are the refusals the form expects, in the interface language. */
+const SERVER_ERROR_KEYS: Record<string, string> = {
+  'Token name already in use': 'accessTokens.errorNameInUse',
+  'Token limit reached': 'accessTokens.errorLimit',
+  'Read-only role': 'accessTokens.errorReadOnly',
+  'Workspace not found': 'accessTokens.errorWorkspace',
 }
 
 export function AccessTokensDialog({ open, onClose }: AccessTokensDialogProps) {
@@ -43,6 +68,7 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
   const [revoking, setRevoking] = useState<AccessToken | null>(null)
   const [revokePending, setRevokePending] = useState(false)
   const [revokeError, setRevokeError] = useState<string | null>(null)
+  const [generating, setGenerating] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -79,6 +105,18 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
       setRevokePending(false)
       setRevoking(null)
     }
+  }
+
+  if (generating) {
+    return (
+      <GenerateTokenForm
+        onCancel={() => setGenerating(false)}
+        onCreated={() => {
+          setGenerating(false)
+          void load()
+        }}
+      />
+    )
   }
 
   return (
@@ -155,7 +193,7 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
         <Button type="button" variant="outline" onClick={onClose}>
           {t('common.close')}
         </Button>
-        <Button type="button">
+        <Button type="button" onClick={() => setGenerating(true)}>
           <Plus size={14} /> {t('accessTokens.generate')}
         </Button>
       </DialogFooter>
@@ -169,5 +207,116 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
         onConfirm={() => void handleRevoke()}
       />
     </div>
+  )
+}
+
+function GenerateTokenForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: () => void }) {
+  const { t } = useTranslation()
+  const { current, workspaces } = useWorkspace()
+  const [name, setName] = useState('')
+  const [workspaceId, setWorkspaceId] = useState(current?.id ?? '')
+  const [scopes, setScopes] = useState<AccessTokenScope[]>(DEFAULT_SCOPES)
+  const [validity, setValidity] = useState<Validity>(90)
+  const [saving, setSaving] = useState(false)
+  // The raw answer, not its translation: the message follows the language if it changes.
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      await accessTokens.create({
+        name: name.trim(),
+        workspace_id: workspaceId,
+        // In the order of the checkboxes, whatever order they were ticked in.
+        scopes: SCOPES.filter((scope) => scopes.includes(scope)),
+        expires_in_days: validity,
+      })
+      onCreated()
+    } catch (err) {
+      setError(extractApiError(err, t('accessTokens.createError')))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleScope = (scope: AccessTokenScope, checked: boolean) =>
+    setScopes((selected) => (checked ? [...selected, scope] : selected.filter((item) => item !== scope)))
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+      <div className="space-y-1.5">
+        <Label htmlFor="access-token-name">{t('common.name')}</Label>
+        <Input id="access-token-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={100} autoFocus />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor="access-token-workspace">{t('accessTokens.workspace')}</Label>
+          <Select value={workspaceId} onValueChange={setWorkspaceId}>
+            <SelectTrigger id="access-token-workspace" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {workspaces.map((workspace) => (
+                <SelectItem key={workspace.id} value={workspace.id}>
+                  {workspace.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="min-w-0 space-y-1.5">
+          <Label htmlFor="access-token-validity">{t('accessTokens.validity')}</Label>
+          <Select value={String(validity)} onValueChange={(value) => setValidity(Number(value) as Validity)}>
+            <SelectTrigger id="access-token-validity" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {VALIDITIES.map((days) => (
+                <SelectItem key={days} value={String(days)}>
+                  {t('accessTokens.days', { days })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">{t('accessTokens.scopes')}</legend>
+        {SCOPES.map((scope) => (
+          <div key={scope} className="flex items-start gap-2">
+            <Checkbox
+              id={`access-token-scope-${scope}`}
+              className="mt-0.5"
+              checked={scopes.includes(scope)}
+              onCheckedChange={(checked) => toggleScope(scope, checked === true)}
+            />
+            <Label htmlFor={`access-token-scope-${scope}`} className="block font-normal">
+              <code className="rounded bg-muted px-1 py-0.5 text-[11px]">{scope}</code> {t(SCOPE_KEYS[scope])}
+            </Label>
+          </div>
+        ))}
+      </fieldset>
+
+      <p className="text-xs text-muted-foreground">{t('accessTokens.nameVisible')}</p>
+
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {SERVER_ERROR_KEYS[error] ? t(SERVER_ERROR_KEYS[error]) : error}
+        </p>
+      )}
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+          {t('common.cancel')}
+        </Button>
+        <Button type="submit" disabled={saving || !name.trim() || scopes.length === 0}>
+          {t('accessTokens.submit')}
+        </Button>
+      </DialogFooter>
+    </form>
   )
 }
