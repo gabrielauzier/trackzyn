@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest, preValidationAsyncHookHandler } from 'fastify'
+import type { FastifyInstance, FastifyReply, FastifyRequest, onRequestAsyncHookHandler } from 'fastify'
 import type { AppContext } from '../context.ts'
 import { forbidden } from '../http/http-error.ts'
 import { callTool, listTools } from '../mcp/tools.ts'
@@ -55,7 +55,7 @@ async function answer(ctx: AppContext, request: FastifyRequest, reply: FastifyRe
 export function mcpRoutes(ctx: AppContext) {
   return async (app: FastifyInstance): Promise<void> => {
     /** Stops DNS rebinding (MCP-09): a client outside a browser sends no `Origin`. */
-    const rejectForeignOrigin: preValidationAsyncHookHandler = async (request) => {
+    const rejectForeignOrigin: onRequestAsyncHookHandler = async (request) => {
       const { origin } = request.headers
       if (origin !== undefined && origin !== ctx.config.frontendUrl) throw forbidden()
     }
@@ -65,7 +65,9 @@ export function mcpRoutes(ctx: AppContext) {
       {
         schema: { hide: true },
         config: { tokenScope: 'any' },
-        preValidation: [requireToken, workspaceContext(ctx), rejectForeignOrigin],
+        // Before the body is parsed: without a token, a malformed body must still answer 401 (MCP-07).
+        onRequest: [requireToken, rejectForeignOrigin],
+        preValidation: [workspaceContext(ctx)],
       },
       async (request, reply) => {
         await answer(ctx, request, reply)
@@ -78,7 +80,7 @@ export function mcpRoutes(ctx: AppContext) {
     const noStream = {
       schema: { hide: true },
       config: { tokenScope: 'any' as const },
-      preValidation: [rejectForeignOrigin],
+      onRequest: [rejectForeignOrigin],
     }
     const methodNotAllowed = async (_request: FastifyRequest, reply: FastifyReply) =>
       reply.code(405).header('Allow', 'POST').send({ detail: 'Method Not Allowed' })

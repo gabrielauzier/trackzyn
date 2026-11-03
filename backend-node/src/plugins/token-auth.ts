@@ -1,4 +1,4 @@
-import type { FastifyInstance, preValidationAsyncHookHandler } from 'fastify'
+import type { FastifyInstance, onRequestAsyncHookHandler } from 'fastify'
 import type { AppContext } from '../context.ts'
 import { HttpError, forbidden } from '../http/http-error.ts'
 import { type TokenPrincipal, type TokenScope, authenticate, recordTokenUse } from '../services/access-tokens.ts'
@@ -25,7 +25,7 @@ function deniedBy(principal: TokenPrincipal, method: string, scope: TokenScope |
 }
 
 /** A route only a token may call: the session JWT skips the hook below, so it stops here (MCP-08). */
-export const requireToken: preValidationAsyncHookHandler = async (request) => {
+export const requireToken: onRequestAsyncHookHandler = async (request) => {
   if (!request.tokenPrincipal) throw new HttpError(401, 'Unauthorized', { 'WWW-Authenticate': 'Bearer' })
   request.user = request.tokenPrincipal.user
 }

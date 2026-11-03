@@ -81,9 +81,26 @@ describe('without a valid token', () => {
     await t.app.inject({ method: 'DELETE', url: `/api/tokens/${revoked.id}`, headers: bearer(owner.token) })
     expect((await post(url, INITIALIZE, withToken(revoked.value))).status).toBe(401)
   })
+
+  it('MCP-07 no token answers 401 before the body is read, even when it is not valid JSON', async () => {
+    const reply = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{' })
+    expect(reply.status).toBe(401)
+    expect(reply.headers.get('www-authenticate')).toBe('Bearer')
+  })
+
+  it('MCP-08 the session JWT answers 401 before the body is read', async () => {
+    const reply = await fetch(url, { method: 'POST', headers: { ...withToken(owner.token), 'content-type': 'application/json' }, body: '{' })
+    expect(reply.status).toBe(401)
+    expect(reply.headers.get('www-authenticate')).toBe('Bearer')
+  })
 })
 
 describe('Origin', () => {
+  it('MCP-09 another origin answers 403 before the body is read', async () => {
+    const reply = await fetch(url, { method: 'POST', headers: { ...withToken(), origin: 'https://evil.example.com', 'content-type': 'application/json' }, body: '{' })
+    expect(reply.status).toBe(403)
+  })
+
   it('MCP-09 another origin answers 403', async () => {
     const reply = await post(url, INITIALIZE, { ...withToken(), origin: 'https://evil.example.com' })
     expect(reply.status).toBe(403)

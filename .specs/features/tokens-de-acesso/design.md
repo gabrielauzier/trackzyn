@@ -176,7 +176,7 @@ A rota lê `Idempotency-Key` só com principal. Por isso o cabeçalho é validad
 - **Purpose**: Expor as ferramentas por Streamable HTTP sem estado.
 - **Location**: `backend-node/src/routes/mcp.ts`, `backend-node/src/mcp/tools.ts` (novos)
 - **Interfaces**:
-  - `POST /api/mcp` com `config.tokenScope: 'any'`, `schema.hide: true` e `preValidation: [requireToken, workspaceContext(ctx), rejectForeignOrigin]`
+  - `POST /api/mcp` com `config.tokenScope: 'any'`, `schema.hide: true`, `onRequest: [requireToken, rejectForeignOrigin]` e `preValidation: [workspaceContext(ctx)]`; o token e a origem são conferidos antes de ler o corpo, para um corpo malformado sem token dar 401, não 422
   - `GET` e `DELETE /api/mcp`: 405
   - `TOOLS: Array<{ name, scope, input: ZodObject, write: boolean, run(ctx, wc, principal, args) }>`
 - **Dependencies**: `@modelcontextprotocol/sdk@1.32.2`, importado dinamicamente na rota
