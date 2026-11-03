@@ -21,6 +21,12 @@ def job_block(name: str) -> str:
 
 
 
+class TriggersTest(unittest.TestCase):
+    def test_pushes_and_pull_requests_to_main_and_v2_run_the_workflow(self):
+        text = WORKFLOW.read_text()
+        self.assertIn("on:\n  push:\n    branches: [main, v2]\n  pull_request:\n    branches: [main, v2]\n", text)
+
+
 class NodeBackendJobsTest(unittest.TestCase):
     def test_backend_node_tests_job_lints_typechecks_and_tests_with_coverage(self):
         block = job_block("backend-node-tests")
