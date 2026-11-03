@@ -1,7 +1,6 @@
-<p align="center">
-  <img src="frontend/public/favicon.svg" width="96" alt="trackzyn logo" />
-</p>
-<h1 align="center">trackzyn</h1>
+<h1 align="center">
+  <img src="docs/brand/trackzyn-wordmark.svg" width="320" alt="trackzyn" />
+</h1>
 
 <p align="center">
 Task management and activity time tracking, self-hosted. Fastify + PostgreSQL + BullMQ on the back, React + Tailwind + shadcn on the front.
