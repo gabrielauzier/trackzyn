@@ -267,13 +267,13 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | TOKEN-03 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-04 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-05 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-06 | P1: Gerar um token | Tasks | In Tasks |
+| TOKEN-06 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-07 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-08 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-09 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-10 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-11 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-12 | P1: Gerar um token | Tasks | In Tasks |
+| TOKEN-12 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-13 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-14 | P1: Gerar um token | Tasks | In Tasks |
 | TOKEN-15 | Edge Cases | Tasks | Implementing |
@@ -339,7 +339,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | MCP-09 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-10 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-11 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-12 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
+| MCP-12 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | In Tasks |

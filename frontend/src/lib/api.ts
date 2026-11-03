@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getDesktopApi, isDesktop } from '@/lib/platform'
 import { writesBlocked } from '@/lib/write-lock'
 import type { NumberFormat, DateFormat } from '@/lib/format'
 import type {
@@ -33,6 +34,16 @@ import type { QueuedAction } from '@/lib/focus/queue'
 const api = axios.create({
   baseURL: '/api',
 })
+
+/**
+ * The API's absolute address, for what is used outside this page (`curl`, an MCP client). On the
+ * desktop the page's origin is `app://` and `/api` is proxied to the saved server, so that server
+ * is the address; on the web `/api` is on the page's own origin.
+ */
+export async function externalApiUrl(): Promise<string> {
+  const server = isDesktop() ? await getDesktopApi().getServerUrl() : null
+  return `${(server ?? window.location.origin).replace(/\/+$/, '')}/api`
+}
 
 // Storage key for the currently-selected workspace ID. Lives in
 // localStorage so reloads + new tabs stay on the same workspace until

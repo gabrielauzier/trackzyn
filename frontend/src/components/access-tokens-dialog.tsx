@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { KeyRound, Plus } from 'lucide-react'
+import { toast } from 'sonner'
+import { Copy, KeyRound, Plus, TriangleAlert } from 'lucide-react'
 import { useWorkspace } from '@/contexts/workspace-context'
-import { accessTokens } from '@/lib/api'
+import { accessTokens, externalApiUrl } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { AccessToken, AccessTokenScope } from '@/types'
+import type { AccessToken, AccessTokenScope, CreatedAccessToken } from '@/types'
 
 interface AccessTokensDialogProps {
   open: boolean
@@ -69,6 +70,9 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
   const [revokePending, setRevokePending] = useState(false)
   const [revokeError, setRevokeError] = useState<string | null>(null)
   const [generating, setGenerating] = useState(false)
+  // The only place the full value lives (TOKEN-06): it dies with this panel when the dialog closes,
+  // and creating it goes around TanStack Query so that no cache ever holds it.
+  const [created, setCreated] = useState<CreatedAccessToken | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -107,13 +111,25 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
     }
   }
 
+  if (created) {
+    return (
+      <CreatedTokenView
+        created={created}
+        onDone={() => {
+          setCreated(null)
+          void load()
+        }}
+      />
+    )
+  }
+
   if (generating) {
     return (
       <GenerateTokenForm
         onCancel={() => setGenerating(false)}
-        onCreated={() => {
+        onCreated={(token) => {
           setGenerating(false)
-          void load()
+          setCreated(token)
         }}
       />
     )
@@ -210,7 +226,7 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
   )
 }
 
-function GenerateTokenForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: () => void }) {
+function GenerateTokenForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: (token: CreatedAccessToken) => void }) {
   const { t } = useTranslation()
   const { current, workspaces } = useWorkspace()
   const [name, setName] = useState('')
@@ -226,14 +242,14 @@ function GenerateTokenForm({ onCancel, onCreated }: { onCancel: () => void; onCr
     setSaving(true)
     setError(null)
     try {
-      await accessTokens.create({
+      const token = await accessTokens.create({
         name: name.trim(),
         workspace_id: workspaceId,
         // In the order of the checkboxes, whatever order they were ticked in.
         scopes: SCOPES.filter((scope) => scopes.includes(scope)),
         expires_in_days: validity,
       })
-      onCreated()
+      onCreated(token)
     } catch (err) {
       setError(extractApiError(err, t('accessTokens.createError')))
     } finally {
@@ -318,5 +334,89 @@ function GenerateTokenForm({ onCancel, onCreated }: { onCancel: () => void; onCr
         </Button>
       </DialogFooter>
     </form>
+  )
+}
+
+function CreatedTokenView({ created, onDone }: { created: CreatedAccessToken; onDone: () => void }) {
+  const { t } = useTranslation()
+  const [apiUrl, setApiUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    void externalApiUrl().then(setApiUrl)
+  }, [])
+
+  const header = `Authorization: Bearer ${created.token}`
+  const mcpUrl = `${apiUrl}/mcp`
+  const mcpConfig = JSON.stringify(
+    { mcpServers: { trackzyn: { type: 'http', url: mcpUrl, headers: { Authorization: `Bearer ${created.token}` } } } },
+    null,
+    2,
+  )
+  const curl = [
+    `# ${t('accessTokens.curlFindList')}`,
+    `curl ${apiUrl}/lists -H "${header}"`,
+    '',
+    `# ${t('accessTokens.curlCreateTask')}`,
+    `curl -X POST ${apiUrl}/tasks \\`,
+    `  -H "${header}" \\`,
+    '  -H "Content-Type: application/json" \\',
+    `  -d '${JSON.stringify({ list_id: 'LIST_ID', title: t('accessTokens.curlTaskTitle') })}'`,
+  ].join('\n')
+
+  return (
+    <div className="min-w-0 space-y-4">
+      <div className="flex items-start gap-2.5 rounded-lg bg-amber-500/10 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-300">
+        <TriangleAlert size={16} className="mt-0.5 shrink-0" />
+        <p>{t('accessTokens.copyNow')}</p>
+      </div>
+
+      <CopyBlock label={t('accessTokens.tokenLabel')} copyLabel={t('accessTokens.copyToken')} value={created.token} />
+
+      {apiUrl && (
+        <>
+          <CopyBlock label={t('accessTokens.curlLabel')} copyLabel={t('accessTokens.copyCurl')} value={curl} testId="access-token-curl" />
+          <CopyBlock label={t('accessTokens.mcpUrlLabel')} copyLabel={t('accessTokens.copyMcpUrl')} value={mcpUrl} />
+          <CopyBlock
+            label={t('accessTokens.mcpConfigLabel')}
+            copyLabel={t('accessTokens.copyMcpConfig')}
+            value={mcpConfig}
+            testId="access-token-mcp-config"
+          />
+        </>
+      )}
+
+      <DialogFooter>
+        <Button type="button" onClick={onDone}>
+          {t('accessTokens.done')}
+        </Button>
+      </DialogFooter>
+    </div>
+  )
+}
+
+function CopyBlock({ label, copyLabel, value, testId }: { label: string; copyLabel: string; value: string; testId?: string }) {
+  const { t } = useTranslation()
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+      toast.success(t('accessTokens.copied'))
+    } catch {
+      toast.error(t('accessTokens.copyFailed'))
+    }
+  }
+
+  return (
+    <div className="min-w-0 space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium">{label}</p>
+        <Button type="button" variant="ghost" size="icon-sm" aria-label={copyLabel} title={copyLabel} onClick={() => void handleCopy()}>
+          <Copy size={14} />
+        </Button>
+      </div>
+      <pre data-testid={testId} className="rounded-lg bg-muted px-3 py-2 font-mono text-xs break-all whitespace-pre-wrap">
+        {value}
+      </pre>
+    </div>
   )
 }

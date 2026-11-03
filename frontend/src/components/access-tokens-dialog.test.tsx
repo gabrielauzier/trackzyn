@@ -3,12 +3,15 @@ import { screen, waitFor, within } from '@testing-library/react'
 
 import { AccessTokensDialog } from '@/components/access-tokens-dialog'
 import { accessTokens } from '@/lib/api'
+import { toast } from 'sonner'
 import { i18n, renderWithProviders, t } from '@/test/utils'
 import type { AccessToken } from '@/types'
 
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api')>()),
   accessTokens: { list: vi.fn(), create: vi.fn(), revoke: vi.fn() },
 }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 const workspace = { id: 'ws-1', name: 'Synthetic workspace', role: 'owner' }
 const otherWorkspace = { id: 'ws-2', name: 'Second workspace', role: 'editor' }
@@ -342,6 +345,155 @@ describe('AccessTokensDialog form', () => {
 
     expect(await screen.findByText('n8n flow')).toBeInTheDocument()
     expect(accessTokens.create).not.toHaveBeenCalled()
+  })
+})
+
+const TOKEN = 'tkz_SyntheticValueOnlyTheCreationResponseCarries0000000'
+
+async function generateToken(rendered: ReturnType<typeof renderDialog>) {
+  vi.mocked(accessTokens.create).mockResolvedValue({
+    id: '55555555-5555-4555-8555-555555555555',
+    token: TOKEN,
+    expires_at: '2027-01-30T10:00:00Z',
+  })
+  await openForm(rendered.user)
+  await rendered.user.type(screen.getByLabelText('Name'), 'n8n flow')
+  await rendered.user.click(screen.getByRole('button', { name: 'Generate' }))
+  await screen.findByText(TOKEN)
+}
+
+describe('AccessTokensDialog created token', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'trackzyn')
+  })
+
+  it('shows the value with the warning', async () => {
+    const rendered = renderDialog()
+    await generateToken(rendered)
+
+    expect(screen.getByText(TOKEN)).toBeInTheDocument()
+    expect(screen.getByText("Copy it now; this token won't be shown again")).toBeInTheDocument()
+  })
+
+  it('shows the exact warning of TOKEN-06 in Portuguese', async () => {
+    await i18n.changeLanguage('pt-BR')
+    vi.mocked(accessTokens.create).mockResolvedValue({
+      id: '55555555-5555-4555-8555-555555555555',
+      token: TOKEN,
+      expires_at: '2027-01-30T10:00:00Z',
+    })
+    const { user } = renderDialog()
+
+    await screen.findByText('n8n flow')
+    await user.click(screen.getByRole('button', { name: 'Gerar token' }))
+    await user.type(await screen.findByLabelText('Nome'), 'novo')
+    await user.click(screen.getByRole('button', { name: 'Gerar' }))
+
+    expect(await screen.findByText('Copie agora; este token não será mostrado de novo')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Copiar token' })).toBeInTheDocument()
+  })
+
+  it('copies the value to the clipboard and confirms', async () => {
+    const rendered = renderDialog()
+    await generateToken(rendered)
+
+    await rendered.user.click(screen.getByRole('button', { name: 'Copy token' }))
+
+    expect(await navigator.clipboard.readText()).toBe(TOKEN)
+    expect(toast.success).toHaveBeenCalledWith('Copied')
+  })
+
+  it('tells when the copy fails', async () => {
+    const rendered = renderDialog()
+    await generateToken(rendered)
+    vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('denied'))
+
+    await rendered.user.click(screen.getByRole('button', { name: 'Copy token' }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Could not copy. Select the text and copy it by hand.'))
+  })
+
+  it('shows the absolute MCP address and a configuration with the Authorization header', async () => {
+    const rendered = renderDialog()
+    await generateToken(rendered)
+
+    const url = `${window.location.origin}/api/mcp`
+    expect(window.location.origin).toMatch(/^http/)
+    expect(await screen.findByText(url)).toBeInTheDocument()
+
+    const config = JSON.parse(screen.getByTestId('access-token-mcp-config').textContent ?? '')
+    expect(config.mcpServers.trackzyn).toEqual({ type: 'http', url, headers: { Authorization: `Bearer ${TOKEN}` } })
+  })
+
+  it('shows curl commands that find the list and create the task with this token', async () => {
+    const rendered = renderDialog()
+    await generateToken(rendered)
+
+    const curl = (await screen.findByTestId('access-token-curl')).textContent ?? ''
+    expect(curl).toContain(`curl ${window.location.origin}/api/lists -H "Authorization: Bearer ${TOKEN}"`)
+    expect(curl).toContain(`curl -X POST ${window.location.origin}/api/tasks`)
+    expect(curl).toContain(`-H "Authorization: Bearer ${TOKEN}"`)
+    expect(curl).toContain('-H "Content-Type: application/json"')
+    expect(curl).toContain('"list_id"')
+    expect(curl).toContain('"title"')
+  })
+
+  it('points to the saved server on the desktop, whose page lives on app://', async () => {
+    Object.defineProperty(window, 'trackzyn', {
+      value: { isDesktop: true, getServerUrl: vi.fn(async () => 'https://srv.example.com/') },
+      configurable: true,
+    })
+    const rendered = renderDialog()
+    await generateToken(rendered)
+
+    expect(await screen.findByText('https://srv.example.com/api/mcp')).toBeInTheDocument()
+    expect(screen.getByTestId('access-token-curl').textContent).toContain('curl https://srv.example.com/api/lists')
+    expect(JSON.parse(screen.getByTestId('access-token-mcp-config').textContent ?? '').mcpServers.trackzyn.url).toBe(
+      'https://srv.example.com/api/mcp',
+    )
+  })
+
+  it('keeps the value out of localStorage and out of the query and mutation caches', async () => {
+    localStorage.setItem('unrelated', 'kept')
+    const rendered = renderDialog()
+    await generateToken(rendered)
+    await rendered.user.click(screen.getByRole('button', { name: 'Copy token' }))
+
+    const stored = Object.keys(localStorage).map((key) => `${key}=${localStorage.getItem(key)}`)
+    expect(stored).toContain('unrelated=kept')
+    expect(stored.join('\n')).not.toContain(TOKEN)
+
+    const cached = JSON.stringify([
+      rendered.queryClient.getQueryCache().getAll().map((query) => query.state),
+      rendered.queryClient.getMutationCache().getAll().map((mutation) => mutation.state),
+    ])
+    expect(cached).not.toContain(TOKEN)
+    localStorage.removeItem('unrelated')
+  })
+
+  it('does not show the value again after closing and reopening the dialog', async () => {
+    const rendered = renderDialog()
+    await generateToken(rendered)
+
+    const fresh = (open: boolean) => <AccessTokensDialog open={open} onClose={rendered.onClose} />
+    rendered.rerender(fresh(false))
+    await waitFor(() => expect(screen.queryByText(TOKEN)).not.toBeInTheDocument())
+
+    rendered.rerender(fresh(true))
+
+    expect(await screen.findByText('n8n flow')).toBeInTheDocument()
+    expect(document.body.textContent).not.toContain(TOKEN)
+  })
+
+  it('leaves the value behind when going back to the list, which now has the new token', async () => {
+    const rendered = renderDialog()
+    await generateToken(rendered)
+    vi.mocked(accessTokens.list).mockResolvedValue([active, unused, { ...active, id: '55555555-5555-4555-8555-555555555555', name: 'Fresh one' }])
+
+    await rendered.user.click(screen.getByRole('button', { name: 'Done' }))
+
+    expect(await screen.findByText('Fresh one')).toBeInTheDocument()
+    expect(document.body.textContent).not.toContain(TOKEN)
   })
 })
 

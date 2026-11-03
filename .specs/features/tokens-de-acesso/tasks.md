@@ -863,12 +863,14 @@ T28
 
 **Done when**:
 
-- [ ] O valor aparece com o aviso `Copie agora; este token não será mostrado de novo`
-- [ ] Copiar grava o valor na área de transferência
-- [ ] A tela mostra a URL de `/api/mcp` e a configuração com o cabeçalho `Authorization`
-- [ ] Fechar e reabrir o diálogo não mostra o valor, e ele não aparece em `localStorage` nem no cache do TanStack Query
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] O valor aparece com o aviso `Copie agora; este token não será mostrado de novo`
+- [x] Copiar grava o valor na área de transferência
+- [x] A tela mostra a URL de `/api/mcp` e a configuração com o cabeçalho `Authorization`
+- [x] Fechar e reabrir o diálogo não mostra o valor, e ele não aparece em `localStorage` nem no cache do TanStack Query
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
