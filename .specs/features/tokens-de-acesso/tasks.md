@@ -679,13 +679,15 @@ T28
 
 **Done when**:
 
-- [ ] O schema em `tools/list` traz os mesmos campos e limites da rota, mais `idempotency_key`
-- [ ] A tarefa criada aparece no quadro com `created_via`
-- [ ] A mesma chave não duplica; a mesma chave usada em REST e em MCP pelo mesmo token também não
-- [ ] Lista arquivada devolve `isError: true` com `List is archived`
-- [ ] Um `viewer` com escopo de escrita recebe `isError: true` com `Read-only role`
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] O schema em `tools/list` traz os mesmos campos e limites da rota, mais `idempotency_key`
+- [x] A tarefa criada aparece no quadro com `created_via`
+- [x] A mesma chave não duplica; a mesma chave usada em REST e em MCP pelo mesmo token também não
+- [x] Lista arquivada devolve `isError: true` com `List is archived`
+- [x] Um `viewer` com escopo de escrita recebe `isError: true` com `Read-only role`
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

@@ -4,9 +4,10 @@ import { HttpError, forbidden } from '../http/http-error.ts'
 import { zodIssueToItem } from '../plugins/errors.ts'
 import { type WorkspaceContext, ensureWritable } from '../plugins/workspace.ts'
 import { listParams, listsView } from '../routes/lists.ts'
-import { taskParams, toTaskRead } from '../routes/tasks.ts'
+import { createTaskBody, taskParams, toTaskRead } from '../routes/tasks.ts'
 import type { TokenPrincipal, TokenScope } from '../services/access-tokens.ts'
 import { buildBoard } from '../services/board.ts'
+import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { getTask } from '../services/tasks.ts'
 
 /** Who is calling and from where, as the guards of `POST /api/mcp` left them. */
@@ -62,6 +63,25 @@ const TOOLS: readonly Tool[] = [
     input: described(taskParams, { task_id: 'The id of the task, as returned by get_board.' }),
     pathArguments: ['task_id'],
     run: async ({ ctx, workspace }, { task_id }) => toTaskRead(await getTask(ctx.db, task_id.toLowerCase(), workspace.workspace.id)),
+  }),
+  tool({
+    name: 'create_task',
+    description: 'Create a task in a list, optionally with notes, an estimate and subtasks. It goes to the end of its column. Send an idempotency_key when you may retry, so that a retry does not create the task twice. The list must not be archived.',
+    scope: 'tasks:create',
+    write: true,
+    input: described(createTaskBody.extend({ idempotency_key: z.string().min(1).max(255).optional() }), {
+      list_id: 'The id of the list, as returned by list_lists.',
+      title: 'The title of the task, 1 to 255 characters.',
+      estimate_minutes: 'How long the task should take, from 1 to 1440 minutes, or null for no estimate.',
+      column: 'The board column: backlog (the default), this_week, today or done.',
+      notes: 'Free text notes about the task, up to 10000 characters.',
+      subtasks: 'Subtask titles in order, up to 50, each 1 to 255 characters.',
+      idempotency_key: 'Any unique string, up to 255 characters. Within 24 hours, the same key with the same arguments returns the same task and replayed: true instead of creating another; with other arguments it fails.',
+    }),
+    run: async ({ ctx, workspace, principal }, { idempotency_key, ...body }) => {
+      const { task, replayed } = await createTaskFromToken(ctx.db, workspace.workspace.id, principal, toTaskIntake(body), idempotency_key)
+      return { ...toTaskRead(task), replayed }
+    },
   }),
 ]
 
