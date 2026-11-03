@@ -52,6 +52,8 @@ Hoje a API do trackzyn só aceita o JWT da sessão de login, que dura pouco e d�
 | Conteúdo do reenvio | Devolve o estado atual da tarefa, com o cabeçalho `Idempotency-Replayed: true` | Não precisa guardar cópia da resposta. | y |
 | Selo visível para todos | Todos os membros do workspace veem o nome do token | O selo existe para mostrar a origem; o diálogo avisa que o nome fica visível. | y |
 | Transporte MCP | Streamable HTTP sem estado em `POST /api/mcp` | É o transporte remoto do protocolo e não exige estado de conexão, como AD-003. A versão do protocolo e do SDK é conferida em Design. | y |
+| O que conta como uso em `last_used_at` | Toda autenticação bem-sucedida, mesmo com erro depois | Quem investiga um vazamento precisa ver tentativas negadas. Lacuna achada pelo Verifier e resolvida pelo design. | n |
+| Precedência em `/api/mcp` | Token inválido (401) vem antes de `Origin` (403), e `Origin` vem antes de 405 | Fixa a ordem que os testes já provam. Lacuna achada pelo Verifier. | n |
 | Clientes MCP suportados | Clientes que enviam cabeçalho `Authorization` próprio | Não verifiquei a lista atual de clientes; quem só aceita OAuth fica de fora. Conferir na fase de Design. | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -60,7 +62,7 @@ Hoje a API do trackzyn só aceita o JWT da sessão de login, que dura pouco e d�
 
 ## Escopos e rotas
 
-Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
+Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas exceções, que não devolvem dados: uma rota inexistente responde 404, e `OPTIONS` é respondido pelo plugin de CORS antes do hook de token.
 
 | Escopo | Rotas REST | Ferramentas MCP |
 | ------ | ---------- | --------------- |
@@ -115,7 +117,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 4. WHEN o usuário confirma a revogação no diálogo de confirmação que já existe THEN the trackzyn SHALL enviar `DELETE /api/tokens/:id`, responder 204 e mostrar o token como `revoked`. (MANAGE-04)
 5. WHEN `DELETE /api/tokens/:id` chega para um token já revogado ou expirado THEN the trackzyn SHALL responder 204 sem alterar `revoked_at` já preenchido. (MANAGE-05)
 6. IF o token pertence a outro usuário THEN the trackzyn SHALL responder 404 a `DELETE /api/tokens/:id`. (MANAGE-06)
-7. WHEN um token usado com sucesso tem `last_used_at` nulo ou com mais de 60 s THEN the trackzyn SHALL gravar a hora atual em `last_used_at`. (MANAGE-07)
+7. WHEN um token autenticado, mesmo que a rota responda erro depois, tem `last_used_at` nulo ou com mais de 60 s THEN the trackzyn SHALL gravar a hora atual em `last_used_at`. (MANAGE-07)
 8. WHEN se passam 90 dias de `revoked_at` ou de `expires_at` THEN the trackzyn SHALL apagar o token na próxima escrita de tokens do usuário dono, mantendo as tarefas criadas por ele. (MANAGE-08)
 
 **Independent Test**: Gerar dois tokens, revogar um, conferir os estados na lista e que o outro continua funcionando.
@@ -139,7 +141,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 7. WHEN o workspace é excluído THEN the trackzyn SHALL apagar os tokens dele em cascata. (AUTH-07)
 8. WHEN uma requisição com token não envia `X-Workspace-Id` THEN the trackzyn SHALL usar o workspace do token. (SCOPE-01)
 9. IF `X-Workspace-Id` difere do workspace do token THEN the trackzyn SHALL responder 403 `Token is bound to another workspace`. (SCOPE-02)
-10. IF um token chama uma rota fora da tabela "Escopos e rotas" THEN the trackzyn SHALL responder 403 `Route not available for tokens`. (SCOPE-03)
+10. IF um token chama uma rota registrada fora da tabela "Escopos e rotas", salvo as exceções dessa seção, THEN the trackzyn SHALL responder 403 `Route not available for tokens`. (SCOPE-03)
 11. The trackzyn SHALL negar a tokens qualquer rota nova que não tenha sido declarada na tabela de escopos. (SCOPE-04)
 12. IF um token chama uma rota da tabela sem o escopo correspondente THEN the trackzyn SHALL responder 403 `Missing scope: <escopo>`. (SCOPE-05)
 13. IF um token chama `/api/tokens` THEN the trackzyn SHALL responder 403 `Route not available for tokens`, para um token nunca gerar outro. (SCOPE-06)
@@ -202,8 +204,8 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 6. IF uma ferramenta falha por validação, escopo, papel ou recurso inexistente THEN the trackzyn SHALL devolver `isError: true` com o mesmo texto de erro da rota REST equivalente. (MCP-06)
 7. IF a requisição MCP vem sem token válido THEN the trackzyn SHALL responder HTTP 401 com `WWW-Authenticate: Bearer`. (MCP-07)
 8. IF `POST /api/mcp` recebe o JWT de sessão THEN the trackzyn SHALL responder HTTP 401. (MCP-08)
-9. IF a requisição traz um cabeçalho `Origin` diferente de `FRONTEND_URL` THEN the trackzyn SHALL responder HTTP 403, para barrar DNS rebinding. (MCP-09)
-10. WHEN um cliente envia `GET /api/mcp` THEN the trackzyn SHALL responder HTTP 405, pois o servidor não abre fluxo de eventos. (MCP-10)
+9. IF uma requisição a `/api/mcp` não recusada antes por token inválido (MCP-07, MCP-08) traz um cabeçalho `Origin` diferente de `FRONTEND_URL` THEN the trackzyn SHALL responder HTTP 403, para barrar DNS rebinding. (MCP-09)
+10. WHEN um cliente envia `GET` ou `DELETE /api/mcp` sem cair em MCP-09 THEN the trackzyn SHALL responder HTTP 405, pois o servidor não abre fluxo de eventos. (MCP-10)
 11. The trackzyn SHALL atender cada requisição MCP sem guardar estado de sessão entre elas. (MCP-11)
 12. WHEN o token mostrado na criação é exibido THEN the trackzyn SHALL mostrar junto a URL de `/api/mcp` e um exemplo de configuração com o cabeçalho `Authorization`. (MCP-12)
 
@@ -220,8 +222,8 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 **Acceptance Criteria**:
 
 1. WHEN uma tarefa é criada por `POST /api/tasks` ou `create_task` com token THEN the trackzyn SHALL registrar o token criador na tarefa. (ORIGIN-01)
-2. The trackzyn SHALL devolver `created_via` com o nome do token, ou `null`, nas respostas de tarefa e do quadro. (ORIGIN-02)
-3. WHILE `created_via` não é nulo the trackzyn SHALL mostrar no cartão e no diálogo da tarefa o selo `via <nome>`, em todos os papéis. (ORIGIN-03)
+2. The trackzyn SHALL devolver `created_via` com o nome do token, ou `null`, nas respostas de tarefa e do quadro; a visão de foco não traz esse campo. (ORIGIN-02)
+3. WHILE `created_via` não é nulo the trackzyn SHALL mostrar no cartão do quadro e no diálogo da tarefa o selo `via <nome>`, em todos os papéis. (ORIGIN-03)
 4. WHEN o token é revogado ou expira THEN the trackzyn SHALL manter o selo. (ORIGIN-04)
 5. WHEN o token é apagado pela limpeza de MANAGE-08 THEN the trackzyn SHALL manter a tarefa e devolver `created_via` nulo. (ORIGIN-05)
 6. WHEN uma tarefa é duplicada ou editada THEN the trackzyn SHALL manter `created_via` da original e deixar nulo na cópia. (ORIGIN-06)
