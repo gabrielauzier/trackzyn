@@ -342,7 +342,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | MCP-12 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | Implementing |
-| ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | In Tasks |
+| ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-04 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-05 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | Implementing |

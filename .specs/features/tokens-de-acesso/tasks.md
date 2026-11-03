@@ -953,9 +953,11 @@ T28
 
 **Done when**:
 
-- [ ] O selo aparece com `created_via` e não aparece com `null`
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] O selo aparece com `created_via` e não aparece com `null`
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: build

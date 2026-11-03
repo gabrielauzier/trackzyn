@@ -42,6 +42,21 @@ async function renderDialog(canWrite = true) {
 }
 
 describe('TaskDialog', () => {
+  it('shows the token that created the task, in every role', async () => {
+    vi.mocked(tasks.get).mockResolvedValue({ ...task, created_via: 'n8n flow' })
+    await renderDialog(false)
+
+    const origin = screen.getByText('via n8n flow')
+    expect(origin).toHaveClass('truncate')
+    expect(origin).toHaveAttribute('title', 'via n8n flow')
+  })
+
+  it('shows no origin on a task without a token', async () => {
+    await renderDialog()
+
+    expect(screen.queryByText(/^via /)).not.toBeInTheDocument()
+  })
+
   it('shows the title, estimate, notes and subtasks to edit', async () => {
     await renderDialog()
 
