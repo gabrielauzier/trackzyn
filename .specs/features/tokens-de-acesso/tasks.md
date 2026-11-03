@@ -981,9 +981,11 @@ T28
 
 **Done when**:
 
-- [ ] O `curl` do guia, executado contra o servidor de desenvolvimento, cria uma tarefa
-- [ ] A configuração MCP do guia conecta ao servidor de desenvolvimento usando o `Client` do SDK
-- [ ] Gate check passes: Build
+- [x] O `curl` do guia, executado contra o servidor de desenvolvimento, cria uma tarefa
+- [x] A configuração MCP do guia conecta ao servidor de desenvolvimento usando o `Client` do SDK
+- [x] Gate check passes: Build
+
+**Status**: ✅ Done
 
 **Tests**: none
 **Gate**: build
