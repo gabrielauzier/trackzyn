@@ -4,11 +4,12 @@ import { HttpError, forbidden } from '../http/http-error.ts'
 import { zodIssueToItem } from '../plugins/errors.ts'
 import { type WorkspaceContext, ensureWritable } from '../plugins/workspace.ts'
 import { listParams, listsView } from '../routes/lists.ts'
-import { createTaskBody, taskParams, toTaskRead } from '../routes/tasks.ts'
+import { addSubtaskBody, createTaskBody, moveTaskBody, taskParams, toSubtaskRead, toTaskRead, updateTaskBody } from '../routes/tasks.ts'
 import type { TokenPrincipal, TokenScope } from '../services/access-tokens.ts'
 import { buildBoard } from '../services/board.ts'
+import { createSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
-import { getTask } from '../services/tasks.ts'
+import { deleteTask, getTask, moveTask, updateTask } from '../services/tasks.ts'
 
 /** Who is calling and from where, as the guards of `POST /api/mcp` left them. */
 export interface ToolCaller {
@@ -37,6 +38,8 @@ function described<Input extends z.ZodObject>(input: Input, texts: { [Field in k
   return z.object(shape) as unknown as Input
 }
 
+const TASK_ID = 'The id of the task, as returned by get_board or create_task.'
+
 const TOOLS: readonly Tool[] = [
   tool({
     name: 'list_lists',
@@ -60,7 +63,7 @@ const TOOLS: readonly Tool[] = [
     description: 'Get one task with its notes, estimate, column and subtasks.',
     scope: 'tasks:read',
     write: false,
-    input: described(taskParams, { task_id: 'The id of the task, as returned by get_board.' }),
+    input: described(taskParams, { task_id: TASK_ID }),
     pathArguments: ['task_id'],
     run: async ({ ctx, workspace }, { task_id }) => toTaskRead(await getTask(ctx.db, task_id.toLowerCase(), workspace.workspace.id)),
   }),
@@ -81,6 +84,60 @@ const TOOLS: readonly Tool[] = [
     run: async ({ ctx, workspace, principal }, { idempotency_key, ...body }) => {
       const { task, replayed } = await createTaskFromToken(ctx.db, workspace.workspace.id, principal, toTaskIntake(body), idempotency_key)
       return { ...toTaskRead(task), replayed }
+    },
+  }),
+  tool({
+    name: 'update_task',
+    description: 'Change the title, estimate or notes of a task. Send only the fields to change. To change its column, use move_task.',
+    scope: 'tasks:write',
+    write: true,
+    input: described(taskParams.extend(updateTaskBody.shape), {
+      task_id: TASK_ID,
+      title: 'The new title, 1 to 255 characters.',
+      estimate_minutes: 'The new estimate, from 1 to 1440 minutes, or null to remove it.',
+      notes: 'The new notes, replacing the current ones, up to 10000 characters.',
+    }),
+    pathArguments: ['task_id'],
+    run: async ({ ctx, workspace }, { task_id, title, estimate_minutes, notes }) =>
+      toTaskRead(await updateTask(ctx.db, task_id.toLowerCase(), workspace.workspace.id, { title, estimateMinutes: estimate_minutes, notes })),
+  }),
+  tool({
+    name: 'move_task',
+    description: 'Move a task to a board column, at a chosen position. Moving it to done marks it as completed; moving it out of done clears that.',
+    scope: 'tasks:write',
+    write: true,
+    input: described(taskParams.extend(moveTaskBody.shape), {
+      task_id: TASK_ID,
+      column: 'The target column: backlog, this_week, today or done.',
+      before_task_id: 'The id of the task in that column to place it right before, or null to place it at the end.',
+    }),
+    pathArguments: ['task_id'],
+    run: async ({ ctx, workspace }, { task_id, column, before_task_id }) =>
+      toTaskRead(await moveTask(ctx.db, task_id.toLowerCase(), workspace.workspace.id, { column, beforeTaskId: before_task_id?.toLowerCase() ?? null, byUserId: workspace.user.id })),
+  }),
+  tool({
+    name: 'add_subtask',
+    description: 'Add a subtask to the end of a task.',
+    scope: 'tasks:write',
+    write: true,
+    input: described(taskParams.extend(addSubtaskBody.shape), {
+      task_id: TASK_ID,
+      title: 'The title of the subtask, 1 to 255 characters.',
+    }),
+    pathArguments: ['task_id'],
+    run: async ({ ctx, workspace }, { task_id, title }) => toSubtaskRead(await createSubtask(ctx.db, task_id.toLowerCase(), workspace.workspace.id, title)),
+  }),
+  tool({
+    name: 'delete_task',
+    description: 'Delete a task with its subtasks and the time recorded on it. This cannot be undone.',
+    scope: 'tasks:delete',
+    write: true,
+    input: described(taskParams, { task_id: TASK_ID }),
+    pathArguments: ['task_id'],
+    run: async ({ ctx, workspace }, { task_id }) => {
+      const id = task_id.toLowerCase()
+      await deleteTask(ctx.db, id, workspace.workspace.id)
+      return { id, deleted: true }
     },
   }),
 ]

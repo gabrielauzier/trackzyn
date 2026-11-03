@@ -329,11 +329,11 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | IDEM-07 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | IDEM-08 | P1: Criar tarefas pela API REST | Tasks | Implementing |
 | MCP-01 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-02 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
+| MCP-02 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-03 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-04 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-05 | P1: Conectar uma IA por MCP | Tasks | Implementing |
-| MCP-06 | P1: Conectar uma IA por MCP | Tasks | In Tasks |
+| MCP-06 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-07 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-08 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-09 | P1: Conectar uma IA por MCP | Tasks | Implementing |

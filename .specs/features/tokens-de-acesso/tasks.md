@@ -711,12 +711,14 @@ T28
 
 **Done when**:
 
-- [ ] Cada ferramenta aplica a mudança e aparece só com o escopo certo
-- [ ] `delete_task` não aparece sem `tasks:delete`
-- [ ] Tarefa de outro workspace devolve `isError: true` com `Task not found`
-- [ ] Um `viewer` recebe `Read-only role` em todas
-- [ ] Gate check passes: Build
-- [ ] Test count: a contagem do backend só aumenta
+- [x] Cada ferramenta aplica a mudança e aparece só com o escopo certo
+- [x] `delete_task` não aparece sem `tasks:delete`
+- [x] Tarefa de outro workspace devolve `isError: true` com `Task not found`
+- [x] Um `viewer` recebe `Read-only role` em todas
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: build

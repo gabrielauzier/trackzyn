@@ -51,6 +51,10 @@ export const createTaskBody = z.object({
   subtasks: z.array(title).max(50).optional(),
 })
 
+export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: z.string().max(10_000).optional() })
+export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
+export const addSubtaskBody = z.object({ title })
+
 /** In the handler and not in the schema: with the session JWT the header is not even read (IDEM-08). */
 function idempotencyKey(request: FastifyRequest): string | undefined {
   const key = request.headers['idempotency-key'] as string | undefined
@@ -61,7 +65,7 @@ function idempotencyKey(request: FastifyRequest): string | undefined {
   return key
 }
 
-function toSubtaskRead(subtask: Subtask) {
+export function toSubtaskRead(subtask: Subtask) {
   return { id: subtask.id, task_id: subtask.taskId, title: subtask.title, done: subtask.done, position: subtask.position }
 }
 
@@ -123,7 +127,7 @@ export function taskRoutes(ctx: AppContext) {
       {
         schema: {
           params: taskParams,
-          body: z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: z.string().max(10_000).optional() }),
+          body: updateTaskBody,
           response: { 200: taskReadSchema },
         },
         config: { tokenScope: 'tasks:write' },
@@ -144,7 +148,7 @@ export function taskRoutes(ctx: AppContext) {
       {
         schema: {
           params: taskParams,
-          body: z.object({ column, before_task_id: uuid.nullable() }),
+          body: moveTaskBody,
           response: { 200: taskReadSchema },
         },
         config: { tokenScope: 'tasks:write' },
@@ -199,7 +203,7 @@ export function taskRoutes(ctx: AppContext) {
     typed.post(
       '/api/tasks/:task_id/subtasks',
       {
-        schema: { params: taskParams, body: z.object({ title }), response: { 201: subtaskReadSchema } },
+        schema: { params: taskParams, body: addSubtaskBody, response: { 201: subtaskReadSchema } },
         config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
