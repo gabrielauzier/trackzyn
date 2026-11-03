@@ -800,13 +800,15 @@ T28
 
 **Done when**:
 
-- [ ] Mostra nome, workspace, escopos, `display_hint`, expiração, último uso e estado de cada token
-- [ ] Sem tokens, mostra o estado vazio com `Gerar token`
-- [ ] Revogar pede confirmação e atualiza a linha para `revoked`
-- [ ] Erro de rede mostra a mensagem de `extractApiError`
-- [ ] Os testes de paridade de `locales` passam
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Mostra nome, workspace, escopos, `display_hint`, expiração, último uso e estado de cada token
+- [x] Sem tokens, mostra o estado vazio com `Gerar token`
+- [x] Revogar pede confirmação e atualiza a linha para `revoked`
+- [x] Erro de rede mostra a mensagem de `extractApiError`
+- [x] Os testes de paridade de `locales` passam
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

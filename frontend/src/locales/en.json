@@ -1,4 +1,22 @@
 {
+  "accessTokens": {
+    "description": "Tokens let automations and AI clients use the API without your login session.",
+    "empty": "You have no access tokens yet.",
+    "expires": "Expires: {{date}}",
+    "generate": "Generate token",
+    "lastUsed": "Last used: {{date}}",
+    "loadError": "Could not load your tokens.",
+    "neverUsed": "Never",
+    "revoke": "Revoke",
+    "revokeDescription": "{{name}} stops working right away, and this can't be undone. The tasks it created stay.",
+    "revokeError": "Could not revoke the token.",
+    "revokeNamed": "Revoke {{name}}",
+    "revokeTitle": "Revoke token",
+    "statusActive": "Active",
+    "statusExpired": "Expired",
+    "statusRevoked": "Revoked",
+    "title": "Access tokens"
+  },
   "admin": {
     "settings": {
       "dateFormatAuto": "Automatic",

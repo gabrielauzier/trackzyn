@@ -1,0 +1,173 @@
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { KeyRound, Plus } from 'lucide-react'
+import { accessTokens } from '@/lib/api'
+import { extractApiError } from '@/lib/api-errors'
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import type { AccessToken } from '@/types'
+
+interface AccessTokensDialogProps {
+  open: boolean
+  onClose: () => void
+}
+
+const STATUS_KEYS: Record<AccessToken['status'], string> = {
+  active: 'accessTokens.statusActive',
+  expired: 'accessTokens.statusExpired',
+  revoked: 'accessTokens.statusRevoked',
+}
+
+export function AccessTokensDialog({ open, onClose }: AccessTokensDialogProps) {
+  const { t } = useTranslation()
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t('accessTokens.title')}</DialogTitle>
+          <DialogDescription>{t('accessTokens.description')}</DialogDescription>
+        </DialogHeader>
+        <AccessTokensPanel onClose={onClose} />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AccessTokensPanel({ onClose }: { onClose: () => void }) {
+  const { t, i18n } = useTranslation()
+  const [tokens, setTokens] = useState<AccessToken[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [revoking, setRevoking] = useState<AccessToken | null>(null)
+  const [revokePending, setRevokePending] = useState(false)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setLoadError(null)
+    try {
+      setTokens(await accessTokens.list())
+    } catch (err) {
+      setLoadError(extractApiError(err, t('accessTokens.loadError')))
+    } finally {
+      setLoading(false)
+    }
+  }, [t])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const formatDate = (value: string) =>
+    new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+
+  const handleRevoke = async () => {
+    if (!revoking) return
+    setRevokePending(true)
+    setRevokeError(null)
+    try {
+      await accessTokens.revoke(revoking.id)
+      const revokedAt = new Date().toISOString()
+      setTokens((current) =>
+        current.map((token) => (token.id === revoking.id ? { ...token, status: 'revoked', revoked_at: revokedAt } : token)),
+      )
+    } catch (err) {
+      setRevokeError(extractApiError(err, t('accessTokens.revokeError')))
+    } finally {
+      setRevokePending(false)
+      setRevoking(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {loading ? (
+        <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+      ) : loadError ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 p-3">
+          <p role="alert" className="text-sm text-destructive">
+            {loadError}
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
+            {t('common.retry')}
+          </Button>
+        </div>
+      ) : tokens.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed px-3 py-6 text-center">
+          <KeyRound size={20} className="text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">{t('accessTokens.empty')}</p>
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {tokens.map((token) => (
+            <li key={token.id} className="flex items-start gap-3 rounded-lg border p-3">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-medium" title={token.name}>
+                    {token.name}
+                  </p>
+                  <Badge variant={token.status === 'active' ? 'secondary' : 'outline'}>{t(STATUS_KEYS[token.status])}</Badge>
+                </div>
+                <p className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+                  <span className="font-mono">{token.display_hint}</span>
+                  <span className="min-w-0 truncate">{token.workspace_name}</span>
+                </p>
+                <p className="flex flex-wrap gap-1">
+                  {token.scopes.map((scope) => (
+                    <code key={scope} className="rounded bg-muted px-1 py-0.5 text-[11px]">
+                      {scope}
+                    </code>
+                  ))}
+                </p>
+                <p className="text-xs text-muted-foreground">{t('accessTokens.expires', { date: formatDate(token.expires_at) })}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('accessTokens.lastUsed', {
+                    date: token.last_used_at ? formatDate(token.last_used_at) : t('accessTokens.neverUsed'),
+                  })}
+                </p>
+              </div>
+              {token.status === 'active' && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  aria-label={t('accessTokens.revokeNamed', { name: token.name })}
+                  onClick={() => setRevoking(token)}
+                >
+                  {t('accessTokens.revoke')}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {revokeError && (
+        <p role="alert" className="text-sm text-destructive">
+          {revokeError}
+        </p>
+      )}
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose}>
+          {t('common.close')}
+        </Button>
+        <Button type="button">
+          <Plus size={14} /> {t('accessTokens.generate')}
+        </Button>
+      </DialogFooter>
+
+      <DeleteConfirmationDialog
+        open={!!revoking}
+        title={t('accessTokens.revokeTitle')}
+        description={t('accessTokens.revokeDescription', { name: revoking?.name ?? '' })}
+        isPending={revokePending}
+        onClose={() => setRevoking(null)}
+        onConfirm={() => void handleRevoke()}
+      />
+    </div>
+  )
+}

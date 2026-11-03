@@ -1,4 +1,22 @@
 {
+  "accessTokens": {
+    "description": "Tokens permitem que automações e clientes de IA usem a API sem a sua sessão de login.",
+    "empty": "Você ainda não tem tokens de acesso.",
+    "expires": "Expira em: {{date}}",
+    "generate": "Gerar token",
+    "lastUsed": "Último uso: {{date}}",
+    "loadError": "Não foi possível carregar seus tokens.",
+    "neverUsed": "Nunca",
+    "revoke": "Revogar",
+    "revokeDescription": "{{name}} para de funcionar na hora, e isso não tem volta. As tarefas criadas por ele continuam.",
+    "revokeError": "Não foi possível revogar o token.",
+    "revokeNamed": "Revogar {{name}}",
+    "revokeTitle": "Revogar token",
+    "statusActive": "Ativo",
+    "statusExpired": "Expirado",
+    "statusRevoked": "Revogado",
+    "title": "Tokens de acesso"
+  },
   "admin": {
     "settings": {
       "dateFormatAuto": "Automático",
