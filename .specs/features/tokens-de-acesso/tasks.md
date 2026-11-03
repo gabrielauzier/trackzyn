@@ -894,10 +894,12 @@ T28
 
 **Done when**:
 
-- [ ] Com o flag ligado, o item aparece e abre o diálogo
-- [ ] Com o flag desligado, o item não aparece
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] Com o flag ligado, o item aparece e abre o diálogo
+- [x] Com o flag desligado, o item não aparece
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

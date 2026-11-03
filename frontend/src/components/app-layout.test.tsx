@@ -25,6 +25,8 @@ const state = vi.hoisted(() => ({
   },
   workspace: { id: 'synthetic', name: 'Synthetic workspace', role: 'owner' },
   canWrite: false,
+  personalTokens: false,
+  accessTokens: { list: vi.fn(async () => []), create: vi.fn(), revoke: vi.fn() },
   auth: {
     oidcConfig: vi.fn(),
     listPasskeys: vi.fn(),
@@ -57,10 +59,11 @@ vi.mock('@/contexts/workspace-context', () => ({
   }),
 }))
 vi.mock('@/hooks/use-feature-flags', () => ({
-  useFeatureFlags: () => ({ isLoading: false, features: {}, isEnabled: () => false, updateCheckRepo: null }),
+  useFeatureFlags: () => ({ isLoading: false, features: {}, isEnabled: (flag: string) => flag === 'personal_tokens' && state.personalTokens, updateCheckRepo: null }),
 }))
 vi.mock('@/lib/api', () => ({
   auth: state.auth,
+  accessTokens: state.accessTokens,
   admin: {
     defaultColors: async () => ({ light: null, dark: null }),
     numberFormat: async () => ({ format: 'auto' }),
@@ -150,6 +153,7 @@ afterEach(() => {
   Reflect.deleteProperty(window, 'trackzyn')
   vi.unstubAllGlobals()
   state.canWrite = false
+  state.personalTokens = false
 })
 
 describe('app layout title bar', () => {
@@ -212,6 +216,32 @@ describe('app layout sidebar', () => {
     const nav = screen.getByRole('navigation')
     expect(within(nav).queryByRole('link', { name: 'Create new list' })).not.toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'All my lists' })).toBeInTheDocument()
+  })
+})
+
+describe('app layout access tokens entry', () => {
+  async function openAccountMenu() {
+    const { user } = renderWithProviders(<AppLayout />)
+    await user.click(screen.getByRole('button', { name: 'Synthetic workspace' }))
+    await screen.findByText(t('auth.twoFactorTitle'))
+    return user
+  }
+
+  it('offers the entry and opens the dialog when the server has personal tokens', async () => {
+    state.personalTokens = true
+    const user = await openAccountMenu()
+
+    await user.click(screen.getByRole('menuitem', { name: t('accessTokens.title') }))
+
+    expect(await screen.findByRole('dialog', { name: t('accessTokens.title') })).toBeInTheDocument()
+    await waitFor(() => expect(state.accessTokens.list).toHaveBeenCalled())
+  })
+
+  it('hides the entry when the server has them off, as in the local mode', async () => {
+    await openAccountMenu()
+
+    expect(screen.queryByRole('menuitem', { name: t('accessTokens.title') })).not.toBeInTheDocument()
+    expect(screen.queryByText(t('accessTokens.title'))).not.toBeInTheDocument()
   })
 })
 

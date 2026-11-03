@@ -262,7 +262,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TOKEN-01 | P1: Gerar um token | Tasks | In Tasks |
+| TOKEN-01 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-02 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-03 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-04 | P1: Gerar um token | Tasks | Implementing |
@@ -275,7 +275,7 @@ Toda rota fora desta tabela responde 403 a um token (SCOPE-03).
 | TOKEN-11 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-12 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-13 | P1: Gerar um token | Tasks | Implementing |
-| TOKEN-14 | P1: Gerar um token | Tasks | In Tasks |
+| TOKEN-14 | P1: Gerar um token | Tasks | Implementing |
 | TOKEN-15 | Edge Cases | Tasks | Implementing |
 | TOKEN-16 | Edge Cases | Tasks | Implementing |
 | MANAGE-01 | P1: Ver e revogar tokens | Tasks | Implementing |
