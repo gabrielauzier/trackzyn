@@ -2,6 +2,10 @@ appId: com.trackzyn.desktop
 productName: trackzyn
 directories:
   output: release
+  buildResources: build
+# One 1024px PNG; electron-builder derives the .icns (macOS), .ico (Windows) and
+# the Linux icon sizes from it. Regenerate it with scripts/render-brand-icons.cjs.
+icon: build/icon.png
 files:
   - out/**
   - package.json

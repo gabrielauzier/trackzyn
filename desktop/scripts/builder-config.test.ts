@@ -18,6 +18,15 @@ describe('electron-builder config', () => {
     expect(targetNames(config.linux).sort()).toEqual(['AppImage', 'deb'])
   })
 
+  it('builds every platform icon from one 1024px source', () => {
+    expect(config.directories.buildResources).toBe('build')
+    expect(config.icon).toBe('build/icon.png')
+    const icon = readFileSync(path.resolve(__dirname, '..', config.icon as string))
+    // PNG signature, then the IHDR width and height.
+    expect(icon.subarray(1, 4).toString()).toBe('PNG')
+    expect([icon.readUInt32BE(16), icon.readUInt32BE(20)]).toEqual([1024, 1024])
+  })
+
   it('does not depend on release variables, so unpublished builds need none', () => {
     expect(config.publish).toBeUndefined()
     expect(JSON.stringify(config)).not.toContain('${env.TRACKZYN_DESKTOP_RELEASE')
