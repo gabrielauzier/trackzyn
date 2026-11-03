@@ -2,10 +2,11 @@ import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
-import type { List } from '../db/schema.ts'
+import type { List, Workspace } from '../db/schema.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
 import { dayTimezone } from '../services/day.ts'
+import type { TokenPrincipal } from '../services/access-tokens.ts'
 import { type ListCard, createList, deleteList, getList, listLists, moveList, updateList } from '../services/lists.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -27,7 +28,7 @@ const listCardSchema = listReadSchema.extend({
   preview: z.array(z.object({ id: z.string(), title: z.string() })),
 })
 
-const listParams = z.object({ list_id: uuid })
+export const listParams = z.object({ list_id: uuid })
 const name = z.string().min(1).max(100)
 const color = z.number().int().min(1).max(8)
 
@@ -48,6 +49,14 @@ function toListCard(card: ListCard) {
   return { ...toListRead(card.list), pending_count: card.pendingCount, preview: card.preview }
 }
 
+/** What `GET /api/lists` answers, in REST and in MCP. */
+export async function listsView(ctx: AppContext, workspace: Workspace, principal: TokenPrincipal | null, archived: boolean) {
+  const cards = await listLists(ctx.db, workspace.id, { archived })
+  // The preview shows task titles, which `lists:read` alone does not reach (SCOPE-09).
+  const visible = principal && !principal.scopes.includes('tasks:read') ? cards.map((card) => ({ ...card, preview: [] })) : cards
+  return { timezone: await dayTimezone(ctx.db, workspace), lists: visible.map(toListCard) }
+}
+
 export function listRoutes(ctx: AppContext) {
   return async (app: FastifyInstance): Promise<void> => {
     const typed = app.withTypeProvider<ZodTypeProvider>()
@@ -65,14 +74,7 @@ export function listRoutes(ctx: AppContext) {
         config: { tokenScope: 'lists:read' },
         preValidation: reading,
       },
-      async (request) => {
-        const workspace = request.workspace.workspace
-        const cards = await listLists(ctx.db, workspace.id, { archived: request.query.archived === 'true' })
-        // The preview shows task titles, which `lists:read` alone does not reach (SCOPE-09).
-        const principal = request.tokenPrincipal
-        const visible = principal && !principal.scopes.includes('tasks:read') ? cards.map((card) => ({ ...card, preview: [] })) : cards
-        return { timezone: await dayTimezone(ctx.db, workspace), lists: visible.map(toListCard) }
-      },
+      async (request) => listsView(ctx, request.workspace.workspace, request.tokenPrincipal, request.query.archived === 'true'),
     )
 
     typed.post(

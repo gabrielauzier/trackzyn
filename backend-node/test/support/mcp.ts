@@ -31,3 +31,12 @@ export const INITIALIZE = {
   method: 'initialize',
   params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'by-hand', version: '1.0.0' } },
 }
+
+/** Calls a tool and hands back what a tool answers: its text and whether it is an error. */
+export async function callTool(client: Client, name: string, args: Record<string, unknown> = {}) {
+  const result = (await client.callTool({ name, arguments: args })) as { isError?: boolean; content: Array<{ type: string; text: string }> }
+  const text = result.content[0]!.text
+  return { isError: result.isError === true, text, json: () => JSON.parse(text) as Record<string, unknown> }
+}
+
+export const toolNames = async (client: Client) => (await client.listTools()).tools.map((tool) => tool.name).sort()

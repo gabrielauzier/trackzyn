@@ -1,5 +1,6 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { hasZodFastifySchemaValidationErrors } from 'fastify-type-provider-zod'
+import type { z } from 'zod'
 import { HttpError } from '../http/http-error.ts'
 
 type Loc = Array<string | number>
@@ -28,7 +29,7 @@ interface ValidationItem {
 }
 
 /** One FastAPI/pydantic-shaped item per zod issue. */
-function toItem(issue: { keyword: string; instancePath: string; message: string; params: Record<string, unknown> }, root: string): ValidationItem {
+export function toItem(issue: { keyword: string; instancePath: string; message: string; params: Record<string, unknown> }, root: string): ValidationItem {
   const path = issue.instancePath.split('/').slice(1).filter((part) => part !== '')
   const loc: Loc = [root, ...path.map((part) => (/^\d+$/.test(part) ? Number(part) : part))]
   const message = issue.message ?? ''
@@ -56,6 +57,11 @@ function toItem(issue: { keyword: string; instancePath: string; message: string;
     }
   }
   return { type: issue.keyword, loc, msg: message }
+}
+
+/** `toItem` for a zod issue that did not come through a route's own validation, such as an MCP tool's arguments. */
+export function zodIssueToItem(issue: z.core.$ZodIssue, root: string): ValidationItem {
+  return toItem({ keyword: issue.code, instancePath: `/${issue.path.join('/')}`, message: issue.message, params: { ...issue } }, root)
 }
 
 function unprocessable(reply: FastifyReply, detail: ValidationItem[]) {

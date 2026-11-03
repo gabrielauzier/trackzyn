@@ -71,5 +71,9 @@ export function workspaceContext(ctx: AppContext): preValidationAsyncHookHandler
 
 /** `current_writable_workspace`: the context, refused with 403 `Read-only role` for a viewer. */
 export const requireWrite: preValidationAsyncHookHandler = async (request) => {
-  if (!canWrite(request.workspace.member.role)) throw new HttpError(403, 'Read-only role')
+  ensureWritable(request.workspace)
+}
+
+export function ensureWritable({ member }: WorkspaceContext): void {
+  if (!canWrite(member.role)) throw new HttpError(403, 'Read-only role')
 }

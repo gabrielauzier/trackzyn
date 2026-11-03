@@ -648,12 +648,14 @@ T28
 
 **Done when**:
 
-- [ ] `tools/list` devolve só as ferramentas dos escopos do token
-- [ ] Chamar ferramenta sem o escopo devolve `isError: true` com `Missing scope: x`
-- [ ] Recurso inexistente e argumento inválido devolvem `isError: true` com o texto da rota REST
-- [ ] `list_lists` devolve `preview` vazio sem `tasks:read`
-- [ ] Gate check passes: Full
-- [ ] Test count: a contagem do backend só aumenta
+- [x] `tools/list` devolve só as ferramentas dos escopos do token
+- [x] Chamar ferramenta sem o escopo devolve `isError: true` com `Missing scope: x`
+- [x] Recurso inexistente e argumento inválido devolvem `isError: true` com o texto da rota REST
+- [x] `list_lists` devolve `preview` vazio sem `tasks:read`
+- [x] Gate check passes: Full
+- [x] Test count: a contagem do backend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

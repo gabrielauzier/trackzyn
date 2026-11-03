@@ -35,7 +35,7 @@ const taskReadSchema = z.object({
   created_via: z.string().nullable(),
 })
 
-const taskParams = z.object({ task_id: uuid })
+export const taskParams = z.object({ task_id: uuid })
 const subtaskParams = z.object({ subtask_id: uuid })
 const title = z.string().min(1).max(255)
 const estimateMinutes = z.number().int().min(1).max(1440).nullable()
@@ -65,7 +65,7 @@ function toSubtaskRead(subtask: Subtask) {
   return { id: subtask.id, task_id: subtask.taskId, title: subtask.title, done: subtask.done, position: subtask.position }
 }
 
-function toTaskRead(task: TaskWithSubtasks) {
+export function toTaskRead(task: TaskWithSubtasks) {
   return {
     id: task.id,
     list_id: task.listId,

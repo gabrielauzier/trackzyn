@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest, preValidationAsyncHookHandler } from 'fastify'
 import type { AppContext } from '../context.ts'
 import { forbidden } from '../http/http-error.ts'
+import { callTool, listTools } from '../mcp/tools.ts'
 import { requireToken } from '../plugins/token-auth.ts'
 import { workspaceContext } from '../plugins/workspace.ts'
 
@@ -20,12 +21,24 @@ async function answer(ctx: AppContext, request: FastifyRequest, reply: FastifyRe
 
   let close = async (): Promise<void> => undefined
   try {
-    const [{ Server }, { StreamableHTTPServerTransport }] = await Promise.all([
+    const [{ Server }, { StreamableHTTPServerTransport }, { CallToolRequestSchema, ListToolsRequestSchema }] = await Promise.all([
       import('@modelcontextprotocol/sdk/server/index.js'),
       import('@modelcontextprotocol/sdk/server/streamableHttp.js'),
+      import('@modelcontextprotocol/sdk/types.js'),
     ])
     const server = new Server({ name: ctx.config.appName, version: SERVER_VERSION }, { capabilities: { tools: {} } })
     close = () => server.close()
+    const principal = request.tokenPrincipal!
+    server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: listTools(principal) }))
+    server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
+      try {
+        return await callTool({ ctx, workspace: request.workspace, principal }, params.name, params.arguments)
+      } catch (error) {
+        // The SDK would send this message to the client as it is.
+        request.log.error({ err: error }, 'mcp tool failed')
+        throw new Error('Internal server error', { cause: error })
+      }
+    })
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true })
     await server.connect(transport)
     await transport.handleRequest(request.raw, reply.raw, request.body)
