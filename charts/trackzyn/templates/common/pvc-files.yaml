@@ -1,0 +1,21 @@
+{{- if .Values.persistence.files.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "trackzyn.fullname" . }}-files
+  labels:
+    {{- include "trackzyn.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.files.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.files.size | quote }}
+  {{- if .Values.persistence.files.storageClass }}
+  {{- if (eq "-" .Values.persistence.files.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.persistence.files.storageClass }}"
+  {{- end }}
+  {{- end }}
+{{- end }}

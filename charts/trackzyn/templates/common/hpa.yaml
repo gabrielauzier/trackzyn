@@ -1,0 +1,42 @@
+{{- if .Values.autoscaling.enabled }}
+{{- range $component := list "backend" "frontend" "worker" }}
+{{- $componentEnabled := true }}
+{{- if eq $component "worker" }}
+  {{- $componentEnabled = $.Values.worker.enabled }}
+{{- end }}
+{{- if $componentEnabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "trackzyn.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "trackzyn.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "trackzyn.fullname" $ }}-{{ $component }}
+  minReplicas: {{ $.Values.autoscaling.minReplicas }}
+  maxReplicas: {{ $.Values.autoscaling.maxReplicas }}
+  metrics:
+    {{- if $.Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $.Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if $.Values.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ $.Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

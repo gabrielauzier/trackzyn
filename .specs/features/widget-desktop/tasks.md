@@ -1,0 +1,461 @@
+# Widget de foco no desktop Tasks
+
+## Execution Protocol (MANDATORY -- do not skip)
+
+Implement these tasks with the `tlc-spec-driven` skill: **activate it by name and follow its Execute flow and Critical Rules.** Do not search for skill files by filesystem path. The skill is the source of truth for the full flow (per-task cycle, sub-agent delegation, adequacy review, Verifier, discrimination sensor).
+
+**If the skill cannot be activated, STOP and tell the user - do not proceed without it.**
+
+---
+
+**Design**: `.specs/features/widget-desktop/design.md`
+**Status**: Draft
+**Pré-requisito**: `foco-e-sons` concluída (usa `useFocus`, `lib/sounds`, a página de foco e a ponte `focus:state`).
+
+---
+
+## Test Coverage Matrix
+
+> Generated from codebase, project guidelines, and spec - confirm before Execute. Guidelines found: `CONTRIBUTING.md`, `.github/workflows/ci.yml` (desktop: lint, typecheck, test, `test:e2e` com `xvfb-run` no Linux), `desktop/playwright.config.mts`. Onde os guias não definem profundidade, valem os padrões fortes da skill.
+
+| Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
+| ---------- | ------------------ | -------------------- | ---------------- | ----------- |
+| Desktop main e preload | unit (fakes de Electron) | Todos os ramos; 1:1 com os ACs de janela, posição e atalho | `desktop/src/**/*.test.ts` | `npm --prefix desktop test` |
+| Montagem do processo principal (`main/index.ts`) | e2e (Playwright + Electron) | Abrir, agir, expandir, restaurar pelo sistema, atalho | `desktop/e2e/*.spec.ts` | `npm --prefix desktop run test:e2e` |
+| Lógica pura do frontend | unit | Todos os ramos | `frontend/src/lib/**/*.test.ts` | `npm --prefix frontend test` |
+| Componentes e páginas | unit (Testing Library) | Cada AC visível, com e sem o mouse | `frontend/src/**/*.test.tsx` | `npm --prefix frontend test` |
+
+## Gate Check Commands
+
+> Generated from codebase - confirm before Execute.
+
+| Gate Level | When to Use | Command |
+| ---------- | ----------- | ------- |
+| Quick | Tasks com testes de unidade de um pacote | `npm --prefix desktop test` ou `npm --prefix frontend test` |
+| Full | Tasks do processo principal e páginas | `npm --prefix desktop run lint && npm --prefix desktop run typecheck && npm --prefix desktop test` (desktop) ou `npm --prefix frontend run lint && npm --prefix frontend run typecheck && npm --prefix frontend test` (frontend) |
+| Build | Fim de cada fase e a task de montagem | os dois Full acima + `npm --prefix frontend run build` + `npm --prefix desktop run test:e2e` |
+
+---
+
+## Execution Plan
+
+Phases are ordered and run sequentially - each phase completes before the next begins, and tasks within a phase execute in order.
+
+### Phase 1: Processo principal
+
+```
+T1 → T4 → T5
+T2 → T4
+T3 → T4
+```
+
+### Phase 2: Telas do widget
+
+```
+T6 → T7 → T10
+T6 → T8 → T10
+T9 → T10
+T6 → T11
+```
+
+### Phase 3: Montagem e ponta a ponta
+
+```
+T12
+```
+
+---
+
+## Task Breakdown
+
+### Phase 1: Processo principal
+
+#### T1: Ponte do widget
+
+**What**: Canais `focus:collapse`, `focus:expand`, `focus:changed`, `widget:state`, `widget:resize` e os membros `windowRole` (lido de um argumento do processo), `collapseFocus`, `expandFocus`, `resizeWidget`, `notifyFocusChanged`, `onFocusChanged` e `onWidgetState`; atualizar o comentário e os testes que contam os membros.
+**Where**: `desktop/src/shared/ipc.ts`
+**Depends on**: None
+**Reuses**: padrão de `onExportState` e `APP_VERSION_ARG`
+**Requirement**: WIDGET-22, WIDGET-24
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes do preload: cada membro novo chama o canal certo; `windowRole` é `widget` com o argumento e `main` sem; a contagem fixada passa a 22
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Os canais `focus:collapse`, `focus:expand`, `focus:changed` e `widget:resize` ficam registrados em `main/index.ts` com handlers vazios até a T12, porque `ipc.test.ts` exige o registro. `widget:state` entrou na lista de canais só de envio, e a janela principal recebe `{ open: false }` ao carregar. `expandFocus` aceita o motivo opcional `task_left` (tabela de erros do design). A ponte também mudou o espelho `frontend/src/lib/platform.ts`, os fakes dos testes do frontend e a lista de `desktop/e2e/security.spec.ts`.
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(desktop): bridge the focus widget`
+
+---
+
+#### T2: Janela do widget
+
+**What**: `createWidgetWindow(bounds)`: sem moldura, `alwaysOnTop` no nível `floating`, sem redimensionar, fora da barra de tarefas, 300×64 px, mesmo preload com `windowRole=widget`, `hardenWebContents`, `setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })` no macOS, carregando `APP_ORIGIN/widget`.
+**Where**: `desktop/src/main/widget-window.ts`
+**Depends on**: None
+**Reuses**: `main/window.ts`, `main/security.ts`
+**Requirement**: WIDGET-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes com `BrowserWindow` falso: opções exatas acima; `hardenWebContents` aplicado; URL `app://…/widget`
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: A assinatura é `createWidgetWindow(bounds, { appVersion, platform? })`: o widget usa só a posição de `bounds` e sempre abre compacto (300×64); `appVersion` vai no mesmo argumento da janela principal, para `window.trackzyn.appVersion` ser igual nas duas (a spec não diz).
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(desktop): create the focus widget window`
+
+---
+
+#### T3: Posição do widget
+
+**What**: `widgetBounds(saved, displays, mainDisplay)`: a posição salva se ela cabe numa tela; senão, o canto superior direito da tela da janela principal com margem de 16 px. Nova chave `widgetBounds` em `config-store.ts`.
+**Where**: `desktop/src/main/widget-bounds.ts`
+**Depends on**: None
+**Reuses**: `resolveWindowBounds` e `isBounds`
+**Requirement**: WIDGET-09, WIDGET-10, WIDGET-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes: sem posição salva → canto superior direito; posição salva visível → ela; posição salva numa tela desconectada → canto superior direito; a chave sobrevive a recriar o `config-store`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: "Cabe numa tela" segue a WIDGET-11: a posição salva vale enquanto alguma parte do widget compacto (300×64) cai numa tela conectada, com a mesma checagem de interseção de `resolveWindowBounds`; as bordas exatas estão nos testes. O widget sempre abre compacto, mesmo se a posição foi salva com as anotações abertas. `WIDGET_SIZE` passou de `widget-window.ts` para `widget-bounds.ts`, para a lógica pura não importar o Electron.
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(desktop): place and remember the focus widget`
+
+---
+
+#### T4: Controle do widget
+
+**What**: `createWidgetController`: `open()` (abre e minimiza a principal), `close(reason)` (fecha; restaura e foca a principal na tela de foco, ou no quadro em `task_left`; não restaura em `restore`), `minimize` da principal com foco ativo abre, `restore`/`show` da principal fecha, `close` do sistema e `render-process-gone` equivalem a expandir, salva a posição em `moved` e retransmite `focus:changed` e `widget:state`.
+**Where**: `desktop/src/main/widget-controller.ts`
+**Depends on**: T1, T2, T3
+**Reuses**: `trackWindowState` (atraso de 500 ms)
+**Requirement**: WIDGET-01, WIDGET-02, WIDGET-03, WIDGET-17, WIDGET-18, WIDGET-19, WIDGET-21, WIDGET-22, WIDGET-23
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Um teste por AC citado com fakes; minimizar sem foco ativo não abre (Edge Case)
+- [x] `focus:changed` vindo de uma janela chega só à outra
+- [x] Gate check passes: Full (desktop)
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O processo principal não sabe a lista do foco. Por isso o controlador guarda a última URL `app://trackzyn/focus/<id>` da janela principal: `Expandir` mantém a página se ela já está na tela de foco, senão carrega essa URL (sem nenhuma, mantém a página); `task_left` carrega `/lists/<id>` dessa lista, ou `/` sem lista conhecida. A posição é salva com `trackWindowState` (em `move`, com 500 ms, e ao fechar), não só em `moved`, que não existe no Linux. Fechar a janela principal fecha o widget, para o app encerrar (risco do design). `did-fail-load` não fecha o widget: só `render-process-gone`, como pede a task. `open()` não confere o foco ativo, porque `collapseFocus` pode chegar antes do `focus:state`; quem confere são o minimizar e o atalho (`focusActive()`). O widget recebe `widget:state {open: true}` quando a página dele carrega.
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(desktop): control the focus widget`
+
+---
+
+#### T5: Atalho do widget
+
+**What**: `bindWidgetShortcut(webContents, controller, platform)` via `before-input-event`: `Ctrl+Shift+F` (Windows/Linux) ou `Meta+Shift+F` (macOS) abre o widget a partir da principal com foco ativo e expande a partir do widget.
+**Where**: `desktop/src/main/widget-shortcut.ts`
+**Depends on**: T4
+**Reuses**: nada
+**Requirement**: WIDGET-04, WIDGET-05, WIDGET-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes: combinação certa por plataforma; sem foco ativo não abre; outras teclas passam adiante sem `preventDefault`; nada é registrado como atalho global (WIDGET-05)
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O atalho compara `input.key` (`f` ou `F`) com Shift, sem Alt e só com o modificador da plataforma (Ctrl fora do macOS, Cmd no macOS). Tecla repetida por segurar não alterna o widget. Sem foco ativo e com o widget fechado, a combinação passa adiante sem `preventDefault`. A WIDGET-05 é provada pelo único ouvinte `before-input-event` e por nenhum arquivo de `main/` usar `globalShortcut`.
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `feat(desktop): toggle the focus widget with a shortcut`
+
+---
+
+### Phase 2: Telas do widget
+
+#### T6: Ganchos do desktop no frontend
+
+**What**: `isDesktop()`, `windowRole()`, `collapseFocus()`, `expandFocus()` e `useWidgetOpen()`; sem `window.trackzyn`, viram no-op, `main` e `false`.
+**Where**: `frontend/src/lib/desktop/focus-window.ts`
+**Depends on**: T1
+**Reuses**: `lib/platform.ts`
+**Requirement**: WIDGET-24
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes com e sem `window.trackzyn` falso
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: `isDesktop` é reexportado de `lib/platform.ts`. `useWidgetOpen` guarda o último `widget:state` num estado do módulo, ouvido uma vez por ponte, para uma tela montada depois da abertura do widget já saber que ele está aberto.
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(web): add desktop focus window hooks`
+
+---
+
+#### T7: Sons só numa janela
+
+**What**: `shouldPlayHere()` passa a usar `windowRole` e `useWidgetOpen`: o widget sempre toca; a principal só com o widget fechado.
+**Where**: `frontend/src/lib/sounds/gate.ts`
+**Depends on**: T6
+**Reuses**: `gate.ts` de `foco-e-sons`
+**Requirement**: WIDGET-23
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes: widget aberto → widget `true`, principal `false`; widget fechado → principal `true`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: `shouldPlayHere()` continua sem argumento e lê `isWidgetOpen()`, o mesmo estado de `useWidgetOpen`. `useFocusSounds` chama `useWidgetOpen()` ao montar, para a janela principal já ouvir o `widget:state` antes do primeiro som. O teste antigo da janela principal ganhou `windowRole` e `onWidgetState` no objeto falso; a asserção é a mesma.
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(web): play sounds only in the visible focus window`
+
+---
+
+#### T8: Controles do widget
+
+**What**: Título truncado e cronômetro sempre; com o mouse, `Intervalo`, `Anotações`, `Pausar`/`Retomar`, `Pular`, `Concluir`, `Expandir`, e `Estender`/`Concluir` em `awaiting_extend`; `Tudo limpo` + `Expandir` sem tarefa; fundo arrastável e botões fora da área de arrastar.
+**Where**: `frontend/src/components/focus/widget-controls.tsx`
+**Depends on**: T6
+**Reuses**: `break-picker`, `focus-task-card` (formato do cronômetro)
+**Requirement**: WIDGET-07, WIDGET-08, WIDGET-12, WIDGET-13, WIDGET-16
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `frontend-design`
+
+**Done when**:
+
+- [x] Testes: sem hover só título e cronômetro; com hover os 6 controles; `awaiting_extend` com hover mostra `Estender`; fila vazia mostra `Tudo limpo`; cada botão chama a ação de `useFocus`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Onde a spec não diz, segui a tela de foco: no intervalo, o widget mostra `Intervalo` e o tempo dele e, com o mouse, só `Encerrar intervalo` e `Expandir` (BREAK-04); em `00:00:00`, `Estender`, `Concluir`, `Intervalo`, `Anotações`, `Pular` e `Expandir`, sem `Pausar`/`Retomar` (não há sessão para pausar); sem permissão de escrita, só `Expandir`. Os controles são ícones com `aria-label` (300 px de largura) e somem 150 ms depois de o mouse sair, para não piscar entre botões; o foco vindo do teclado também os mostra, o de um clique não. `BreakPicker` ganhou `iconOnly` e `onOpenChange`: com o seletor aberto os controles ficam e o widget avisa a página para crescer, porque o seletor não cabe em 64 px.
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(web): add the widget controls`
+
+---
+
+#### T9: Anotações no widget
+
+**What**: Campo com as anotações da tarefa atual; ao abrir chama `resizeWidget('notes')`, ao perder o foco salva com `PATCH /api/tasks/:id {notes}` e volta a `compact`.
+**Where**: `frontend/src/components/focus/widget-notes.tsx`
+**Depends on**: None
+**Reuses**: cliente de tarefas de `listas-e-quadro`
+**Requirement**: WIDGET-14, WIDGET-15
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes: abrir pede `notes`; `blur` envia o texto e pede `compact`; texto acima de 10 000 bloqueia
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: As anotações vêm de `useTask` (`GET /api/tasks/:id`), porque o estado do foco não as traz. Salvar invalida `['lists']`, a chave de `useTask`, para o diálogo da tarefa mostrar o mesmo texto. Sem mudança, o `blur` não envia nada e só volta a `compact`. Se o servidor recusa, o erro aparece e o campo fica aberto com o texto (a spec não diz). `resizeWidget` entrou em `lib/desktop/focus-window.ts`, e `api.test.ts` ganhou a prova HTTP de `tasks.get` e `tasks.update` (L-007).
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `feat(web): edit notes from the widget`
+
+---
+
+#### T10: Página do widget
+
+**What**: `/widget` dentro de `ProtectedRoute` e fora de `AppLayout`, com `useFocus`, `useFocusSounds`, os controles e as anotações; a cada ação chama `notifyFocusChanged`, e ao receber `onFocusChanged` invalida a consulta do foco; sem tarefa porque ela saiu de Hoje, chama `expandFocus` com `task_left`.
+**Where**: `frontend/src/pages/focus-widget.tsx`
+**Depends on**: T7, T8, T9
+**Reuses**: `App.tsx` (rotas)
+**Requirement**: WIDGET-12, WIDGET-17, WIDGET-22
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `react-composition-patterns`
+
+**Done when**:
+
+- [x] Testes: pausar chama `notifyFocusChanged`; evento recebido refaz a consulta; tarefa sumida chama `expandFocus`; avisos da fila offline aparecem no widget
+- [x] Gate check passes: Full (frontend)
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: O widget não monta o `FocusGuard`. Ele só existe com a janela principal aberta (minimizada), e o guarda dela continua a informar o foco para o diálogo de fechar (SYNC-08) e a perguntar pela sessão travada ao abrir (SYNC-11); duas janelas informando se sobrescreveriam. Um teste prova que o widget não chama `reportFocusState` nem `onPauseRequest`, e `App.test.tsx` prova `/widget` sem o menu lateral e o login sem sessão. Uma tarefa pausada não tem sessão que diga a lista: o widget começa na lista guardada em `localStorage` (`trackzyn.focus.list`, que a tela de foco grava na T11) e segue a lista da sessão aberta. `notifyFocusChanged` sai depois de o servidor responder à ação, para a outra janela ler o estado novo. Os avisos da fila offline (recusas e o aviso das 24h, aqui dentro do widget e não em toast, que não caberia) fazem o widget crescer como nas anotações. `taskLeft` saiu de `pages/focus.tsx` para `lib/focus/task-left.ts`, para as duas telas usarem a mesma regra.
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `feat(web): add the focus widget page`
+
+---
+
+#### T11: Recolher a partir da tela de foco e do quadro
+
+**What**: Ícone de recolher na página de foco só no desktop; no desktop, `Focar agora` abre a sessão e chama `collapseFocus`; a página de foco chama `notifyFocusChanged` e ouve `onFocusChanged`.
+**Where**: `frontend/src/pages/focus.tsx`
+**Depends on**: T6
+**Reuses**: `lib/desktop/focus-window.ts`
+**Requirement**: WIDGET-01, WIDGET-02, WIDGET-22, WIDGET-24
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Testes: sem `window.trackzyn` o ícone não aparece; com ele, o clique chama `collapseFocus`; no desktop, abrir pelo `Focar agora` chama `collapseFocus` depois do `start`
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Decisão do usuário (opção a): o ícone de recolher existe só no desktop e abre o widget; a versão compacta da página saiu, e a FOCUS-01 de `foco-e-sons` foi ajustada no mesmo commit, com o teste dela afirmando que o ícone não aparece no navegador. `Focar agora` navega com `state: { collapse: true }`; no desktop, a tela de foco chama `collapseFocus` depois de o `start` ser respondido, ou na hora quando uma tarefa deste dispositivo já conta nessa lista; sem nada para começar, fica na tela. O estado da rota é limpo depois de recolher. A tela de foco avisa o widget depois de cada ação respondida e grava `trackzyn.focus.list`. Quem ouve `onFocusChanged` na janela principal é o `FocusGuard`, no nível do app (commit `fix(web)` anterior), que também passou a informar o foco como ativo só com uma tarefa em foco.
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `feat(web): collapse focus into the widget`
+
+---
+
+### Phase 3: Montagem e ponta a ponta
+
+#### T12: Montar o widget no app e provar ponta a ponta
+
+**What**: Em `main/index.ts`, criar o controlador do widget, registrar os canais com `trustedHandle`, ligar o atalho nas duas janelas e o estado vindo de `focus:state`; novo spec Playwright que abre o widget, pausa por ele, expande, restaura a principal pelo sistema e usa o atalho.
+**Where**: `desktop/e2e/widget.spec.ts`
+**Depends on**: T5, T10, T11
+**Reuses**: `desktop/e2e/support/launch.ts`, `trustedHandle`
+**Requirement**: WIDGET-01, WIDGET-04, WIDGET-06, WIDGET-10, WIDGET-18, WIDGET-19, WIDGET-20, WIDGET-22
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `playwright-skill`
+
+**Done when**:
+
+- [x] O spec passa no macOS local e no CI Linux com `xvfb-run`
+- [x] Pausar no widget para o cronômetro da principal em até 1 s (WIDGET-22)
+- [x] Gate check passes: Build
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
+
+**Nota**: Rodado só no macOS local (3 vezes seguidas, 16 s); o CI Linux com `xvfb-run` não foi conferido aqui. Sem gerenciador de janelas, minimizar e restaurar não mudam estado no xvfb: no Linux o spec não confere `isMinimized` e simula a restauração pelo sistema com `emit('restore')`. O atalho é digitado com `webContents.sendInputEvent`, porque o teclado do Playwright não passa por `before-input-event`. Só a janela principal informa `focus:state` (vai para `focusClose.reportState` e `controller.setFocusState`) e só ela pode pedir `focus:collapse`. O diálogo de SYNC-08 restaura a janela principal minimizada antes de perguntar, para a pergunta aparecer com o widget aberto; o spec prova isso ao sair com a tarefa contando. Ao carregar, a janela principal recebe `widget:state` com `controller.isOpen()`.
+
+**Tests**: e2e
+**Gate**: build
+
+**Commit**: `feat(desktop): wire the focus widget into the app`
+
+---
+
+## Diagram-Definition Cross-Check
+
+| Task | Depends On (task body) | Diagram Shows | Status |
+| ---- | ---------------------- | ------------- | ------ |
+| T1, T2, T3 | None | - | ✅ Match |
+| T4 | T1, T2, T3 | T1 → T4, T2 → T4, T3 → T4 | ✅ Match |
+| T5 | T4 | T4 → T5 | ✅ Match |
+| T6 | T1 (fase anterior) | - | ✅ Match |
+| T7 | T6 | T6 → T7 | ✅ Match |
+| T8 | T6 | T6 → T8 | ✅ Match |
+| T9 | None | - | ✅ Match |
+| T10 | T7, T8, T9 | T7 → T10, T8 → T10, T9 → T10 | ✅ Match |
+| T11 | T6 | T6 → T11 | ✅ Match |
+| T12 | T5, T10, T11 (fases anteriores) | - | ✅ Match |
+
+## Test Co-location Validation
+
+| Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
+| ---- | --------------------------- | --------------- | --------- | ------ |
+| T1–T5 | Desktop main e preload | unit | unit | ✅ OK |
+| T6, T7 | Lógica pura do frontend | unit | unit | ✅ OK |
+| T8–T11 | Componentes e páginas | unit | unit | ✅ OK |
+| T12 | Montagem do processo principal | e2e | e2e | ✅ OK |
