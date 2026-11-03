@@ -742,10 +742,12 @@ T28
 
 **Done when**:
 
-- [ ] Um teste confirma que o bundle gerado não contém o código do SDK
-- [ ] O backend empacotado sobe sem o SDK instalado e responde 404 em `/api/mcp`
-- [ ] Gate check passes: `npm --prefix desktop test`
-- [ ] Test count: a contagem do desktop só aumenta
+- [x] Um teste confirma que o bundle gerado não contém o código do SDK
+- [x] O backend empacotado sobe sem o SDK instalado e responde 404 em `/api/mcp`
+- [x] Gate check passes: `npm --prefix desktop test`
+- [x] Test count: a contagem do desktop só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: build
