@@ -72,7 +72,7 @@ export function FoundationsSection() {
             <ShellLogo size={24} />
             <ShellLogo size={40} />
             <ShellLogo size={64} />
-            <span className="text-foreground"><ShellLogo size={40} /></span>
+            <span className="text-foreground"><ShellLogo size={40} variant="mono" /></span>
           </div>
         </Specimen>
         <Specimen name="Icon registry" importFrom="@/lib/icon-registry" wide>

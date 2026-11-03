@@ -21,17 +21,41 @@ describe('ShellLogo', () => {
     expect(svg).toHaveAttribute('height', '64')
   })
 
-  it('keeps the viewBox fixed so the mark never distorts', () => {
+  it('keeps a square viewBox so the mark never distorts', () => {
     const { container } = renderWithProviders(<ShellLogo size={120} />)
 
     const svg = container.querySelector('svg')!
-    expect(svg).toHaveAttribute('viewBox', '0 0 24 24')
+    expect(svg).toHaveAttribute('viewBox', '0 -1.5 43 43')
     expect(svg).toHaveAttribute('preserveAspectRatio', 'xMidYMid meet')
   })
 
-  it('fills from currentColor, so it follows the theme', () => {
+  it('paints the brand gradient by default', () => {
     const { container } = renderWithProviders(<ShellLogo />)
 
+    const gradient = container.querySelector('linearGradient')!
+    expect(gradient).toBeInTheDocument()
+    const ring = container.querySelector('[data-part="ring"]')!
+    expect(ring.getAttribute('fill')).toBe(`url(#${gradient.id})`)
+  })
+
+  it('gives every instance its own gradient ids', () => {
+    const { container } = renderWithProviders(
+      <>
+        <ShellLogo />
+        <ShellLogo />
+      </>,
+    )
+
+    const ids = [...container.querySelectorAll('linearGradient')].map((g) => g.id)
+    expect(ids).toHaveLength(4)
+    expect(new Set(ids).size).toBe(4)
+    for (const id of ids) expect(id).toMatch(/^[\w-]+$/)
+  })
+
+  it('fills from currentColor in the mono variant, so it follows the theme', () => {
+    const { container } = renderWithProviders(<ShellLogo variant="mono" />)
+
+    expect(container.querySelector('linearGradient')).toBeNull()
     expect(container.querySelector('g')).toHaveAttribute('fill', 'currentColor')
   })
 
