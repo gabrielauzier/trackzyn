@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { inWorkspace, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
+import { mintToken } from '../support/tokens.ts'
 
 let t: TestApp
 let call: ReturnType<typeof inWorkspace>
@@ -37,7 +38,7 @@ describe('GET /api/lists/:id/board', () => {
       },
     })
     expect(board.columns.today.tasks).toEqual([
-      { id: today.json().id, title: 'Focus', estimate_minutes: 30, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 } },
+      { id: today.json().id, title: 'Focus', estimate_minutes: 30, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null },
     ])
     expect(board.columns.done.days).toHaveLength(1)
     expect(board.columns.done.days[0].tasks.map((task: { title: string }) => task.title)).toEqual(['Finished'])
@@ -49,5 +50,26 @@ describe('GET /api/lists/:id/board', () => {
     const invalid = await call('GET', '/api/lists/nope/board', owner.token, workspaceId)
     expect(invalid.statusCode).toBe(422)
     expect(invalid.json().detail[0]).toMatchObject({ loc: ['path', 'list_id'], msg: 'Input should be a valid UUID' })
+  })
+})
+
+describe('GET /api/lists/:id/board with the origin of the tasks', () => {
+  it('ORIGIN-02 answers the name of the token on the card of its task, to the session and to a token; null on the others', async () => {
+    const { owner, workspaceId } = await ownerViewerStranger(t)
+    const list = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Week', color: 2 })).json()
+    const token = await mintToken(t, owner.token, workspaceId)
+    const created = await t.app.inject({ method: 'POST', url: '/api/tasks', headers: bearer(token.value), payload: { list_id: list.id, title: 'Via token' } })
+    await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list.id, title: 'By hand' })
+    const expected = [
+      { title: 'Via token', created_via: created.json().created_via },
+      { title: 'By hand', created_via: null },
+    ]
+    expect(created.json().created_via).toEqual(expect.any(String))
+
+    const bySession = await call('GET', `/api/lists/${list.id}/board`, owner.token, workspaceId)
+    const byToken = await t.app.inject({ method: 'GET', url: `/api/lists/${list.id}/board`, headers: bearer(token.value) })
+
+    expect(bySession.json().columns.backlog.tasks).toMatchObject(expected)
+    expect(byToken.json().columns.backlog.tasks).toMatchObject(expected)
   })
 })

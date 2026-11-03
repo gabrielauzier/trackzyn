@@ -18,6 +18,7 @@ import { WorkspaceSwitcher } from '@/components/workspace-switcher'
 import { ChangePasswordDialog } from '@/components/change-password-dialog'
 import { TwoFactorSetup } from '@/components/two-factor-setup'
 import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
+import { AccessTokensDialog } from '@/components/access-tokens-dialog'
 import { CommandPalette } from '@/components/command-palette'
 import { FocusGuard } from '@/components/focus/focus-guard'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
@@ -63,6 +64,7 @@ export function AppLayout() {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
   const [twoFactorOpen, setTwoFactorOpen] = useState(false)
   const [passkeysOpen, setPasskeysOpen] = useState(false)
+  const [accessTokensOpen, setAccessTokensOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
@@ -298,6 +300,7 @@ export function AppLayout() {
               onChangePassword={() => setChangePasswordOpen(true)}
               onTwoFactor={() => setTwoFactorOpen(true)}
               onPasskeys={() => setPasskeysOpen(true)}
+              onAccessTokens={isEnabled('personal_tokens') ? () => setAccessTokensOpen(true) : undefined}
               onUpdateAvailable={openUpdateDialog}
               localAuthEnabled={localAuthEnabled}
               collapsed={collapsed}
@@ -340,6 +343,7 @@ export function AppLayout() {
         onClose={() => setPasskeysOpen(false)}
         localAuthEnabled={localAuthEnabled}
       />
+      <AccessTokensDialog open={accessTokensOpen} onClose={() => setAccessTokensOpen(false)} />
       <FocusGuard />
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <UpdateAvailableDialog

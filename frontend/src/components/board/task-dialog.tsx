@@ -44,10 +44,16 @@ export function TaskDialog({ taskId, canWrite, onClose }: TaskDialogProps) {
 }
 
 function TaskDetails({ taskId, canWrite, onDone }: { taskId: string; canWrite: boolean; onDone: () => void }) {
+  const { t } = useTranslation()
   const { data: task } = useTask(taskId)
   if (!task) return <Skeleton className="h-48 w-full" />
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
+      {task.created_via && (
+        <p className="truncate text-xs text-muted-foreground" title={t('board.createdVia', { name: task.created_via })}>
+          {t('board.createdVia', { name: task.created_via })}
+        </p>
+      )}
       {/* Keyed by id so the form starts from this task's saved values. */}
       <TaskForm key={task.id} task={task} canWrite={canWrite} onDone={onDone} />
       <SubtaskList taskId={task.id} canWrite={canWrite} />

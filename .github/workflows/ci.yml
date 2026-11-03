@@ -2,11 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2]
   pull_request:
-    branches: [main]
+    branches: [main, v2]
 
-# Only superseded PR runs are cancelled; every main push is validated.
+# Only superseded PR runs are cancelled; every push to main or v2 is validated.
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -120,8 +120,8 @@ jobs:
     defaults:
       run:
         working-directory: backend-node
-    # Redis is the only service: the integration tests run on PGlite, and the BullMQ worker (C35)
-    # and RedisStore tests need a real Redis.
+    # Most integration tests run on PGlite. The BullMQ worker (C35) and RedisStore tests need a real
+    # Redis, and the concurrency tests in test/postgres need a real PostgreSQL: PGlite has one connection.
     services:
       redis:
         image: redis:8-alpine
@@ -129,6 +129,17 @@ jobs:
           - 6379/tcp
         options: >-
           --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -167,12 +178,14 @@ jobs:
         if: steps.changes.outputs.run_backend_node != 'false'
         run: npm run typecheck
 
-      # No database service: the integration tests run on PGlite. REDIS_URL turns on the tests
-      # that need a real Redis (RedisStore, BullMQ worker); without it they are not collected.
+      # The integration tests run on PGlite. REDIS_URL turns on the tests that need a real Redis
+      # (RedisStore, BullMQ worker) and TEST_POSTGRES_URL the concurrency tests in test/postgres;
+      # without them they are not collected.
       - name: Run tests with coverage
         if: steps.changes.outputs.run_backend_node != 'false'
         env:
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports['6379'] }}/0
+          TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/postgres
         run: npm test -- --coverage
 
 

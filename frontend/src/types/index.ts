@@ -45,6 +45,29 @@ export interface PasskeyOptionsResponse {
   options: Record<string, unknown>
 }
 
+export type AccessTokenScope = 'lists:read' | 'tasks:read' | 'tasks:create' | 'tasks:write' | 'tasks:delete'
+
+export interface AccessToken {
+  id: string
+  name: string
+  workspace_id: string
+  workspace_name: string
+  scopes: AccessTokenScope[]
+  display_hint: string
+  created_at: string
+  expires_at: string
+  last_used_at: string | null
+  revoked_at: string | null
+  status: 'active' | 'expired' | 'revoked'
+}
+
+/** The only response that carries the full token value. */
+export interface CreatedAccessToken {
+  id: string
+  token: string
+  expires_at: string
+}
+
 export interface AppSetting {
   key: string
   value: string
@@ -144,6 +167,8 @@ export interface Task {
   completed_at: string | null
   created_at: string
   subtasks: Subtask[]
+  /** Name of the access token that created the task; null otherwise. */
+  created_via: string | null
 }
 
 export interface TaskCardView {
@@ -153,6 +178,8 @@ export interface TaskCardView {
   spent_seconds: number
   position: number
   subtasks: { done: number; total: number }
+  /** Name of the access token that created the task; null otherwise. */
+  created_via: string | null
 }
 
 export interface BoardColumnView {

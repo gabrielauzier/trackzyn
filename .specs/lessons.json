@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 17,
+  "next_id": 26,
   "lessons": [
     {
       "id": "L-001",
@@ -292,6 +292,168 @@
       ],
       "created": "2026-10-26T00:39:28Z",
       "last_seen": "2026-10-26T00:39:28Z"
+    },
+    {
+      "id": "L-017",
+      "key": "ac_gap::count a rate limit per operation not per http request when the protocol lets one request carry many operations",
+      "text": "Count a rate limit per operation, not per HTTP request, when the protocol lets one request carry many operations.",
+      "signal": "ac_gap",
+      "scope": "rate-limit",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "RATE-01 (rate-limit)"
+      ],
+      "created": "2026-11-03T00:52:31Z",
+      "last_seen": "2026-11-03T00:52:31Z"
+    },
+    {
+      "id": "L-018",
+      "key": "spec_precision_gap::state whether a denied request counts as use when a requirement updates a usage timestamp",
+      "text": "State whether a denied request counts as use when a requirement updates a usage timestamp.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MANAGE-07 (specs)"
+      ],
+      "created": "2026-11-03T00:52:31Z",
+      "last_seen": "2026-11-03T00:52:31Z"
+    },
+    {
+      "id": "L-019",
+      "key": "spec_precision_gap::state the precedence between authentication origin and method errors when one route can answer several of them",
+      "text": "State the precedence between authentication, origin and method errors when one route can answer several of them.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MCP-09 (specs)"
+      ],
+      "created": "2026-11-03T00:52:32Z",
+      "last_seen": "2026-11-03T00:52:32Z"
+    },
+    {
+      "id": "L-020",
+      "key": "spec_precision_gap::name every view of an entity that must carry a new field when several endpoints render that entity",
+      "text": "Name every view of an entity that must carry a new field when several endpoints render that entity.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "ORIGIN-03 (specs)"
+      ],
+      "created": "2026-11-03T00:52:32Z",
+      "last_seen": "2026-11-03T00:52:32Z"
+    },
+    {
+      "id": "L-021",
+      "key": "spec_deviation::record a framework owned route exempted from a deny by default rule in the spec not only in a test comment",
+      "text": "Record a framework-owned route exempted from a deny-by-default rule in the spec, not only in a test comment.",
+      "signal": "spec_deviation",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/test/routes/token-scopes.test.ts:85 (routes)"
+      ],
+      "created": "2026-11-03T00:52:32Z",
+      "last_seen": "2026-11-03T00:52:32Z"
+    },
+    {
+      "id": "L-022",
+      "key": "ac_gap::reject nul characters in text fields at the schema since postgresql refuses them with a 500",
+      "text": "Reject NUL characters in text fields at the schema, since PostgreSQL refuses them with a 500.",
+      "signal": "ac_gap",
+      "scope": "validation",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/routes/access-tokens.ts:53 (validation)"
+      ],
+      "created": "2026-11-03T00:52:32Z",
+      "last_seen": "2026-11-03T00:52:32Z"
+    },
+    {
+      "id": "L-023",
+      "key": "surviving_mutant::test a shared validation rule through every route and tool that reuses it not only the first one",
+      "text": "Test a shared validation rule through every route and tool that reuses it, not only the first one.",
+      "signal": "surviving_mutant",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N09, N10 (validation.md iteração 2) (routes)"
+      ],
+      "created": "2026-11-03T01:53:14Z",
+      "last_seen": "2026-11-03T01:53:14Z"
+    },
+    {
+      "id": "L-024",
+      "key": "surviving_mutant::test the single item case when a request shape is rejected as a collection",
+      "text": "Test the single-item case when a request shape is rejected as a collection.",
+      "signal": "surviving_mutant",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "B2 (validation.md iteração 2) (routes)"
+      ],
+      "created": "2026-11-03T01:53:15Z",
+      "last_seen": "2026-11-03T01:53:15Z"
+    },
+    {
+      "id": "L-025",
+      "key": "surviving_mutant::assert the precedence between two refusals with one request that triggers both",
+      "text": "Assert the precedence between two refusals with one request that triggers both.",
+      "signal": "surviving_mutant",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "tokens-de-acesso"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "O3, O4 (validation.md iteração 2) (routes)"
+      ],
+      "created": "2026-11-03T01:53:15Z",
+      "last_seen": "2026-11-03T01:53:15Z"
     }
   ]
 }

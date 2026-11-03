@@ -7,6 +7,8 @@ import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fast
 import type { AppContext } from './context.ts'
 import { decorateRequest } from './plugins/auth.ts'
 import { registerErrorHandling } from './plugins/errors.ts'
+import { registerTokenAuth } from './plugins/token-auth.ts'
+import { accessTokenRoutes } from './routes/access-tokens.ts'
 import { adminRoutes } from './routes/admin.ts'
 import { authRoutes } from './routes/auth.ts'
 import { boardRoutes } from './routes/board.ts'
@@ -15,6 +17,7 @@ import { focusRoutes } from './routes/focus.ts'
 import { healthRoutes } from './routes/health.ts'
 import { infoRoutes } from './routes/info.ts'
 import { listRoutes } from './routes/lists.ts'
+import { mcpRoutes } from './routes/mcp.ts'
 import { oidcRoutes } from './routes/oidc.ts'
 import { passkeyRoutes } from './routes/passkeys.ts'
 import { reportRoutes } from './routes/reports.ts'
@@ -30,6 +33,8 @@ export async function buildApp(
   options: FastifyServerOptions = {},
   /** Runs right after Fastify is created, before any plugin: global hooks added here see every request. */
   beforeRoutes?: (app: FastifyInstance) => void,
+  /** Runs after every route: a route added here gets the same hooks and error handling as the others. */
+  afterRoutes?: (app: FastifyInstance) => void,
 ): Promise<FastifyInstance> {
   const app = Fastify({ ...options })
   beforeRoutes?.(app)
@@ -37,8 +42,19 @@ export async function buildApp(
   app.setSerializerCompiler(serializerCompiler)
 
   await app.register(swagger, {
-    openapi: { info: { title: ctx.config.appName, version: '0.1.0' } },
-    transform: jsonSchemaTransform,
+    openapi: {
+      info: { title: ctx.config.appName, version: '0.1.0' },
+      components: { securitySchemes: { personalAccessToken: { type: 'http', scheme: 'bearer', bearerFormat: 'tkz_...' } } },
+    },
+    transform: (input) => {
+      const transformed = jsonSchemaTransform(input)
+      const scope = input.route.config?.tokenScope
+      if (!scope) return transformed
+      return {
+        ...transformed,
+        schema: { ...transformed.schema, security: [{ personalAccessToken: [] }], description: `Requires the token scope \`${scope}\`.` },
+      }
+    },
   })
   await app.register(formbody)
   // One byte over the limit marks the file as truncated, which the upload route reports as too large.
@@ -51,6 +67,7 @@ export async function buildApp(
 
   decorateRequest(app)
   registerErrorHandling(app)
+  if (ctx.config.personalTokensEnabled) registerTokenAuth(app, ctx)
 
   await app.register(healthRoutes)
   await app.register(adminRoutes(ctx))
@@ -68,8 +85,11 @@ export async function buildApp(
   await app.register(boardRoutes(ctx))
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
+  if (ctx.config.personalTokensEnabled) await app.register(accessTokenRoutes(ctx))
+  if (ctx.config.personalTokensEnabled) await app.register(mcpRoutes(ctx))
 
   app.get('/api/openapi.json', { schema: { hide: true } }, async () => app.swagger())
+  afterRoutes?.(app)
 
   await app.ready()
   return app

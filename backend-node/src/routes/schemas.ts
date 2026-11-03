@@ -2,6 +2,9 @@ import { z } from 'zod'
 import type { Workspace, WorkspaceMember } from '../db/schema.ts'
 import type { User } from '../db/schema.ts'
 
+/** PostgreSQL text cannot hold a NUL character: without this it is a 500 at the database, not a 422. */
+export const withoutNul = (schema: z.ZodString) => schema.refine((value) => !value.includes('\0'), 'Input should not contain a NUL character')
+
 /** UserRead of the Python API. */
 export const userReadSchema = z.object({
   id: z.string(),

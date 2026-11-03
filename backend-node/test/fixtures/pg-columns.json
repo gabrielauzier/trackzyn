@@ -219,6 +219,74 @@
       "maxLength": null
     }
   ],
+  "personal_access_tokens": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "name",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 100
+    },
+    {
+      "column": "token_hash",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 64
+    },
+    {
+      "column": "last_four",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 4
+    },
+    {
+      "column": "scopes",
+      "type": "json",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "expires_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "last_used_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "revoked_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    }
+  ],
   "subtasks": [
     {
       "column": "id",
@@ -247,6 +315,38 @@
     {
       "column": "position",
       "type": "integer",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "task_idempotency_keys": [
+    {
+      "column": "token_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "key",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 255
+    },
+    {
+      "column": "request_hash",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 64
+    },
+    {
+      "column": "task_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
       "nullable": false,
       "maxLength": null
     }
@@ -308,6 +408,12 @@
     },
     {
       "column": "completed_by_user_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_via_token_id",
       "type": "uuid",
       "nullable": true,
       "maxLength": null

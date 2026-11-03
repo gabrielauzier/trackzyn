@@ -10,6 +10,7 @@ const card = (id: string, position: number): TaskCardView => ({
   spent_seconds: 0,
   position,
   subtasks: { done: 0, total: 0 },
+  created_via: null,
 })
 
 // Backlog is empty; Today has three cards, This week one, Concluídas one.

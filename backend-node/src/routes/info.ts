@@ -26,7 +26,7 @@ export function infoRoutes(ctx: AppContext) {
       },
       async () => ({
         app_name: ctx.config.appName,
-        features: {},
+        features: { personal_tokens: ctx.config.personalTokensEnabled },
         update_check_repo: ctx.config.updateCheckRepo || null,
       }),
     )

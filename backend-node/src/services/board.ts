@@ -12,6 +12,8 @@ export interface TaskCardView {
   spent_seconds: number
   position: number
   subtasks: { done: number; total: number }
+  /** The name of the token that created the task, while that token exists. */
+  created_via: string | null
 }
 
 export interface ColumnView {
@@ -61,6 +63,7 @@ interface TaskRow extends Record<string, unknown> {
   completed_date: string | null
   subtasks_done: number
   subtasks_total: number
+  created_via: string | null
 }
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
@@ -105,11 +108,14 @@ export async function buildBoard(
         SELECT t.id, t.title, t.estimate_minutes, t."column", t.position,
                CASE WHEN t."column" = 'done' THEN (${completedDate})::text END AS completed_date,
                count(s.id) FILTER (WHERE s.done)::int AS subtasks_done,
-               count(s.id)::int AS subtasks_total
-        FROM tasks t LEFT JOIN subtasks s ON s.task_id = t.id
+               count(s.id)::int AS subtasks_total,
+               p.name AS created_via
+        FROM tasks t
+        LEFT JOIN subtasks s ON s.task_id = t.id
+        LEFT JOIN personal_access_tokens p ON p.id = t.created_via_token_id
         WHERE t.list_id = ${list.id}
           AND (t."column" <> 'done' OR ${completedDate} = ${today}::date OR ${completedDate} = (SELECT day FROM previous))
-        GROUP BY t.id
+        GROUP BY t.id, p.name
         ORDER BY t.position, t.created_at`,
   )
 
@@ -126,6 +132,7 @@ export async function buildBoard(
     spent_seconds: spent.get(row.id) ?? 0,
     position: row.position,
     subtasks: { done: row.subtasks_done, total: row.subtasks_total },
+    created_via: row.created_via,
   })
   const inColumn = (column: TaskColumn) => found.filter((row) => row.column === column).map(view)
 

@@ -23,6 +23,7 @@ const created: Task = {
   completed_at: null,
   created_at: '2026-10-24T10:00:00Z',
   subtasks: [],
+  created_via: null,
 }
 
 beforeEach(() => {

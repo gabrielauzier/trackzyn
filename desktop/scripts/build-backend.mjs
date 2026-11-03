@@ -13,8 +13,9 @@ await build({
   format: 'cjs',
   target: 'node22',
   // PGlite reads its .wasm and .data by import.meta.url and argon2 is a native addon per platform:
-  // both stay packages next to the app instead of going into the bundle.
-  external: ['@electric-sql/pglite', '@node-rs/argon2', 'pg-native'],
+  // both stay packages next to the app instead of going into the bundle. The MCP SDK serves only a route
+  // the local mode does not register, so the app does not ship it (TOKEN-13).
+  external: ['@electric-sql/pglite', '@modelcontextprotocol/sdk', '@node-rs/argon2', 'pg-native'],
   // The ESM sources ask for their own folder; in a CommonJS bundle that is the bundle's.
   define: { 'import.meta.dirname': '__dirname', 'import.meta.url': '__importMetaUrl' },
   banner: { js: "const __importMetaUrl = require('node:url').pathToFileURL(__filename).href;" },

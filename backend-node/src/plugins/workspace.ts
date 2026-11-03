@@ -30,12 +30,18 @@ const canWrite = (role: string) => ['owner', 'editor', 'manager'].includes(role)
 /**
  * `current_workspace`: resolves `X-Workspace-Id` (or the user's default workspace) after
  * `requireUser`. A manager without a membership row gets a virtual `manager` membership.
+ * A token only ever addresses its own workspace, under the same member and archive checks.
  */
 export function workspaceContext(ctx: AppContext): preValidationAsyncHookHandler {
   return async (request) => {
     const user = request.user
     const header = request.headers['x-workspace-id']
-    const requested = Array.isArray(header) ? header[0] : header
+    const given = Array.isArray(header) ? header[0] : header
+    const principal = request.tokenPrincipal
+    if (principal && given && given.toLowerCase() !== principal.workspaceId) {
+      throw new HttpError(403, 'Token is bound to another workspace')
+    }
+    const requested = principal ? principal.workspaceId : given
 
     if (requested) {
       if (!UUID_PATTERN.test(requested)) throw new HttpError(400, 'Invalid X-Workspace-Id')
@@ -65,5 +71,9 @@ export function workspaceContext(ctx: AppContext): preValidationAsyncHookHandler
 
 /** `current_writable_workspace`: the context, refused with 403 `Read-only role` for a viewer. */
 export const requireWrite: preValidationAsyncHookHandler = async (request) => {
-  if (!canWrite(request.workspace.member.role)) throw new HttpError(403, 'Read-only role')
+  ensureWritable(request.workspace)
+}
+
+export function ensureWritable({ member }: WorkspaceContext): void {
+  if (!canWrite(member.role)) throw new HttpError(403, 'Read-only role')
 }

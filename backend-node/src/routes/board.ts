@@ -14,6 +14,7 @@ const taskCard = z.object({
   spent_seconds: z.number(),
   position: z.number(),
   subtasks: z.object({ done: z.number(), total: z.number() }),
+  created_via: z.string().nullable(),
 })
 const column = z.object({ tasks: z.array(taskCard), estimate_minutes: z.number() })
 const progressColumn = column.extend({ done: z.number(), total: z.number() })
@@ -42,6 +43,7 @@ export function boardRoutes(ctx: AppContext) {
           params: z.object({ list_id: z.string().regex(UUID_PATTERN, 'Input should be a valid UUID') }),
           response: { 200: boardSchema },
         },
+        config: { tokenScope: 'tasks:read' },
         preValidation: [requireUser, workspaceContext(ctx)],
       },
       async (request) => buildBoard(ctx.db, request.params.list_id.toLowerCase(), request.workspace.workspace, request.workspace.user.id),

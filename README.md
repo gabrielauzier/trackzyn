@@ -13,6 +13,7 @@ trackzyn starts from the [launchkit](https://github.com/gabrielauzier/launchkit)
 
 - **Auth:** email and password, first-run admin setup, TOTP two-factor, passkeys (WebAuthn), OIDC/SSO (Authentik, Pocket ID, …) with optional role sync, rate-limited login, and public registration that admins can switch off.
 - **Workspaces:** every user gets a personal workspace. Additional workspaces have members with owner, editor and viewer roles, plus an optional external manager. Every request is scoped by the `X-Workspace-Id` header.
+- **Access tokens and MCP:** long-lived, scoped, revocable tokens for automations and AI clients, over the REST API and an MCP server. See the [guide, in Portuguese](docs/tokens-de-acesso.md).
 - **Admin panel:** user CRUD, registration toggle, brand colours, number and date formats, and the application timezone.
 - **Files:** workspace-scoped uploads on a pluggable storage provider (local disk out of the box), with size and type limits.
 - **Background jobs:** a BullMQ worker and scheduler on Redis, with an example job and schedule.

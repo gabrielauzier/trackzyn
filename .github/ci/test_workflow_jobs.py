@@ -21,6 +21,12 @@ def job_block(name: str) -> str:
 
 
 
+class TriggersTest(unittest.TestCase):
+    def test_pushes_and_pull_requests_to_main_and_v2_run_the_workflow(self):
+        text = WORKFLOW.read_text()
+        self.assertIn("on:\n  push:\n    branches: [main, v2]\n  pull_request:\n    branches: [main, v2]\n", text)
+
+
 class NodeBackendJobsTest(unittest.TestCase):
     def test_backend_node_tests_job_lints_typechecks_and_tests_with_coverage(self):
         block = job_block("backend-node-tests")
@@ -31,6 +37,14 @@ class NodeBackendJobsTest(unittest.TestCase):
         block = job_block("backend-node-tests")
         self.assertIn("image: redis:8-alpine", block)
         self.assertIn("REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports['6379'] }}/0", block)
+
+    def test_backend_node_tests_job_has_a_postgres_service_and_passes_test_postgres_url(self):
+        block = job_block("backend-node-tests")
+        self.assertIn("image: postgres:16", block)
+        self.assertIn(
+            "TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/postgres",
+            block,
+        )
 
 
 

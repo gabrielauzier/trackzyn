@@ -37,6 +37,7 @@ import {
   ChevronsUpDown,
   Download,
   KeyRound,
+  KeySquare,
   Languages,
   LogOut,
   Plus,
@@ -72,6 +73,8 @@ interface AccountMenuProps {
   onTwoFactor: () => void
   /** Open the passkey management dialog. */
   onPasskeys: () => void
+  /** Open the access tokens dialog; omitted when the server has them off. */
+  onAccessTokens?: () => void
   /** Open the "Update available" dialog; omitted when the check is off. */
   onUpdateAvailable?: () => void
   /** True when local password/passkey auth is enabled. */
@@ -93,6 +96,7 @@ export function WorkspaceSwitcher({
   onChangePassword,
   onTwoFactor,
   onPasskeys,
+  onAccessTokens,
   onUpdateAvailable,
   localAuthEnabled,
   collapsed = false,
@@ -255,6 +259,15 @@ export function WorkspaceSwitcher({
             >
               <Fingerprint size={14} />
               {t('auth.passkeysTitle')}
+            </DropdownMenuItem>
+          )}
+          {onAccessTokens && (
+            <DropdownMenuItem
+              onClick={onAccessTokens}
+              className="flex items-center gap-2"
+            >
+              <KeySquare size={14} />
+              {t('accessTokens.title')}
             </DropdownMenuItem>
           )}
           {onUpdateAvailable && (

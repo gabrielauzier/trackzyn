@@ -110,6 +110,60 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: backend-node/src/services/reports.ts:148,177 (backend/aggregation)
 - last seen: 2026-10-26T00:39:28Z
 
+### L-017 - Count a rate limit per operation, not per HTTP request, when the protocol lets one request carry many operations.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `rate-limit` · harmful: 0
+- features: tokens-de-acesso
+- evidence: RATE-01 (rate-limit)
+- last seen: 2026-11-03T00:52:31Z
+
+### L-018 - State whether a denied request counts as use when a requirement updates a usage timestamp.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: tokens-de-acesso
+- evidence: MANAGE-07 (specs)
+- last seen: 2026-11-03T00:52:31Z
+
+### L-019 - State the precedence between authentication, origin and method errors when one route can answer several of them.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: tokens-de-acesso
+- evidence: MCP-09 (specs)
+- last seen: 2026-11-03T00:52:32Z
+
+### L-020 - Name every view of an entity that must carry a new field when several endpoints render that entity.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: tokens-de-acesso
+- evidence: ORIGIN-03 (specs)
+- last seen: 2026-11-03T00:52:32Z
+
+### L-021 - Record a framework-owned route exempted from a deny-by-default rule in the spec, not only in a test comment.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: tokens-de-acesso
+- evidence: backend-node/test/routes/token-scopes.test.ts:85 (routes)
+- last seen: 2026-11-03T00:52:32Z
+
+### L-022 - Reject NUL characters in text fields at the schema, since PostgreSQL refuses them with a 500.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `validation` · harmful: 0
+- features: tokens-de-acesso
+- evidence: backend-node/src/routes/access-tokens.ts:53 (validation)
+- last seen: 2026-11-03T00:52:32Z
+
+### L-023 - Test a shared validation rule through every route and tool that reuses it, not only the first one.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: tokens-de-acesso
+- evidence: N09, N10 (validation.md iteração 2) (routes)
+- last seen: 2026-11-03T01:53:14Z
+
+### L-024 - Test the single-item case when a request shape is rejected as a collection.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: tokens-de-acesso
+- evidence: B2 (validation.md iteração 2) (routes)
+- last seen: 2026-11-03T01:53:15Z
+
+### L-025 - Assert the precedence between two refusals with one request that triggers both.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: tokens-de-acesso
+- evidence: O3, O4 (validation.md iteração 2) (routes)
+- last seen: 2026-11-03T01:53:15Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
