@@ -29,7 +29,7 @@ export function AuthBrandPanel() {
         className="pointer-events-none absolute -right-28 -bottom-24 text-white/[0.06]"
         style={{ transform: 'rotate(-8deg)' }}
       >
-        <ShellLogo size={640} />
+        <ShellLogo size={640} variant="mono" />
       </div>
 
       {/* Depth: gentle vignette toward the edges */}
@@ -45,7 +45,7 @@ export function AuthBrandPanel() {
       {/* Wordmark */}
       <div className="relative flex items-center gap-2.5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
-          <ShellLogo size={20} className="text-white" />
+          <ShellLogo size={20} variant="mono" className="text-white" />
         </div>
         <span className="text-lg font-semibold tracking-tight">{t('app.name')}</span>
       </div>
