@@ -141,7 +141,7 @@ describe('AccessTokensDialog revocation', () => {
     expect(confirm).toHaveTextContent('n8n flow')
     expect(accessTokens.revoke).not.toHaveBeenCalled()
 
-    await user.click(within(confirm).getByRole('button', { name: t('common.delete') }))
+    await user.click(within(confirm).getByRole('button', { name: t('accessTokens.revoke') }))
 
     await waitFor(() => expect(within(row('n8n flow')).getByText('Revoked')).toBeInTheDocument())
     expect(accessTokens.revoke).toHaveBeenCalledWith(active.id)
@@ -169,7 +169,7 @@ describe('AccessTokensDialog revocation', () => {
 
     await user.click(screen.getByRole('button', { name: 'Revoke n8n flow' }))
     const confirm = await screen.findByRole('dialog', { name: 'Revoke token' })
-    await user.click(within(confirm).getByRole('button', { name: t('common.delete') }))
+    await user.click(within(confirm).getByRole('button', { name: t('accessTokens.revoke') }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Service unavailable')
     expect(within(row('n8n flow')).getByText('Active')).toBeInTheDocument()

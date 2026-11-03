@@ -16,6 +16,8 @@ type DeleteConfirmationDialogProps = {
   title: string
   description: string
   isPending: boolean
+  /** The confirm button's text, when the action is not a deletion. */
+  confirmLabel?: string
   onClose: () => void
   onCancel?: () => void
   onConfirm: () => void
@@ -26,6 +28,7 @@ export function DeleteConfirmationDialog({
   title,
   description,
   isPending,
+  confirmLabel,
   onClose,
   onCancel = onClose,
   onConfirm,
@@ -50,7 +53,7 @@ export function DeleteConfirmationDialog({
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={isPending}>
             <Trash2 size={14} className="mr-1" />
-            {t('common.delete')}
+            {confirmLabel ?? t('common.delete')}
           </Button>
         </DialogFooter>
       </DialogContent>

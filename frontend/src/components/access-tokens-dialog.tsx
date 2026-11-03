@@ -219,6 +219,7 @@ function AccessTokensPanel({ onClose }: { onClose: () => void }) {
         title={t('accessTokens.revokeTitle')}
         description={t('accessTokens.revokeDescription', { name: revoking?.name ?? '' })}
         isPending={revokePending}
+        confirmLabel={t('accessTokens.revoke')}
         onClose={() => setRevoking(null)}
         onConfirm={() => void handleRevoke()}
       />
