@@ -500,6 +500,7 @@
     "archivedEmptyHint": "As listas arquivadas aparecem aqui, com as tarefas e o tempo registrado."
   },
   "board": {
+    "createdVia": "via {{name}}",
     "orderInToday": "Ordem em Hoje",
     "complete": "Concluir {{title}}",
     "estimate": "Estimativa",

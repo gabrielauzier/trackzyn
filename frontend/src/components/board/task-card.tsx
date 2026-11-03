@@ -133,6 +133,12 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onComplete, s
         </span>
       </div>
 
+      {task.created_via && (
+        <p className="truncate text-xs text-muted-foreground" title={t('board.createdVia', { name: task.created_via })}>
+          {t('board.createdVia', { name: task.created_via })}
+        </p>
+      )}
+
       {task.subtasks.total > 0 && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <span className="flex-1">{t('board.subtaskSummary', { done: task.subtasks.done, total: task.subtasks.total })}</span>

@@ -500,6 +500,7 @@
     "archivedEmptyHint": "Archived lists show up here, with their tasks and tracked time kept."
   },
   "board": {
+    "createdVia": "via {{name}}",
     "orderInToday": "Order in Today",
     "complete": "Complete {{title}}",
     "estimate": "Estimate",

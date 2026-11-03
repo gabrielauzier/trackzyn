@@ -923,11 +923,13 @@ T28
 
 **Done when**:
 
-- [ ] O selo aparece com `created_via` e não aparece com `null`
-- [ ] O selo aparece também com `canWrite` falso
-- [ ] Um nome de 100 caracteres não quebra o layout do cartão, com truncamento e `title`
-- [ ] Gate check passes: Quick
-- [ ] Test count: a contagem do frontend só aumenta
+- [x] O selo aparece com `created_via` e não aparece com `null`
+- [x] O selo aparece também com `canWrite` falso
+- [x] Um nome de 100 caracteres não quebra o layout do cartão, com truncamento e `title`
+- [x] Gate check passes: Quick
+- [x] Test count: a contagem do frontend só aumenta
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

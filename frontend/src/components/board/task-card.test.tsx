@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 
 import { TaskCard } from '@/components/board/task-card'
-import { renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders } from '@/test/utils'
 import type { TaskCardView } from '@/types'
 
 function task(overrides: Partial<TaskCardView> = {}): TaskCardView {
@@ -21,6 +21,41 @@ function task(overrides: Partial<TaskCardView> = {}): TaskCardView {
 const noop = { onOpen: vi.fn(), onComplete: vi.fn() }
 
 describe('TaskCard', () => {
+  it('shows the token that created the task', () => {
+    renderWithProviders(<TaskCard task={task({ created_via: 'n8n flow' })} column="backlog" canWrite {...noop} />)
+
+    expect(screen.getByText('via n8n flow')).toBeInTheDocument()
+  })
+
+  it('shows no origin on a task without a token', () => {
+    renderWithProviders(<TaskCard task={task({ created_via: null })} column="backlog" canWrite {...noop} />)
+
+    expect(screen.queryByText(/^via /)).not.toBeInTheDocument()
+  })
+
+  it('shows the origin to a viewer too', () => {
+    renderWithProviders(<TaskCard task={task({ created_via: 'n8n flow' })} column="backlog" canWrite={false} {...noop} />)
+
+    expect(screen.getByText('via n8n flow')).toBeInTheDocument()
+  })
+
+  it('truncates a 100 character name and keeps it whole in the title', () => {
+    const name = 'n'.repeat(100)
+    renderWithProviders(<TaskCard task={task({ created_via: name })} column="backlog" canWrite {...noop} />)
+
+    const origin = screen.getByText(`via ${name}`)
+    expect(origin).toHaveClass('truncate')
+    expect(origin).toHaveAttribute('title', `via ${name}`)
+  })
+
+  it('shows the origin in Portuguese', async () => {
+    await i18n.changeLanguage('pt-BR')
+    renderWithProviders(<TaskCard task={task({ created_via: 'n8n flow' })} column="backlog" canWrite {...noop} />)
+
+    expect(screen.getByText('via n8n flow')).toBeInTheDocument()
+    await i18n.changeLanguage('en')
+  })
+
   it('shows the title, the estimate and the time spent', () => {
     renderWithProviders(<TaskCard task={task({ estimate_minutes: 87 })} column="backlog" canWrite {...noop} />)
 
