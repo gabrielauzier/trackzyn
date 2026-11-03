@@ -24,6 +24,7 @@ const task: Task = {
   completed_at: null,
   created_at: '2026-10-24T10:00:00Z',
   subtasks: [{ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', task_id: TASK, title: 'Outline', done: false, position: 0 }],
+  created_via: null,
 }
 
 beforeEach(() => {

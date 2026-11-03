@@ -31,6 +31,7 @@ function taskWith(items: Subtask[]): Task {
     completed_at: null,
     created_at: '2026-10-24T10:00:00Z',
     subtasks: items,
+    created_via: null,
   }
 }
 

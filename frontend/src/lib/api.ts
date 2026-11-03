@@ -2,6 +2,9 @@ import axios from 'axios'
 import { writesBlocked } from '@/lib/write-lock'
 import type { NumberFormat, DateFormat } from '@/lib/format'
 import type {
+  AccessToken,
+  AccessTokenScope,
+  CreatedAccessToken,
   User,
   AdminUser,
   AdminUserList,
@@ -125,6 +128,26 @@ export const workspaces = {
   archive: async (id: string): Promise<Workspace> => {
     const { data } = await api.post(`/workspaces/${id}/archive`)
     return data
+  },
+}
+
+// Access tokens
+export const accessTokens = {
+  list: async (): Promise<AccessToken[]> => {
+    const { data } = await api.get('/tokens')
+    return data
+  },
+  create: async (payload: {
+    name: string
+    workspace_id: string
+    scopes: AccessTokenScope[]
+    expires_in_days: 30 | 90 | 365
+  }): Promise<CreatedAccessToken> => {
+    const { data } = await api.post('/tokens', payload)
+    return data
+  },
+  revoke: async (id: string): Promise<void> => {
+    await api.delete(`/tokens/${id}`)
   },
 }
 

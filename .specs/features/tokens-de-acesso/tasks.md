@@ -773,8 +773,10 @@ T28
 
 **Done when**:
 
-- [ ] Typecheck passa com os novos tipos e `created_via` nulo nos fixtures atuais
-- [ ] Gate check passes: Quick + `npm --prefix frontend run typecheck`
+- [x] Typecheck passa com os novos tipos e `created_via` nulo nos fixtures atuais
+- [x] Gate check passes: Quick + `npm --prefix frontend run typecheck`
+
+**Status**: ✅ Done
 
 **Tests**: none
 **Gate**: quick
