@@ -1,0 +1,337 @@
+name: CI
+
+on:
+  push:
+    branches: [main, v2]
+  pull_request:
+    branches: [main, v2]
+
+# Only superseded PR runs are cancelled; every push to main or v2 is validated.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+
+
+  frontend-checks:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect frontend-relevant changes
+        id: frontend-changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip frontend checks
+        if: steps.frontend-changes.outputs.run_frontend == 'false'
+        run: echo "No frontend-relevant changes; skipping frontend checks."
+
+      - name: Set up Node.js
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm ci
+
+      - name: Lint
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm run lint -- --max-warnings=0
+
+      - name: Type check & Build
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm run build
+
+      - name: Run tests
+        if: steps.frontend-changes.outputs.run_frontend != 'false'
+        run: npm test
+
+  helm-checks:
+    name: Helm Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect helm-relevant changes
+        id: helm-changes
+        run: python3 .github/ci/changes.py
+
+      - name: Skip helm checks
+        if: steps.helm-changes.outputs.run_helm == 'false'
+        run: echo "No helm-relevant changes; skipping helm lint."
+
+      - name: Set up Helm
+        if: steps.helm-changes.outputs.run_helm != 'false'
+        uses: azure/setup-helm@v5
+        with:
+          version: v4.3.0
+
+      - name: Lint Helm Chart
+        if: steps.helm-changes.outputs.run_helm != 'false'
+        run: helm lint charts/trackzyn
+
+      - name: Validate Helm Chart with Kubeconform
+        if: steps.helm-changes.outputs.run_helm != 'false'
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar -xz
+          sudo mv kubeconform /usr/local/bin/
+
+          helm template trackzyn-test charts/trackzyn | kubeconform -summary -strict
+
+  eject-smoke:
+    name: Eject Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Only the template carries the eject script; an ejected project skips this.
+      - name: Eject into a temporary directory
+        if: hashFiles('scripts/eject.sh') != ''
+        run: ./scripts/eject.sh "$RUNNER_TEMP/ejected" --name acme-app --display-name "Acme"
+
+      - name: Check the copy is renamed and has no git history
+        if: hashFiles('scripts/eject.sh') != ''
+        run: |
+          cd "$RUNNER_TEMP/ejected"
+          test ! -e .git
+          test ! -e scripts/eject.sh
+          test -d charts/acme-app
+          if grep -rIil trackzyn . ; then echo "template name left behind"; exit 1; fi
+
+
+  backend-node-tests:
+    name: Backend Node Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-node
+    # Most integration tests run on PGlite. The BullMQ worker (C35) and RedisStore tests need a real
+    # Redis, and the concurrency tests in test/postgres need a real PostgreSQL: PGlite has one connection.
+    services:
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379/tcp
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect Node backend changes
+        id: changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip Node backend checks
+        if: steps.changes.outputs.run_backend_node == 'false'
+        run: echo "No Node-backend-relevant changes; skipping the Node backend checks."
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.run_backend_node != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+
+      - name: Install dependencies
+        if: steps.changes.outputs.run_backend_node != 'false'
+        run: npm ci
+
+      - name: Lint
+        if: steps.changes.outputs.run_backend_node != 'false'
+        run: npm run lint
+
+      - name: Type check
+        if: steps.changes.outputs.run_backend_node != 'false'
+        run: npm run typecheck
+
+      # The integration tests run on PGlite. REDIS_URL turns on the tests that need a real Redis
+      # (RedisStore, BullMQ worker) and TEST_POSTGRES_URL the concurrency tests in test/postgres;
+      # without them they are not collected.
+      - name: Run tests with coverage
+        if: steps.changes.outputs.run_backend_node != 'false'
+        env:
+          REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports['6379'] }}/0
+          TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:${{ job.services.postgres.ports['5432'] }}/postgres
+        run: npm test -- --coverage
+
+
+
+
+
+  desktop-checks:
+    name: Desktop Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect desktop-relevant changes
+        id: desktop-changes
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip desktop checks
+        if: steps.desktop-changes.outputs.run_desktop == 'false'
+        run: echo "No desktop-relevant changes; skipping desktop checks."
+
+      - name: Set up Node.js
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+            backend-node/package-lock.json
+
+      - name: Install dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: |
+          npm ci --prefix ../frontend
+          npm ci
+
+      # `npm run build:backend` bundles backend-node/src with esbuild: its packages must be there.
+      - name: Install the local backend's dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm ci --prefix ../backend-node
+
+      - name: Lint
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run lint
+
+      - name: Type check
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run typecheck
+
+      # Unsigned: no certificates here, so the app is built and packaged only
+      # to prove it builds (and for the fuse checks in the test run below).
+      - name: Build the unsigned app
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run package:dir
+
+      # The packaged-app test starts the app with its local backend; it needs a display.
+      - name: Start a virtual display
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: |
+          Xvfb :99 -screen 0 1280x1024x24 &
+          echo "DISPLAY=:99" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm test
+
+      # The web build must not reach for the desktop bridge (window.trackzyn).
+      - name: Check the web bundle
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run check:web-bundle
+
+  desktop-e2e:
+    name: Desktop E2E (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Detect desktop-relevant changes
+        id: desktop-changes
+        shell: bash
+        working-directory: .
+        run: python3 .github/ci/changes.py
+
+      - name: Skip desktop E2E
+        if: steps.desktop-changes.outputs.run_desktop == 'false'
+        shell: bash
+        run: echo "No desktop-relevant changes; skipping desktop E2E."
+
+      - name: Set up Node.js
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            desktop/package-lock.json
+            backend-node/package-lock.json
+
+      - name: Install dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        shell: bash
+        run: |
+          npm ci --prefix ../frontend
+          npm ci
+
+      # `npm run build:backend` bundles backend-node/src with esbuild: its packages must be there.
+      - name: Install the local backend's dependencies
+        if: steps.desktop-changes.outputs.run_desktop != 'false'
+        shell: bash
+        run: npm ci --prefix ../backend-node
+
+      # npm run test:e2e builds the app (frontend, main, bundled local backend) and runs every
+      # Playwright spec, including the local mode (local-flow.spec.ts) and the SSO deep link (sso.spec.ts).
+      # Linux has no display on the runner; the app needs one to open a window.
+      - name: Run Playwright tests (Linux)
+        if: runner.os == 'Linux' && steps.desktop-changes.outputs.run_desktop != 'false'
+        run: xvfb-run --auto-servernum npm run test:e2e
+
+      - name: Run Playwright tests
+        if: runner.os != 'Linux' && steps.desktop-changes.outputs.run_desktop != 'false'
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ failure() && steps.desktop-changes.outputs.run_desktop != 'false' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-e2e-${{ runner.os }}
+          path: |
+            desktop/test-results
+            desktop/playwright-report

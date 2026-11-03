@@ -1,0 +1,3 @@
+ALTER TABLE "tasks" ADD COLUMN "completed_by_user_id" uuid;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_completed_by_user_id_users_id_fk" FOREIGN KEY ("completed_by_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "tasks" ADD CONSTRAINT "ck_tasks_completed_by_done" CHECK ("tasks"."column" = 'done' OR "tasks"."completed_by_user_id" IS NULL);

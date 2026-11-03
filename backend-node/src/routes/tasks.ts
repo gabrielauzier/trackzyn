@@ -1,0 +1,274 @@
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+import type { AppContext } from '../context.ts'
+import { type Subtask, TASK_COLUMNS } from '../db/schema.ts'
+import { HttpError } from '../http/http-error.ts'
+import { authGuards } from '../plugins/auth.ts'
+import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
+import { withoutNul } from './schemas.ts'
+import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
+import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
+import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
+import { UUID_PATTERN } from '../services/users.ts'
+
+const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
+
+const subtaskReadSchema = z.object({
+  id: z.string(),
+  task_id: z.string(),
+  title: z.string(),
+  done: z.boolean(),
+  position: z.number(),
+})
+
+const taskReadSchema = z.object({
+  id: z.string(),
+  list_id: z.string(),
+  title: z.string(),
+  notes: z.string(),
+  estimate_minutes: z.number().nullable(),
+  column: z.enum(TASK_COLUMNS),
+  position: z.number(),
+  completed_at: z.string().nullable(),
+  created_at: z.string(),
+  subtasks: z.array(subtaskReadSchema),
+  created_via: z.string().nullable(),
+})
+
+export const taskParams = z.object({ task_id: uuid })
+const subtaskParams = z.object({ subtask_id: uuid })
+const title = withoutNul(z.string().min(1).max(255))
+const notes = withoutNul(z.string().max(10_000))
+const estimateMinutes = z.number().int().min(1).max(1440).nullable()
+const column = z.enum(TASK_COLUMNS)
+
+/** What creating a task accepts, in REST and in MCP. Feed its output to `toTaskIntake`. */
+export const createTaskBody = z.object({
+  list_id: uuid,
+  title,
+  estimate_minutes: estimateMinutes.optional(),
+  column: column.default('backlog'),
+  notes: notes.optional(),
+  subtasks: z.array(title).max(50).optional(),
+})
+
+export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: notes.optional() })
+export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
+export const addSubtaskBody = z.object({ title })
+
+/** In the handler and not in the schema: with the session JWT the header is not even read (IDEM-08). */
+function idempotencyKey(request: FastifyRequest): string | undefined {
+  const key = request.headers['idempotency-key'] as string | undefined
+  if (key === undefined) return undefined
+  const loc = ['header', 'idempotency-key']
+  if (key === '') throw new HttpError(422, [{ type: 'string_too_short', loc, msg: 'String should have at least 1 characters' }])
+  if (key.length > 255) throw new HttpError(422, [{ type: 'string_too_long', loc, msg: 'String should have at most 255 characters' }])
+  return key
+}
+
+export function toSubtaskRead(subtask: Subtask) {
+  return { id: subtask.id, task_id: subtask.taskId, title: subtask.title, done: subtask.done, position: subtask.position }
+}
+
+export function toTaskRead(task: TaskWithSubtasks) {
+  return {
+    id: task.id,
+    list_id: task.listId,
+    title: task.title,
+    notes: task.notes,
+    estimate_minutes: task.estimateMinutes,
+    column: task.column,
+    position: task.position,
+    completed_at: task.completedAt?.toISOString() ?? null,
+    created_at: task.createdAt.toISOString(),
+    subtasks: task.subtasks.map(toSubtaskRead),
+    created_via: task.createdVia,
+  }
+}
+
+export function taskRoutes(ctx: AppContext) {
+  return async (app: FastifyInstance): Promise<void> => {
+    const typed = app.withTypeProvider<ZodTypeProvider>()
+    const { requireUser } = authGuards(ctx)
+    const reading = [requireUser, workspaceContext(ctx)]
+    const writing = [...reading, requireWrite]
+
+    typed.post(
+      '/api/tasks',
+      {
+        schema: {
+          body: createTaskBody,
+          response: { 201: taskReadSchema },
+        },
+        config: { tokenScope: 'tasks:create' },
+        preValidation: writing,
+      },
+      async (request, reply) => {
+        const workspaceId = request.workspace.workspace.id
+        const input = toTaskIntake(request.body)
+        const principal = request.tokenPrincipal
+        if (!principal) {
+          const task = await createTask(ctx.db, workspaceId, { ...input, userId: request.workspace.user.id })
+          return reply.code(201).send(toTaskRead(task))
+        }
+        const { task, replayed } = await createTaskFromToken(ctx.db, workspaceId, principal, input, idempotencyKey(request))
+        if (replayed) reply.header('Idempotency-Replayed', 'true')
+        return reply.code(201).send(toTaskRead(task))
+      },
+    )
+
+    typed.get(
+      '/api/tasks/:task_id',
+      { schema: { params: taskParams, response: { 200: taskReadSchema } }, config: { tokenScope: 'tasks:read' }, preValidation: reading },
+      async (request) => toTaskRead(await getTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id)),
+    )
+
+    typed.patch(
+      '/api/tasks/:task_id',
+      {
+        schema: {
+          params: taskParams,
+          body: updateTaskBody,
+          response: { 200: taskReadSchema },
+        },
+        config: { tokenScope: 'tasks:write' },
+        preValidation: writing,
+      },
+      async (request) =>
+        toTaskRead(
+          await updateTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
+            title: request.body.title,
+            estimateMinutes: request.body.estimate_minutes,
+            notes: request.body.notes,
+          }),
+        ),
+    )
+
+    typed.post(
+      '/api/tasks/:task_id/move',
+      {
+        schema: {
+          params: taskParams,
+          body: moveTaskBody,
+          response: { 200: taskReadSchema },
+        },
+        config: { tokenScope: 'tasks:write' },
+        preValidation: writing,
+      },
+      async (request) =>
+        toTaskRead(
+          await moveTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
+            column: request.body.column,
+            beforeTaskId: request.body.before_task_id?.toLowerCase() ?? null,
+            byUserId: request.workspace.user.id,
+          }),
+        ),
+    )
+
+    typed.post(
+      '/api/tasks/:task_id/duplicate',
+      { schema: { params: taskParams, response: { 201: taskReadSchema } }, config: { tokenScope: 'tasks:write' }, preValidation: writing },
+      async (request, reply) =>
+        reply
+          .code(201)
+          .send(toTaskRead(await duplicateTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id))),
+    )
+
+    typed.post(
+      '/api/tasks/:task_id/move-to-list',
+      {
+        schema: { params: taskParams, body: z.object({ list_id: uuid }), response: { 200: taskReadSchema } },
+        config: { tokenScope: 'tasks:write' },
+        preValidation: writing,
+      },
+      async (request) =>
+        toTaskRead(
+          await moveTaskToList(
+            ctx.db,
+            request.params.task_id.toLowerCase(),
+            request.workspace.workspace.id,
+            request.body.list_id.toLowerCase(),
+          ),
+        ),
+    )
+
+    typed.delete(
+      '/api/tasks/:task_id',
+      { schema: { params: taskParams }, config: { tokenScope: 'tasks:delete' }, preValidation: writing },
+      async (request, reply) => {
+        await deleteTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id)
+        return reply.code(204).send()
+      },
+    )
+
+    typed.post(
+      '/api/tasks/:task_id/subtasks',
+      {
+        schema: { params: taskParams, body: addSubtaskBody, response: { 201: subtaskReadSchema } },
+        config: { tokenScope: 'tasks:write' },
+        preValidation: writing,
+      },
+      async (request, reply) => {
+        const subtask = await createSubtask(
+          ctx.db,
+          request.params.task_id.toLowerCase(),
+          request.workspace.workspace.id,
+          request.body.title,
+        )
+        return reply.code(201).send(toSubtaskRead(subtask))
+      },
+    )
+
+    typed.patch(
+      '/api/subtasks/:subtask_id',
+      {
+        schema: {
+          params: subtaskParams,
+          body: z.object({ title: title.optional(), done: z.boolean().optional() }),
+          response: { 200: subtaskReadSchema },
+        },
+        config: { tokenScope: 'tasks:write' },
+        preValidation: writing,
+      },
+      async (request) =>
+        toSubtaskRead(
+          await updateSubtask(ctx.db, request.params.subtask_id.toLowerCase(), request.workspace.workspace.id, {
+            title: request.body.title,
+            done: request.body.done,
+          }),
+        ),
+    )
+
+    typed.post(
+      '/api/subtasks/:subtask_id/move',
+      {
+        schema: {
+          params: subtaskParams,
+          body: z.object({ before_subtask_id: uuid.nullable() }),
+          response: { 200: subtaskReadSchema },
+        },
+        config: { tokenScope: 'tasks:write' },
+        preValidation: writing,
+      },
+      async (request) =>
+        toSubtaskRead(
+          await moveSubtask(
+            ctx.db,
+            request.params.subtask_id.toLowerCase(),
+            request.workspace.workspace.id,
+            request.body.before_subtask_id?.toLowerCase() ?? null,
+          ),
+        ),
+    )
+
+    typed.delete(
+      '/api/subtasks/:subtask_id',
+      { schema: { params: subtaskParams }, config: { tokenScope: 'tasks:delete' }, preValidation: writing },
+      async (request, reply) => {
+        await deleteSubtask(ctx.db, request.params.subtask_id.toLowerCase(), request.workspace.workspace.id)
+        return reply.code(204).send()
+      },
+    )
+  }
+}
