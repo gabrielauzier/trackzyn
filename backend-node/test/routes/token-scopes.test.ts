@@ -82,9 +82,8 @@ describe('the routes open to tokens', () => {
   })
 
   it('SCOPE-03 SCOPE-04 every registered route outside the table answers 403 to a token with every scope', async () => {
-    // SPEC_DEVIATION: the walk leaves out `OPTIONS *`, the CORS preflight of @fastify/cors.
-    // Reason: its onRequest hook answers every OPTIONS before the token hook, and that answer carries no data.
-    // Moving the token hook before it would strip the CORS headers from the token errors.
+    // The walk leaves out `OPTIONS *`, the CORS preflight of @fastify/cors, an exception the spec records:
+    // its onRequest hook answers every OPTIONS before the token hook, and that answer carries no data.
     expect(registered.filter((route) => route.method === 'OPTIONS').map((route) => route.url)).toEqual(['*'])
     const outside = registered.filter((route) => !inTable.has(routeKey(route)) && route.method !== 'OPTIONS')
     // The walk must really have seen the app: the admin routes and a generated HEAD among them.

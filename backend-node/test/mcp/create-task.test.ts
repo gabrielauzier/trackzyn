@@ -112,6 +112,31 @@ describe('failures', () => {
     expect(await t.ctx.db.select().from(tasks).where(eq(tasks.listId, listId))).toEqual([])
   })
 
+  it('MCP-13 a batch of one item answers 400 and does not run it', async () => {
+    const { listId, token, stored } = await setup()
+    const message = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'create_task', arguments: { list_id: listId, title: 'Batch' } } }
+    const reply = await post(url, [message], { authorization: `Bearer ${token.value}` })
+    expect(reply.status).toBe(400)
+    expect(await stored()).toEqual([])
+  })
+
+  it('API-12 add_subtask with a NUL character is a tool error and adds nothing', async () => {
+    const { client, create } = await setup()
+    const task = JSON.parse((await create({ title: 'A' })).text) as { id: string }
+    const result = await callTool(client, 'add_subtask', { task_id: task.id, title: 'a\u0000b' })
+    expect(result.isError).toBe(true)
+    expect(JSON.parse(result.text)[0].loc).toEqual(['body', 'title'])
+    expect(JSON.parse((await callTool(client, 'get_task', { task_id: task.id })).text).subtasks).toEqual([])
+  })
+
+  it('MCP-06 an idempotency_key with a NUL character is a tool error and creates nothing', async () => {
+    const { create, stored } = await setup()
+    const result = await create({ title: 'A', idempotency_key: 'a\u0000b' })
+    expect(result.isError).toBe(true)
+    expect(JSON.parse(result.text)[0].loc).toEqual(['body', 'idempotency_key'])
+    expect(await stored()).toEqual([])
+  })
+
   it('API-12 a title with a NUL character is a tool error, like the 422 of the route', async () => {
     const { client, listId } = await setup()
     const result = await callTool(client, 'create_task', { list_id: listId, title: 'a\u0000b' })

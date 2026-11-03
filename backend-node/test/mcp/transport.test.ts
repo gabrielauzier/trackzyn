@@ -96,6 +96,18 @@ describe('without a valid token', () => {
 })
 
 describe('Origin', () => {
+  it('MCP-09 an invalid token answers 401 even from another origin', async () => {
+    const origin = 'https://evil.example.com'
+    for (const headers of [{ origin }, { ...withToken(owner.token), origin }, { ...withToken(`tkz_${'x'.repeat(43)}`), origin }]) {
+      expect((await post(url, INITIALIZE, headers)).status).toBe(401)
+    }
+  })
+
+  it('MCP-09 DELETE from another origin answers 403 before the body is read', async () => {
+    const reply = await fetch(url, { method: 'DELETE', headers: { ...withToken(), origin: 'https://evil.example.com', 'content-type': 'application/json' }, body: '{' })
+    expect(reply.status).toBe(403)
+  })
+
   it('MCP-09 another origin answers 403 before the body is read', async () => {
     const reply = await fetch(url, { method: 'POST', headers: { ...withToken(), origin: 'https://evil.example.com', 'content-type': 'application/json' }, body: '{' })
     expect(reply.status).toBe(403)

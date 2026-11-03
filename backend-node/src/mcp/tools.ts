@@ -4,6 +4,7 @@ import { HttpError, forbidden } from '../http/http-error.ts'
 import { zodIssueToItem } from '../plugins/errors.ts'
 import { type WorkspaceContext, ensureWritable } from '../plugins/workspace.ts'
 import { listParams, listsView } from '../routes/lists.ts'
+import { withoutNul } from '../routes/schemas.ts'
 import { addSubtaskBody, createTaskBody, moveTaskBody, taskParams, toSubtaskRead, toTaskRead, updateTaskBody } from '../routes/tasks.ts'
 import type { TokenPrincipal, TokenScope } from '../services/access-tokens.ts'
 import { buildBoard } from '../services/board.ts'
@@ -72,7 +73,7 @@ const TOOLS: readonly Tool[] = [
     description: 'Create a task in a list, optionally with notes, an estimate and subtasks. It goes to the end of its column. Send an idempotency_key when you may retry, so that a retry does not create the task twice. The list must not be archived.',
     scope: 'tasks:create',
     write: true,
-    input: described(createTaskBody.extend({ idempotency_key: z.string().min(1).max(255).optional() }), {
+    input: described(createTaskBody.extend({ idempotency_key: withoutNul(z.string().min(1).max(255)).optional() }), {
       list_id: 'The id of the list, as returned by list_lists.',
       title: 'The title of the task, 1 to 255 characters.',
       estimate_minutes: 'How long the task should take, from 1 to 1440 minutes, or null for no estimate.',

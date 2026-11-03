@@ -202,7 +202,7 @@ Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas 
 4. WHEN `create_task` é chamada com argumentos válidos THEN the trackzyn SHALL criar a tarefa pela mesma regra de API-01 a API-10 e devolver o id e o título. (MCP-04)
 5. WHEN `create_task` recebe `idempotency_key` THEN the trackzyn SHALL aplicar as mesmas regras de IDEM-01 a IDEM-07. (MCP-05)
 6. IF uma ferramenta falha por validação, escopo, papel ou recurso inexistente THEN the trackzyn SHALL devolver `isError: true` com o mesmo texto de erro da rota REST equivalente. (MCP-06)
-7. IF a requisição MCP vem sem token válido THEN the trackzyn SHALL responder HTTP 401 com `WWW-Authenticate: Bearer`. (MCP-07)
+7. IF um `POST /api/mcp` vem sem token válido THEN the trackzyn SHALL responder HTTP 401 com `WWW-Authenticate: Bearer`. (MCP-07)
 8. IF `POST /api/mcp` recebe o JWT de sessão THEN the trackzyn SHALL responder HTTP 401. (MCP-08)
 9. IF uma requisição a `/api/mcp` não recusada antes por token inválido (MCP-07, MCP-08) traz um cabeçalho `Origin` diferente de `FRONTEND_URL` THEN the trackzyn SHALL responder HTTP 403, para barrar DNS rebinding. (MCP-09)
 10. WHEN um cliente envia `GET` ou `DELETE /api/mcp` sem cair em MCP-09 THEN the trackzyn SHALL responder HTTP 405, pois o servidor não abre fluxo de eventos. (MCP-10)
@@ -242,6 +242,7 @@ Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas 
 - WHEN duas criações simultâneas usam o mesmo nome THEN the trackzyn SHALL aceitar uma e responder 409 `Token name already in use` à outra. (TOKEN-16)
 - IF `name` contém o caractere NUL THEN the trackzyn SHALL responder 422 sem criar o token. (TOKEN-17)
 - IF `title`, `notes` ou o título de uma subtarefa contém o caractere NUL THEN the trackzyn SHALL responder 422 sem gravar nada. (API-12)
+- IF `idempotency_key` de `create_task` contém o caractere NUL THEN the trackzyn SHALL devolver `isError: true` sem criar a tarefa. (MCP-14)
 - IF `POST /api/mcp` recebe um lote JSON-RPC (corpo em array) THEN the trackzyn SHALL responder HTTP 400 com o erro JSON-RPC `-32600` sem executar nenhuma chamada, para o lote não contornar RATE-01. (MCP-13)
 - IF o token foi rebaixado de papel entre duas requisições THEN the trackzyn SHALL aplicar o papel atual já na requisição seguinte, sem cache. (SCOPE-11)
 
@@ -251,7 +252,7 @@ Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas 
 
 | Dimensão | Cobertura |
 | -------- | --------- |
-| Validação e limites | TOKEN-07, TOKEN-17, API-06, API-12, IDEM-05, MCP-13 |
+| Validação e limites | TOKEN-07, TOKEN-17, API-06, API-12, IDEM-05, MCP-13, MCP-14 |
 | Falhas e falha parcial | API-07, MCP-06 |
 | Idempotência e retentativa | IDEM-01 a IDEM-08, MANAGE-05 |
 | Autorização e limite de requisições | AUTH-01 a AUTH-10, SCOPE-01 a SCOPE-11, RATE-01 |
@@ -348,6 +349,7 @@ Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas 
 | MCP-11 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-12 | P1: Conectar uma IA por MCP | Tasks | Implementing |
 | MCP-13 | Edge Cases | Tasks | Implementing |
+| MCP-14 | Edge Cases | Tasks | Implementing |
 | ORIGIN-01 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-02 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-03 | P1: Ver a origem da tarefa | Tasks | Implementing |
@@ -356,7 +358,7 @@ Toda rota registrada fora desta tabela responde 403 a um token (SCOPE-03). Duas 
 | ORIGIN-06 | P1: Ver a origem da tarefa | Tasks | Implementing |
 | ORIGIN-07 | P1: Ver a origem da tarefa | Tasks | Implementing |
 
-**Coverage:** 88 total, 88 mapped to tasks, 0 unmapped
+**Coverage:** 89 total, 89 mapped to tasks, 0 unmapped
 
 ---
 
