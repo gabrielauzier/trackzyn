@@ -887,9 +887,9 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] Salvar uma edição recusada com 404 `Task not found` mostra `Task not found` no painel e não chama `toast.error`
-- [ ] Um ajuste recusado pela grade ainda chama `toast.error` com a mensagem da API
-- [ ] Gate check passes: Full (frontend)
+- [x] Salvar uma edição recusada com 404 `Task not found` mostra `Task not found` no painel e não chama `toast.error`
+- [x] Um ajuste recusado pela grade ainda chama `toast.error` com a mensagem da API
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

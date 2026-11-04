@@ -270,7 +270,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 const { started_at, ended_at } = input
                 const changes: AgendaSessionChanges =
                   input.kind === 'task' ? { started_at, ended_at, task_id: input.task_id } : { started_at, ended_at, list_id: input.list_id }
-                await update.mutateAsync({ id: selected.id, changes })
+                // The panel shows a refusal itself (AGENDA-31).
+                await update.mutateAsync({ id: selected.id, changes, quiet: true })
                 setEditTimes(null)
               }}
             />

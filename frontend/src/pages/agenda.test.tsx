@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { toast } from 'sonner'
 
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
 import { lists, sessions } from '@/lib/api'
@@ -10,6 +11,11 @@ import AgendaPage from './agenda'
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
   sessions: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), tasks: vi.fn() },
+}))
+
+vi.mock('sonner', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('sonner')>()),
+  toast: { success: vi.fn(), error: vi.fn() },
 }))
 
 const workspace = vi.hoisted(() => ({ canWrite: true }))
@@ -199,6 +205,17 @@ describe('AgendaPage', () => {
     expect(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:30' })).toBeInTheDocument()
   })
 
+  it('shows a refused edit once, in the panel, without a toast (AGENDA-31)', async () => {
+    vi.mocked(sessions.update).mockRejectedValue({ response: { status: 404, data: { detail: 'Task not found' } } })
+    const { user } = renderWithProviders(<AgendaPage />)
+    await user.click(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' }))
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.change(await screen.findByLabelText('End'), { target: { value: '11:30' } })
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Task not found')
+    expect(toast.error).not.toHaveBeenCalled()
+  })
+
   it('shows the details to a viewer without Edit nor Delete (AGENDA-44)', async () => {
     workspace.canWrite = false
     const { user } = renderWithProviders(<AgendaPage />)
@@ -348,6 +365,8 @@ describe('AgendaPage', () => {
       await pullEndTo1530(user, container)
       await waitFor(() => expect(sessions.update).toHaveBeenCalledTimes(1))
       expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      // A grid adjustment has no panel: its refusal is a toast (AGENDA-35).
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Session not found'))
       expect(screen.queryByRole('button', { name: 'Write the report, 14:00 – 15:30' })).toBeNull()
     })
   })

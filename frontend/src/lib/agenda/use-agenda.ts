@@ -92,13 +92,14 @@ export function useAgenda(period: AgendaPeriod) {
     onSettled: refresh,
   })
 
+  /** `quiet`: the caller shows a refusal itself (the edit panel), so it gets no toast. */
   const update = useMutation({
-    mutationFn: ({ id, changes }: { id: string; changes: AgendaSessionChanges }) => sessionsApi.update(id, changes),
+    mutationFn: ({ id, changes }: { id: string; changes: AgendaSessionChanges; quiet?: boolean }) => sessionsApi.update(id, changes),
     onMutate: ({ id, changes }) =>
       applyToAll(client, (sessions) => sessions.map((session) => (session.id === id ? { ...session, ...changes } : session))),
-    onError: (error, _variables, snapshot) => {
+    onError: (error, { quiet }, snapshot) => {
       restore(client, snapshot)
-      toast.error(sessionErrorMessage(error, t))
+      if (!quiet) toast.error(sessionErrorMessage(error, t))
     },
     onSettled: refresh,
   })

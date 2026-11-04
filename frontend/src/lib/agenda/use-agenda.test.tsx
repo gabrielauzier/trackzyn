@@ -91,6 +91,22 @@ describe('useAgenda', () => {
     expect(cached(client)?.[0]).toEqual(expect.objectContaining({ started_at: ended.started_at, ended_at: ended.ended_at }))
   })
 
+  it('leaves a refused edit to the caller that shows it, without a toast, and still puts it back', async () => {
+    vi.mocked(sessions.update).mockRejectedValue(apiError(404, 'Task not found'))
+    const { client, hook } = setup()
+    await waitFor(() => expect(hook.result.current.query.data).toBeDefined())
+
+    let refusal: unknown
+    await act(async () => {
+      await hook.result.current.update
+        .mutateAsync({ id: 's1', changes: { ended_at: '2026-11-02T18:30:00.000Z' }, quiet: true })
+        .catch((error: unknown) => (refusal = error))
+    })
+    expect(refusal).toMatchObject({ response: { status: 404, data: { detail: 'Task not found' } } })
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(cached(client)?.[0]).toEqual(expect.objectContaining({ ended_at: ended.ended_at }))
+  })
+
   it('reads a refused duration in the app words, not the API detail (AGENDA-24)', async () => {
     vi.mocked(sessions.update).mockRejectedValue(apiError(422, 'A session lasts from 1 minute to 24 hours', 'invalid_duration'))
     const { hook } = setup()
