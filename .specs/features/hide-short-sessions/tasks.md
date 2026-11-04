@@ -333,9 +333,9 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] No workspace com o mínimo em 5, a sessão de 2 min não aparece
-- [ ] No outro workspace, desligado, a sessão de 2 min aparece
-- [ ] Gate check passes: Full (backend)
+- [x] No workspace com o mínimo em 5, a sessão de 2 min não aparece
+- [x] No outro workspace, desligado, a sessão de 2 min aparece
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

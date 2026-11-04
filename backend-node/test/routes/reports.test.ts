@@ -138,6 +138,30 @@ describe('GET /api/reports/sessions', () => {
     expect(after).not.toContain(short)
   })
 
+  it('HIDE-19 HIDE-24 reads the minimum of the workspace asked for: 5 hides the 2-minute session, the other workspace with none lists its own', async () => {
+    const { owner, workspaceId, listId } = await setup()
+    const other = (await t.app.inject({ method: 'POST', url: '/api/workspaces', headers: bearer(owner.token), payload: { name: 'Side', self_membership: true } }))
+      .json().id as string
+    const otherList = (await call('POST', '/api/lists', owner.token, other, { name: 'Side', color: 2 })).json().id as string
+    const at = (hoursAgo: number, minutes = 0) => new Date(Date.now() - hoursAgo * 3_600_000 + minutes * 60_000).toISOString()
+    const blip = async (workspace: string, list: string) => {
+      const task = (await call('POST', '/api/tasks', owner.token, workspace, { list_id: list, title: 'Blip', column: 'today' })).json().id as string
+      const created = await call('POST', '/api/sessions', owner.token, workspace, { kind: 'task', task_id: task, started_at: at(5), ended_at: at(5, 2) })
+      expect(created.statusCode).toBe(201)
+      return created.json().id as string
+    }
+    const hiddenOne = await blip(workspaceId, listId)
+    const shownOne = await blip(other, otherList)
+    await t.app.inject({ method: 'PATCH', url: `/api/workspaces/${workspaceId}`, headers: bearer(owner.token), payload: { min_session_minutes: 5 } })
+    const listed = async (workspace: string) =>
+      ((await call('GET', `/api/reports/sessions?${period(date(-1), date(1))}`, owner.token, workspace)).json().days as Array<{
+        sessions: Array<{ id: string }>
+      }>).flatMap((day) => day.sessions.map((session) => session.id))
+
+    expect(await listed(workspaceId)).not.toContain(hiddenOne)
+    expect(await listed(other)).toEqual([shownOne])
+  })
+
   it('REPORT-13 answers 422 for a reversed period or 367 days and 200 for 366; 404 for a list of another workspace', async () => {
     const { owner, workspaceId, stranger, strangerWorkspaceId } = await setup()
     const get = (query: string) => call('GET', `/api/reports/sessions?${query}`, owner.token, workspaceId)
