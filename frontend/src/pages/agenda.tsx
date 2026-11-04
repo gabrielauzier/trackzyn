@@ -350,18 +350,18 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               onEdit={canWrite ? () => setEditTimes(sessionTimes(selected, timezone)) : undefined}
               onDelete={
                 canWrite
-                  ? () => {
-                      remove.mutate(selected.id)
-                      // The panel closes with the session, not back to its block (MERGE-31).
-                      setGroupIds(null)
-                    }
+                  ? () =>
+                      // The panel closes with the session, not back to its block (MERGE-31); a failed delete
+                      // brings the session back still chosen from its block (MERGE-33).
+                      remove.mutate(selected.id, { onSuccess: () => setGroupIds(null) })
                   : undefined
               }
               onBack={groupIds ? () => setSelectedId(null) : undefined}
               groupCount={group.length}
             />
           )}
-          {!draft && !selected && group.length > 0 && (
+          {/* While a delete is on its way the chosen session is gone from the list: no flash of the block's list. */}
+          {!draft && !selected && group.length > 0 && !remove.isPending && (
             <SessionGroupList sessions={group} timezone={timezone} onPick={pickFromGroup} onClose={closeSelected} />
           )}
         </div>

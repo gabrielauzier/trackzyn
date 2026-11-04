@@ -360,6 +360,21 @@ describe('AgendaPage', () => {
       expect(screen.queryByRole('complementary')).toBeNull()
     })
 
+    it('MERGE-33 keeps the way back to the block when deleting the chosen session fails', async () => {
+      vi.mocked(sessions.remove).mockRejectedValue({ response: { status: 500, data: { detail: 'Server error' } } })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await pickSecond(user)
+      await user.click(screen.getByRole('button', { name: 'Delete' }))
+      await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
+      expect(sessions.remove).toHaveBeenCalledWith('b')
+      await waitFor(() => expect(toast.error).toHaveBeenCalled())
+
+      // The session is back, still chosen from its block: its details and the way back to the list.
+      expect(await screen.findByRole('heading', { name: 'Review the notes' })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: '‹ Work · 2 sessions' }))
+      expect(screen.getByRole('complementary', { name: 'Work · 2 sessions' })).toBeInTheDocument()
+    })
+
     it('MERGE-24 redraws the grid when the join gap of the current workspace changes, without a reload', async () => {
       workspace.mergeGapMinutes = null
       const { rerender } = renderWithProviders(<AgendaPage />)
