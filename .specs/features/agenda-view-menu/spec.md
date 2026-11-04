@@ -98,26 +98,26 @@ Quem não trabalha no fim de semana vê na Agenda duas colunas sempre vazias, e 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| DAYS-01 | P1: Menu | Design | Pending |
-| DAYS-02 | P1: Menu | Design | Pending |
-| DAYS-03 | P1: Menu | Design | Pending |
-| DAYS-04 | P1: Menu | Design | Pending |
-| DAYS-05 | P1: Menu | Design | Pending |
-| DAYS-06 | P1: Menu | Design | Pending |
-| DAYS-07 | P1: Dias | Design | Pending |
-| DAYS-08 | P1: Dias | Design | Pending |
-| DAYS-09 | P1: Dias | Design | Pending |
-| DAYS-10 | P1: Dias | Design | Pending |
-| DAYS-11 | P1: Dias | Design | Pending |
-| DAYS-12 | P1: Dias | Design | Pending |
-| DAYS-13 | P1: Dias | Design | Pending |
-| DAYS-14 | P1: Dias | Design | Pending |
-| DAYS-15 | P1: Dias | Design | Pending |
-| DAYS-16 | P1: Dias | Design | Pending |
-| DAYS-17 | P1: Dias | Design | Pending |
-| DAYS-18 | P1: Menu | Design | Pending |
+| DAYS-01 | P1: Menu | T3, T5 | In Tasks |
+| DAYS-02 | P1: Menu | T4, T5 | In Tasks |
+| DAYS-03 | P1: Menu | T2 | In Tasks |
+| DAYS-04 | P1: Menu | T2 | In Tasks |
+| DAYS-05 | P1: Menu | T2, T5 | In Tasks |
+| DAYS-06 | P1: Menu | T5 | In Tasks |
+| DAYS-07 | P1: Dias | T2 | In Tasks |
+| DAYS-08 | P1: Dias | T2, T5 | In Tasks |
+| DAYS-09 | P1: Dias | T2, T3, T5 | In Tasks |
+| DAYS-10 | P1: Dias | T5 | In Tasks |
+| DAYS-11 | P1: Dias | T1, T2 | In Tasks |
+| DAYS-12 | P1: Dias | T1, T2 | In Tasks |
+| DAYS-13 | P1: Dias | T1, T2 | In Tasks |
+| DAYS-14 | P1: Dias | T2 | In Tasks |
+| DAYS-15 | P1: Dias | T1, T5 | In Tasks |
+| DAYS-16 | P1: Dias | T5 | In Tasks |
+| DAYS-17 | P1: Dias | T2, T5 | In Tasks |
+| DAYS-18 | P1: Menu | T2 | In Tasks |
 
-**Coverage:** 18 total, 0 mapped to tasks, 18 unmapped ⚠️
+**Coverage:** 18 total, 18 mapped to tasks, 0 unmapped
 
 ---
 
