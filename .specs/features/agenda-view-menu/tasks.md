@@ -245,9 +245,9 @@ T6 → T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Com `agenda.days = [0,1,3,4,5,6]`, `Nova sessão` abre o painel em quarta-feira, 4 de novembro
-- [ ] O aviso diz `Overlaps Quick call (14:01 – 14:03).`, sessão de um dia escondido
-- [ ] Gate check passes: Quick
+- [x] Com `agenda.days = [0,1,3,4,5,6]`, `Nova sessão` abre o painel em quarta-feira, 4 de novembro
+- [x] O aviso diz `Overlaps Quick call (14:01 – 14:03).`, sessão de um dia escondido
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

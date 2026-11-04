@@ -192,15 +192,20 @@ describe('AgendaPage', () => {
       expect(headers(container)).toEqual(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'])
     })
 
-    it('DAYS-16 still warns about an overlap with a session of a hidden day', async () => {
-      localStorage.setItem('agenda.days', '[0,1,2,3,4]')
-      // Wednesday 14:01 to 14:03, inside the New session that opens at 14:00 – 14:05; then Saturday is the hidden day.
+    it('DAYS-16 opens New session on a hidden today and warns about an overlap with a session of that hidden day', async () => {
+      // Wednesday, today, is the hidden day; its 14:01 to 14:03 session is inside the New session at 14:00 – 14:05.
+      localStorage.setItem('agenda.days', '[0,1,3,4,5,6]')
       const wednesday: AgendaSession = { ...monday, id: 's8', task_title: 'Quick call', started_at: '2026-11-04T17:01:00.000Z', ended_at: '2026-11-04T17:03:00.000Z' }
       vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, wednesday, saturday] })
-      const { user } = renderWithProviders(<AgendaPage />)
-      await screen.findByRole('button', { name: 'View options, 5 of 7 days' })
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'View options, 6 of 7 days' })
+      expect(container.querySelector('[data-day-header="2026-11-04"]')).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Quick call, 14:01 – 14:03' })).toBeNull()
+
       await user.click(screen.getByRole('button', { name: 'New session' }))
-      expect(await screen.findByRole('status')).toHaveTextContent('Overlaps Quick call (14:01 – 14:03).')
+      expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Date')).toHaveValue('2026-11-04')
+      expect(screen.getByRole('status')).toHaveTextContent('Overlaps Quick call (14:01 – 14:03).')
     })
   })
 
