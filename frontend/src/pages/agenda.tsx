@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, ZoomIn } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
 import { DatePickerChip } from '@/components/agenda/date-picker-chip'
 import { DayTimeline } from '@/components/agenda/day-timeline'
 import { SessionDetails, SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
-import { PX_PER_MINUTE, WeekGrid } from '@/components/agenda/week-grid'
+import { WeekGrid } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -17,6 +17,7 @@ import { lists, sessions as sessionsApi } from '@/lib/api'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
+import { DEFAULT_ZOOM, ZOOMS, type Zoom, pxPerMinuteAt } from '@/lib/agenda/zoom'
 import { cn } from '@/lib/utils'
 import type { AgendaSession, AgendaSessionChanges, ListCard } from '@/types'
 
@@ -68,6 +69,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const monday = mondayOf(day)
   const [listId, setListId] = useState<string | null>(null)
   const [chosenView, setView] = useState<'week' | 'day'>('week')
+  const [zoom, setZoom] = useState<Zoom>(DEFAULT_ZOOM)
+  const pxPerMinute = pxPerMinuteAt(zoom)
   // Below 768 px the agenda shows one day at a time (AGENDA-36).
   const narrow = useIsMobile()
   const view = narrow ? 'day' : chosenView
@@ -106,7 +109,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     update.mutate({ id: final.sessionId, changes })
   }
   const drag = useGridDrag({
-    pxPerMinute: PX_PER_MINUTE,
+    pxPerMinute,
     limit: (day) => dayLimit(day, now, timezone),
     dayAt: columnDayAt,
     onCommit: commit,
@@ -193,6 +196,23 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               ))}
             </div>
           )}
+          <div role="group" aria-label={t('agenda.zoom')} className="flex items-center rounded-lg bg-muted p-0.5">
+            <ZoomIn size={14} className="mx-1.5 text-muted-foreground" aria-hidden />
+            {ZOOMS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={zoom === option}
+                className={cn(
+                  'rounded-md px-2.5 py-1 text-sm font-medium tabular-nums',
+                  zoom === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                )}
+                onClick={() => setZoom(option)}
+              >
+                {t('agenda.zoomLevel', { level: option })}
+              </button>
+            ))}
+          </div>
           {/* The day view has its own + button. */}
           {canWrite && view === 'week' && (
             <Button type="button" size="sm" onClick={() => openNew()}>
@@ -224,6 +244,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 drag={canWrite ? drag : undefined}
                 selectedId={selected?.id ?? null}
                 onSelect={select}
+                pxPerMinute={pxPerMinute}
               />
             ) : (
               <DayTimeline
@@ -237,6 +258,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 onNew={canWrite ? () => openNew(day) : undefined}
                 selectedId={selected?.id ?? null}
                 onSelect={select}
+                pxPerMinute={pxPerMinute}
               />
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, type PointerEvent } from 'react'
+import { useMemo, type PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
@@ -6,13 +6,12 @@ import { SessionBlock } from '@/components/agenda/session-block'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf, zonedInstant, type Piece } from '@/lib/agenda/layout'
 import type { DragTarget, useGridDrag } from '@/lib/agenda/use-grid-drag'
+import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
 import { cn } from '@/lib/utils'
 import type { AgendaSession } from '@/types'
 
-/** 144 px per hour. */
+/** 144 px per hour: the scale at the default zoom (3x). */
 export const PX_PER_MINUTE = 2.4
-/** The grid opens scrolled to this hour (AGENDA-02). */
-const FIRST_HOUR = 7
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 
 /** Lines across the time after now, where nothing can be recorded (AGENDA-23). */
@@ -31,6 +30,8 @@ interface WeekGridProps {
   drag?: GridDrag
   selectedId?: string | null
   onSelect?: (session: AgendaSession) => void
+  /** Pixels per minute, from the zoom; the default zoom's scale when absent. */
+  pxPerMinute?: number
 }
 
 /** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
@@ -49,10 +50,10 @@ function weekdayLabel(day: string, locale: string): string {
  * time of its task sessions; the sessions as blocks, side by side where they overlap (AGENDA-06); the now
  * line on today (AGENDA-05) and the time after now hatched, where no drag starts (AGENDA-23).
  */
-export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = null, onSelect }: WeekGridProps) {
+export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = null, onSelect, pxPerMinute = PX_PER_MINUTE }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const scroller = useRef<HTMLDivElement>(null)
+  const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute)
   const today = dayOf(now, timezone)
   const nowMinute = minuteOf(now, timezone)
   const draft = drag?.draft ?? null
@@ -76,9 +77,6 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
   )
   const pieces = useMemo(() => dayPieces(shown, days, timezone, now), [shown, days, timezone, now])
 
-  useLayoutEffect(() => {
-    if (scroller.current) scroller.current.scrollTop = FIRST_HOUR * 60 * PX_PER_MINUTE
-  }, [])
 
   return (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
@@ -105,13 +103,13 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
         })}
       </div>
       <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-14rem)] min-h-80 overflow-y-auto [scrollbar-gutter:stable]">
-        <div className="relative flex" style={{ height: DAY_MINUTES * PX_PER_MINUTE }}>
+        <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-14 shrink-0" aria-hidden>
             {HOURS.map((hour) => (
               <span
                 key={hour}
                 className="absolute right-2 -translate-y-1/2 text-[10px] tabular-nums text-muted-foreground"
-                style={{ top: hour * 60 * PX_PER_MINUTE }}
+                style={{ top: hour * 60 * pxPerMinute }}
               >
                 {hour === 0 ? '' : minuteClock(hour * 60)}
               </span>
@@ -132,7 +130,7 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
                     key={hour}
                     aria-hidden
                     className="pointer-events-none absolute inset-x-0 border-t border-border/60"
-                    style={{ top: hour * 60 * PX_PER_MINUTE }}
+                    style={{ top: hour * 60 * pxPerMinute }}
                   />
                 ))}
                 {limit < DAY_MINUTES && (
@@ -140,7 +138,7 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
                     aria-hidden
                     data-future
                     className="pointer-events-none absolute inset-x-0 bottom-0"
-                    style={{ top: limit * PX_PER_MINUTE, backgroundImage: HATCH }}
+                    style={{ top: limit * pxPerMinute, backgroundImage: HATCH }}
                   />
                 )}
                 <div className="absolute inset-0 mx-0.5">
@@ -152,7 +150,7 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
                       <SessionBlock
                         key={piece.session.id}
                         piece={piece}
-                        pxPerMinute={PX_PER_MINUTE}
+                        pxPerMinute={pxPerMinute}
                         timezone={timezone}
                         selected={selected}
                         onSelect={onSelect && (() => onSelect(piece.session))}
@@ -184,7 +182,7 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
                     <div
                       data-draft
                       className="absolute inset-x-0 z-20 rounded-md border-2 border-dashed border-primary bg-primary/15 px-1.5 text-xs font-medium tabular-nums"
-                      style={{ top: newDraft.start * PX_PER_MINUTE, height: (newDraft.end - newDraft.start) * PX_PER_MINUTE }}
+                      style={{ top: newDraft.start * pxPerMinute, height: (newDraft.end - newDraft.start) * pxPerMinute }}
                     >
                       {t('agenda.range', { start: minuteClock(newDraft.start), end: minuteClock(newDraft.end) })}
                       {(['top', 'bottom'] as const).map((edge) => (
@@ -207,7 +205,7 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
                     aria-hidden
                     data-now-line
                     className="pointer-events-none absolute inset-x-0 z-30 h-0.5 bg-primary"
-                    style={{ top: nowMinute * PX_PER_MINUTE }}
+                    style={{ top: nowMinute * pxPerMinute }}
                   />
                 )}
               </div>

@@ -84,6 +84,39 @@ describe('AgendaPage', () => {
     await waitFor(() => expect(sessions.list).toHaveBeenCalledWith({ from: '2026-11-09', to: '2026-11-15' }))
   })
 
+  it('zooms the hours to 1x, 2x or 3x, one at a time, from the control right of Day and Week', async () => {
+    const { user, container } = renderWithProviders(<AgendaPage />)
+    const block = await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+    const zoom = screen.getByRole('group', { name: 'Zoom' })
+    const view = screen.getByRole('group', { name: 'View' })
+    expect(view.compareDocumentPosition(zoom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(view.nextElementSibling).toBe(zoom)
+    const levels = within(zoom).getAllByRole('button')
+    expect(levels.map((level) => level.textContent)).toEqual(['1x', '2x', '3x'])
+    const pressed = () => levels.filter((level) => level.getAttribute('aria-pressed') === 'true').map((level) => level.textContent)
+    const gridHeight = () => (container.querySelector('[data-agenda-scroll] > div') as HTMLElement).style.height
+
+    // 3x by default: 144 px an hour; the 1-hour session is as tall as an hour.
+    expect(pressed()).toEqual(['3x'])
+    expect(gridHeight()).toBe(`${24 * 144}px`)
+    expect(block.style.height).toBe('144px')
+
+    await user.click(within(zoom).getByRole('button', { name: '1x' }))
+    expect(pressed()).toEqual(['1x'])
+    expect(gridHeight()).toBe(`${24 * 48}px`)
+    expect(screen.getByRole('button', { name: 'Write the report, 10:00 – 11:00' }).style.height).toBe('48px')
+
+    await user.click(within(zoom).getByRole('button', { name: '2x' }))
+    expect(pressed()).toEqual(['2x'])
+    expect(gridHeight()).toBe(`${24 * 96}px`)
+  })
+
+  it('names the zoom Lupa in Portuguese', async () => {
+    await i18n.changeLanguage('pt-BR')
+    renderWithProviders(<AgendaPage />)
+    expect(await screen.findByRole('group', { name: 'Lupa' })).toBeInTheDocument()
+  })
+
   it('reads the week in Portuguese, across months too (AGENDA-08)', async () => {
     await i18n.changeLanguage('pt-BR')
     const { user } = renderWithProviders(<AgendaPage />)

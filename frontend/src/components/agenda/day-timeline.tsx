@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
@@ -8,11 +8,10 @@ import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf, mondayOf, weekDays } from '@/lib/agenda/layout'
+import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
 import { cn } from '@/lib/utils'
 import type { AgendaSession } from '@/types'
 
-/** The timeline opens scrolled to this hour, as the week does (AGENDA-02). */
-const FIRST_HOUR = 7
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const HATCH = 'repeating-linear-gradient(135deg, var(--muted) 0 6px, transparent 6px 12px)'
 
@@ -30,6 +29,8 @@ interface DayTimelineProps {
   onNew?: () => void
   selectedId?: string | null
   onSelect?: (session: AgendaSession) => void
+  /** Pixels per minute, from the zoom; the default zoom's scale when absent. */
+  pxPerMinute?: number
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -39,10 +40,21 @@ const utc = (day: string) => new Date(`${day}T00:00:00Z`)
  * the seven days from Monday, a dot on the days with sessions, the week arrows, the day and its total, a
  * single-column timeline, the messages of an empty or a future day, and the `+` button.
  */
-export function DayTimeline({ day, sessions, timezone, now, onPickDay, onWeek, onNew, selectedId = null, onSelect }: DayTimelineProps) {
+export function DayTimeline({
+  day,
+  sessions,
+  timezone,
+  now,
+  onPickDay,
+  onWeek,
+  onNew,
+  selectedId = null,
+  onSelect,
+  pxPerMinute = PX_PER_MINUTE,
+}: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const scroller = useRef<HTMLDivElement>(null)
+  const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute)
   const days = useMemo(() => weekDays(mondayOf(day)), [day])
   const pieces = useMemo(() => dayPieces(sessions, days, timezone, now), [sessions, days, timezone, now])
   const today = dayOf(now, timezone)
@@ -51,9 +63,6 @@ export function DayTimeline({ day, sessions, timezone, now, onPickDay, onWeek, o
   const total = dayTotal(ofDay)
   const limit = dayLimit(day, now, timezone)
 
-  useLayoutEffect(() => {
-    if (scroller.current) scroller.current.scrollTop = FIRST_HOUR * 60 * PX_PER_MINUTE
-  }, [])
 
   const title = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(utc(day))
 
@@ -103,13 +112,13 @@ export function DayTimeline({ day, sessions, timezone, now, onPickDay, onWeek, o
       )}
 
       <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-18rem)] min-h-80 overflow-y-auto rounded-xl border bg-card">
-        <div className="relative flex" style={{ height: DAY_MINUTES * PX_PER_MINUTE }}>
+        <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-12 shrink-0" aria-hidden>
             {HOURS.map((hour) => (
               <span
                 key={hour}
                 className="absolute right-2 -translate-y-1/2 text-[10px] tabular-nums text-muted-foreground"
-                style={{ top: hour * 60 * PX_PER_MINUTE }}
+                style={{ top: hour * 60 * pxPerMinute }}
               >
                 {hour === 0 ? '' : minuteClock(hour * 60)}
               </span>
@@ -121,7 +130,7 @@ export function DayTimeline({ day, sessions, timezone, now, onPickDay, onWeek, o
                 key={hour}
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 border-t border-border/60"
-                style={{ top: hour * 60 * PX_PER_MINUTE }}
+                style={{ top: hour * 60 * pxPerMinute }}
               />
             ))}
             {limit < DAY_MINUTES && (
@@ -129,7 +138,7 @@ export function DayTimeline({ day, sessions, timezone, now, onPickDay, onWeek, o
                 aria-hidden
                 data-future
                 className="pointer-events-none absolute inset-x-0 bottom-0"
-                style={{ top: limit * PX_PER_MINUTE, backgroundImage: HATCH }}
+                style={{ top: limit * pxPerMinute, backgroundImage: HATCH }}
               />
             )}
             <div className="absolute inset-0 mx-0.5">
@@ -137,7 +146,7 @@ export function DayTimeline({ day, sessions, timezone, now, onPickDay, onWeek, o
                 <SessionBlock
                   key={piece.session.id}
                   piece={piece}
-                  pxPerMinute={PX_PER_MINUTE}
+                  pxPerMinute={pxPerMinute}
                   timezone={timezone}
                   selected={piece.session.id === selectedId}
                   onSelect={onSelect && (() => onSelect(piece.session))}
@@ -149,7 +158,7 @@ export function DayTimeline({ day, sessions, timezone, now, onPickDay, onWeek, o
                 aria-hidden
                 data-now-line
                 className="pointer-events-none absolute inset-x-0 z-30 h-0.5 bg-primary"
-                style={{ top: minuteOf(now, timezone) * PX_PER_MINUTE }}
+                style={{ top: minuteOf(now, timezone) * pxPerMinute }}
               />
             )}
           </div>

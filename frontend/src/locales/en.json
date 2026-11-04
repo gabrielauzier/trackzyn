@@ -768,6 +768,8 @@
     "day": "Day",
     "week": "Week",
     "view": "View",
+    "zoom": "Zoom",
+    "zoomLevel": "{{level}}x",
     "list": "List",
     "allLists": "All lists",
     "loadError": "Could not load the agenda.",
