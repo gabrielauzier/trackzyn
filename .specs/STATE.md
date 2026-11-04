@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/tokens-de-acesso`
-- **Phase / Task**: Execute concluído; Verifier PASS na iteração 3
-- **Completed**: as 5 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso)
+- **Feature**: `.specs/features/agenda`
+- **Phase / Task**: Execute concluído (T1–T29); Verifier PASS na rodada 2 (`41c138f`)
+- **Completed**: as 6 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda)
 - **In-progress** (file:line): none
-- **Next step**: revisar o PR para a `v2`; o Postgres 16 e o `RedisStore` ainda não rodaram, porque `ci.yml` só dispara na `main`; testar um cliente MCP real. Das features anteriores, seguem pendentes: fechar as issues #1 e #2, rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
+- **Next step**: abrir o PR da `feat/agenda` para a `main` e testar a Agenda no app (arrastar, alças, mover entre dias, celular); seguem sem teste a premissa de que uma sessão manual move o corte de `lastChange` (AD-002) e o arraste na visão do dia, que hoje só ajusta pelos campos do painel
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feat/personal-access-tokens
+- **Branch**: feat/agenda

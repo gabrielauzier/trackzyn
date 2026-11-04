@@ -161,53 +161,53 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AGENDA-01 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-02 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-03 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-04 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-05 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-06 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-07 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-08 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-09 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-10 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-11 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-12 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-13 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-14 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-15 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-16 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-17 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-18 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-19 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-20 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-21 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-22 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-23 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-24 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-25 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-26 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
-| AGENDA-27 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-28 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-29 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-30 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-31 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-32 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-33 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-34 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-35 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-36 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-37 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-38 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-39 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-40 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-41 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-42 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-43 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
-| AGENDA-44 | Edge cases | Tasks | Implementing |
-| AGENDA-45 | Edge cases | Tasks | Implementing |
-| AGENDA-46 | Edge cases | Tasks | Implementing |
-| AGENDA-47 | Edge cases | Tasks | Implementing |
+| AGENDA-01 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-02 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-03 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-04 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-05 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-06 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-07 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-08 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-09 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-10 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-11 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-12 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-13 | P1: Ver as sessões da semana | Tasks | Verified |
+| AGENDA-14 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-15 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-16 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-17 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-18 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-19 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-20 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-21 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-22 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-23 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-24 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-25 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-26 | P1: Registrar uma sessão pela grade | Tasks | Verified |
+| AGENDA-27 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-28 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-29 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-30 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-31 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-32 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-33 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-34 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-35 | P2: Ajustar e excluir uma sessão | Tasks | Verified |
+| AGENDA-36 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-37 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-38 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-39 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-40 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-41 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-42 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-43 | P2: Agenda do dia e escolha da data | Tasks | Verified |
+| AGENDA-44 | Edge cases | Tasks | Verified |
+| AGENDA-45 | Edge cases | Tasks | Verified |
+| AGENDA-46 | Edge cases | Tasks | Verified |
+| AGENDA-47 | Edge cases | Tasks | Verified |
 
 **Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 

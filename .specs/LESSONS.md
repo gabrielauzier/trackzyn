@@ -164,6 +164,54 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: O3, O4 (validation.md iteração 2) (routes)
 - last seen: 2026-11-03T01:53:15Z
 
+### L-026 - Test every lookup of an owned record against the same user's record in another workspace, not only another user's.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend/scoping` · harmful: 0
+- features: agenda
+- evidence: M6 backend-node/src/services/sessions.ts:190 (backend/scoping)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-027 - Inject the hit-testing callback a drag depends on in tests, since jsdom lays nothing out and an untested callback means the cross-target move is unproven.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/drag-and-drop` · harmful: 0
+- features: agenda
+- evidence: F4 frontend/src/lib/agenda/use-grid-drag.ts:105 (frontend/drag-and-drop)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-028 - Prove an optimistic rollback with the refetch failing or pending, since a successful refetch restores the cache by itself.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/optimistic` · harmful: 0
+- features: agenda
+- evidence: F6 frontend/src/lib/agenda/use-agenda.ts:100 (frontend/optimistic)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-029 - Test interval grouping with a chain where one item overlaps the next and that one only touches a third.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/layout` · harmful: 0
+- features: agenda
+- evidence: F1 frontend/src/lib/agenda/layout.ts:122 (frontend/layout)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-030 - Check that the endpoint a picker reuses returns the whole set the spec names before building on it; board views are windowed.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `frontend/data-sources` · harmful: 0
+- features: agenda
+- evidence: SPEC_DEVIATION frontend/src/components/agenda/session-panel.tsx:67 (AGENDA-16) (frontend/data-sources)
+- last seen: 2026-11-04T06:16:43Z
+
+### L-031 - A check the spec runs over all the user's records must not read the list-filtered query the view shows.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend/filters` · harmful: 0
+- features: agenda
+- evidence: AGENDA-19 frontend/src/pages/agenda.tsx:241 (frontend/filters)
+- last seen: 2026-11-04T06:16:43Z
+
+### L-032 - State the result at the exact boundary when a default time is derived by rounding, such as now within the first minutes of an hour.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: agenda
+- evidence: AGENDA-15 frontend/src/lib/agenda/layout.ts:150 (specs)
+- last seen: 2026-11-04T06:16:43Z
+
+### L-033 - Say per view which entry points stay available on days the action cannot apply to, such as future days.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: agenda
+- evidence: AGENDA-43 frontend/src/components/agenda/day-timeline.tsx:160 (specs)
+- last seen: 2026-11-04T06:16:43Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

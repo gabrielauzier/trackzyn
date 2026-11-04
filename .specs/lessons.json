@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 26,
+  "next_id": 34,
   "lessons": [
     {
       "id": "L-001",
@@ -454,6 +454,150 @@
       ],
       "created": "2026-11-03T01:53:15Z",
       "last_seen": "2026-11-03T01:53:15Z"
+    },
+    {
+      "id": "L-026",
+      "key": "surviving_mutant::test every lookup of an owned record against the same user s record in another workspace not only another user s",
+      "text": "Test every lookup of an owned record against the same user's record in another workspace, not only another user's.",
+      "signal": "surviving_mutant",
+      "scope": "backend/scoping",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M6 backend-node/src/services/sessions.ts:190 (backend/scoping)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-027",
+      "key": "surviving_mutant::inject the hit testing callback a drag depends on in tests since jsdom lays nothing out and an untested callback means the cross target move is unproven",
+      "text": "Inject the hit-testing callback a drag depends on in tests, since jsdom lays nothing out and an untested callback means the cross-target move is unproven.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/drag-and-drop",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F4 frontend/src/lib/agenda/use-grid-drag.ts:105 (frontend/drag-and-drop)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-028",
+      "key": "surviving_mutant::prove an optimistic rollback with the refetch failing or pending since a successful refetch restores the cache by itself",
+      "text": "Prove an optimistic rollback with the refetch failing or pending, since a successful refetch restores the cache by itself.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/optimistic",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F6 frontend/src/lib/agenda/use-agenda.ts:100 (frontend/optimistic)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-029",
+      "key": "surviving_mutant::test interval grouping with a chain where one item overlaps the next and that one only touches a third",
+      "text": "Test interval grouping with a chain where one item overlaps the next and that one only touches a third.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/layout",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F1 frontend/src/lib/agenda/layout.ts:122 (frontend/layout)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-030",
+      "key": "spec_deviation::check that the endpoint a picker reuses returns the whole set the spec names before building on it board views are windowed",
+      "text": "Check that the endpoint a picker reuses returns the whole set the spec names before building on it; board views are windowed.",
+      "signal": "spec_deviation",
+      "scope": "frontend/data-sources",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION frontend/src/components/agenda/session-panel.tsx:67 (AGENDA-16) (frontend/data-sources)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-031",
+      "key": "ac_gap::a check the spec runs over all the user s records must not read the list filtered query the view shows",
+      "text": "A check the spec runs over all the user's records must not read the list-filtered query the view shows.",
+      "signal": "ac_gap",
+      "scope": "frontend/filters",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AGENDA-19 frontend/src/pages/agenda.tsx:241 (frontend/filters)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-032",
+      "key": "spec_precision_gap::state the result at the exact boundary when a default time is derived by rounding such as now within the first minutes of an hour",
+      "text": "State the result at the exact boundary when a default time is derived by rounding, such as now within the first minutes of an hour.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AGENDA-15 frontend/src/lib/agenda/layout.ts:150 (specs)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-033",
+      "key": "spec_precision_gap::say per view which entry points stay available on days the action cannot apply to such as future days",
+      "text": "Say per view which entry points stay available on days the action cannot apply to, such as future days.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AGENDA-43 frontend/src/components/agenda/day-timeline.tsx:160 (specs)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
     }
   ]
 }
