@@ -359,8 +359,8 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] Com o idioma em português e o valor 0, aparece `Entre 1 e 60 minutos.`
-- [ ] Gate check passes: Build
+- [x] Com o idioma em português e o valor 0, aparece `Entre 1 e 60 minutos.`
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

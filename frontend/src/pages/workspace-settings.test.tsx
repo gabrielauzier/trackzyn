@@ -127,7 +127,7 @@ describe('workspace settings: hide short sessions (#22)', () => {
     expect(minutesField()).toHaveValue(10)
   })
 
-  it('names it Esconder sessões curtas in Portuguese, with Menos de and minutos', async () => {
+  it('HIDE-06 HIDE-09 names it Esconder sessões curtas in Portuguese, with Menos de, minutos and Entre 1 e 60 minutos.', async () => {
     const { i18n } = await import('@/test/utils')
     await i18n.changeLanguage('pt-BR')
     state.workspace = workspace(5)
@@ -135,6 +135,8 @@ describe('workspace settings: hide short sessions (#22)', () => {
     expect(await screen.findByRole('switch', { name: 'Esconder sessões curtas' })).toBeInTheDocument()
     expect(screen.getByLabelText('Menos de')).toHaveValue(5)
     expect(screen.getByText('minutos')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Menos de'), { target: { value: '0' } })
+    expect(screen.getByText('Entre 1 e 60 minutos.')).toBeInTheDocument()
     await i18n.changeLanguage('en')
   })
 })
