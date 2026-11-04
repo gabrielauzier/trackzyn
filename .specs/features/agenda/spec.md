@@ -204,8 +204,8 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-41 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
 | AGENDA-42 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
 | AGENDA-43 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-44 | Edge cases | Tasks | In Tasks |
-| AGENDA-45 | Edge cases | Tasks | In Tasks |
+| AGENDA-44 | Edge cases | Tasks | Implementing |
+| AGENDA-45 | Edge cases | Tasks | Implementing |
 | AGENDA-46 | Edge cases | Tasks | In Tasks |
 | AGENDA-47 | Edge cases | Tasks | In Tasks |
 

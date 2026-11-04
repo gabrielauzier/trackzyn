@@ -196,11 +196,11 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Cada rota responde o status da tabela `Surface` do design no caminho feliz e em cada erro listado
-- [ ] Um `viewer` lê (200) e recebe 403 `Read-only role` em `POST`, `PATCH` e `DELETE`
-- [ ] Um período de 43 dias responde 422
-- [ ] `test/routes/token-scopes.test.ts` passa com as rotas novas fechadas a token
-- [ ] Gate check passes: Full (backend)
+- [x] Cada rota responde o status da tabela `Surface` do design no caminho feliz e em cada erro listado
+- [x] Um `viewer` lê (200) e recebe 403 `Read-only role` em `POST`, `PATCH` e `DELETE`
+- [x] Um período de 43 dias responde 422
+- [x] `test/routes/token-scopes.test.ts` passa com as rotas novas fechadas a token
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full
