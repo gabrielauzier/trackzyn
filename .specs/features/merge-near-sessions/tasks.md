@@ -106,11 +106,11 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Dono, editor e leitor leem `merge_gap_minutes` (`null` por padrão) na lista e em `current`
-- [ ] O dono grava 5, lê 5; `null` desliga; um `PATCH` sem o campo mantém o valor; o gestor (`manager`) também grava
-- [ ] 0, 61, 1.5 e `"5"` respondem 422 e mantêm o valor
-- [ ] Editor e leitor recebem 403 e o valor fica
-- [ ] Gate check passes: Build
+- [x] Dono, editor e leitor leem `merge_gap_minutes` (`null` por padrão) na lista e em `current`
+- [x] O dono grava 5, lê 5; `null` desliga; um `PATCH` sem o campo mantém o valor; o gestor (`manager`) também grava
+- [x] 0, 61, 1.5 e `"5"` respondem 422 e mantêm o valor
+- [x] Editor e leitor recebem 403 e o valor fica
+- [x] Gate check passes: Build
 
 **Tests**: integration
 **Gate**: build

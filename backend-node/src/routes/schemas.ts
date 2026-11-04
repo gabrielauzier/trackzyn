@@ -27,6 +27,8 @@ export const workspaceReadSchema = z.object({
   color: z.string().nullable(),
   /** Sessions shorter than this many minutes are hidden in the agenda and the Sessions report; null shows all. */
   min_session_minutes: z.number().int().nullable(),
+  /** Sessions of one list and kind this many minutes apart or less are drawn as one block in the agenda; null keeps them apart. */
+  merge_gap_minutes: z.number().int().nullable(),
   created_at: z.string(),
   created_by_user_id: z.string().nullable(),
   managed_by_user_id: z.string().nullable(),
@@ -43,6 +45,7 @@ export function toWorkspaceRead(workspace: Workspace, role: string | null) {
     icon: workspace.icon,
     color: workspace.color,
     min_session_minutes: workspace.minSessionMinutes,
+    merge_gap_minutes: workspace.mergeGapMinutes,
     created_at: workspace.createdAt.toISOString(),
     created_by_user_id: workspace.createdByUserId,
     managed_by_user_id: workspace.managedByUserId,
