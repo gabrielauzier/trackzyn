@@ -204,7 +204,8 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
 
 /**
  * Moves the task to another list of the workspace, to the end of the same column, and renumbers the column
- * it left. Its open focus session ends (FOCUS-15), as for any task that leaves Today.
+ * it left. Its open focus session ends (FOCUS-15), as for any task that leaves Today, and all its sessions move
+ * to the new list, so its time counts there (#21).
  */
 export async function moveTaskToList(
   db: Database,
@@ -227,6 +228,8 @@ export async function moveTaskToList(
       .where(and(eq(tasks.listId, target.id), eq(tasks.column, current.column)))
     await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0 }).where(eq(tasks.id, current.id))
     await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
+    // The task takes its recorded time with it: reports and the agenda group by the session's list (#21).
+    await tx.update(focusSessions).set({ listId: target.id }).where(eq(focusSessions.taskId, current.id))
     const left = await tx
       .select({ id: tasks.id })
       .from(tasks)

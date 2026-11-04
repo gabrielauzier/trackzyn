@@ -43,6 +43,13 @@
       "when": 1793768876010,
       "tag": "0005_session_origin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793801710123,
+      "tag": "0006_session_list_follows_task",
+      "breakpoints": true
     }
   ]
 }
