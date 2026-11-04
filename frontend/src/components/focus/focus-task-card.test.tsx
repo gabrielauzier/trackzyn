@@ -42,4 +42,26 @@ describe('FocusTaskCard (FOCUS-02, FOCUS-03, FOCUS-13)', () => {
     expect(screen.queryByText('Timer stopped')).not.toBeInTheDocument()
     expect(screen.getByRole('timer')).not.toHaveClass('text-muted-foreground')
   })
+
+  it('the drop zone covers the card and keeps its content, so the card keeps its size', () => {
+    const { container } = renderWithProviders(
+      <FocusTaskCard title="DEV-1725" display={{ mode: 'countdown', seconds: 3000 }} dropHint="DEV-1725 goes back to the top of the queue.">
+        <ul aria-label="Subtasks"><li>One</li><li>Two</li></ul>
+      </FocusTaskCard>,
+    )
+
+    // One card, the same box as without the drag: title, timer and subtasks still lay it out.
+    const card = container.querySelector<HTMLElement>('[data-running]')!
+    expect(container.querySelectorAll('[data-running]')).toHaveLength(1)
+    const content = card.querySelector<HTMLElement>('[data-card-content]')!
+    expect(content).toHaveClass('invisible')
+    expect(content).toHaveTextContent('DEV-1725')
+    expect(content).toHaveTextContent('00:50:00')
+    expect(content).toHaveTextContent('OneTwo')
+    // The message is a layer over that box, not a box of its own.
+    const zone = card.querySelector<HTMLElement>('[data-drop-zone]')!
+    expect(zone).toHaveClass('absolute')
+    expect(zone).toHaveTextContent('Drop to focus on this now')
+    expect(zone).toHaveTextContent('DEV-1725 goes back to the top of the queue.')
+  })
 })
