@@ -58,6 +58,14 @@
 - **Date**: 2026-11-02
 - **Status**: active
 
+### AD-008
+- **Decision**: As sessões registradas pela Agenda ficam na mesma tabela `focus_sessions`, com a coluna `origin` (`focus` ou `manual`, padrão `focus`), `device_id = 'agenda'` e `end_reason = 'manual'`. Tempo gasto, relatórios, liquidação e cascatas leem a tabela sem distinguir a origem.
+- **Reason**: Toda consulta de tempo já lê `focus_sessions` (`spentMilliseconds`, `clippedSessions`, a aba Sessões); uma tabela separada exigiria `UNION` em cada uma. Abordagem A do design da Agenda, aprovada pelo usuário em 2026-11-04.
+- **Trade-off**: Uma sessão manual que termina mais tarde que a última mudança move o corte de `lastChange` (AD-002), e ações offline anteriores passam a ser recusadas.
+- **Scope**: `agenda`, `foco-e-sons`, `relatorios`; schema `focus_sessions`; backend `services/sessions.ts`.
+- **Date**: 2026-11-04
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/tokens-de-acesso`
