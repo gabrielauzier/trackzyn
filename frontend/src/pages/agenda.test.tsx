@@ -207,6 +207,86 @@ describe('AgendaPage', () => {
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
   })
+  describe('a new session from the grid (AGENDA-14, AGENDA-17, AGENDA-18, AGENDA-20)', () => {
+    const y = (hours: number, minutes = 0) => (hours * 60 + minutes) * PX_PER_MINUTE
+    const tuesdayColumn = (container: HTMLElement) => container.querySelector<HTMLElement>('[data-agenda-column="2026-11-03"]')!
+
+    /** Drags on Tuesday from 17:32 to 18:41, once the week is in. */
+    async function dragOnTuesday(container: HTMLElement) {
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      fireEvent.pointerDown(tuesdayColumn(container), { clientY: y(17, 32), button: 0 })
+      fireEvent.pointerMove(window, { clientY: y(18, 41) })
+      fireEvent.pointerUp(window, { clientY: y(18, 41) })
+    }
+
+    function pull(handle: HTMLElement, from: number, to: number) {
+      fireEvent.pointerDown(handle, { clientY: from, button: 0 })
+      fireEvent.pointerMove(window, { clientY: to })
+      fireEvent.pointerUp(window, { clientY: to })
+    }
+
+    it('opens New session with the day and both times of the drag (AGENDA-14)', async () => {
+      const { container } = renderWithProviders(<AgendaPage />)
+      await dragOnTuesday(container)
+      expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Date')).toHaveValue('2026-11-03')
+      expect(screen.getByLabelText('Start')).toHaveValue('17:30')
+      expect(screen.getByLabelText('End')).toHaveValue('18:45')
+      expect(tuesdayColumn(container).querySelector('[data-draft]')).toHaveTextContent('17:30 – 18:45')
+    })
+
+    it('moves the edge of the draft when a time changes in the panel (AGENDA-17)', async () => {
+      const { container } = renderWithProviders(<AgendaPage />)
+      await dragOnTuesday(container)
+      fireEvent.change(await screen.findByLabelText('End'), { target: { value: '19:00' } })
+      expect(tuesdayColumn(container).querySelector('[data-draft]')).toHaveTextContent('17:30 – 19:00')
+      fireEvent.change(screen.getByLabelText('Start'), { target: { value: '17:00' } })
+      const draft = tuesdayColumn(container).querySelector<HTMLElement>('[data-draft]')!
+      expect(draft).toHaveTextContent('17:00 – 19:00')
+      expect(draft.style.top).toBe(`${y(17)}px`)
+      expect(draft.style.height).toBe(`${y(2)}px`)
+      expect(screen.getByText('2hr')).toBeInTheDocument()
+    })
+
+    it('changes the panel fields in steps of 15 min when a draft handle is pulled (AGENDA-18)', async () => {
+      const { container } = renderWithProviders(<AgendaPage />)
+      await dragOnTuesday(container)
+      await screen.findByRole('heading', { name: 'New session' })
+      pull(container.querySelector<HTMLElement>('[data-draft] [data-handle="bottom"]')!, y(18, 45), y(19, 22))
+      expect(screen.getByLabelText('End')).toHaveValue('19:15')
+      pull(container.querySelector<HTMLElement>('[data-draft] [data-handle="top"]')!, y(17, 30), y(17, 8))
+      expect(screen.getByLabelText('Start')).toHaveValue('17:15')
+      expect(screen.getByLabelText('End')).toHaveValue('19:15')
+      expect(tuesdayColumn(container).querySelector('[data-draft]')).toHaveTextContent('17:15 – 19:15')
+    })
+
+    it('shows the saved session in the list color, without the draft handles (AGENDA-20)', async () => {
+      // 17:30 to 18:45 on Tuesday in São Paulo.
+      const saved: AgendaSession = { ...monday, id: 's3', origin: 'manual', started_at: '2026-11-03T20:30:00.000Z', ended_at: '2026-11-03T21:45:00.000Z' }
+      vi.mocked(sessions.create).mockImplementation(async () => {
+        vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, saved] })
+        return saved
+      })
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await dragOnTuesday(container)
+      await user.click(await screen.findByRole('combobox', { name: 'Task' }))
+      await user.click(await screen.findByRole('option', { name: 'Write the report' }))
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+
+      expect(sessions.create).toHaveBeenCalledWith({
+        kind: 'task',
+        task_id: 't1',
+        started_at: '2026-11-03T20:30:00.000Z',
+        ended_at: '2026-11-03T21:45:00.000Z',
+      })
+      const block = await screen.findByRole('button', { name: 'Write the report, 17:30 – 18:45' })
+      expect(block.style.borderLeftColor).toBe('var(--chart-3)')
+      expect(container.querySelector('[data-draft]')).toBeNull()
+      expect(block.querySelector('[data-handle]')).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'New session' })).toBeNull()
+    })
+  })
+
   describe('adjusting a block (AGENDA-29, AGENDA-35)', () => {
     // Tuesday 14:00 to 15:00 in São Paulo.
     const tuesday: AgendaSession = { ...monday, id: 's2', started_at: '2026-11-03T17:00:00.000Z', ended_at: '2026-11-03T18:00:00.000Z' }

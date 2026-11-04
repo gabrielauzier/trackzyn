@@ -833,11 +833,11 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] Arrastar na terça de 17:32 a 18:41 abre `New session` com `2026-11-03`, `17:30` e `18:45`
-- [ ] Mudar o fim para `19:00` no painel deixa o rascunho em `17:30 – 19:00`
-- [ ] Puxar a alça de baixo do rascunho até 19:22 deixa o campo fim em `19:15`; a de cima até 17:08, o início em `17:15`
-- [ ] Salvar mostra o bloco da tarefa com a cor da lista e sem `[data-draft]`
-- [ ] Gate check passes: Full (frontend)
+- [x] Arrastar na terça de 17:32 a 18:41 abre `New session` com `2026-11-03`, `17:30` e `18:45`
+- [x] Mudar o fim para `19:00` no painel deixa o rascunho em `17:30 – 19:00`
+- [x] Puxar a alça de baixo do rascunho até 19:22 deixa o campo fim em `19:15`; a de cima até 17:08, o início em `17:15`
+- [x] Salvar mostra o bloco da tarefa com a cor da lista e sem `[data-draft]`
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full
