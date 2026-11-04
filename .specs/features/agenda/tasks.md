@@ -380,11 +380,11 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] A grade mostra 7 colunas de segunda a domingo, com o total do dia (`6h 15min`)
-- [ ] Ao abrir, o scroll fica em 07:00
-- [ ] Duas sessões sobrepostas aparecem lado a lado
-- [ ] O arraste sobre o hachurado não cria rascunho
-- [ ] Gate check passes: Quick
+- [x] A grade mostra 7 colunas de segunda a domingo, com o total do dia (`6h 15min`)
+- [x] Ao abrir, o scroll fica em 07:00
+- [x] Duas sessões sobrepostas aparecem lado a lado
+- [x] O arraste sobre o hachurado não cria rascunho
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

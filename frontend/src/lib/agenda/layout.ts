@@ -134,3 +134,11 @@ export function assignLanes(pieces: Piece[]): LaidOutPiece[] {
 export function dayTotal(pieces: Piece[]): number {
   return pieces.reduce((sum, piece) => (piece.session.kind === 'task' ? sum + piece.seconds : sum), 0)
 }
+
+/** The latest minute a session may end on `day`: the whole of a past day, up to now today, nothing on a later day (AGENDA-23). */
+export function dayLimit(day: string, now: Date, timeZone: string): number {
+  const today = dayOf(now, timeZone)
+  if (day < today) return DAY_MINUTES
+  if (day > today) return 0
+  return minuteOf(now, timeZone)
+}

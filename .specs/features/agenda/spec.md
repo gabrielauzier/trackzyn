@@ -162,7 +162,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | AGENDA-01 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-02 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-02 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-03 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-04 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-05 | P1: Ver as sessões da semana | Tasks | Implementing |
