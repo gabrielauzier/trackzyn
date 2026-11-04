@@ -95,13 +95,17 @@ describe('AgendaPage', () => {
     await waitFor(() => expect(sessions.list).toHaveBeenCalledWith({ from: '2026-11-09', to: '2026-11-15' }))
   })
 
-  it('zooms the hours to 1x, 2x or 3x, one at a time, from the control right of Day and Week', async () => {
+  /** Opens the view menu in the corner of the grid and gives its zoom control. */
+  const openZoom = async (user: ReturnType<typeof renderWithProviders>['user'], name = 'Zoom') => {
+    await user.click(await screen.findByRole('button', { name: /^(View options|Opções de exibição)/ }))
+    return within(await screen.findByRole('dialog')).getByRole('group', { name })
+  }
+
+  it('DAYS-05 DAYS-06 zooms the hours to 1x, 2x or 3x, one at a time, from the view menu, and the toolbar has no zoom', async () => {
     const { user, container } = renderWithProviders(<AgendaPage />)
     const block = await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
-    const zoom = screen.getByRole('group', { name: 'Zoom' })
-    const view = screen.getByRole('group', { name: 'View' })
-    expect(view.compareDocumentPosition(zoom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(view.nextElementSibling).toBe(zoom)
+    expect(screen.queryByRole('group', { name: 'Zoom' })).toBeNull()
+    const zoom = await openZoom(user)
     const levels = within(zoom).getAllByRole('button')
     expect(levels.map((level) => level.textContent)).toEqual(['1x', '2x', '3x'])
     const pressed = () => levels.filter((level) => level.getAttribute('aria-pressed') === 'true').map((level) => level.textContent)
@@ -122,14 +126,13 @@ describe('AgendaPage', () => {
     expect(gridHeight()).toBe(`${24 * 96}px`)
   })
 
-  it('opens on the zoom picked last on this device', async () => {
+  it('DAYS-05 opens on the zoom picked last on this device', async () => {
     const first = renderWithProviders(<AgendaPage />)
-    const zoom = await screen.findByRole('group', { name: 'Zoom' })
-    await first.user.click(within(zoom).getByRole('button', { name: '1x' }))
+    await first.user.click(within(await openZoom(first.user)).getByRole('button', { name: '1x' }))
     first.unmount()
 
-    renderWithProviders(<AgendaPage />)
-    const again = await screen.findByRole('group', { name: 'Zoom' })
+    const second = renderWithProviders(<AgendaPage />)
+    const again = await openZoom(second.user)
     expect(within(again).getByRole('button', { name: '1x' })).toHaveAttribute('aria-pressed', 'true')
     expect(within(again).getByRole('button', { name: '3x' })).toHaveAttribute('aria-pressed', 'false')
     expect((await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })).style.height).toBe('48px')
@@ -137,8 +140,68 @@ describe('AgendaPage', () => {
 
   it('names the zoom Lupa in Portuguese', async () => {
     await i18n.changeLanguage('pt-BR')
-    renderWithProviders(<AgendaPage />)
-    expect(await screen.findByRole('group', { name: 'Lupa' })).toBeInTheDocument()
+    const { user } = renderWithProviders(<AgendaPage />)
+    expect(await openZoom(user, 'Lupa')).toBeInTheDocument()
+  })
+
+  describe('the week days filter (#26)', () => {
+    // Saturday 7 November, 10:00 to 11:00 in São Paulo.
+    const saturday: AgendaSession = { ...monday, id: 's7', task_title: 'Weekend notes', started_at: '2026-11-07T13:00:00.000Z', ended_at: '2026-11-07T14:00:00.000Z' }
+    const headers = (container: HTMLElement) => [...container.querySelectorAll('[data-day-header]')].map((cell) => cell.getAttribute('data-day-header'))
+
+    it('DAYS-01 puts the view options button in the corner of the week header', async () => {
+      const { container } = renderWithProviders(<AgendaPage />)
+      const button = await screen.findByRole('button', { name: 'View options' })
+      expect(container.querySelector('[data-agenda-header]')).toContainElement(button)
+    })
+
+    it('DAYS-09 DAYS-11 DAYS-16 hides Saturday and Sunday at once with Mon – Fri, keeping the totals of the other days', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, saturday] })
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      const mondayTotal = container.querySelector('[data-day-header="2026-11-02"]')!.textContent
+      await user.click(screen.getByRole('button', { name: 'View options' }))
+      await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Mon – Fri' }))
+
+      expect(headers(container)).toEqual(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'])
+      expect(container.querySelectorAll('[data-agenda-column]')).toHaveLength(5)
+      expect(screen.queryByRole('button', { name: 'Weekend notes, 10:00 – 11:00' })).toBeNull()
+      expect(container.querySelector('[data-day-header="2026-11-02"]')!.textContent).toBe(mondayTotal)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'View options, 5 of 7 days' })).toBeInTheDocument()
+    })
+
+    it('DAYS-10 shows a day again at once when it is checked', async () => {
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await user.click(await screen.findByRole('button', { name: 'View options' }))
+      const panel = await screen.findByRole('dialog')
+      await user.click(within(panel).getByRole('checkbox', { name: 'Wednesday' }))
+      expect(headers(container)).not.toContain('2026-11-04')
+      await user.click(within(panel).getByRole('checkbox', { name: 'Wednesday' }))
+      expect(headers(container)).toEqual(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'])
+    })
+
+    it('DAYS-15 opens on the days chosen last on this device', async () => {
+      const first = renderWithProviders(<AgendaPage />)
+      await first.user.click(await screen.findByRole('button', { name: 'View options' }))
+      await first.user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Mon – Fri' }))
+      first.unmount()
+
+      const { container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'View options, 5 of 7 days' })
+      expect(headers(container)).toEqual(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'])
+    })
+
+    it('DAYS-16 still warns about an overlap with a session of a hidden day', async () => {
+      localStorage.setItem('agenda.days', '[0,1,2,3,4]')
+      // Wednesday 14:01 to 14:03, inside the New session that opens at 14:00 – 14:05; then Saturday is the hidden day.
+      const wednesday: AgendaSession = { ...monday, id: 's8', task_title: 'Quick call', started_at: '2026-11-04T17:01:00.000Z', ended_at: '2026-11-04T17:03:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, wednesday, saturday] })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'View options, 5 of 7 days' })
+      await user.click(screen.getByRole('button', { name: 'New session' }))
+      expect(await screen.findByRole('status')).toHaveTextContent('Overlaps Quick call (14:01 – 14:03).')
+    })
   })
 
   it('reads the week in Portuguese, across months too (AGENDA-08)', async () => {
@@ -722,6 +785,18 @@ describe('AgendaPage', () => {
       await user.click(within(panel).getByRole('button', { name: /Review the notes/ }))
       expect(await screen.findByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toHaveAttribute('aria-pressed', 'true')
       expect(screen.getByRole('button', { name: '‹ Work · 2 sessions' })).toBeInTheDocument()
+    })
+
+    it('DAYS-02 DAYS-08 puts the view menu at the top of the day timeline at 390 px, with the zoom and without the week days', async () => {
+      setWidth(390)
+      localStorage.setItem('agenda.days', '[0,1,2,3,4]')
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      const button = await screen.findByRole('button', { name: 'View options' })
+      expect(container.querySelector('[data-agenda-corner]')).toContainElement(button)
+      await user.click(button)
+      const panel = await screen.findByRole('dialog', { name: 'View options' })
+      expect(within(panel).getByRole('group', { name: 'Zoom' })).toBeInTheDocument()
+      expect(within(panel).queryByRole('group', { name: 'Week days' })).toBeNull()
     })
 
     it('shows the week grid at 1024 px', async () => {

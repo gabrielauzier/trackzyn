@@ -185,12 +185,12 @@ T1 → T2 → T3 → T4 → T5
 
 **Done when**:
 
-- [ ] A barra de ferramentas não tem mais o grupo `Zoom`; o menu no canto da semana tem a lupa, e trocar para 1x encolhe a grade
-- [ ] `Mon – Fri` deixa a semana com cinco cabeçalhos na hora; os totais dos dias que ficam não mudam
-- [ ] Reabrir a Agenda mostra os mesmos cinco dias
-- [ ] Na visão Dia (e na largura de 390 px), o menu mostra a lupa e não `Week days` (L-034)
-- [ ] Com o fim de semana escondido, o aviso de sobreposição continua citando uma sessão de sábado
-- [ ] Gate check passes: Build
+- [x] A barra de ferramentas não tem mais o grupo `Zoom`; o menu no canto da semana tem a lupa, e trocar para 1x encolhe a grade
+- [x] `Mon – Fri` deixa a semana com cinco cabeçalhos na hora; os totais dos dias que ficam não mudam
+- [x] Reabrir a Agenda mostra os mesmos cinco dias
+- [x] Na visão Dia (e na largura de 390 px), o menu mostra a lupa e não `Week days` (L-034)
+- [x] Com o fim de semana escondido, o aviso de sobreposição continua citando uma sessão de sábado
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

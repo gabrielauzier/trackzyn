@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Plus, ZoomIn } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
 import { DatePickerChip } from '@/components/agenda/date-picker-chip'
 import { DayTimeline } from '@/components/agenda/day-timeline'
 import { SessionGroupList } from '@/components/agenda/session-group-list'
 import { SessionDetails, SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
+import { AgendaViewMenu } from '@/components/agenda/view-menu'
 import { WeekGrid } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -19,7 +20,8 @@ import { isHiddenSession } from '@/lib/agenda/hide'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
-import { ZOOMS, type Zoom, pxPerMinuteAt, readZoom, saveZoom } from '@/lib/agenda/zoom'
+import { type WeekDay, readShownDays, saveShownDays } from '@/lib/agenda/week-days'
+import { type Zoom, pxPerMinuteAt, readZoom, saveZoom } from '@/lib/agenda/zoom'
 import { cn } from '@/lib/utils'
 import type { AgendaSession, AgendaSessionChanges, ListCard } from '@/types'
 
@@ -87,6 +89,13 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const narrow = useIsMobile()
   const view = narrow ? 'day' : chosenView
   const days = useMemo(() => weekDays(monday), [monday])
+  // The week days this device chose to show; the week view draws only those (DAYS-09, DAYS-15).
+  const [shownDays, setShownDays] = useState<WeekDay[]>(readShownDays)
+  const pickDays = (next: WeekDay[]) => {
+    setShownDays(next)
+    saveShownDays(next)
+  }
+  const visibleDays = useMemo(() => days.filter((_, index) => shownDays.includes(index as WeekDay)), [days, shownDays])
   const sunday = addDays(monday, 6)
   const { query, create, update, remove } = useAgenda({ from: monday, to: sunday, listId })
   const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
@@ -132,6 +141,10 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     dayAt: columnDayAt,
     onCommit: commit,
   })
+  /** The view options in the corner of the grid: the week days in the week view only, and the zoom (DAYS-01, DAYS-02). */
+  const viewMenu = (
+    <AgendaViewMenu days={shownDays} showDays={view === 'week'} zoom={zoom} onDaysChange={pickDays} onZoomChange={pickZoom} />
+  )
   const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null
 
   /** Another week closes the panel without recording (AGENDA-47). */
@@ -232,23 +245,6 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               ))}
             </div>
           )}
-          <div role="group" aria-label={t('agenda.zoom')} className="flex items-center rounded-lg bg-muted p-0.5">
-            <ZoomIn size={14} className="mx-1.5 text-muted-foreground" aria-hidden />
-            {ZOOMS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={zoom === option}
-                className={cn(
-                  'rounded-md px-2.5 py-1 text-sm font-medium tabular-nums',
-                  zoom === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
-                )}
-                onClick={() => pickZoom(option)}
-              >
-                {t('agenda.zoomLevel', { level: option })}
-              </button>
-            ))}
-          </div>
           {/* The day view has its own + button. */}
           {canWrite && view === 'week' && (
             <Button type="button" size="sm" onClick={() => openNew()}>
@@ -273,7 +269,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
           <div className="min-w-0 flex-1">
             {view === 'week' ? (
               <WeekGrid
-                days={days}
+                days={visibleDays}
+                corner={viewMenu}
                 sessions={sessions}
                 timezone={timezone}
                 now={now}
@@ -286,6 +283,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               />
             ) : (
               <DayTimeline
+                corner={viewMenu}
                 day={day}
                 sessions={sessions}
                 timezone={timezone}
