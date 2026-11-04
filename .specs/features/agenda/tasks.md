@@ -543,10 +543,10 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Domingo aparece como a sétima pílula
-- [ ] Um dia passado sem sessões mostra `Nenhuma sessão neste dia. Toque em + para registrar uma.`
-- [ ] Um dia futuro mostra `Este dia ainda não chegou. As sessões aparecem aqui quando você focar.`
-- [ ] Gate check passes: Quick
+- [x] Domingo aparece como a sétima pílula
+- [x] Um dia passado sem sessões mostra `Nenhuma sessão neste dia. Toque em + para registrar uma.`
+- [x] Um dia futuro mostra `Este dia ainda não chegou. As sessões aparecem aqui quando você focar.`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

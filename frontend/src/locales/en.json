@@ -772,6 +772,9 @@
     "allLists": "All lists",
     "loadError": "Could not load the agenda.",
     "retry": "Try again",
-    "goToToday": "Go to today"
+    "goToToday": "Go to today",
+    "days": "Days of the week",
+    "emptyDay": "No sessions on this day. Tap + to record one.",
+    "futureDay": "This day has not come yet. Sessions show up here when you focus."
   }
 }

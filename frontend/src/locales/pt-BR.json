@@ -772,6 +772,9 @@
     "allLists": "Todas as listas",
     "loadError": "Não foi possível carregar a agenda.",
     "retry": "Tentar de novo",
-    "goToToday": "Ir para hoje"
+    "goToToday": "Ir para hoje",
+    "days": "Dias da semana",
+    "emptyDay": "Nenhuma sessão neste dia. Toque em + para registrar uma.",
+    "futureDay": "Este dia ainda não chegou. As sessões aparecem aqui quando você focar."
   }
 }
