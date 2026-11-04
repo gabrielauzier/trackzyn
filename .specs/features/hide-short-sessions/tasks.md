@@ -242,12 +242,12 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Com o mínimo em 5, a sessão de 2 min some da grade, e a de 1 h aparece
-- [ ] Criar uma sessão sobre o horário de uma escondida não mostra o aviso de sobreposição
-- [ ] Ajustar uma sessão para menos de 5 min tira o bloco e fecha o painel
-- [ ] Com o mínimo nulo, todas aparecem
-- [ ] Trocar o mínimo do workspace atual redesenha a grade sem recarregar a página
-- [ ] Gate check passes: Full (frontend)
+- [x] Com o mínimo em 5, a sessão de 2 min some da grade, e a de 1 h aparece
+- [x] Criar uma sessão sobre o horário de uma escondida não mostra o aviso de sobreposição
+- [x] Ajustar uma sessão para menos de 5 min tira o bloco e fecha o painel
+- [x] Com o mínimo nulo, todas aparecem
+- [x] Trocar o mínimo do workspace atual redesenha a grade sem recarregar a página
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

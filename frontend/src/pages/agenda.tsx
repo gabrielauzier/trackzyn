@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus, ZoomIn } from 'lucide-react'
@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { lists, sessions as sessionsApi } from '@/lib/api'
+import { isHiddenSession } from '@/lib/agenda/hide'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
@@ -61,7 +62,10 @@ function sessionTimes(session: AgendaSession, timezone: string): PanelTimes {
 
 function Agenda({ timezone, activeLists }: { timezone: string; activeLists: ListCard[] }) {
   const { t, i18n } = useTranslation()
-  const { canWrite } = useWorkspace()
+  const { canWrite, current } = useWorkspace()
+  // The workspace minimum hides short sessions from the grid and the panel, not from the totals (HIDE-11, HIDE-14).
+  const minSessionMinutes = current?.min_session_minutes ?? null
+  const hidden = useCallback((session: AgendaSession) => isHiddenSession(session, minSessionMinutes), [minSessionMinutes])
   const now = useNow()
   const today = dayOf(now, timezone)
   /** The day the agenda is on; the week shown is the one that holds it. */
@@ -89,12 +93,14 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     queryFn: () => sessionsApi.list({ from: monday, to: sunday }),
     retry: false,
   })
-  const overlapping = everyList.data?.sessions ?? sessions
+  // The overlap warning only names sessions the agenda shows (HIDE-15).
+  const overlapping = (everyList.data?.sessions ?? sessions).filter((session) => !hidden(session))
   const [selectedId, setSelectedId] = useState<string | null>(null)
   /** The times of the selected session while it is edited; null shows its details. */
   const [editTimes, setEditTimes] = useState<PanelTimes | null>(null)
-  // A deleted session leaves the agenda, and its panel closes with it (AGENDA-32).
-  const selected = sessions.find((session) => session.id === selectedId) ?? null
+  // A deleted session leaves the agenda, and its panel closes with it (AGENDA-32), as does one saved shorter
+  // than the workspace minimum (HIDE-17).
+  const selected = sessions.find((session) => session.id === selectedId && !hidden(session)) ?? null
 
   const closeSelected = () => {
     setSelectedId(null)
@@ -250,6 +256,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 selectedId={selected?.id ?? null}
                 onSelect={select}
                 pxPerMinute={pxPerMinute}
+                hidden={hidden}
               />
             ) : (
               <DayTimeline
@@ -264,6 +271,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 selectedId={selected?.id ?? null}
                 onSelect={select}
                 pxPerMinute={pxPerMinute}
+                hidden={hidden}
               />
             )}
           </div>

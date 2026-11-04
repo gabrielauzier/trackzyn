@@ -18,9 +18,12 @@ vi.mock('sonner', async (importOriginal) => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }))
 
-const workspace = vi.hoisted(() => ({ canWrite: true }))
+const workspace = vi.hoisted(() => ({ canWrite: true, minSessionMinutes: null as number | null }))
 vi.mock('@/contexts/workspace-context', () => ({
-  useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace', timezone: null }, canWrite: workspace.canWrite }),
+  useWorkspace: () => ({
+    current: { id: 'ws', name: 'Synthetic workspace', timezone: null, min_session_minutes: workspace.minSessionMinutes },
+    canWrite: workspace.canWrite,
+  }),
 }))
 
 const SP = 'America/Sao_Paulo'
@@ -55,6 +58,7 @@ const monday: AgendaSession = {
 beforeEach(() => {
   vi.clearAllMocks()
   workspace.canWrite = true
+  workspace.minSessionMinutes = null
   // Wednesday 4 November 2026, 14:07 in São Paulo.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-11-04T17:07:00.000Z'))
@@ -169,6 +173,76 @@ describe('AgendaPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'New session' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Overlaps Fix the sink (13:50 – 14:03). The time in common counts in both.')
+  })
+
+  describe('the workspace minimum session length (#22)', () => {
+    // Monday 10:30 to 10:32 in São Paulo: 2 minutes, under a minimum of 5.
+    const blip: AgendaSession = { ...monday, id: 's2', started_at: '2026-11-02T13:30:00.000Z', ended_at: '2026-11-02T13:32:00.000Z' }
+    // Wednesday 14:01 to 14:03, inside the New session that opens at 14:00 – 14:05 at 14:07 (AGENDA-15).
+    const wednesdayBlip: AgendaSession = { ...blip, id: 's3', started_at: '2026-11-04T17:01:00.000Z', ended_at: '2026-11-04T17:03:00.000Z' }
+
+    it('HIDE-11 HIDE-16 hides the 2-minute session under a minimum of 5 and shows both with the minimum off', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, blip] })
+      workspace.minSessionMinutes = 5
+      const { unmount } = renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeNull()
+      unmount()
+
+      workspace.minSessionMinutes = null
+      renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeInTheDocument()
+    })
+
+    it('HIDE-15 opens New session over a hidden session without the overlap warning', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, wednesdayBlip] })
+      workspace.minSessionMinutes = 5
+      const { user } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      await user.click(screen.getByRole('button', { name: 'New session' }))
+      expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      expect(screen.queryByRole('status')).toBeNull()
+    })
+
+    it('HIDE-15 still warns about the same session with the minimum off', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, wednesdayBlip] })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 14:01 – 14:03' })
+      await user.click(screen.getByRole('button', { name: 'New session' }))
+      expect(await screen.findByRole('status')).toHaveTextContent('Overlaps Write the report (14:01 – 14:03).')
+    })
+
+    it('HIDE-17 takes the block off the grid and closes the panel once the session is saved shorter than the minimum', async () => {
+      workspace.minSessionMinutes = 5
+      const saved = { ...monday, ended_at: '2026-11-02T13:03:00.000Z' }
+      vi.mocked(sessions.update).mockImplementation(async () => {
+        vi.mocked(sessions.list).mockResolvedValue({ sessions: [saved] })
+        return saved
+      })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await user.click(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' }))
+      await user.click(screen.getByRole('button', { name: 'Edit' }))
+      fireEvent.change(await screen.findByLabelText('End'), { target: { value: '10:03' } })
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+
+      await waitFor(() => expect(screen.queryByRole('button', { name: /^Write the report, 10:00/ })).toBeNull())
+      expect(screen.queryByRole('heading', { name: 'Edit session' })).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'Write the report' })).toBeNull()
+    })
+
+    it('HIDE-18 redraws the grid when the minimum of the current workspace changes, without a reload', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, blip] })
+      const { rerender } = renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeInTheDocument()
+      const loads = vi.mocked(sessions.list).mock.calls.length
+
+      workspace.minSessionMinutes = 5
+      rerender(<AgendaPage />)
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeNull())
+      expect(screen.getByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
+      // The grid redraws from the sessions already loaded.
+      expect(sessions.list).toHaveBeenCalledTimes(loads)
+    })
   })
 
   it('shows the load error in place of the grid and tries again (AGENDA-12)', async () => {
