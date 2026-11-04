@@ -808,8 +808,8 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] Com o filtro na lista `Work`, um rascunho sobre uma sessão da lista `Home` mostra `Overlaps <título> (<HH:MM> – <HH:MM>). The time in common counts in both.`
-- [ ] Gate check passes: Full (frontend)
+- [x] Com o filtro na lista `Work`, um rascunho sobre uma sessão da lista `Home` mostra `Overlaps <título> (<HH:MM> – <HH:MM>). The time in common counts in both.`
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

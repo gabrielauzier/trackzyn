@@ -96,6 +96,29 @@ describe('AgendaPage', () => {
     await waitFor(() => expect(sessions.list).toHaveBeenCalledWith({ from: '2026-11-02', to: '2026-11-08', list_id: WORK }))
   })
 
+  it('warns about an overlap with a session of another list while the filter is on (AGENDA-19)', async () => {
+    // Wednesday 13:50 to 14:03 in São Paulo, on the list Home.
+    const sink: AgendaSession = {
+      ...monday,
+      id: 's9',
+      task_id: 't9',
+      task_title: 'Fix the sink',
+      list_id: 'home',
+      list_name: 'Home',
+      list_color: 5,
+      started_at: '2026-11-04T16:50:00.000Z',
+      ended_at: '2026-11-04T17:03:00.000Z',
+    }
+    vi.mocked(sessions.list).mockImplementation(async (query) => ({ sessions: query.list_id ? [monday] : [monday, sink] }))
+    const { user } = renderWithProviders(<AgendaPage />)
+    await user.click(await screen.findByRole('combobox', { name: 'List' }))
+    await user.click(await screen.findByRole('option', { name: 'Work' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Fix the sink, 13:50 – 14:03' })).toBeNull())
+
+    await user.click(screen.getByRole('button', { name: 'New session' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Overlaps Fix the sink (13:50 – 14:03). The time in common counts in both.')
+  })
+
   it('shows the load error in place of the grid and tries again (AGENDA-12)', async () => {
     vi.mocked(sessions.list).mockRejectedValueOnce(new Error('offline'))
     const { user, container } = renderWithProviders(<AgendaPage />)

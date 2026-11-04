@@ -13,9 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { lists } from '@/lib/api'
+import { lists, sessions as sessionsApi } from '@/lib/api'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
-import { useAgenda } from '@/lib/agenda/use-agenda'
+import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { cn } from '@/lib/utils'
 import type { AgendaSession, AgendaSessionChanges, ListCard } from '@/types'
@@ -72,8 +72,16 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const narrow = useIsMobile()
   const view = narrow ? 'day' : chosenView
   const days = useMemo(() => weekDays(monday), [monday])
-  const { query, create, update, remove } = useAgenda({ from: monday, to: addDays(monday, 6), listId })
+  const sunday = addDays(monday, 6)
+  const { query, create, update, remove } = useAgenda({ from: monday, to: sunday, listId })
   const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
+  // An overlap is with any other session of the user, whatever the list filter (AGENDA-19).
+  const everyList = useQuery({
+    queryKey: agendaKey({ from: monday, to: sunday, listId: null }),
+    queryFn: () => sessionsApi.list({ from: monday, to: sunday }),
+    retry: false,
+  })
+  const overlapping = everyList.data?.sessions ?? sessions
   const [selectedId, setSelectedId] = useState<string | null>(null)
   /** The times of the selected session while it is edited; null shows its details. */
   const [editTimes, setEditTimes] = useState<PanelTimes | null>(null)
@@ -238,7 +246,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               onTimesChange={changeTimes}
               timezone={timezone}
               now={now}
-              sessions={sessions}
+              sessions={overlapping}
               defaultListId={listId ?? activeLists[0]?.id ?? null}
               onCancel={() => drag.setDraft(null)}
               onSave={async (input, preview) => {
@@ -255,7 +263,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               onTimesChange={setEditTimes}
               timezone={timezone}
               now={now}
-              sessions={sessions}
+              sessions={overlapping}
               defaultListId={selected.list_id}
               onCancel={() => setEditTimes(null)}
               onSave={async (input) => {
