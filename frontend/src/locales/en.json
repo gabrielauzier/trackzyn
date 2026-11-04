@@ -468,6 +468,9 @@
     "minSessionLabel": "Under",
     "minSessionUnit": "minutes",
     "minSessionInvalid": "Between 1 and 60 minutes.",
+    "joinNearSessions": "Join near sessions",
+    "mergeGapLabel": "Up to",
+    "mergeGapUnit": "minutes",
     "hideShortSessionsHint": "Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.",
     "you": "you",
     "youManageThis": "You manage this workspace"

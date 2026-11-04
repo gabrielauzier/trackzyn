@@ -141,3 +141,118 @@ describe('workspace settings: hide short sessions (#22)', () => {
     await i18n.changeLanguage('en')
   })
 })
+
+describe('workspace settings: join near sessions (#23)', () => {
+  const joining = (mergeGapMinutes: number | null, minSessionMinutes: number | null = null): Workspace => ({
+    ...workspace(minSessionMinutes),
+    merge_gap_minutes: mergeGapMinutes,
+  })
+  const joinSwitch = () => screen.getByRole('switch', { name: 'Join near sessions' })
+  const gapField = () => screen.queryByLabelText('Up to')
+
+  it('MERGE-06 shows the switch right below Hide short sessions, off for a null gap, and the field only while it is on', async () => {
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    const hide = await screen.findByRole('switch', { name: 'Hide short sessions' })
+    const switches = screen.getAllByRole('switch')
+    expect(switches.indexOf(joinSwitch())).toBe(switches.indexOf(hide) + 1)
+    expect(hide.compareDocumentPosition(joinSwitch()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(joinSwitch()).toHaveAttribute('aria-checked', 'false')
+    expect(gapField()).toBeNull()
+
+    await user.click(joinSwitch())
+    expect(joinSwitch()).toHaveAttribute('aria-checked', 'true')
+    expect(gapField()).toBeInTheDocument()
+    expect(screen.getByText('minutes')).toBeInTheDocument()
+  })
+
+  it('MERGE-06 opens on with the stored gap', async () => {
+    state.workspace = joining(5)
+    renderWithProviders(<WorkspaceSettingsPage />)
+    expect(await screen.findByRole('switch', { name: 'Join near sessions' })).toHaveAttribute('aria-checked', 'true')
+    expect(gapField()).toHaveValue(5)
+  })
+
+  it('MERGE-07 fills the field with 1 when turned on for a workspace that has it off', async () => {
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    await user.click(await screen.findByRole('switch', { name: 'Join near sessions' }))
+    expect(gapField()).toHaveValue(1)
+  })
+
+  it('MERGE-08 sends the gap of 5 while on, and null once turned off', async () => {
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    await user.click(await screen.findByRole('switch', { name: 'Join near sessions' }))
+    fireEvent.change(gapField()!, { target: { value: '5' } })
+    await user.click(save())
+    await waitFor(() => expect(workspacesApi.update).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(workspacesApi.update).mock.calls[0]).toEqual(['ws', expect.objectContaining({ merge_gap_minutes: 5, min_session_minutes: null })])
+
+    await user.click(joinSwitch())
+    await user.click(save())
+    await waitFor(() => expect(workspacesApi.update).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(workspacesApi.update).mock.calls[1]).toEqual(['ws', expect.objectContaining({ merge_gap_minutes: null })])
+  })
+
+  it('MERGE-09 shows Between 1 and 60 minutes. under the field for 0, 61 and 1.5, sends nothing, and leaves the short sessions field alone', async () => {
+    state.workspace = joining(null, 5)
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    await user.click(await screen.findByRole('switch', { name: 'Join near sessions' }))
+    for (const bad of ['0', '61', '1.5']) {
+      fireEvent.change(gapField()!, { target: { value: bad } })
+      const errors = screen.getAllByText('Between 1 and 60 minutes.')
+      expect(errors).toHaveLength(1)
+      expect(gapField()).toHaveAttribute('aria-invalid', 'true')
+      expect(gapField()).toHaveAttribute('aria-describedby', errors[0]!.id)
+      expect(minutesField()).not.toHaveAttribute('aria-invalid')
+      expect(minutesField()).toHaveValue(5)
+      expect(save()).toBeDisabled()
+      await user.click(save())
+    }
+    expect(workspacesApi.update).not.toHaveBeenCalled()
+
+    fireEvent.change(gapField()!, { target: { value: '60' } })
+    expect(screen.queryByText('Between 1 and 60 minutes.')).toBeNull()
+    expect(save()).toBeEnabled()
+  })
+
+  it('MERGE-09 keeps the join field valid and saving blocked while only the short sessions field is invalid', async () => {
+    state.workspace = joining(5, 5)
+    renderWithProviders(<WorkspaceSettingsPage />)
+    await screen.findByRole('switch', { name: 'Join near sessions' })
+    fireEvent.change(minutesField()!, { target: { value: '0' } })
+    expect(screen.getAllByText('Between 1 and 60 minutes.')).toHaveLength(1)
+    expect(minutesField()).toHaveAttribute('aria-invalid', 'true')
+    expect(gapField()).not.toHaveAttribute('aria-invalid')
+    expect(gapField()).toHaveValue(5)
+    expect(save()).toBeDisabled()
+  })
+
+  it('MERGE-10 shows an editor and a viewer the switch and the field disabled, with the stored value', async () => {
+    state.canManage = false
+    for (const role of ['editor', 'viewer'] as const) {
+      state.workspace = { ...joining(10), role }
+      const { unmount } = renderWithProviders(<WorkspaceSettingsPage />)
+      const toggle = await screen.findByRole('switch', { name: 'Join near sessions' })
+      expect(toggle).toBeDisabled()
+      expect(toggle).toHaveAttribute('aria-checked', 'true')
+      expect(gapField()).toBeDisabled()
+      expect(gapField()).toHaveValue(10)
+      unmount()
+    }
+  })
+
+  it('names it Juntar sessões próximas in Portuguese, with Até, minutos and Entre 1 e 60 minutos.', async () => {
+    const { i18n } = await import('@/test/utils')
+    await i18n.changeLanguage('pt-BR')
+    try {
+      state.workspace = joining(5)
+      renderWithProviders(<WorkspaceSettingsPage />)
+      expect(await screen.findByRole('switch', { name: 'Juntar sessões próximas' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Até')).toHaveValue(5)
+      expect(screen.getByText('minutos')).toBeInTheDocument()
+      fireEvent.change(screen.getByLabelText('Até'), { target: { value: '61' } })
+      expect(screen.getByText('Entre 1 e 60 minutos.')).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+})

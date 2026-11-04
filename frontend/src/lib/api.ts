@@ -118,6 +118,8 @@ export const workspaces = {
       timezone?: string | null
       /** 1 to 60; null shows every session (#22). */
       min_session_minutes?: number | null
+      /** 1 to 60; null keeps near sessions apart in the agenda (#23). */
+      merge_gap_minutes?: number | null
     },
   ): Promise<Workspace> => {
     const { data } = await api.patch(`/workspaces/${id}`, payload)

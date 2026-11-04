@@ -92,6 +92,9 @@ export default function WorkspaceSettingsPage() {
   // Sessions shorter than this many minutes are hidden in the agenda and the Sessions report (#22).
   const [hideShort, setHideShort] = useState(false)
   const [minMinutes, setMinMinutes] = useState('')
+  // Sessions of one list and kind this many minutes apart or less are drawn as one block in the agenda (#23).
+  const [joinNear, setJoinNear] = useState(false)
+  const [gapMinutes, setGapMinutes] = useState('')
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [invitePassword, setInvitePassword] = useState('')
@@ -107,6 +110,7 @@ export default function WorkspaceSettingsPage() {
     current?.icon,
     current?.color,
     current?.min_session_minutes,
+    current?.merge_gap_minutes,
   ])
   const [previousFormKey, setPreviousFormKey] = useState<string | null>(null)
   if (formKey !== previousFormKey) {
@@ -119,6 +123,8 @@ export default function WorkspaceSettingsPage() {
       setEditColor(current.color ?? DEFAULT_WORKSPACE_COLOR)
       setHideShort(current.min_session_minutes !== null)
       setMinMinutes(current.min_session_minutes === null ? '' : String(current.min_session_minutes))
+      setJoinNear(current.merge_gap_minutes !== null)
+      setGapMinutes(current.merge_gap_minutes === null ? '' : String(current.merge_gap_minutes))
     }
   }
   // A whole number from 1 to 60 while the switch is on (HIDE-09).
@@ -127,6 +133,13 @@ export default function WorkspaceSettingsPage() {
     setHideShort(on)
     // Turned on from off, the minimum starts at 1 minute (HIDE-07).
     if (on && minMinutes === '') setMinMinutes('1')
+  }
+  // The same bounds for the join gap (MERGE-09).
+  const gapValid = !joinNear || (/^\d+$/.test(gapMinutes) && Number(gapMinutes) >= 1 && Number(gapMinutes) <= 60)
+  const toggleJoinNear = (on: boolean) => {
+    setJoinNear(on)
+    // Turned on from off, the gap starts at 1 minute (MERGE-07).
+    if (on && gapMinutes === '') setGapMinutes('1')
   }
 
   const membersQuery = useQuery({
@@ -157,6 +170,7 @@ export default function WorkspaceSettingsPage() {
         icon: editIcon,
         color: editColor,
         min_session_minutes: hideShort ? Number(minMinutes) : null,
+        merge_gap_minutes: joinNear ? Number(gapMinutes) : null,
       })
     },
     onSuccess: () => {
@@ -319,7 +333,7 @@ export default function WorkspaceSettingsPage() {
           {canManage && (
             <Button
               onClick={() => updateMutation.mutate()}
-              disabled={updateMutation.isPending || !minValid}
+              disabled={updateMutation.isPending || !minValid || !gapValid}
               className="rounded-lg"
               size="sm"
             >
@@ -469,6 +483,47 @@ export default function WorkspaceSettingsPage() {
               </p>
             )}
             <p className="text-[11px] text-muted-foreground leading-relaxed">{t('workspace.hideShortSessionsHint')}</p>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+              <Switch
+                id="ws-join-near"
+                aria-labelledby="ws-join-near-label"
+                checked={joinNear}
+                onCheckedChange={toggleJoinNear}
+                disabled={!canManage}
+              />
+              <Label id="ws-join-near-label" htmlFor="ws-join-near" className="text-[13px]">
+                {t('workspace.joinNearSessions')}
+              </Label>
+              {joinNear && (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="ws-merge-gap" className="text-[13px] text-muted-foreground">
+                    {t('workspace.mergeGapLabel')}
+                  </Label>
+                  <Input
+                    id="ws-merge-gap"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={60}
+                    step={1}
+                    className="h-9 w-20 rounded-lg"
+                    value={gapMinutes}
+                    onChange={(event) => setGapMinutes(event.target.value)}
+                    aria-invalid={!gapValid || undefined}
+                    aria-describedby={gapValid ? undefined : 'ws-merge-gap-error'}
+                    disabled={!canManage}
+                  />
+                  <span className="text-[13px] text-muted-foreground">{t('workspace.mergeGapUnit')}</span>
+                </div>
+              )}
+            </div>
+            {!gapValid && (
+              <p id="ws-merge-gap-error" className="text-[11px] text-destructive">
+                {t('workspace.minSessionInvalid')}
+              </p>
+            )}
           </div>
         </div>
       </section>

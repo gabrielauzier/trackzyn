@@ -310,13 +310,13 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] O interruptor aparece abaixo de `Hide short sessions`, desligado com o valor nulo; o campo só aparece com ele ligado
-- [ ] Ligar com o valor nulo preenche 1
-- [ ] Salvar com 5 envia `merge_gap_minutes: 5`; desligado, envia `null`
-- [ ] 0, 61 e 1.5 mostram `Between 1 and 60 minutes.` e não enviam nada; o campo de sessões curtas não é afetado
-- [ ] Editor e leitor veem os dois desabilitados, com o valor salvo
-- [ ] Em português: `Juntar sessões próximas`, `Até`, `minutos`
-- [ ] Gate check passes: Build
+- [x] O interruptor aparece abaixo de `Hide short sessions`, desligado com o valor nulo; o campo só aparece com ele ligado
+- [x] Ligar com o valor nulo preenche 1
+- [x] Salvar com 5 envia `merge_gap_minutes: 5`; desligado, envia `null`
+- [x] 0, 61 e 1.5 mostram `Between 1 and 60 minutes.` e não enviam nada; o campo de sessões curtas não é afetado
+- [x] Editor e leitor veem os dois desabilitados, com o valor salvo
+- [x] Em português: `Juntar sessões próximas`, `Até`, `minutos`
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build
