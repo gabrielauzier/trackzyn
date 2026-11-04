@@ -132,10 +132,10 @@ T1 → T2 → T3 → T4 → T5
 
 **Done when**:
 
-- [ ] O `corner` aparece no cabeçalho, antes do primeiro dia
-- [ ] Com cinco dias em `days`, o cabeçalho e a grade têm cinco colunas
-- [ ] Sem `corner`, o canto fica como hoje (os testes atuais passam sem mudança)
-- [ ] Gate check passes: Quick
+- [x] O `corner` aparece no cabeçalho, antes do primeiro dia
+- [x] Com cinco dias em `days`, o cabeçalho e a grade têm cinco colunas
+- [x] Sem `corner`, o canto fica como hoje (os testes atuais passam sem mudança)
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

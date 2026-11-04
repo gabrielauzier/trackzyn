@@ -96,6 +96,21 @@ describe('WeekGrid', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(0)
   })
 
+  it('DAYS-01 draws the corner control in the header, before the first day', () => {
+    const { container } = renderWithProviders(
+      <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} corner={<button type="button">View options</button>} />,
+    )
+    const headerRow = container.querySelector('[data-agenda-header]')!
+    const corner = within(headerRow as HTMLElement).getByRole('button', { name: 'View options' })
+    expect(corner.compareDocumentPosition(header(container, WEEK[0]!)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('DAYS-09 draws five headers and five columns for five days', () => {
+    const { container } = renderWithProviders(<WeekGrid days={WEEK.slice(0, 5)} sessions={[]} timezone={SP} now={NOW} />)
+    expect(container.querySelectorAll('[data-day-header]')).toHaveLength(5)
+    expect(container.querySelectorAll('[data-agenda-column]')).toHaveLength(5)
+  })
+
   it('reserves the scrollbar width in the day header as in the scrolling grid, so their columns line up', () => {
     const { container } = renderWithProviders(<Grid sessions={[]} />)
     const headerRow = container.querySelector('[data-agenda-header]')!

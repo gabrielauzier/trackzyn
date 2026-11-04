@@ -1,4 +1,4 @@
-import { useMemo, type PointerEvent } from 'react'
+import { useMemo, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
@@ -33,6 +33,8 @@ interface WeekGridProps {
   onSelect?: (session: AgendaSession) => void
   /** Pixels per minute, from the zoom; the default zoom's scale when absent. */
   pxPerMinute?: number
+  /** A control drawn in the top left corner of the header, above the hour column (DAYS-01). */
+  corner?: ReactNode
   /** Whether a saved session stays off the grid (HIDE-11); it still counts in the day total (HIDE-14). */
   hidden?: (session: AgendaSession) => boolean
   /** Sessions of one list and kind this many minutes apart or less are drawn as one block (MERGE-11); null keeps them apart. */
@@ -75,6 +77,7 @@ export function WeekGrid({
   apartId = null,
   onSelectGroup,
   selectedGroup = null,
+  corner,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -109,7 +112,7 @@ export function WeekGrid({
     <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
       {/* Both reserve the scrollbar's width, so the day headers line up with the columns under them. */}
       <div data-agenda-header className="flex overflow-y-hidden border-b [scrollbar-gutter:stable]">
-        <div className="w-14 shrink-0" />
+        <div className="flex w-14 shrink-0 items-center justify-center">{corner}</div>
         {days.map((day) => {
           const total = dayTotal(pieces.get(day) ?? [])
           return (
