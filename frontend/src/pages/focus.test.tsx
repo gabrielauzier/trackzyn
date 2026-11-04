@@ -166,7 +166,7 @@ describe('FocusPage', () => {
     renderFocus()
 
     expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument()
-    const card = screen.getByRole('timer').parentElement!
+    const card = screen.getByRole('timer').closest('[data-running]')!
     expect(card).toHaveTextContent(taskA.title)
     expect(card).toHaveAttribute('data-running', 'true')
     expect(card).toHaveClass('border-2', 'border-primary')
