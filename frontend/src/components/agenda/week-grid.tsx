@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { formatDuration } from '@/components/board/format-duration'
 import { SessionBlock } from '@/components/agenda/session-block'
 import { minuteClock } from '@/lib/agenda/format'
+import { joinPieces } from '@/lib/agenda/join'
 import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf, zonedInstant, type Piece } from '@/lib/agenda/layout'
 import type { DragTarget, useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
@@ -34,6 +35,14 @@ interface WeekGridProps {
   pxPerMinute?: number
   /** Whether a saved session stays off the grid (HIDE-11); it still counts in the day total (HIDE-14). */
   hidden?: (session: AgendaSession) => boolean
+  /** Sessions of one list and kind this many minutes apart or less are drawn as one block (MERGE-11); null keeps them apart. */
+  joinGap?: number | null
+  /** The session chosen from a joined block, drawn on its own (MERGE-29). */
+  apartId?: string | null
+  /** A click on a joined block, with its sessions in start order (MERGE-27). */
+  onSelectGroup?: (members: AgendaSession[]) => void
+  /** The ids of the sessions of the chosen joined block; the block shows selected. */
+  selectedGroup?: string[] | null
 }
 
 /** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
@@ -62,6 +71,10 @@ export function WeekGrid({
   onSelect,
   pxPerMinute = PX_PER_MINUTE,
   hidden,
+  joinGap = null,
+  apartId = null,
+  onSelectGroup,
+  selectedGroup = null,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -131,7 +144,11 @@ export function WeekGrid({
           </div>
           {days.map((day) => {
             const limit = dayLimit(day, now, timezone)
-            const laid = assignLanes((pieces.get(day) ?? []).filter((piece) => !hiddenIds.has(piece.session.id)))
+            const visible = (pieces.get(day) ?? []).filter((piece) => !hiddenIds.has(piece.session.id))
+            // The session being adjusted follows the pointer on its own, outside any joined block.
+            const moving = visible.filter((piece) => piece.session.id === adjusting?.sessionId)
+            const resting = visible.filter((piece) => piece.session.id !== adjusting?.sessionId)
+            const laid = assignLanes([...joinPieces(resting, joinGap, apartId), ...moving])
             return (
               <div
                 key={day}
@@ -157,17 +174,20 @@ export function WeekGrid({
                 )}
                 <div className="absolute inset-0 mx-0.5">
                   {laid.map((piece) => {
-                    // The running session ends now: it has no handles and does not move (AGENDA-33).
-                    const target = drag && piece.session.ended_at !== null ? targetOf(piece, timezone) : null
-                    const selected = piece.session.id === selectedId
+                    const members = piece.members
+                    // The running session ends now: it has no handles and does not move (AGENDA-33); nor does a joined block (MERGE-30).
+                    const target = drag && !members && piece.session.ended_at !== null ? targetOf(piece, timezone) : null
+                    const selected = members
+                      ? members.some((member) => selectedGroup?.includes(member.id))
+                      : piece.session.id === selectedId
                     return (
                       <SessionBlock
-                        key={piece.session.id}
+                        key={members ? `group:${piece.session.id}` : piece.session.id}
                         piece={piece}
                         pxPerMinute={pxPerMinute}
                         timezone={timezone}
                         selected={selected}
-                        onSelect={onSelect && (() => onSelect(piece.session))}
+                        onSelect={members ? onSelectGroup && (() => onSelectGroup(members)) : onSelect && (() => onSelect(piece.session))}
                         onPointerDown={(event) => (target ? drag!.startMove(event, target) : event.stopPropagation())}
                       >
                         {target &&

@@ -35,14 +35,36 @@ function Grid({
   onCommit = vi.fn(),
   selectedId = null,
   hidden,
+  joinGap,
+  apartId,
+  onSelectGroup,
+  selectedGroup,
 }: {
   sessions: AgendaSession[]
   onCommit?: (draft: Draft) => void
   selectedId?: string | null
   hidden?: (session: AgendaSession) => boolean
+  joinGap?: number | null
+  apartId?: string | null
+  onSelectGroup?: (members: AgendaSession[]) => void
+  selectedGroup?: string[] | null
 }) {
   const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit })
-  return <WeekGrid days={WEEK} sessions={sessions} timezone={SP} now={NOW} drag={drag} selectedId={selectedId} hidden={hidden} />
+  return (
+    <WeekGrid
+      days={WEEK}
+      sessions={sessions}
+      timezone={SP}
+      now={NOW}
+      drag={drag}
+      selectedId={selectedId}
+      hidden={hidden}
+      joinGap={joinGap}
+      apartId={apartId}
+      onSelectGroup={onSelectGroup}
+      selectedGroup={selectedGroup}
+    />
+  )
 }
 
 const header = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-day-header="${day}"]`)!
@@ -126,6 +148,98 @@ describe('WeekGrid', () => {
       fireEvent.pointerDown(handle, { clientY: y(11), button: 0 })
       fireEvent.pointerMove(window, { clientY: y(10, 15) })
       expect(container.querySelector<HTMLElement>('[data-session-id="long"]')!.style.height).toBe(`${15 * PX_PER_MINUTE}px`)
+    })
+  })
+
+  describe('joined sessions (#23)', () => {
+    // Monday in São Paulo: Produto 10:20-11:01 and 11:05-11:16, and Suporte 10:30-11:00.
+    const produto = { list_name: 'Produto' }
+    const suporte = { list_id: 'l2', list_name: 'Suporte' }
+    const a = session('a', '2026-11-02T13:20:00.000Z', '2026-11-02T14:01:00.000Z', produto)
+    const b = session('b', '2026-11-02T14:05:00.000Z', '2026-11-02T14:16:00.000Z', produto)
+    const c = session('c', '2026-11-02T13:30:00.000Z', '2026-11-02T14:00:00.000Z', suporte)
+
+    it('MERGE-11 MERGE-21 draws the two Produto sessions as one block, side by side with Suporte at the same time', () => {
+      const { container } = renderWithProviders(<Grid sessions={[a, b, c]} joinGap={5} />)
+      const joined = screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' })
+      expect(joined).toHaveAttribute('data-joined')
+      expect(container.querySelector('[data-session-id="b"]')).toBeNull()
+      expect(joined.style.top).toBe(`${y(10, 20)}px`)
+      expect(joined.style.height).toBe(`${56 * PX_PER_MINUTE}px`)
+      const other = screen.getByRole('button', { name: 'Task c, 10:30 – 11:00' })
+      expect([joined.style.left, joined.style.width]).toEqual(['0%', '50%'])
+      expect([other.style.left, other.style.width]).toEqual(['50%', '50%'])
+    })
+
+    it('MERGE-21 gives a joined block alone in its column the whole width', () => {
+      renderWithProviders(<Grid sessions={[a, b]} joinGap={5} />)
+      expect(screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' }).style.width).toBe('100%')
+    })
+
+    it('MERGE-20 counts in the day total each session of the block, not the gap between them', () => {
+      const { container } = renderWithProviders(<Grid sessions={[a, b]} joinGap={5} />)
+      expect(header(container, '2026-11-02')).toHaveTextContent('52min')
+    })
+
+    it('MERGE-19 leaves a hidden session out, so it neither bridges a gap nor shows in a block', () => {
+      // 10:00-10:30, a hidden 2-minute one at 10:31-10:33, and 10:37-11:00: only the hidden one is near both.
+      const first = session('first', '2026-11-02T13:00:00.000Z', '2026-11-02T13:30:00.000Z', produto)
+      const short = session('short', '2026-11-02T13:31:00.000Z', '2026-11-02T13:33:00.000Z', produto)
+      const last = session('last', '2026-11-02T13:37:00.000Z', '2026-11-02T14:00:00.000Z', produto)
+      const { container } = renderWithProviders(
+        <Grid sessions={[first, short, last]} joinGap={5} hidden={(item) => isHiddenSession(item, 5)} />,
+      )
+      expect(screen.getByRole('button', { name: 'Task first, 10:00 – 10:30' })).not.toHaveAttribute('data-joined')
+      expect(screen.getByRole('button', { name: 'Task last, 10:37 – 11:00' })).not.toHaveAttribute('data-joined')
+      expect(container.querySelector('[data-joined]')).toBeNull()
+      expect(container.querySelector('[data-session-id="short"]')).toBeNull()
+    })
+
+    it('MERGE-30 neither moves nor resizes a joined block when it is dragged, and gives it no handles', () => {
+      const onCommit = vi.fn()
+      const { container } = renderWithProviders(
+        <Grid sessions={[a, b]} joinGap={5} onCommit={onCommit} selectedGroup={['a', 'b']} />,
+      )
+      const joined = screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' })
+      expect(container.querySelector('[data-handle]')).toBeNull()
+      fireEvent.pointerDown(joined, { clientY: y(10, 30), button: 0 })
+      fireEvent.pointerMove(window, { clientY: y(12, 30) })
+      fireEvent.pointerUp(window, { clientY: y(12, 30) })
+      expect(onCommit).not.toHaveBeenCalled()
+      expect(container.querySelector('[data-draft]')).toBeNull()
+      expect(screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' })).toBeInTheDocument()
+    })
+
+    it('MERGE-27 calls onSelectGroup with the sessions in start order on a click, and selects the block while one is in the group', () => {
+      const onSelectGroup = vi.fn()
+      const { rerender } = renderWithProviders(<Grid sessions={[b, a]} joinGap={5} onSelectGroup={onSelectGroup} />)
+      const joined = screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' })
+      expect(joined).toHaveAttribute('aria-pressed', 'false')
+      fireEvent.click(joined)
+      expect(onSelectGroup).toHaveBeenCalledWith([a, b])
+
+      rerender(<Grid sessions={[b, a]} joinGap={5} onSelectGroup={onSelectGroup} selectedGroup={['a', 'b']} />)
+      expect(screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' })).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it('MERGE-29 draws the apart session alone, with its handles when selected, and the rest of the group without it', () => {
+      const d = session('d', '2026-11-02T14:18:00.000Z', '2026-11-02T14:30:00.000Z', produto)
+      renderWithProviders(<Grid sessions={[a, b, d]} joinGap={5} apartId="a" selectedId="a" selectedGroup={['a', 'b', 'd']} />)
+      const apart = screen.getByRole('button', { name: 'Task a, 10:20 – 11:01' })
+      expect(apart).not.toHaveAttribute('data-joined')
+      expect([...apart.querySelectorAll<HTMLElement>('[data-handle]')].map((handle) => handle.dataset.handle)).toEqual(['top', 'bottom'])
+      expect(screen.getByRole('button', { name: 'Produto, 2 sessions, 11:05 – 11:30' })).toHaveAttribute('data-joined')
+    })
+
+    it('AGENDA-30 keeps a block being moved on its own while it passes near a session of its list', () => {
+      // Produto 10:00-10:30 and 10:45-11:05: 15 min apart, then the second moved up by 15 min, right after the first.
+      const first = session('first', '2026-11-02T13:00:00.000Z', '2026-11-02T13:30:00.000Z', produto)
+      const moved = session('moved', '2026-11-02T13:45:00.000Z', '2026-11-02T14:05:00.000Z', produto)
+      renderWithProviders(<Grid sessions={[first, moved]} joinGap={5} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Task moved, 10:45 – 11:05' }), { clientY: y(10, 50), button: 0 })
+      fireEvent.pointerMove(window, { clientY: y(10, 35) })
+      expect(screen.getByRole('button', { name: 'Task moved, 10:30 – 10:50' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Task first, 10:00 – 10:30' })).toBeInTheDocument()
     })
   })
 

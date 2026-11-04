@@ -194,13 +194,13 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Com 5, as duas sessões de Produto viram um bloco; uma de outra lista no mesmo horário fica ao lado, com `width: 50%`
-- [ ] O total do cabeçalho do dia é a soma das sessões, sem os espaços
-- [ ] Uma sessão escondida não emenda um espaço nem entra no bloco
-- [ ] Arrastar o bloco unido não chama `onCommit`; ele não tem alças
-- [ ] Clicar nele chama `onSelectGroup` com as sessões em ordem de início, e ele fica selecionado quando um membro está em `selectedGroup`
-- [ ] Com `apartId`, a sessão aparece sozinha e o resto do grupo se redesenha sem ela
-- [ ] Gate check passes: Quick
+- [x] Com 5, as duas sessões de Produto viram um bloco; uma de outra lista no mesmo horário fica ao lado, com `width: 50%`
+- [x] O total do cabeçalho do dia é a soma das sessões, sem os espaços
+- [x] Uma sessão escondida não emenda um espaço nem entra no bloco
+- [x] Arrastar o bloco unido não chama `onCommit`; ele não tem alças
+- [x] Clicar nele chama `onSelectGroup` com as sessões em ordem de início, e ele fica selecionado quando um membro está em `selectedGroup`
+- [x] Com `apartId`, a sessão aparece sozinha e o resto do grupo se redesenha sem ela
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
