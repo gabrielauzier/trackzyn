@@ -33,7 +33,7 @@ Um foco iniciado e pausado em poucos segundos vira uma sessão como qualquer out
 | Sessão que atravessa a meia-noite | Some ou aparece por inteiro, pela duração inteira, nos dois dias | Consequência da linha acima: não esconder só um pedaço | y |
 | Sessão em andamento | Sempre aparece, mesmo enquanto é menor que X | Quem acabou de iniciar o foco veria o bloco sumir e reaparecer; a sessão ainda não tem duração final | y |
 | Intervalos | A regra vale também para os intervalos (pausas) | A issue fala de sessões, e o intervalo é uma sessão na Agenda e na aba Sessões | y |
-| Quem altera | Só o dono do workspace, como o fuso e o idioma | Mesma regra das outras configurações do workspace (`PATCH /api/workspaces/:id` exige `owner`) | y |
+| Quem altera | Só o dono do workspace (papel `owner`) ou o gestor externo (`manager`), como o fuso e o idioma; "dono" nesta spec quer dizer os dois | Mesma regra das outras configurações do workspace: `PATCH /api/workspaces/:id` exige o nível `owner`, que o `manager` também tem (`ROLE_RANK`), e a tela usa `canManage` | y |
 | Quem é afetado | Todos os membros veem as mesmas sessões escondidas | A issue pede uma configuração do workspace | y |
 | Sobreposição na Agenda | O aviso de sobreposição do painel (AGENDA-19) ignora as sessões escondidas, e elas não dividem a largura da coluna (AGENDA-06) com os blocos visíveis | Decisão do usuário (#22): a Agenda só avisa sobre o que se vê; o tempo em comum com uma sessão escondida continua contando nas duas, sem aviso | y |
 | Sessão salva ou ajustada para menos de X na Agenda | É salva normalmente e some da grade; o painel fecha | Mesmo comportamento de uma sessão que sai da Agenda (AGENDA-32); X é uma escolha do dono | y |
@@ -120,32 +120,32 @@ Um foco iniciado e pausado em poucos segundos vira uma sessão como qualquer out
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| HIDE-01 | P1: Configurar | Design | Pending |
-| HIDE-02 | P1: Configurar | Design | Pending |
-| HIDE-03 | P1: Configurar | Design | Pending |
-| HIDE-04 | P1: Configurar | Design | Pending |
-| HIDE-05 | P1: Configurar | Design | Pending |
-| HIDE-06 | P1: Configurar | Design | Pending |
-| HIDE-07 | P1: Configurar | Design | Pending |
-| HIDE-08 | P1: Configurar | Design | Pending |
-| HIDE-09 | P1: Configurar | Design | Pending |
-| HIDE-10 | P1: Configurar | Design | Pending |
-| HIDE-11 | P1: Agenda | Design | Pending |
-| HIDE-12 | P1: Agenda | Design | Pending |
-| HIDE-13 | P1: Agenda | Design | Pending |
-| HIDE-14 | P1: Agenda | Design | Pending |
-| HIDE-15 | P1: Agenda | Design | Pending |
-| HIDE-16 | P1: Agenda | Design | Pending |
-| HIDE-17 | P1: Agenda | Design | Pending |
-| HIDE-18 | P1: Agenda | Design | Pending |
-| HIDE-19 | P1: Sessões | Design | Pending |
-| HIDE-20 | P1: Sessões | Design | Pending |
-| HIDE-21 | P1: Sessões | Design | Pending |
-| HIDE-22 | P1: Sessões | Design | Pending |
-| HIDE-23 | P1: Sessões | Design | Pending |
-| HIDE-24 | P1: Sessões | Design | Pending |
+| HIDE-01 | P1: Configurar | T1 | In Tasks |
+| HIDE-02 | P1: Configurar | T2 | In Tasks |
+| HIDE-03 | P1: Configurar | T2 | In Tasks |
+| HIDE-04 | P1: Configurar | T2 | In Tasks |
+| HIDE-05 | P1: Configurar | T2 | In Tasks |
+| HIDE-06 | P1: Configurar | T8 | In Tasks |
+| HIDE-07 | P1: Configurar | T8 | In Tasks |
+| HIDE-08 | P1: Configurar | T8 | In Tasks |
+| HIDE-09 | P1: Configurar | T8 | In Tasks |
+| HIDE-10 | P1: Configurar | T8 | In Tasks |
+| HIDE-11 | P1: Agenda | T4, T5, T6, T7 | In Tasks |
+| HIDE-12 | P1: Agenda | T4, T5 | In Tasks |
+| HIDE-13 | P1: Agenda | T4 | In Tasks |
+| HIDE-14 | P1: Agenda | T5, T6 | In Tasks |
+| HIDE-15 | P1: Agenda | T5, T6, T7 | In Tasks |
+| HIDE-16 | P1: Agenda | T4, T7 | In Tasks |
+| HIDE-17 | P1: Agenda | T7 | In Tasks |
+| HIDE-18 | P1: Agenda | T7 | In Tasks |
+| HIDE-19 | P1: Sessões | T3 | In Tasks |
+| HIDE-20 | P1: Sessões | T3 | In Tasks |
+| HIDE-21 | P1: Sessões | T3 | In Tasks |
+| HIDE-22 | P1: Sessões | T3 | In Tasks |
+| HIDE-23 | P1: Sessões | T3 | In Tasks |
+| HIDE-24 | P1: Sessões | T3 | In Tasks |
 
-**Coverage:** 24 total, 0 mapped to tasks, 24 unmapped ⚠️
+**Coverage:** 24 total, 24 mapped to tasks, 0 unmapped
 
 ---
 
