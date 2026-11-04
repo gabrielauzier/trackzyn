@@ -271,12 +271,12 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] O dono vê o interruptor abaixo do fuso, desligado com o valor nulo, e o campo só aparece com ele ligado
-- [ ] Ligar com o valor nulo preenche 1
-- [ ] Salvar com 5 envia `min_session_minutes: 5`; desligado, envia `null`
-- [ ] 0, 61 e 1.5 mostram `Entre 1 e 60 minutos.` e não enviam nada
-- [ ] Editor e leitor veem os dois desabilitados, com o valor salvo
-- [ ] Gate check passes: Build
+- [x] O dono vê o interruptor abaixo do fuso, desligado com o valor nulo, e o campo só aparece com ele ligado
+- [x] Ligar com o valor nulo preenche 1
+- [x] Salvar com 5 envia `min_session_minutes: 5`; desligado, envia `null`
+- [x] 0, 61 e 1.5 mostram `Entre 1 e 60 minutos.` e não enviam nada
+- [x] Editor e leitor veem os dois desabilitados, com o valor salvo
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

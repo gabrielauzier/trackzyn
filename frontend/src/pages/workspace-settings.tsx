@@ -13,6 +13,7 @@ import { useLocalAuthEnabled } from '@/hooks/use-local-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -88,6 +89,9 @@ export default function WorkspaceSettingsPage() {
   const [editTimezone, setEditTimezone] = useState('')
   const [editIcon, setEditIcon] = useState(DEFAULT_WORKSPACE_ICON)
   const [editColor, setEditColor] = useState(DEFAULT_WORKSPACE_COLOR)
+  // Sessions shorter than this many minutes are hidden in the agenda and the Sessions report (#22).
+  const [hideShort, setHideShort] = useState(false)
+  const [minMinutes, setMinMinutes] = useState('')
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [invitePassword, setInvitePassword] = useState('')
@@ -95,7 +99,15 @@ export default function WorkspaceSettingsPage() {
   const [removeTarget, setRemoveTarget] = useState<WorkspaceMember | null>(null)
   const [archiveOpen, setArchiveOpen] = useState(false)
 
-  const formKey = JSON.stringify([current?.id, current?.name, current?.locale, current?.timezone, current?.icon, current?.color])
+  const formKey = JSON.stringify([
+    current?.id,
+    current?.name,
+    current?.locale,
+    current?.timezone,
+    current?.icon,
+    current?.color,
+    current?.min_session_minutes,
+  ])
   const [previousFormKey, setPreviousFormKey] = useState<string | null>(null)
   if (formKey !== previousFormKey) {
     setPreviousFormKey(formKey)
@@ -105,7 +117,16 @@ export default function WorkspaceSettingsPage() {
       setEditTimezone(current.timezone ?? '')
       setEditIcon(current.icon ?? DEFAULT_WORKSPACE_ICON)
       setEditColor(current.color ?? DEFAULT_WORKSPACE_COLOR)
+      setHideShort(current.min_session_minutes !== null)
+      setMinMinutes(current.min_session_minutes === null ? '' : String(current.min_session_minutes))
     }
+  }
+  // A whole number from 1 to 60 while the switch is on (HIDE-09).
+  const minValid = !hideShort || (/^\d+$/.test(minMinutes) && Number(minMinutes) >= 1 && Number(minMinutes) <= 60)
+  const toggleHideShort = (on: boolean) => {
+    setHideShort(on)
+    // Turned on from off, the minimum starts at 1 minute (HIDE-07).
+    if (on && minMinutes === '') setMinMinutes('1')
   }
 
   const membersQuery = useQuery({
@@ -135,6 +156,7 @@ export default function WorkspaceSettingsPage() {
         timezone: editTimezone || null,
         icon: editIcon,
         color: editColor,
+        min_session_minutes: hideShort ? Number(minMinutes) : null,
       })
     },
     onSuccess: () => {
@@ -297,7 +319,7 @@ export default function WorkspaceSettingsPage() {
           {canManage && (
             <Button
               onClick={() => updateMutation.mutate()}
-              disabled={updateMutation.isPending}
+              disabled={updateMutation.isPending || !minValid}
               className="rounded-lg"
               size="sm"
             >
@@ -405,6 +427,48 @@ export default function WorkspaceSettingsPage() {
                 {t('workspace.timezoneHint')}
               </p>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-3">
+              <Switch
+                id="ws-hide-short"
+                aria-labelledby="ws-hide-short-label"
+                checked={hideShort}
+                onCheckedChange={toggleHideShort}
+                disabled={!canManage}
+              />
+              <Label id="ws-hide-short-label" htmlFor="ws-hide-short" className="text-[13px]">
+                {t('workspace.hideShortSessions')}
+              </Label>
+              {hideShort && (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="ws-min-minutes" className="text-[13px] text-muted-foreground">
+                    {t('workspace.minSessionLabel')}
+                  </Label>
+                  <Input
+                    id="ws-min-minutes"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={60}
+                    step={1}
+                    className="h-9 w-20 rounded-lg"
+                    value={minMinutes}
+                    onChange={(event) => setMinMinutes(event.target.value)}
+                    aria-invalid={!minValid || undefined}
+                    aria-describedby={minValid ? undefined : 'ws-min-minutes-error'}
+                    disabled={!canManage}
+                  />
+                  <span className="text-[13px] text-muted-foreground">{t('workspace.minSessionUnit')}</span>
+                </div>
+              )}
+            </div>
+            {!minValid && (
+              <p id="ws-min-minutes-error" className="text-[11px] text-destructive">
+                {t('workspace.minSessionInvalid')}
+              </p>
+            )}
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{t('workspace.hideShortSessionsHint')}</p>
           </div>
         </div>
       </section>

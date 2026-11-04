@@ -116,6 +116,8 @@ export const workspaces = {
     id: string,
     payload: Partial<Pick<Workspace, 'name' | 'icon' | 'color' | 'locale'>> & {
       timezone?: string | null
+      /** 1 to 60; null shows every session (#22). */
+      min_session_minutes?: number | null
     },
   ): Promise<Workspace> => {
     const { data } = await api.patch(`/workspaces/${id}`, payload)

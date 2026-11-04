@@ -464,6 +464,11 @@
     "timezone": "Timezone",
     "timezoneDefault": "Application default ({{zone}})",
     "timezoneHint": "The calendar this workspace runs on. Dates and \"today\" roll over at midnight in this timezone.",
+    "hideShortSessions": "Hide short sessions",
+    "minSessionLabel": "Under",
+    "minSessionUnit": "minutes",
+    "minSessionInvalid": "Between 1 and 60 minutes.",
+    "hideShortSessionsHint": "Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.",
     "you": "you",
     "youManageThis": "You manage this workspace"
   },

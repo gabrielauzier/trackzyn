@@ -464,6 +464,11 @@
     "timezone": "Fuso horário",
     "timezoneDefault": "Padrão do aplicativo ({{zone}})",
     "timezoneHint": "O calendário em que este workspace funciona. Datas e o \"hoje\" viram à meia-noite nesse fuso.",
+    "hideShortSessions": "Esconder sessões curtas",
+    "minSessionLabel": "Menos de",
+    "minSessionUnit": "minutos",
+    "minSessionInvalid": "Entre 1 e 60 minutos.",
+    "hideShortSessionsHint": "Sessões encerradas mais curtas que isso somem da Agenda e da aba Sessões dos Relatórios para todos os membros. Elas continuam contando em todos os totais.",
     "you": "você",
     "youManageThis": "Você gerencia este workspace"
   },
