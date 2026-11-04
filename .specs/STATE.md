@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/merge-near-sessions` (#23)
-- **Phase / Task**: Execute concluído (T1–T9, dois batches); Verifier PASS na rodada 1 (`e6a97a5`)
-- **Completed**: as 8 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions, merge-near-sessions)
+- **Feature**: `.specs/features/agenda-view-menu` (#26)
+- **Phase / Task**: Execute concluído (T1–T9); Verifier PASS na rodada 2 (`c1fc90c`)
+- **Completed**: as 9 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions, merge-near-sessions, agenda-view-menu)
 - **In-progress** (file:line): none
-- **Next step**: testar no app (ligar a junção na tela do workspace e clicar num bloco unido) e abrir o PR da `feat/agenda` (Agenda, #21, #22 e #23) para a `main`. O caso da exclusão que falha, apontado pelo Verifier, foi corrigido em `904279f`
+- **Next step**: testar no app (o botão no canto da semana e do dia, o filtro de dias e a lupa no menu; na visão Dia, conferir se o botão cobre o rótulo da primeira hora ao rolar) e enviar os commits para o PR #24
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: feat/agenda

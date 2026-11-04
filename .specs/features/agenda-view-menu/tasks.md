@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: decisões abaixo (feature média, só no frontend, sem contrato novo; o desenho visual aprovado é o canvas `Agenda · menu de exibição`)
-**Status**: In Progress
+**Status**: Done
 **Pré-requisito**: a Agenda (#19) e a lupa, na branch `feat/agenda`.
 
 ### Decisões técnicas
