@@ -271,8 +271,8 @@ T6 → T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Com `agenda.days = [0,1]` a 390 px, o título do dia é `Wednesday, November 4, 2026`
-- [ ] Gate check passes: Quick
+- [x] Com `agenda.days = [0,1]` a 390 px, o título do dia é `Wednesday, November 4, 2026`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

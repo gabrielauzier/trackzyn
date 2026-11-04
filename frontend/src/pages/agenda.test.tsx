@@ -804,6 +804,17 @@ describe('AgendaPage', () => {
       expect(within(panel).queryByRole('group', { name: 'Week days' })).toBeNull()
     })
 
+    it('DAYS-08 keeps the day timeline on its day at 390 px even when the week filter hides it', async () => {
+      setWidth(390)
+      localStorage.setItem('agenda.days', '[0,1]')
+      // Wednesday 4 November, 09:00 to 10:00 in São Paulo: a session of the hidden day the timeline is on.
+      const wednesday: AgendaSession = { ...monday, id: 's9', started_at: '2026-11-04T12:00:00.000Z', ended_at: '2026-11-04T13:00:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, wednesday] })
+      renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026')
+      expect(await screen.findByRole('button', { name: 'Write the report, 09:00 – 10:00' })).toBeInTheDocument()
+    })
+
     it('shows the week grid at 1024 px', async () => {
       setWidth(1024)
       const { container } = renderWithProviders(<AgendaPage />)
