@@ -306,10 +306,10 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] Na largura de 390 px, com o mínimo em 5, o bloco 10:30 – 10:32 não aparece e o 10:00 – 11:00 aparece
-- [ ] O título do dia mostra o total com as duas sessões (1 h 2 min)
-- [ ] Tirar `hidden={hidden}` do `DayTimeline` faz o teste falhar
-- [ ] Gate check passes: Full (frontend)
+- [x] Na largura de 390 px, com o mínimo em 5, o bloco 10:30 – 10:32 não aparece e o 10:00 – 11:00 aparece
+- [x] O título do dia mostra o total com as duas sessões (1 h 2 min)
+- [x] Tirar `hidden={hidden}` do `DayTimeline` faz o teste falhar
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

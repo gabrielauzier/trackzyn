@@ -531,6 +531,20 @@ describe('AgendaPage', () => {
       expect(screen.queryByRole('group', { name: 'View' })).toBeNull()
     })
 
+    it('HIDE-11 HIDE-14 hides the 2-minute session in the day view under a minimum of 5, and the day total still counts it', async () => {
+      setWidth(390)
+      workspace.minSessionMinutes = 5
+      // Wednesday, the day the narrow agenda opens on: 10:00 to 11:00, and 10:30 to 10:32.
+      const long: AgendaSession = { ...monday, started_at: '2026-11-04T13:00:00.000Z', ended_at: '2026-11-04T14:00:00.000Z' }
+      const blip: AgendaSession = { ...monday, id: 's2', started_at: '2026-11-04T13:30:00.000Z', ended_at: '2026-11-04T13:32:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [long, blip] })
+      renderWithProviders(<AgendaPage />)
+
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeNull()
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026 · 1hr 2min')
+    })
+
     it('shows the week grid at 1024 px', async () => {
       setWidth(1024)
       const { container } = renderWithProviders(<AgendaPage />)
