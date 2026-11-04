@@ -86,6 +86,10 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
 
   await test.step('pausing in the widget stops the main window timer within 1 s (WIDGET-12, WIDGET-22)', async () => {
     const widget = await widgetPage(app)
+    // The server keeps whole seconds and a task with 0 s spent offers Start, not Resume: pause only once
+    // a full second ran, however the timer rounds. Without a window manager to wait for (Linux), or with a
+    // quick minimize (Windows), the pause would otherwise land under a second after the start.
+    await expect(widget.getByRole('timer')).toHaveText(/^00:29:([0-4]\d|5[0-8])$/, { timeout: 5000 })
     await widget.getByRole('group', { name: 'Focus widget' }).hover()
     await widget.getByRole('button', { name: 'Pause' }).click()
     const clicked = Date.now()
