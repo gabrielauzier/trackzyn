@@ -4,18 +4,18 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
-import { SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
+import { SessionDetails, SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
 import { PX_PER_MINUTE, WeekGrid } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { lists } from '@/lib/api'
-import { addDays, dayLimit, dayOf, mondayOf, newSessionTimes, weekDays } from '@/lib/agenda/layout'
+import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays } from '@/lib/agenda/layout'
 import { useAgenda } from '@/lib/agenda/use-agenda'
 import { useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { cn } from '@/lib/utils'
-import type { ListCard } from '@/types'
+import type { AgendaSession, AgendaSessionChanges, ListCard } from '@/types'
 
 const ALL_LISTS = 'all'
 
@@ -38,6 +38,14 @@ function weekLabel(monday: string, locale: string): string {
   )
 }
 
+/** The day and times of a session, as the panel edits them. */
+function sessionTimes(session: AgendaSession, timezone: string): PanelTimes {
+  const start = new Date(session.started_at)
+  const minute = minuteOf(start, timezone)
+  const length = Math.round((Date.parse(session.ended_at ?? session.started_at) - start.getTime()) / 60_000)
+  return { day: dayOf(start, timezone), start: minute, end: minute + length }
+}
+
 function Agenda({ timezone, activeLists }: { timezone: string; activeLists: ListCard[] }) {
   const { t, i18n } = useTranslation()
   const { canWrite } = useWorkspace()
@@ -47,8 +55,18 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const [listId, setListId] = useState<string | null>(null)
   const [view, setView] = useState<'week' | 'day'>('week')
   const days = useMemo(() => weekDays(monday), [monday])
-  const { query, create } = useAgenda({ from: monday, to: addDays(monday, 6), listId })
+  const { query, create, update, remove } = useAgenda({ from: monday, to: addDays(monday, 6), listId })
   const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  /** The times of the selected session while it is edited; null shows its details. */
+  const [editTimes, setEditTimes] = useState<PanelTimes | null>(null)
+  // A deleted session leaves the agenda, and its panel closes with it (AGENDA-32).
+  const selected = sessions.find((session) => session.id === selectedId) ?? null
+
+  const closeSelected = () => {
+    setSelectedId(null)
+    setEditTimes(null)
+  }
 
   const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, now, timezone), onCommit: () => {} })
   const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null
@@ -57,10 +75,12 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   /** Another week closes the panel without recording (AGENDA-47). */
   const goTo = (nextMonday: string) => {
     drag.setDraft(null)
+    closeSelected()
     setMonday(nextMonday)
   }
 
   const openNew = () => {
+    closeSelected()
     const times = newSessionTimes(now, timezone)
     setMonday(mondayOf(times.day))
     drag.setDraft({ mode: 'create', ...times, sessionId: null })
@@ -145,6 +165,12 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               timezone={timezone}
               now={now}
               drag={canWrite ? drag : undefined}
+              selectedId={selected?.id ?? null}
+              onSelect={(session) => {
+                drag.setDraft(null)
+                setEditTimes(null)
+                setSelectedId(session.id)
+              }}
             />
           </div>
           {canWrite && draft && (
@@ -160,6 +186,37 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 await create.mutateAsync({ input, preview })
                 drag.setDraft(null)
               }}
+            />
+          )}
+          {!draft && selected && editTimes && canWrite && (
+            <SessionPanel
+              key={selected.id}
+              editing={selected}
+              times={editTimes}
+              onTimesChange={setEditTimes}
+              timezone={timezone}
+              now={now}
+              sessions={sessions}
+              defaultListId={selected.list_id}
+              onCancel={() => setEditTimes(null)}
+              onSave={async (input) => {
+                const { started_at, ended_at } = input
+                const changes: AgendaSessionChanges =
+                  input.kind === 'task' ? { started_at, ended_at, task_id: input.task_id } : { started_at, ended_at, list_id: input.list_id }
+                await update.mutateAsync({ id: selected.id, changes })
+                setEditTimes(null)
+              }}
+            />
+          )}
+          {!draft && selected && !editTimes && (
+            <SessionDetails
+              key={selected.id}
+              session={selected}
+              timezone={timezone}
+              now={now}
+              onClose={closeSelected}
+              onEdit={canWrite ? () => setEditTimes(sessionTimes(selected, timezone)) : undefined}
+              onDelete={canWrite ? () => remove.mutate(selected.id) : undefined}
             />
           )}
         </div>

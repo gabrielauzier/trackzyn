@@ -463,10 +463,10 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] O painel de uma sessão do foco mostra `registrada pelo foco`
-- [ ] Confirmar `Excluir` chama `sessions.remove` e o bloco some
-- [ ] A sessão aberta mostra `A sessão em andamento não tem alças: o fim é agora. Para ajustar, pause no foco.` e não mostra `Editar`
-- [ ] Gate check passes: Quick
+- [x] O painel de uma sessão do foco mostra `registrada pelo foco`
+- [x] Confirmar `Excluir` chama `sessions.remove` e o bloco some
+- [x] A sessão aberta mostra `A sessão em andamento não tem alças: o fim é agora. Para ajustar, pause no foco.` e não mostra `Editar`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

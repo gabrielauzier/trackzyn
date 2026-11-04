@@ -749,7 +749,17 @@
       "start": "Início",
       "end": "Fim",
       "duration": "Duração",
-      "overlap": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta nas duas."
+      "overlap": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta nas duas.",
+      "editTitle": "Editar sessão",
+      "edit": "Editar",
+      "origin": {
+        "focus": "registrada pelo foco",
+        "manual": "registrada na agenda"
+      },
+      "running": "A sessão em andamento não tem alças: o fim é agora. Para ajustar, pause no foco.",
+      "openFocus": "Abrir o foco",
+      "deleteTitle": "Excluir esta sessão?",
+      "deleteDescription": "{{title}} · {{when}} será excluída, e o tempo dela sai da tarefa."
     },
     "today": "Hoje",
     "previousWeek": "Semana anterior",

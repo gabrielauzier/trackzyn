@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { lists, sessions } from '@/lib/api'
 import { newSessionTimes } from '@/lib/agenda/layout'
-import { renderWithProviders } from '@/test/utils'
-import type { AgendaSession, Board, ListCard, TaskCardView } from '@/types'
-import { SessionPanel, type PanelTimes } from './session-panel'
+import { i18n, renderWithProviders } from '@/test/utils'
+import type { AgendaSession, AgendaSessionInput, Board, ListCard, TaskCardView } from '@/types'
+import { SessionDetails, SessionPanel, type PanelTimes } from './session-panel'
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
@@ -70,7 +70,19 @@ const existing: AgendaSession = {
   ended_at: '2026-11-03T21:30:00.000Z',
 }
 
-function Panel({ initial, onCancel = vi.fn(), agenda = [] }: { initial: PanelTimes; onCancel?: () => void; agenda?: AgendaSession[] }) {
+function Panel({
+  initial,
+  onCancel = vi.fn(),
+  agenda = [],
+  editing,
+  onSave = (input) => sessions.create(input),
+}: {
+  initial: PanelTimes
+  onCancel?: () => void
+  agenda?: AgendaSession[]
+  editing?: AgendaSession
+  onSave?: (input: AgendaSessionInput) => Promise<unknown>
+}) {
   const [times, setTimes] = useState(initial)
   return (
     <SessionPanel
@@ -81,7 +93,8 @@ function Panel({ initial, onCancel = vi.fn(), agenda = [] }: { initial: PanelTim
       sessions={agenda}
       defaultListId="home"
       onCancel={onCancel}
-      onSave={(input) => sessions.create(input)}
+      onSave={onSave}
+      editing={editing}
     />
   )
 }
@@ -210,5 +223,137 @@ describe('SessionPanel (new)', () => {
 describe('newSessionTimes (AGENDA-15)', () => {
   it('opens on today, from the full hour before now to now rounded down to 5 min', () => {
     expect(newSessionTimes(NOW, SP)).toEqual({ day: '2026-11-04', start: at(14), end: at(14, 5) })
+  })
+})
+
+describe('SessionDetails (AGENDA-27, AGENDA-32, AGENDA-33)', () => {
+  const details = (session: AgendaSession, handlers: { onEdit?: () => void; onDelete?: () => void; onClose?: () => void } = {}) =>
+    renderWithProviders(
+      <SessionDetails session={session} timezone={SP} now={NOW} onClose={handlers.onClose ?? vi.fn()} onEdit={handlers.onEdit} onDelete={handlers.onDelete} />,
+    )
+
+  it('shows the task, the list, the day, times and duration and that the focus recorded it (AGENDA-27)', () => {
+    const { container } = details(existing, { onEdit: vi.fn(), onDelete: vi.fn() })
+    expect(screen.getByRole('heading', { name: 'Plan the sprint' })).toBeInTheDocument()
+    expect(container).toHaveTextContent('Work')
+    expect(screen.getByText('Tuesday, November 3 · 18:00 – 18:30 · 30min')).toBeInTheDocument()
+    expect(screen.getByText('recorded by the focus')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+  })
+
+  it('reads the details in Portuguese (AGENDA-27)', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      details({ ...existing, kind: 'break', task_id: null, task_title: null, origin: 'manual' }, { onEdit: vi.fn(), onDelete: vi.fn() })
+      expect(screen.getByRole('heading', { name: 'Intervalo' })).toBeInTheDocument()
+      expect(screen.getByText('terça-feira, 3 de novembro · 18:00 – 18:30 · 30min')).toBeInTheDocument()
+      expect(screen.getByText('registrada na agenda')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Editar' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Excluir' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('shows a session recorded on the agenda as such (AGENDA-27)', () => {
+    details({ ...existing, origin: 'manual' })
+    expect(screen.getByText('recorded on the agenda')).toBeInTheDocument()
+  })
+
+  it('closes on Close', async () => {
+    const onClose = vi.fn()
+    const { user } = details(existing, { onClose })
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('opens the edit form on Edit (AGENDA-31)', async () => {
+    const onEdit = vi.fn()
+    const { user } = details(existing, { onEdit, onDelete: vi.fn() })
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(onEdit).toHaveBeenCalledTimes(1)
+  })
+
+  it('deletes only once the confirmation is accepted (AGENDA-32)', async () => {
+    const onDelete = vi.fn()
+    const { user } = details(existing, { onEdit: vi.fn(), onDelete })
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toHaveTextContent('Delete this session?')
+    expect(dialog).toHaveTextContent('Plan the sprint · Tuesday, November 3 · 18:00 – 18:30 · 30min')
+    expect(onDelete).not.toHaveBeenCalled()
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }))
+    expect(onDelete).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the session when the confirmation is cancelled (AGENDA-32)', async () => {
+    const onDelete = vi.fn()
+    const { user } = details(existing, { onEdit: vi.fn(), onDelete })
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+    expect(onDelete).not.toHaveBeenCalled()
+  })
+
+  it('offers no edit nor delete for the running session, only the way to the focus (AGENDA-33)', () => {
+    details({ ...existing, ended_at: null }, { onEdit: vi.fn(), onDelete: vi.fn() })
+    expect(
+      screen.getByText('The running session has no handles: its end is now. To adjust it, pause it in the focus.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open the focus' })).toHaveAttribute('href', '/focus/work')
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
+  })
+
+  it('hides Edit and Delete from a viewer (AGENDA-44)', () => {
+    details(existing)
+    expect(screen.getByRole('heading', { name: 'Plan the sprint' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
+  })
+})
+
+describe('SessionPanel (edit, AGENDA-31)', () => {
+  const own: PanelTimes = { day: '2026-11-03', start: at(18), end: at(18, 30) }
+
+  it('opens with the task, the date and the times of the session, editable', async () => {
+    renderWithProviders(<Panel initial={own} editing={existing} agenda={[existing]} />)
+    expect(screen.getByRole('heading', { name: 'Edit session' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Task' })).toHaveTextContent('Plan the sprint'))
+    expect(screen.getByLabelText('Date')).toHaveValue('2026-11-03')
+    expect(screen.getByLabelText('Start')).toHaveValue('18:00')
+    expect(screen.getByLabelText('End')).toHaveValue('18:30')
+    // The session itself is no overlap.
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('saves the changed times and the chosen task', async () => {
+    const onSave = vi.fn().mockResolvedValue(existing)
+    const { user } = renderWithProviders(<Panel initial={own} editing={existing} onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText('End'), { target: { value: '19:00' } })
+    await chooseTask(user, 'Write the report')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(onSave).toHaveBeenCalledWith(
+      { kind: 'task', task_id: 't1', started_at: '2026-11-03T21:00:00.000Z', ended_at: '2026-11-03T22:00:00.000Z' },
+      expect.anything(),
+    )
+  })
+
+  it('shows the refusals of the creation: an end in the future (AGENDA-23)', async () => {
+    const onSave = vi.fn().mockRejectedValue({ response: { status: 422, data: { detail: 'x', code: 'invalid_time' } } })
+    const { user } = renderWithProviders(<Panel initial={own} editing={existing} onSave={onSave} />)
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Task' })).toHaveTextContent('Plan the sprint'))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('The session cannot end in the future.')
+  })
+
+  it('shows the refusals of the creation: a task not found (AGENDA-25)', async () => {
+    const onSave = vi.fn().mockRejectedValue({ response: { status: 404, data: { detail: 'Task not found' } } })
+    const { user } = renderWithProviders(<Panel initial={own} editing={existing} onSave={onSave} />)
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Task' })).toHaveTextContent('Plan the sprint'))
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Task not found')
   })
 })

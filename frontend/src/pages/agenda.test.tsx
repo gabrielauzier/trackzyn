@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
@@ -134,5 +134,51 @@ describe('AgendaPage', () => {
     fireEvent.pointerUp(window, { clientY: 660 * PX_PER_MINUTE })
     expect(container.querySelector('[data-draft]')).toBeNull()
     expect(screen.queryByRole('heading', { name: 'New session' })).toBeNull()
+  })
+  it('opens the details of a block and deletes it once confirmed, taking the block off the grid (AGENDA-27, AGENDA-32)', async () => {
+    // Once deleted, the server no longer has the session.
+    vi.mocked(sessions.remove).mockImplementation(async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [] })
+    })
+    const { user } = renderWithProviders(<AgendaPage />)
+    await user.click(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' }))
+    expect(screen.getByRole('heading', { name: 'Write the report' })).toBeInTheDocument()
+    expect(screen.getByText('recorded by the focus')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
+    expect(sessions.remove).toHaveBeenCalledWith('s1')
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeNull())
+    expect(screen.queryByRole('heading', { name: 'Write the report' })).toBeNull()
+  })
+
+  it('saves the edited times of a session (AGENDA-31)', async () => {
+    const saved = { ...monday, ended_at: '2026-11-02T14:30:00.000Z' }
+    vi.mocked(sessions.update).mockImplementation(async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [saved] })
+      return saved
+    })
+    const { user } = renderWithProviders(<AgendaPage />)
+    await user.click(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' }))
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(await screen.findByRole('heading', { name: 'Edit session' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Start')).toHaveValue('10:00')
+    fireEvent.change(screen.getByLabelText('End'), { target: { value: '11:30' } })
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(sessions.update).toHaveBeenCalledWith('s1', {
+      started_at: '2026-11-02T13:00:00.000Z',
+      ended_at: '2026-11-02T14:30:00.000Z',
+      task_id: 't1',
+    })
+    expect(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:30' })).toBeInTheDocument()
+  })
+
+  it('shows the details to a viewer without Edit nor Delete (AGENDA-44)', async () => {
+    workspace.canWrite = false
+    const { user } = renderWithProviders(<AgendaPage />)
+    await user.click(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' }))
+    expect(screen.getByRole('heading', { name: 'Write the report' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
   })
 })

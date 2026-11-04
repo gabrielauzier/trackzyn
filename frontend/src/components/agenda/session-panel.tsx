@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useQueries, useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 
 import { formatDuration } from '@/components/board/format-duration'
+import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,7 +20,7 @@ import {
 } from '@/components/ui/select'
 import { lists as listsApi } from '@/lib/api'
 import { clockTime, minuteClock } from '@/lib/agenda/format'
-import { DAY_MINUTES, zonedInstant } from '@/lib/agenda/layout'
+import { DAY_MINUTES, dayOf, zonedInstant } from '@/lib/agenda/layout'
 import { sessionErrorMessage, type SessionPreview } from '@/lib/agenda/use-agenda'
 import { cn } from '@/lib/utils'
 import type { AgendaSession, AgendaSessionInput, Board } from '@/types'
@@ -42,6 +45,8 @@ interface SessionPanelProps {
   onCancel: () => void
   /** Records the session; a rejection is the API error, shown in the panel. */
   onSave: (input: AgendaSessionInput, preview: SessionPreview) => Promise<unknown>
+  /** The session being edited (AGENDA-31); absent for a new one. Its kind stays, as the API keeps it. */
+  editing?: AgendaSession
 }
 
 type Kind = 'task' | 'break'
@@ -49,6 +54,11 @@ type Kind = 'task' | 'break'
 interface TaskOption {
   id: string
   title: string
+}
+
+interface TaskGroup {
+  list: { id: string; name: string; color: number }
+  tasks: TaskOption[]
 }
 
 /** The tasks of a board in every column it shows. */
@@ -69,12 +79,22 @@ const parseTime = (value: string): number | null => {
  * The `Nova sessão` panel (AGENDA-14 to AGENDA-26): a task of the active lists grouped by list, or a break
  * and its list; the date, start, end and duration; the overlap warning; `Cancelar` or Esc, and `Salvar`.
  */
-export function SessionPanel({ times, onTimesChange, timezone, now, sessions, defaultListId, onCancel, onSave }: SessionPanelProps) {
+export function SessionPanel({
+  times,
+  onTimesChange,
+  timezone,
+  now,
+  sessions,
+  defaultListId,
+  onCancel,
+  onSave,
+  editing,
+}: SessionPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const [kind, setKind] = useState<Kind>('task')
-  const [taskId, setTaskId] = useState<string | null>(null)
-  const [breakListId, setBreakListId] = useState<string | null>(null)
+  const [kind, setKind] = useState<Kind>(editing?.kind ?? 'task')
+  const [taskId, setTaskId] = useState<string | null>(editing?.task_id ?? null)
+  const [breakListId, setBreakListId] = useState<string | null>(editing?.kind === 'break' ? editing.list_id : null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -83,7 +103,17 @@ export function SessionPanel({ times, onTimesChange, timezone, now, sessions, de
   const boards = useQueries({
     queries: activeLists.map((list) => ({ queryKey: ['lists', list.id, 'board'], queryFn: () => listsApi.board(list.id) })),
   })
-  const groups = activeLists.map((list, index) => ({ list, tasks: boards[index]?.data ? boardTasks(boards[index].data) : [] }))
+  const groups: TaskGroup[] = activeLists.map((list, index) => ({
+    list,
+    tasks: boards[index]?.data ? boardTasks(boards[index].data) : [],
+  }))
+  // The task of an edited session stays among the choices even when the boards no longer show it.
+  if (editing?.kind === 'task' && editing.task_id && !groups.some((group) => group.tasks.some((task) => task.id === editing.task_id))) {
+    const own = { id: editing.task_id, title: editing.task_title ?? '' }
+    const group = groups.find((item) => item.list.id === editing.list_id)
+    if (group) group.tasks = [...group.tasks, own]
+    else groups.push({ list: { id: editing.list_id, name: editing.list_name, color: editing.list_color }, tasks: [own] })
+  }
   const fallbackList = activeLists.some((list) => list.id === defaultListId) ? defaultListId : (activeLists[0]?.id ?? null)
   const listOfBreak = breakListId ?? fallbackList
 
@@ -99,6 +129,7 @@ export function SessionPanel({ times, onTimesChange, timezone, now, sessions, de
   const endAt = zonedInstant(times.day, times.end, timezone)
   const seconds = Math.max(0, (endAt.getTime() - startAt.getTime()) / 1000)
   const overlap = sessions.find((session) => {
+    if (session.id === editing?.id) return false
     const end = session.ended_at === null ? now.getTime() : Date.parse(session.ended_at)
     return Date.parse(session.started_at) < endAt.getTime() && end > startAt.getTime()
   })
@@ -141,10 +172,10 @@ export function SessionPanel({ times, onTimesChange, timezone, now, sessions, de
   return (
     <aside aria-labelledby="session-panel-title" className="flex w-full flex-col gap-4 rounded-xl border bg-card p-4 lg:w-80">
       <h2 id="session-panel-title" className="text-base font-semibold">
-        {t('agenda.panel.newTitle')}
+        {t(editing ? 'agenda.panel.editTitle' : 'agenda.panel.newTitle')}
       </h2>
       <form className="flex flex-col gap-4" onSubmit={submit}>
-        <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+        <div className={cn('grid grid-cols-2 gap-1 rounded-lg bg-muted p-1', editing && 'hidden')}>
           {(['task', 'break'] as const).map((option) => (
             <button
               key={option}
@@ -270,6 +301,105 @@ export function SessionPanel({ times, onTimesChange, timezone, now, sessions, de
           </Button>
         </div>
       </form>
+    </aside>
+  )
+}
+
+interface SessionDetailsProps {
+  session: AgendaSession
+  timezone: string
+  now: Date
+  onClose: () => void
+  /** Opens the edit form; absent for a user who cannot write (AGENDA-44). */
+  onEdit?: () => void
+  /** Deletes the session once confirmed; absent for a user who cannot write (AGENDA-44). */
+  onDelete?: () => void
+}
+
+/** `<weekday>, <day> <month> · HH:MM – HH:MM · <duration>` of a session (AGENDA-27). */
+function sessionWhen(session: AgendaSession, timezone: string, now: Date, locale: string, t: TFunction): string {
+  const start = new Date(session.started_at)
+  const end = session.ended_at === null ? now : new Date(session.ended_at)
+  const date = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(
+    new Date(`${dayOf(start, timezone)}T00:00:00Z`),
+  )
+  const range = `${clockTime(start, timezone)} – ${session.ended_at === null ? t('agenda.now') : clockTime(end, timezone)}`
+  const seconds = Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000))
+  return `${date} · ${range} · ${formatDuration(seconds, locale)}`
+}
+
+/**
+ * The details of a session (AGENDA-27): the task (or `Intervalo`), the list, the day, times and duration,
+ * where it was recorded, and `Editar`, `Excluir` with its confirmation (AGENDA-32) and `Fechar`. The
+ * running session offers no edit nor delete, only the way to the focus (AGENDA-33).
+ */
+export function SessionDetails({ session, timezone, now, onClose, onEdit, onDelete }: SessionDetailsProps) {
+  const { t, i18n } = useTranslation()
+  const [confirming, setConfirming] = useState(false)
+  const running = session.ended_at === null
+  const title = session.kind === 'break' ? t('agenda.break') : (session.task_title ?? '')
+  const when = sessionWhen(session, timezone, now, i18n.language, t)
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !confirming) onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose, confirming])
+
+  return (
+    <aside aria-labelledby="session-details-title" className="flex w-full flex-col gap-3 rounded-xl border bg-card p-4 lg:w-80">
+      <div className="flex flex-col gap-1">
+        <h2 id="session-details-title" className="text-base font-semibold">
+          {title}
+        </h2>
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: `var(--chart-${session.list_color})` }} />
+          {session.list_name}
+        </p>
+      </div>
+      <p className="text-sm tabular-nums">{when}</p>
+      <p className="text-xs text-muted-foreground">{t(`agenda.panel.origin.${session.origin}`)}</p>
+
+      {running && (
+        <div className="flex flex-col gap-2 rounded-md bg-primary/10 px-3 py-2 text-sm">
+          <p>{t('agenda.panel.running')}</p>
+          <Link to={`/focus/${session.list_id}`} className="font-medium text-primary underline-offset-4 hover:underline">
+            {t('agenda.panel.openFocus')}
+          </Link>
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        {!running && onDelete && (
+          <Button type="button" variant="outline" className="text-destructive" onClick={() => setConfirming(true)}>
+            {t('common.delete')}
+          </Button>
+        )}
+        {!running && onEdit && (
+          <Button type="button" variant="outline" onClick={onEdit}>
+            {t('agenda.panel.edit')}
+          </Button>
+        )}
+        <Button type="button" onClick={onClose}>
+          {t('common.close')}
+        </Button>
+      </div>
+
+      {onDelete && (
+        <DeleteConfirmationDialog
+          open={confirming}
+          title={t('agenda.panel.deleteTitle')}
+          description={t('agenda.panel.deleteDescription', { title, when })}
+          isPending={false}
+          onClose={() => setConfirming(false)}
+          onConfirm={() => {
+            setConfirming(false)
+            onDelete()
+          }}
+        />
+      )}
     </aside>
   )
 }

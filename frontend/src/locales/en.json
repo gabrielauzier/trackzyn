@@ -749,7 +749,17 @@
       "start": "Start",
       "end": "End",
       "duration": "Duration",
-      "overlap": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts in both."
+      "overlap": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts in both.",
+      "editTitle": "Edit session",
+      "edit": "Edit",
+      "origin": {
+        "focus": "recorded by the focus",
+        "manual": "recorded on the agenda"
+      },
+      "running": "The running session has no handles: its end is now. To adjust it, pause it in the focus.",
+      "openFocus": "Open the focus",
+      "deleteTitle": "Delete this session?",
+      "deleteDescription": "{{title}} · {{when}} will be deleted, and its time leaves the task."
     },
     "today": "Today",
     "previousWeek": "Previous week",
