@@ -113,7 +113,9 @@ describe('FocusWidgetPage', () => {
 
   it('opened on a paused task, reads the list of the last focus screen', async () => {
     localStorage.setItem('trackzyn.focus.list', LIST)
-    vi.mocked(focus.get).mockResolvedValue(paused())
+    // Paused after 10 minutes on it: Resume (a task that never counted reads Start, #14).
+    const counted = { ...taskA, spent_seconds: 600 }
+    vi.mocked(focus.get).mockResolvedValue(paused({ task: counted, today: { ...paused().today, tasks: [{ ...counted, position: 0 }, { ...taskB, position: 1 }] } }))
     const { hover } = renderWidget()
 
     expect(await screen.findByText('DEV-1725')).toBeInTheDocument()
@@ -123,6 +125,9 @@ describe('FocusWidgetPage', () => {
   })
 
   it('pausing applies the pause and then tells the main window (WIDGET-12, WIDGET-22)', async () => {
+    // The server answers the pause with the time A counted (a task that never counted reads Start, #14).
+    const counted = { ...taskA, spent_seconds: 600 }
+    vi.mocked(focus.send).mockResolvedValue(paused({ task: counted, today: { ...paused().today, tasks: [{ ...counted, position: 0 }, { ...taskB, position: 1 }] } }))
     const { user, hover } = renderWidget()
     await screen.findByText('DEV-1725')
     await hover()
