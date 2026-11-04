@@ -302,10 +302,10 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Arrastar de 17:32 a 18:41 dá o rascunho 17:30–18:45
-- [ ] Arrastar além de agora para no último passo antes de agora
-- [ ] Mover um bloco de 1h mantém 1h
-- [ ] Gate check passes: Quick
+- [x] Arrastar de 17:32 a 18:41 dá o rascunho 17:30–18:45
+- [x] Arrastar além de agora para no último passo antes de agora
+- [x] Mover um bloco de 1h mantém 1h
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

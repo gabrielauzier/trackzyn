@@ -174,11 +174,11 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-11 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-12 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-13 | P1: Ver as sessões da semana | Tasks | In Tasks |
-| AGENDA-14 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
+| AGENDA-14 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
 | AGENDA-15 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-16 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-17 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
-| AGENDA-18 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
+| AGENDA-18 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
 | AGENDA-19 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-20 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
 | AGENDA-21 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
