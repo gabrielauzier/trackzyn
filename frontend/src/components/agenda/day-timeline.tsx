@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
@@ -42,6 +42,8 @@ interface DayTimelineProps {
   onSelectGroup?: (members: AgendaSession[]) => void
   /** The ids of the sessions of the chosen joined block; the block shows selected. */
   selectedGroup?: string[] | null
+  /** A control drawn at the top of the hour column, above the timeline (DAYS-02). */
+  corner?: ReactNode
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -67,6 +69,7 @@ export function DayTimeline({
   apartId = null,
   onSelectGroup,
   selectedGroup = null,
+  corner,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -128,6 +131,12 @@ export function DayTimeline({
       )}
 
       <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-18rem)] min-h-80 overflow-y-auto rounded-xl border bg-card">
+        {/* Over the top of the hour column, kept in view while the timeline scrolls (DAYS-02). */}
+        {corner && (
+          <div data-agenda-corner className="sticky top-0 z-20 h-0">
+            <div className="flex w-12 justify-center pt-1.5">{corner}</div>
+          </div>
+        )}
         <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-12 shrink-0" aria-hidden>
             {HOURS.map((hour) => (

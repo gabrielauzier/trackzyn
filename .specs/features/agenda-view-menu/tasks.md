@@ -159,9 +159,9 @@ T1 → T2 → T3 → T4 → T5
 
 **Done when**:
 
-- [ ] O `corner` aparece dentro da área que rola, antes das horas, com posição `sticky` no topo
-- [ ] Sem `corner`, a linha do tempo fica como hoje
-- [ ] Gate check passes: Quick
+- [x] O `corner` aparece dentro da área que rola, antes das horas, com posição `sticky` no topo
+- [x] Sem `corner`, a linha do tempo fica como hoje
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

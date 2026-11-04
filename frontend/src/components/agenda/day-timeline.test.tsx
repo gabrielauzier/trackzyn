@@ -199,3 +199,20 @@ describe('DayTimeline with joined sessions (#23)', () => {
     expect(screen.getByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
   })
 })
+
+describe('DayTimeline corner (#26)', () => {
+  it('DAYS-02 draws the corner control at the top of the hour column, sticky while the timeline scrolls, and not hidden from assistive tech', () => {
+    const { container } = timeline('2026-11-03', { corner: <button type="button">View options</button> })
+    const scroller = container.querySelector<HTMLElement>('[data-agenda-scroll]')!
+    const corner = within(scroller).getByRole('button', { name: 'View options' })
+    const sticky = corner.closest('[data-agenda-corner]')!
+    expect(sticky).toHaveClass('sticky', 'top-0')
+    expect(corner.closest('[aria-hidden="true"]')).toBeNull()
+    expect(scroller.firstElementChild).toBe(sticky)
+  })
+
+  it('draws no corner without one', () => {
+    const { container } = timeline('2026-11-03')
+    expect(container.querySelector('[data-agenda-corner]')).toBeNull()
+  })
+})
