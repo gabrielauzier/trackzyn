@@ -31,6 +31,8 @@ interface DayTimelineProps {
   onSelect?: (session: AgendaSession) => void
   /** Pixels per minute, from the zoom; the default zoom's scale when absent. */
   pxPerMinute?: number
+  /** Whether a session stays off the timeline (HIDE-11); it still counts in the total and the empty message (HIDE-14). */
+  hidden?: (session: AgendaSession) => boolean
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -51,6 +53,7 @@ export function DayTimeline({
   selectedId = null,
   onSelect,
   pxPerMinute = PX_PER_MINUTE,
+  hidden,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -59,7 +62,7 @@ export function DayTimeline({
   const pieces = useMemo(() => dayPieces(sessions, days, timezone, now), [sessions, days, timezone, now])
   const today = dayOf(now, timezone)
   const ofDay = pieces.get(day) ?? []
-  const laid = assignLanes(ofDay)
+  const laid = assignLanes(hidden ? ofDay.filter((piece) => !hidden(piece.session)) : ofDay)
   const total = dayTotal(ofDay)
   const limit = dayLimit(day, now, timezone)
 

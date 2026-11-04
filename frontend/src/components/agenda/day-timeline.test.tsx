@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { isHiddenSession } from '@/lib/agenda/hide'
 import { i18n, renderWithProviders } from '@/test/utils'
 import type { AgendaSession } from '@/types'
 import { DayTimeline } from './day-timeline'
@@ -112,5 +113,30 @@ describe('DayTimeline', () => {
   it('hides + from a viewer (AGENDA-44)', () => {
     timeline('2026-11-02', { onNew: undefined })
     expect(screen.queryByRole('button', { name: 'New session' })).toBeNull()
+  })
+})
+
+describe('DayTimeline with hidden sessions (#22)', () => {
+  // Tuesday 14:00-15:00 and 14:20-14:22 in São Paulo; the 2-minute one is under a 5-minute minimum.
+  const short: AgendaSession = { ...tuesday, id: 'b', started_at: '2026-11-03T17:20:00.000Z', ended_at: '2026-11-03T17:22:00.000Z' }
+  const hidden = (session: AgendaSession) => isHiddenSession(session, 5)
+
+  it('HIDE-11 HIDE-14 draws no block for the hidden session and counts it in the day total', () => {
+    const { container } = timeline('2026-11-03', { sessions: [tuesday, short], hidden })
+    expect(container.querySelector('[data-session-id="b"]')).toBeNull()
+    expect(container.querySelector('[data-session-id="a"]')).not.toBeNull()
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tuesday, November 3, 2026 · 1hr 2min')
+  })
+
+  it('HIDE-15 gives the whole width to a block that overlaps only a hidden one', () => {
+    const { container } = timeline('2026-11-03', { sessions: [tuesday, short], hidden })
+    expect(container.querySelector<HTMLElement>('[data-session-id="a"]')!.style.width).toBe('100%')
+  })
+
+  it('shows the total and no block, without the empty-day message, on a day whose sessions are all hidden', () => {
+    const { container } = timeline('2026-11-03', { sessions: [short], hidden })
+    expect(container.querySelectorAll('[data-session-id]')).toHaveLength(0)
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tuesday, November 3, 2026 · 2min')
+    expect(screen.queryByText('No sessions on this day. Tap + to record one.')).toBeNull()
   })
 })

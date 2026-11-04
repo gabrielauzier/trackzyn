@@ -215,10 +215,10 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Uma sessão escondida não tem bloco, e o total do dia a soma
-- [ ] Um dia com todas as sessões escondidas mostra o total, nenhum bloco e não mostra a mensagem de dia vazio
-- [ ] Um bloco que se sobrepõe só a uma escondida ocupa a largura inteira
-- [ ] Gate check passes: Quick
+- [x] Uma sessão escondida não tem bloco, e o total do dia a soma
+- [x] Um dia com todas as sessões escondidas mostra o total, nenhum bloco e não mostra a mensagem de dia vazio
+- [x] Um bloco que se sobrepõe só a uma escondida ocupa a largura inteira
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
