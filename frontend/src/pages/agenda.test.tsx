@@ -18,10 +18,16 @@ vi.mock('sonner', async (importOriginal) => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }))
 
-const workspace = vi.hoisted(() => ({ canWrite: true, minSessionMinutes: null as number | null }))
+const workspace = vi.hoisted(() => ({ canWrite: true, minSessionMinutes: null as number | null, mergeGapMinutes: null as number | null }))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({
-    current: { id: 'ws', name: 'Synthetic workspace', timezone: null, min_session_minutes: workspace.minSessionMinutes },
+    current: {
+      id: 'ws',
+      name: 'Synthetic workspace',
+      timezone: null,
+      min_session_minutes: workspace.minSessionMinutes,
+      merge_gap_minutes: workspace.mergeGapMinutes,
+    },
     canWrite: workspace.canWrite,
   }),
 }))
@@ -59,6 +65,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   workspace.canWrite = true
   workspace.minSessionMinutes = null
+  workspace.mergeGapMinutes = null
   // Wednesday 4 November 2026, 14:07 in São Paulo.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-11-04T17:07:00.000Z'))
@@ -241,6 +248,136 @@ describe('AgendaPage', () => {
       await waitFor(() => expect(screen.queryByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeNull())
       expect(screen.getByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
       // The grid redraws from the sessions already loaded.
+      expect(sessions.list).toHaveBeenCalledTimes(loads)
+    })
+  })
+
+  describe('joining near sessions (#23)', () => {
+    // Monday in São Paulo, both of Work: 10:20 to 11:01, then 11:05 to 11:16, 4 minutes later (the example of #23).
+    const first: AgendaSession = { ...monday, id: 'a', started_at: '2026-11-02T13:20:00.000Z', ended_at: '2026-11-02T14:01:00.000Z' }
+    const second: AgendaSession = {
+      ...monday,
+      id: 'b',
+      origin: 'manual',
+      task_id: 't2',
+      task_title: 'Review the notes',
+      started_at: '2026-11-02T14:05:00.000Z',
+      ended_at: '2026-11-02T14:16:00.000Z',
+    }
+    const joined = () => screen.findByRole('button', { name: 'Work, 2 sessions, 10:20 – 11:16' })
+    const pickSecond = async (user: ReturnType<typeof renderWithProviders>['user']) => {
+      await user.click(await joined())
+      const panel = screen.getByRole('complementary', { name: 'Work · 2 sessions' })
+      await user.click(within(panel).getByRole('button', { name: /Review the notes/ }))
+    }
+
+    beforeEach(() => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [first, second] })
+      workspace.mergeGapMinutes = 5
+    })
+
+    it('MERGE-23 draws the two sessions as one block under a join gap of 5, and as two with the gap off', async () => {
+      const { unmount } = renderWithProviders(<AgendaPage />)
+      expect(await joined()).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toBeNull()
+      unmount()
+
+      workspace.mergeGapMinutes = null
+      renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /2 sessions/ })).toBeNull()
+    })
+
+    it('MERGE-27 MERGE-28 opens the list of the block on a click, and the details of the 11:05 session with Edit and Delete', async () => {
+      const { user } = renderWithProviders(<AgendaPage />)
+      await user.click(await joined())
+      expect(await joined()).toHaveAttribute('aria-pressed', 'true')
+      const panel = screen.getByRole('complementary', { name: 'Work · 2 sessions' })
+      expect(within(panel).getByText('Monday, November 2 · 10:20 – 11:16')).toBeInTheDocument()
+      expect(within(panel).getByText('11:05 – 11:16 · 11min')).toBeInTheDocument()
+
+      await user.click(within(panel).getByRole('button', { name: /Review the notes/ }))
+      expect(screen.getByRole('heading', { name: 'Review the notes' })).toBeInTheDocument()
+      expect(screen.getByText('Monday, November 2 · 11:05 – 11:16 · 11min')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+    })
+
+    it('MERGE-29 MERGE-33 draws the chosen session alone with its handles, and the way back shows the list again', async () => {
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await pickSecond(user)
+      const alone = await screen.findByRole('button', { name: 'Review the notes, 11:05 – 11:16' })
+      expect(alone).toHaveAttribute('aria-pressed', 'true')
+      expect(alone.querySelector('[data-handle="top"]')).not.toBeNull()
+      expect(alone.querySelector('[data-handle="bottom"]')).not.toBeNull()
+      // The rest of the block is drawn without it: one session is a common block.
+      expect(screen.getByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
+      expect(container.querySelector('[data-joined]')).toBeNull()
+
+      await user.click(screen.getByRole('button', { name: '‹ Work · 2 sessions' }))
+      expect(screen.getByRole('complementary', { name: 'Work · 2 sessions' })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: 'Review the notes' })).toBeNull()
+    })
+
+    it('MERGE-31 joins the chosen session again with its neighbour once the details close', async () => {
+      const { user } = renderWithProviders(<AgendaPage />)
+      await pickSecond(user)
+      await screen.findByRole('button', { name: 'Review the notes, 11:05 – 11:16' })
+      await user.click(screen.getByRole('button', { name: 'Close' }))
+      expect(await joined()).toHaveAttribute('aria-pressed', 'false')
+      expect(screen.queryByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toBeNull()
+      expect(screen.queryByRole('complementary')).toBeNull()
+    })
+
+    it('MERGE-31 joins the chosen session again once its edit is saved', async () => {
+      const saved = { ...second, ended_at: '2026-11-02T14:20:00.000Z' }
+      vi.mocked(sessions.update).mockImplementation(async () => {
+        vi.mocked(sessions.list).mockResolvedValue({ sessions: [first, saved] })
+        return saved
+      })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await pickSecond(user)
+      await user.click(screen.getByRole('button', { name: 'Edit' }))
+      fireEvent.change(await screen.findByLabelText('End'), { target: { value: '11:20' } })
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+      expect(await screen.findByRole('button', { name: 'Work, 2 sessions, 10:20 – 11:20' })).toBeInTheDocument()
+      expect(screen.queryByRole('complementary')).toBeNull()
+    })
+
+    it('MERGE-31 closes the panel once the chosen session is deleted, leaving its neighbour alone', async () => {
+      vi.mocked(sessions.remove).mockImplementation(async () => {
+        vi.mocked(sessions.list).mockResolvedValue({ sessions: [first] })
+      })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await pickSecond(user)
+      await user.click(screen.getByRole('button', { name: 'Delete' }))
+      await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
+      expect(sessions.remove).toHaveBeenCalledWith('b')
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toBeNull())
+      expect(screen.getByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
+      expect(screen.queryByRole('complementary')).toBeNull()
+    })
+
+    it('MERGE-24 redraws the grid when the join gap of the current workspace changes, without a reload', async () => {
+      workspace.mergeGapMinutes = null
+      const { rerender } = renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
+      const loads = vi.mocked(sessions.list).mock.calls.length
+
+      workspace.mergeGapMinutes = 5
+      rerender(<AgendaPage />)
+      expect(await joined()).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeNull()
+      // The grid redraws from the sessions already loaded.
+      expect(sessions.list).toHaveBeenCalledTimes(loads)
+
+      // Back to 3 minutes: the 4-minute gap keeps them apart again.
+      workspace.mergeGapMinutes = 3
+      rerender(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /2 sessions/ })).toBeNull()
       expect(sessions.list).toHaveBeenCalledTimes(loads)
     })
   })
@@ -543,6 +680,33 @@ describe('AgendaPage', () => {
       expect(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeNull()
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026 · 1hr 2min')
+    })
+
+    it('MERGE-23 joins the two Work sessions into one block in the day view at 390 px, and picks one from it', async () => {
+      setWidth(390)
+      workspace.mergeGapMinutes = 5
+      // Wednesday, the day the narrow agenda opens on: 10:20 to 11:01 and 11:05 to 11:16.
+      const first: AgendaSession = { ...monday, id: 'a', started_at: '2026-11-04T13:20:00.000Z', ended_at: '2026-11-04T14:01:00.000Z' }
+      const second: AgendaSession = {
+        ...monday,
+        id: 'b',
+        task_title: 'Review the notes',
+        started_at: '2026-11-04T14:05:00.000Z',
+        ended_at: '2026-11-04T14:16:00.000Z',
+      }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [first, second] })
+      const { user } = renderWithProviders(<AgendaPage />)
+
+      const block = await screen.findByRole('button', { name: 'Work, 2 sessions, 10:20 – 11:16' })
+      expect(screen.queryByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeNull()
+      // The day total is the sum of the sessions, not the gap (MERGE-20).
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026 · 52min')
+
+      await user.click(block)
+      const panel = screen.getByRole('complementary', { name: 'Work · 2 sessions' })
+      await user.click(within(panel).getByRole('button', { name: /Review the notes/ }))
+      expect(await screen.findByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByRole('button', { name: '‹ Work · 2 sessions' })).toBeInTheDocument()
     })
 
     it('shows the week grid at 1024 px', async () => {

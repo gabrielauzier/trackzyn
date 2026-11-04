@@ -280,13 +280,13 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Com 5, as duas sessões de Produto aparecem como um bloco; com nulo, como dois
-- [ ] Clicar no bloco abre a lista; escolher a de 11:05 mostra os detalhes dela com `Edit` e `Delete`
-- [ ] Com a sessão escolhida, ela aparece sozinha com as alças, e o voltar mostra a lista de novo
-- [ ] Fechar o painel junta a sessão de novo com a vizinha
-- [ ] Trocar o espaço do workspace atual redesenha a grade sem uma nova leitura das sessões
-- [ ] Na largura de 390 px, as duas sessões de Produto aparecem como um bloco no dia (L-034)
-- [ ] Gate check passes: Full (frontend)
+- [x] Com 5, as duas sessões de Produto aparecem como um bloco; com nulo, como dois
+- [x] Clicar no bloco abre a lista; escolher a de 11:05 mostra os detalhes dela com `Edit` e `Delete`
+- [x] Com a sessão escolhida, ela aparece sozinha com as alças, e o voltar mostra a lista de novo
+- [x] Fechar o painel junta a sessão de novo com a vizinha
+- [x] Trocar o espaço do workspace atual redesenha a grade sem uma nova leitura das sessões
+- [x] Na largura de 390 px, as duas sessões de Produto aparecem como um bloco no dia (L-034)
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

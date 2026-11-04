@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Plus, ZoomIn } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { DatePickerChip } from '@/components/agenda/date-picker-chip'
 import { DayTimeline } from '@/components/agenda/day-timeline'
+import { SessionGroupList } from '@/components/agenda/session-group-list'
 import { SessionDetails, SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
 import { WeekGrid } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
@@ -66,6 +67,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   // The workspace minimum hides short sessions from the grid and the panel, not from the totals (HIDE-11, HIDE-14).
   const minSessionMinutes = current?.min_session_minutes ?? null
   const hidden = useCallback((session: AgendaSession) => isHiddenSession(session, minSessionMinutes), [minSessionMinutes])
+  // Near sessions of one list and kind are drawn as one block (MERGE-11, MERGE-24).
+  const joinGap = current?.merge_gap_minutes ?? null
   const now = useNow()
   const today = dayOf(now, timezone)
   /** The day the agenda is on; the week shown is the one that holds it. */
@@ -101,10 +104,14 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   // A deleted session leaves the agenda, and its panel closes with it (AGENDA-32), as does one saved shorter
   // than the workspace minimum (HIDE-17).
   const selected = sessions.find((session) => session.id === selectedId && !hidden(session)) ?? null
+  /** The sessions of the joined block clicked last (MERGE-27); a session chosen from it keeps it for the way back. */
+  const [groupIds, setGroupIds] = useState<string[] | null>(null)
+  const group = groupIds ? sessions.filter((session) => groupIds.includes(session.id) && !hidden(session)) : []
 
   const closeSelected = () => {
     setSelectedId(null)
     setEditTimes(null)
+    setGroupIds(null)
   }
 
   /** A released handle or block saves its new times (AGENDA-29, AGENDA-30); a new draft waits for the panel. */
@@ -152,8 +159,26 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const select = (session: AgendaSession) => {
     drag.setDraft(null)
     setEditTimes(null)
+    setGroupIds(null)
     setSelectedId(session.id)
   }
+
+  /** A click on a joined block lists its sessions (MERGE-27). */
+  const selectGroup = (members: AgendaSession[]) => {
+    drag.setDraft(null)
+    setEditTimes(null)
+    setSelectedId(null)
+    setGroupIds(members.map((member) => member.id))
+  }
+
+  /** A session chosen from the list opens alone, out of the block, with its handles (MERGE-28, MERGE-29). */
+  const pickFromGroup = (session: AgendaSession) => {
+    setEditTimes(null)
+    setSelectedId(session.id)
+  }
+
+  // While a session is chosen the selection is that session; the block is selected only while its list shows.
+  const joining = { joinGap, apartId: selected?.id ?? null, onSelectGroup: selectGroup, selectedGroup: selected ? null : groupIds }
 
   return (
     <div className="flex flex-col gap-4">
@@ -257,6 +282,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 onSelect={select}
                 pxPerMinute={pxPerMinute}
                 hidden={hidden}
+                {...joining}
               />
             ) : (
               <DayTimeline
@@ -272,6 +298,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 onSelect={select}
                 pxPerMinute={pxPerMinute}
                 hidden={hidden}
+                {...joining}
               />
             )}
           </div>
@@ -307,7 +334,9 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                   input.kind === 'task' ? { started_at, ended_at, task_id: input.task_id } : { started_at, ended_at, list_id: input.list_id }
                 // The panel shows a refusal itself (AGENDA-31).
                 await update.mutateAsync({ id: selected.id, changes, quiet: true })
-                setEditTimes(null)
+                // A session chosen from a joined block goes back into it once saved (MERGE-31).
+                if (groupIds) closeSelected()
+                else setEditTimes(null)
               }}
             />
           )}
@@ -319,8 +348,21 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               now={now}
               onClose={closeSelected}
               onEdit={canWrite ? () => setEditTimes(sessionTimes(selected, timezone)) : undefined}
-              onDelete={canWrite ? () => remove.mutate(selected.id) : undefined}
+              onDelete={
+                canWrite
+                  ? () => {
+                      remove.mutate(selected.id)
+                      // The panel closes with the session, not back to its block (MERGE-31).
+                      setGroupIds(null)
+                    }
+                  : undefined
+              }
+              onBack={groupIds ? () => setSelectedId(null) : undefined}
+              groupCount={group.length}
             />
+          )}
+          {!draft && !selected && group.length > 0 && (
+            <SessionGroupList sessions={group} timezone={timezone} onPick={pickFromGroup} onClose={closeSelected} />
           )}
         </div>
       )}
