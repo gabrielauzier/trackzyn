@@ -750,6 +750,17 @@
       "end": "End",
       "duration": "Duration",
       "overlap": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts in both."
-    }
+    },
+    "today": "Today",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "newSession": "New session",
+    "day": "Day",
+    "week": "Week",
+    "view": "View",
+    "list": "List",
+    "allLists": "All lists",
+    "loadError": "Could not load the agenda.",
+    "retry": "Try again"
   }
 }

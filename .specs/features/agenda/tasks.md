@@ -436,10 +436,10 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `Próxima semana` muda o cabeçalho de `2 – 8 de novembro de 2026` para `9 – 15 de novembro de 2026`
-- [ ] Uma falha da query mostra `Não foi possível carregar a agenda.` e `Tentar de novo` chama a query de novo
-- [ ] Um `viewer` não vê `Nova sessão`
-- [ ] Gate check passes: Full (frontend)
+- [x] `Próxima semana` muda o cabeçalho de `2 – 8 de novembro de 2026` para `9 – 15 de novembro de 2026`
+- [x] Uma falha da query mostra `Não foi possível carregar a agenda.` e `Tentar de novo` chama a query de novo
+- [x] Um `viewer` não vê `Nova sessão`
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

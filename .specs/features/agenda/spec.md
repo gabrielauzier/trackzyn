@@ -168,7 +168,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-05 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-06 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-07 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-08 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-08 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-09 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-10 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-11 | P1: Ver as sessões da semana | Tasks | Implementing |
@@ -207,7 +207,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-44 | Edge cases | Tasks | Implementing |
 | AGENDA-45 | Edge cases | Tasks | Implementing |
 | AGENDA-46 | Edge cases | Tasks | Implementing |
-| AGENDA-47 | Edge cases | Tasks | In Tasks |
+| AGENDA-47 | Edge cases | Tasks | Implementing |
 
 **Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 

@@ -1,11 +1,190 @@
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
+import { SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
+import { PX_PER_MINUTE, WeekGrid } from '@/components/agenda/week-grid'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
+import { lists } from '@/lib/api'
+import { addDays, dayLimit, dayOf, mondayOf, newSessionTimes, weekDays } from '@/lib/agenda/layout'
+import { useAgenda } from '@/lib/agenda/use-agenda'
+import { useGridDrag } from '@/lib/agenda/use-grid-drag'
+import { cn } from '@/lib/utils'
+import type { ListCard } from '@/types'
 
-/** `/agenda`: the logged-in user's own sessions of the week. */
+const ALL_LISTS = 'all'
+
+/** The clock of the grid: the open session, the now line and the hatched time move with it. */
+function useNow(): Date {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  return now
+}
+
+/** `2 – 8 de novembro de 2026`, or `26 de outubro – 1 de novembro de 2026` across months (AGENDA-08). */
+function weekLabel(monday: string, locale: string): string {
+  const at = (day: string) => new Date(`${day}T00:00:00Z`)
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).formatRange(
+    at(monday),
+    at(addDays(monday, 6)),
+  )
+}
+
+function Agenda({ timezone, activeLists }: { timezone: string; activeLists: ListCard[] }) {
+  const { t, i18n } = useTranslation()
+  const { canWrite } = useWorkspace()
+  const now = useNow()
+  const today = dayOf(now, timezone)
+  const [monday, setMonday] = useState(() => mondayOf(today))
+  const [listId, setListId] = useState<string | null>(null)
+  const [view, setView] = useState<'week' | 'day'>('week')
+  const days = useMemo(() => weekDays(monday), [monday])
+  const { query, create } = useAgenda({ from: monday, to: addDays(monday, 6), listId })
+  const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
+
+  const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, now, timezone), onCommit: () => {} })
+  const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null
+  const shownDay = days.includes(today) ? today : monday
+
+  /** Another week closes the panel without recording (AGENDA-47). */
+  const goTo = (nextMonday: string) => {
+    drag.setDraft(null)
+    setMonday(nextMonday)
+  }
+
+  const openNew = () => {
+    const times = newSessionTimes(now, timezone)
+    setMonday(mondayOf(times.day))
+    drag.setDraft({ mode: 'create', ...times, sessionId: null })
+  }
+
+  const changeTimes = (times: PanelTimes) => {
+    if (!days.includes(times.day)) setMonday(mondayOf(times.day))
+    drag.setDraft({ mode: 'create', ...times, sessionId: null })
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => goTo(mondayOf(today))}>
+          {t('agenda.today')}
+        </Button>
+        <div className="flex items-center">
+          <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.previousWeek')} onClick={() => goTo(addDays(monday, -7))}>
+            <ChevronLeft size={16} />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.nextWeek')} onClick={() => goTo(addDays(monday, 7))}>
+            <ChevronRight size={16} />
+          </Button>
+        </div>
+        <h2 className="text-base font-semibold" aria-live="polite">
+          {weekLabel(monday, i18n.language)}
+        </h2>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Select value={listId ?? ALL_LISTS} onValueChange={(value) => setListId(value === ALL_LISTS ? null : value)}>
+            <SelectTrigger size="sm" aria-label={t('agenda.list')} className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_LISTS}>{t('agenda.allLists')}</SelectItem>
+              {activeLists.map((list) => (
+                <SelectItem key={list.id} value={list.id}>
+                  {list.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div role="group" aria-label={t('agenda.view')} className="flex rounded-lg bg-muted p-0.5">
+            {(['day', 'week'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={view === option}
+                className={cn(
+                  'rounded-md px-3 py-1 text-sm font-medium',
+                  view === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                )}
+                onClick={() => setView(option)}
+              >
+                {t(`agenda.${option}`)}
+              </button>
+            ))}
+          </div>
+          {canWrite && (
+            <Button type="button" size="sm" onClick={openNew}>
+              <Plus size={14} />
+              {t('agenda.newSession')}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {query.isError ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border py-16 text-center">
+          <p className="text-sm text-destructive">{t('agenda.loadError')}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>
+            {t('agenda.retry')}
+          </Button>
+        </div>
+      ) : query.data === undefined ? (
+        <Skeleton className="h-96 w-full rounded-xl" />
+      ) : (
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          <div className="min-w-0 flex-1">
+            <WeekGrid
+              days={view === 'week' ? days : [shownDay]}
+              sessions={sessions}
+              timezone={timezone}
+              now={now}
+              drag={canWrite ? drag : undefined}
+            />
+          </div>
+          {canWrite && draft && (
+            <SessionPanel
+              times={{ day: draft.day, start: draft.start, end: draft.end }}
+              onTimesChange={changeTimes}
+              timezone={timezone}
+              now={now}
+              sessions={sessions}
+              defaultListId={listId ?? activeLists[0]?.id ?? null}
+              onCancel={() => drag.setDraft(null)}
+              onSave={async (input, preview) => {
+                await create.mutateAsync({ input, preview })
+                drag.setDraft(null)
+              }}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** `/agenda`: the logged-in user's own sessions of the week (AGENDA-01, AGENDA-10). */
 export default function AgendaPage() {
   const { t } = useTranslation()
   const { current } = useWorkspace()
-  return <PageHeader section={current?.name ?? ''} title={t('nav.agenda')} />
+  // The lists answer carries the workspace day timezone, which decides the days and midnight (AD-004).
+  const active = useQuery({ queryKey: ['lists', { archived: false }], queryFn: () => lists.list({ archived: false }) })
+
+  return (
+    <div>
+      <PageHeader section={current?.name ?? ''} title={t('nav.agenda')} />
+      {active.data ? (
+        <Agenda timezone={active.data.timezone} activeLists={active.data.lists} />
+      ) : active.isError ? (
+        <p className="py-12 text-center text-sm text-destructive">{t('agenda.loadError')}</p>
+      ) : (
+        <Skeleton className="h-96 w-full rounded-xl" />
+      )}
+    </div>
+  )
 }

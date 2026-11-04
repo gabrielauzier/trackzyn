@@ -750,6 +750,17 @@
       "end": "Fim",
       "duration": "Duração",
       "overlap": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta nas duas."
-    }
+    },
+    "today": "Hoje",
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Próxima semana",
+    "newSession": "Nova sessão",
+    "day": "Dia",
+    "week": "Semana",
+    "view": "Visão",
+    "list": "Lista",
+    "allLists": "Todas as listas",
+    "loadError": "Não foi possível carregar a agenda.",
+    "retry": "Tentar de novo"
   }
 }
