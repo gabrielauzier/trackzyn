@@ -142,3 +142,12 @@ export function dayLimit(day: string, now: Date, timeZone: string): number {
   if (day > today) return 0
   return minuteOf(now, timeZone)
 }
+
+/**
+ * The times `Nova sessão` opens with (AGENDA-15): today, ending now rounded down to 5 min and starting at
+ * the full hour before that end.
+ */
+export function newSessionTimes(now: Date, timeZone: string): { day: string; start: number; end: number } {
+  const end = Math.floor(minuteOf(now, timeZone) / 5) * 5
+  return { day: dayOf(now, timeZone), start: Math.max(0, Math.ceil(end / 60) * 60 - 60), end }
+}

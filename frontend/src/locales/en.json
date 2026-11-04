@@ -737,6 +737,19 @@
     },
     "break": "Break",
     "now": "now",
-    "range": "{{start}} – {{end}}"
+    "range": "{{start}} – {{end}}",
+    "panel": {
+      "newTitle": "New session",
+      "task": "Task",
+      "break": "Break",
+      "chooseTask": "Choose a task",
+      "breakList": "List of the break",
+      "chooseList": "Choose a list",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "duration": "Duration",
+      "overlap": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts in both."
+    }
   }
 }

@@ -737,6 +737,19 @@
     },
     "break": "Intervalo",
     "now": "agora",
-    "range": "{{start}} – {{end}}"
+    "range": "{{start}} – {{end}}",
+    "panel": {
+      "newTitle": "Nova sessão",
+      "task": "Tarefa",
+      "break": "Intervalo",
+      "chooseTask": "Escolha uma tarefa",
+      "breakList": "Lista do intervalo",
+      "chooseList": "Escolha uma lista",
+      "date": "Data",
+      "start": "Início",
+      "end": "Fim",
+      "duration": "Duração",
+      "overlap": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta nas duas."
+    }
   }
 }

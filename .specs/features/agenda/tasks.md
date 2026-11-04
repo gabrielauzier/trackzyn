@@ -408,11 +408,11 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Mudar o fim de 18:45 para 19:00 muda a duração para `1h 30min`
-- [ ] Um horário sobreposto mostra `Sobrepõe <título> (<HH:MM> – <HH:MM>). O tempo em comum conta nas duas.` e `Salvar` continua habilitado
-- [ ] Um 422 `invalid_time` mostra `A sessão não pode terminar no futuro.`
-- [ ] Esc fecha sem chamar `sessions.create`
-- [ ] Gate check passes: Quick
+- [x] Mudar o fim de 18:45 para 19:00 muda a duração para `1h 30min`
+- [x] Um horário sobreposto mostra `Sobrepõe <título> (<HH:MM> – <HH:MM>). O tempo em comum conta nas duas.` e `Salvar` continua habilitado
+- [x] Um 422 `invalid_time` mostra `A sessão não pode terminar no futuro.`
+- [x] Esc fecha sem chamar `sessions.create`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
