@@ -21,14 +21,16 @@ interface FocusControlsProps {
   taskId: string | null
   /** Pending tasks of Today; with one, there is nothing to skip to (FOCUS-07). */
   pending: number
+  /** Time already tracked on the task; a stopped task that never counted reads `Começar` (#14). */
+  spentSeconds?: number
   actions: FocusControlActions
 }
 
 /**
- * `Pausar` or `Retomar`, `Pular`, `Concluir` and `Intervalo` for the task in focus (FOCUS-04 to
+ * `Pausar` or `Retomar` (`Começar` for a task that never counted), `Pular`, `Concluir` and `Intervalo` for the task in focus (FOCUS-04 to
  * FOCUS-08, BREAK-01); during a break, only `Encerrar intervalo` (BREAK-04).
  */
-export function FocusControls({ display, taskId, pending, actions }: FocusControlsProps) {
+export function FocusControls({ display, taskId, pending, spentSeconds, actions }: FocusControlsProps) {
   const { t } = useTranslation()
 
   if (display.mode === 'break') {
@@ -52,7 +54,7 @@ export function FocusControls({ display, taskId, pending, actions }: FocusContro
         </Button>
       ) : (
         <Button onClick={() => actions.start(taskId)}>
-          <Play /> {t('focus.controls.resume')}
+          <Play /> {t(spentSeconds === 0 ? 'focus.controls.start' : 'focus.controls.resume')}
         </Button>
       )}
       <Button variant="outline" disabled={pending <= 1} onClick={() => actions.skip(taskId)}>

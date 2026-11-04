@@ -5,10 +5,11 @@ import { WidgetControls } from '@/components/focus/widget-controls'
 import type { Display } from '@/lib/focus/display'
 import { renderWithProviders } from '@/test/utils'
 
-const TASK = { id: 'task-a', title: 'Write the quarterly report for the board meeting' }
+type WidgetTask = { id: string; title: string; spent_seconds?: number; subtasks?: { done: number; total: number } }
+const TASK: WidgetTask = { id: 'task-a', title: 'Write the quarterly report for the board meeting' }
 const SIX = ['Break', 'Notes', 'Pause', 'Skip', 'Complete', 'Expand']
 
-function renderControls(display: Display, options: { task?: typeof TASK | null; pending?: number; canWrite?: boolean } = {}) {
+function renderControls(display: Display, options: { task?: WidgetTask | null; pending?: number; canWrite?: boolean; onSubtasks?: () => void } = {}) {
   const actions = {
     start: vi.fn(),
     pause: vi.fn(),
@@ -31,6 +32,7 @@ function renderControls(display: Display, options: { task?: typeof TASK | null; 
       onNotes={onNotes}
       onExpand={onExpand}
       onPanelChange={onPanelChange}
+      onSubtasks={options.onSubtasks}
     />,
   )
   const widget = screen.getByRole('group', { name: 'Focus widget' })
@@ -203,5 +205,47 @@ describe('WidgetControls dragging (WIDGET-06)', () => {
     for (const button of screen.getAllByRole('button')) {
       expect(button.closest('.\\[-webkit-app-region\\:no-drag\\]'), button.getAttribute('aria-label') ?? '').not.toBeNull()
     }
+  })
+})
+
+describe('WidgetControls with subtasks (#16)', () => {
+  it('the compact widget shows the subtask counter', () => {
+    const { unmount } = renderControls({ mode: 'countdown', seconds: 1930 }, { task: { ...TASK, subtasks: { done: 1, total: 4 } } })
+
+    // Between the title and the timer, in the compact row of the widget (still h-16, 64 px).
+    const badge = screen.getByText('1/4')
+    const title = screen.getByText(TASK.title)
+    const timer = screen.getByRole('timer')
+    expect(badge.parentElement).toBe(timer.parentElement)
+    expect(title.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(badge.compareDocumentPosition(timer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Focus widget' })).toHaveClass('h-16')
+    unmount()
+
+    // Without subtasks, or from an answer stored before the counts existed, no counter.
+    const { unmount: second } = renderControls({ mode: 'countdown', seconds: 1930 }, { task: { ...TASK, subtasks: { done: 0, total: 0 } } })
+    expect(screen.queryByText('0/0')).not.toBeInTheDocument()
+    second()
+    renderControls({ mode: 'countdown', seconds: 1930 }, { task: TASK })
+    expect(screen.queryByText(/^\d+\/\d+$/)).not.toBeInTheDocument()
+  })
+
+  it('puts the Subtasks icon left of Notes, and it opens the panel', async () => {
+    const onSubtasks = vi.fn()
+    const { user, widget } = renderControls({ mode: 'countdown', seconds: 60 }, { onSubtasks })
+    await user.hover(widget)
+
+    expect(buttonNames()).toEqual(['Break', 'Subtasks', 'Notes', 'Pause', 'Skip', 'Complete', 'Expand'])
+    await user.click(screen.getByRole('button', { name: 'Subtasks' }))
+    expect(onSubtasks).toHaveBeenCalledTimes(1)
+  })
+
+  it('reads Start for a paused task that never counted', async () => {
+    const { user, widget, actions } = renderControls({ mode: 'paused', seconds: 2700 }, { task: { ...TASK, spent_seconds: 0 } })
+    await user.hover(widget)
+
+    expect(buttonNames()).toEqual(['Break', 'Notes', 'Start', 'Skip', 'Complete', 'Expand'])
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    expect(actions.start).toHaveBeenCalledWith(TASK.id)
   })
 })

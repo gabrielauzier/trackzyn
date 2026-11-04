@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, CircleCheck, Maximize2, NotebookPen, Pause, Play, SkipForward, Square, TimerReset } from 'lucide-react'
+import { Check, CircleCheck, ListChecks, Maximize2, NotebookPen, Pause, Play, SkipForward, Square, TimerReset } from 'lucide-react'
 
 import { BreakPicker } from '@/components/focus/break-picker'
 import type { FocusControlActions } from '@/components/focus/focus-controls'
@@ -16,22 +16,45 @@ export const HIDE_DELAY_MS = 150
 
 interface WidgetControlsProps {
   display: Display
-  /** The task in focus; `null` with nothing left in Today. */
-  task: { id: string; title: string } | null
+  /** The task in focus; `null` with nothing left in Today. `subtasks` is absent in an answer stored before it existed. */
+  task: { id: string; title: string; spent_seconds?: number; subtasks?: { done: number; total: number } } | null
   /** Pending tasks of Today; with one, there is nothing to skip to (FOCUS-07). */
   pending: number
   /** Whether the user may change the workspace; without it, only `Expandir`. */
   canWrite: boolean
   actions: FocusControlActions & { extend: (taskId: string) => unknown }
   onNotes: () => void
+  /** Opens or closes the subtasks panel, left of `Anotações` (#16). */
+  onSubtasks?: () => void
+  /** Whether the subtasks panel is open. */
+  subtasksOpen?: boolean
   onExpand: () => void
   /** Told when the break picker opens and closes, so the widget can grow for it. */
   onPanelChange: (open: boolean) => void
 }
 
-function IconButton({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode }) {
+interface IconButtonProps {
+  label: string
+  onClick: () => void
+  disabled?: boolean
+  pressed?: boolean
+  onPointerDown?: () => void
+  children: ReactNode
+}
+
+function IconButton({ label, onClick, disabled, pressed, onPointerDown, children }: IconButtonProps) {
   return (
-    <Button variant="ghost" size="icon-sm" aria-label={label} title={label} disabled={disabled} onClick={onClick}>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label={label}
+      aria-pressed={pressed}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      onPointerDown={onPointerDown}
+      className={pressed ? 'bg-accent text-accent-foreground' : undefined}
+    >
       {children}
     </Button>
   )
@@ -44,7 +67,18 @@ function IconButton({ label, onClick, disabled, children }: { label: string; onC
  * With nothing left in Today, `Tudo limpo` and `Expandir` (WIDGET-16). The background drags the
  * window and the buttons stay out of the drag area (WIDGET-06).
  */
-export function WidgetControls({ display, task, pending, canWrite, actions, onNotes, onExpand, onPanelChange }: WidgetControlsProps) {
+export function WidgetControls({
+  display,
+  task,
+  pending,
+  canWrite,
+  actions,
+  onNotes,
+  onSubtasks,
+  subtasksOpen = false,
+  onExpand,
+  onPanelChange,
+}: WidgetControlsProps) {
   const { t } = useTranslation()
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
@@ -76,10 +110,18 @@ export function WidgetControls({ display, task, pending, canWrite, actions, onNo
     />
   )
   const notes = (
-    <IconButton label={t('focus.widget.notes')} onClick={onNotes}>
-      <NotebookPen />
-    </IconButton>
+    <>
+      {onSubtasks && (
+        <IconButton label={t('focus.widget.subtasks')} pressed={subtasksOpen} onClick={onSubtasks}>
+          <ListChecks />
+        </IconButton>
+      )}
+      <IconButton label={t('focus.widget.notes')} onClick={onNotes}>
+        <NotebookPen />
+      </IconButton>
+    </>
   )
+  const counter = task?.subtasks && task.subtasks.total > 0 ? task.subtasks : null
 
   const clear = display.mode === 'all_clear' || display.mode === 'idle' || (task === null && display.mode !== 'break')
   const running = display.mode === 'countdown' || display.mode === 'countup'
@@ -123,7 +165,7 @@ export function WidgetControls({ display, task, pending, canWrite, actions, onNo
             <Pause />
           </IconButton>
         ) : (
-          <IconButton label={t('focus.controls.resume')} onClick={() => actions.start(task.id)}>
+          <IconButton label={t(task.spent_seconds === 0 ? 'focus.controls.start' : 'focus.controls.resume')} onClick={() => actions.start(task.id)}>
             <Play />
           </IconButton>
         )}
@@ -173,6 +215,11 @@ export function WidgetControls({ display, task, pending, canWrite, actions, onNo
             <span className="min-w-0 flex-1 truncate text-sm font-medium">
               {display.mode === 'break' ? t('focus.break.open') : task?.title}
             </span>
+            {display.mode !== 'break' && counter && (
+              <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-xs font-medium text-primary tabular-nums">
+                {counter.done}/{counter.total}
+              </span>
+            )}
             <span role="timer" className="shrink-0 font-mono text-lg font-bold tabular-nums">
               {formatClock(display.mode === 'awaiting_extend' ? 0 : display.seconds)}
             </span>

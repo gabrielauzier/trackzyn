@@ -563,7 +563,8 @@
     "noteRedo": "Redo",
     "renameSubtaskHint": "Double-click to rename",
     "moveSubtaskUp": "Move {{title}} up",
-    "moveSubtaskDown": "Move {{title}} down"
+    "moveSubtaskDown": "Move {{title}} down",
+    "openFocus": "Open focus without starting the timer"
   },
   "focus": {
     "sounds": {
@@ -590,7 +591,8 @@
       "pause": "Pause",
       "resume": "Resume",
       "skip": "Skip",
-      "endBreak": "End break"
+      "endBreak": "End break",
+      "start": "Start"
     },
     "elsewhere": {
       "title": "You are already focusing on another device.",
@@ -632,7 +634,29 @@
     "widget": {
       "label": "Focus widget",
       "notes": "Notes",
-      "expand": "Expand"
+      "expand": "Expand",
+      "subtasks": "Subtasks"
+    },
+    "card": {
+      "stopped": "Timer stopped"
+    },
+    "queue": {
+      "move": "Move {{title}}",
+      "position": "{{title}}: position {{position}} of {{total}}",
+      "cancelled": "Moving {{title}} was cancelled",
+      "instructions": "To pick up a task, press Space. Move it with the up and down arrow keys, press Space again to drop it, or Escape to cancel.",
+      "dropToFocus": "Drop to focus on this now",
+      "backToTop": "{{title}} goes back to the top of the queue.",
+      "backToTopWithTime": "{{title}} goes back to the top of the queue, with {{spent}} already tracked.",
+      "subtaskCount_one": "{{count}} subtask",
+      "subtaskCount_other": "{{count}} subtasks"
+    },
+    "subtasks": {
+      "title": "Subtasks",
+      "summary": "Subtasks · {{done}}/{{total}}",
+      "allDone": "All done here.",
+      "completeTask": "Complete task",
+      "showAll": "Show all ({{total}})"
     }
   },
   "reports": {

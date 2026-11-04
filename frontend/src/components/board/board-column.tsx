@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CircleCheck, Rocket } from 'lucide-react'
+import { CircleCheck, Eye, Rocket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AddTaskForm } from '@/components/board/add-task-form'
 import { formatDuration } from '@/components/board/format-duration'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { isDesktop } from '@/lib/desktop/focus-window'
 import type { Board, BoardColumnView, TaskCardView } from '@/types'
 
 type PendingColumn = 'backlog' | 'this_week' | 'today'
@@ -23,11 +25,13 @@ interface BoardColumnProps {
   renderTask: (task: TaskCardView, index: number) => ReactNode
   /** What Focus now does; the focus mode itself comes with `foco-e-sons`. */
   onFocusNow?: () => void
+  /** Opens the focus screen without starting the timer; only the desktop app offers it (#14). */
+  onOpenFocus?: () => void
   className?: string
 }
 
 /** One of the three pending columns: Backlog, This week or Today. */
-export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocusNow, className }: BoardColumnProps) {
+export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocusNow, onOpenFocus, className }: BoardColumnProps) {
   const { t, i18n } = useTranslation()
   const hasProgress = view.done !== undefined && view.total !== undefined
   const done = view.done ?? 0
@@ -63,9 +67,30 @@ export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocu
       )}
 
       {column === 'today' && (
-        <Button className="mt-auto w-full" variant="outline" disabled={!canWrite || empty} onClick={onFocusNow}>
-          <Rocket size={16} /> {t('board.focusNow')}
-        </Button>
+        <div className="mt-auto flex items-center gap-2">
+          <Button className="flex-1" variant="outline" disabled={!canWrite || empty} onClick={onFocusNow}>
+            <Rocket size={16} /> {t('board.focusNow')}
+          </Button>
+          {isDesktop() && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-9"
+                    aria-label={t('board.openFocus')}
+                    disabled={!canWrite || empty}
+                    onClick={onOpenFocus}
+                  >
+                    <Eye size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('board.openFocus')}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       )}
     </section>
   )

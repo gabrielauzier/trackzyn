@@ -586,6 +586,34 @@ describe('ListBoardPage', () => {
     expect(await screen.findByText('Focus page {"collapse":true}')).toBeInTheDocument()
   })
 
+  it('open-without-starting navigates to the focus screen with start false', async () => {
+    Object.defineProperty(window, 'trackzyn', {
+      value: { isDesktop: true, windowRole: 'main', onWidgetState: vi.fn(() => () => undefined), collapseFocus: vi.fn(), notifyFocusChanged: vi.fn() },
+      configurable: true,
+    })
+    try {
+      function FocusProbe() {
+        const { state, pathname } = useLocation()
+        return <p>Focus page {pathname} {JSON.stringify(state)}</p>
+      }
+      const { user } = renderWithProviders(
+        <Routes>
+          <Route path="/lists/:listId" element={<ListBoardPage />} />
+          <Route path="/focus/:listId" element={<FocusProbe />} />
+        </Routes>,
+        { route: `/lists/${WEEK}` },
+      )
+
+      await user.click(await screen.findByRole('button', { name: 'Open focus without starting the timer' }))
+
+      expect(await screen.findByText(`Focus page /focus/${WEEK} {"start":false}`)).toBeInTheDocument()
+      expect(focus.send).not.toHaveBeenCalled()
+      expect(window.trackzyn!.collapseFocus).not.toHaveBeenCalled()
+    } finally {
+      Reflect.deleteProperty(window, 'trackzyn')
+    }
+  })
+
   it('highlights the card in focus with its time running (FOCUS-16)', async () => {
     vi.mocked(focus.get).mockResolvedValue(focusState(true))
     renderBoard()
