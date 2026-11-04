@@ -70,13 +70,31 @@ describe('AuthProvider session restore', () => {
     // An expired or revoked token must not leave the app in a half-signed-in
     // state where every request 401s.
     localStorage.setItem('token', 'expired-jwt')
-    auth.me.mockRejectedValue(new Error('401'))
+    auth.me.mockRejectedValue(Object.assign(new Error('Unauthorized'), { response: { status: 401 } }))
 
     const { result } = await renderAuth()
 
     expect(result.current.token).toBeNull()
     expect(result.current.user).toBeNull()
     expect(localStorage.getItem('token')).toBeNull()
+  })
+
+  it('keeps the token when the server cannot be reached, and restores the user once it answers', async () => {
+    // A window opened offline (the desktop focus widget) must not sign the user out of every window.
+    localStorage.setItem('token', 'stored-jwt')
+    auth.me.mockRejectedValueOnce(new Error('Network Error')).mockResolvedValue(USER)
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(auth.me).toHaveBeenCalledTimes(1))
+    expect(localStorage.getItem('token')).toBe('stored-jwt')
+    expect(result.current.token).toBe('stored-jwt')
+
+    act(() => {
+      window.dispatchEvent(new Event('online'))
+    })
+
+    await waitFor(() => expect(result.current.user).toEqual(USER))
+    expect(result.current.isLoading).toBe(false)
   })
 })
 

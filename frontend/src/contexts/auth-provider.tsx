@@ -5,6 +5,13 @@ import type { User } from '@/types'
 
 import { AuthContext, type LoginResult } from '@/contexts/auth-context'
 
+const ME_RETRY_MS = 5_000
+
+function isUnreachable(error: unknown): boolean {
+  const status = (error as { response?: { status?: unknown } } | null)?.response?.status
+  return typeof status !== 'number' || status >= 500
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
@@ -16,19 +23,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }
 
+  // Bumped to ask the server again for the user after it could not be reached.
+  const [attempt, setAttempt] = useState(0)
+
   useEffect(() => {
     if (!token) return
     let cancelled = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+    const retry = () => setAttempt((count) => count + 1)
     auth.me()
-      .then((me) => { if (!cancelled) setUser(me) })
-      .catch(() => {
+      .then((me) => {
         if (cancelled) return
+        setUser(me)
+        setIsLoading(false)
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+        // Only an answer from the server says the token is bad. Dropping it on a network error would
+        // also sign out the other desktop windows, which share this storage.
+        if (isUnreachable(error)) {
+          retryTimer = setTimeout(retry, ME_RETRY_MS)
+          window.addEventListener('online', retry, { once: true })
+          return
+        }
         localStorage.removeItem('token')
         setToken(null)
+        setIsLoading(false)
       })
-      .finally(() => { if (!cancelled) setIsLoading(false) })
-    return () => { cancelled = true }
-  }, [token])
+    return () => {
+      cancelled = true
+      clearTimeout(retryTimer)
+      window.removeEventListener('online', retry)
+    }
+  }, [token, attempt])
 
   // Sync token across tabs via storage events
   useEffect(() => {

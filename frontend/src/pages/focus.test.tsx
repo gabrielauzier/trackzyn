@@ -311,6 +311,29 @@ describe('FocusPage on the desktop (WIDGET-01, WIDGET-02, WIDGET-22, WIDGET-24)'
     expect(sent()).toEqual([])
   })
 
+  it('opened by Focus now without a connection, starts here and keeps the widget closed', async () => {
+    vi.mocked(focus.send).mockRejectedValue(new Error('Network Error'))
+    renderFocus(fromFocusNow)
+
+    await waitFor(() => expect(sent()).toHaveLength(1))
+    await expect(vi.mocked(focus.send).mock.results[0]!.value).rejects.toThrow('Network Error')
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(bridge.collapseFocus).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument()
+  })
+
+  it('opened by Focus now with a stopped session of this device, stays here for the decision', async () => {
+    vi.mocked(focus.get).mockResolvedValue({
+      ...counting(deviceId()),
+      stale: { session_id: 'session-1', last_seen_at: now(), seconds: 300 },
+    })
+    renderFocus(fromFocusNow)
+
+    expect(await screen.findByText('DEV-1725')).toBeInTheDocument()
+    expect(bridge.collapseFocus).not.toHaveBeenCalled()
+  })
+
   it('opened by Focus now with nothing to start, stays here', async () => {
     vi.mocked(focus.get).mockResolvedValue(paused({ task: null, today: { pending: 0, done: 1, estimate_minutes: 0, tasks: [] } }))
     renderFocus(fromFocusNow)
