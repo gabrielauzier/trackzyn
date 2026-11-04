@@ -665,6 +665,12 @@
       "type": "timestamp with time zone",
       "nullable": false,
       "maxLength": null
+    },
+    {
+      "column": "min_session_minutes",
+      "type": "smallint",
+      "nullable": true,
+      "maxLength": null
     }
   ]
 }

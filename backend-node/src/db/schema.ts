@@ -72,18 +72,24 @@ export const userPasskeys = pgTable(
   ],
 )
 
-export const workspaces = pgTable('workspaces', {
-  id: uuid('id').primaryKey(),
-  name: varchar('name', { length: 100 }).notNull(),
-  createdByUserId: uuid('created_by_user_id').references(() => users.id, { onDelete: 'set null' }),
-  isArchived: boolean('is_archived').notNull().default(false),
-  managedByUserId: uuid('managed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
-  locale: varchar('locale', { length: 10 }),
-  timezone: varchar('timezone', { length: 64 }),
-  icon: varchar('icon', { length: 50 }),
-  color: varchar('color', { length: 7 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-})
+export const workspaces = pgTable(
+  'workspaces',
+  {
+    id: uuid('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(),
+    createdByUserId: uuid('created_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    isArchived: boolean('is_archived').notNull().default(false),
+    managedByUserId: uuid('managed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    locale: varchar('locale', { length: 10 }),
+    timezone: varchar('timezone', { length: 64 }),
+    icon: varchar('icon', { length: 50 }),
+    color: varchar('color', { length: 7 }),
+    /** Sessions shorter than this many minutes (1 to 60) are hidden in the agenda and the Sessions report; null shows all (#22). */
+    minSessionMinutes: smallint('min_session_minutes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [check('ck_workspaces_min_session_minutes', sql`${t.minSessionMinutes} BETWEEN 1 AND 60`)],
+)
 
 export const files = pgTable(
   'files',

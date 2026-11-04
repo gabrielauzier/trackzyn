@@ -50,6 +50,13 @@
       "when": 1793801710123,
       "tag": "0006_session_list_follows_task",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793806561397,
+      "tag": "0007_workspace_min_session",
+      "breakpoints": true
     }
   ]
 }

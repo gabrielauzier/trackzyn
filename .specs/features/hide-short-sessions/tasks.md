@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/hide-short-sessions/design.md`
-**Status**: Draft
+**Status**: In Progress
 **Pré-requisito**: a Agenda (#19), na branch `feat/agenda`, de onde esta feature parte.
 
 ---
@@ -74,10 +74,10 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Um workspace gravado antes da migration lê `min_session_minutes = null` depois dela
-- [ ] O banco recusa 0 e 61 e aceita 1 e 60
-- [ ] `backend-node/src/db/schema.ts` tem `minSessionMinutes`
-- [ ] Gate check passes: Full (backend)
+- [x] Um workspace gravado antes da migration lê `min_session_minutes = null` depois dela
+- [x] O banco recusa 0 e 61 e aceita 1 e 60
+- [x] `backend-node/src/db/schema.ts` tem `minSessionMinutes`
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full
