@@ -781,10 +781,10 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] O painel oferece, no grupo da lista, uma tarefa Concluída que a rota devolve e que nenhum quadro mostra
-- [ ] O painel não lê `lists.board`
-- [ ] Não há `SPEC_DEVIATION` de AGENDA-16 em `session-panel.tsx`
-- [ ] Gate check passes: Full (frontend)
+- [x] O painel oferece, no grupo da lista, uma tarefa Concluída que a rota devolve e que nenhum quadro mostra
+- [x] O painel não lê `lists.board`
+- [x] Não há `SPEC_DEVIATION` de AGENDA-16 em `session-panel.tsx`
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

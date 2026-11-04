@@ -6,6 +6,7 @@ import type {
   AccessToken,
   AgendaSession,
   AgendaSessionChanges,
+  AgendaTask,
   AgendaSessionInput,
   AccessTokenScope,
   CreatedAccessToken,
@@ -468,6 +469,11 @@ export const sessions = {
   },
   remove: async (id: string): Promise<void> => {
     await api.delete(`/sessions/${id}`)
+  },
+  /** The tasks a session can go to: every column of the active lists, Done of any date included. */
+  tasks: async (): Promise<{ tasks: AgendaTask[] }> => {
+    const { data } = await api.get('/sessions/tasks')
+    return data
   },
 }
 

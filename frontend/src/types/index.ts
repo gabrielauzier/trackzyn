@@ -328,6 +328,17 @@ export type AgendaSessionInput =
   | { kind: 'task'; task_id: string; started_at: string; ended_at: string }
   | { kind: 'break'; list_id: string; started_at: string; ended_at: string }
 
+/** A task a session can go to, with its list. */
+export interface AgendaTask {
+  id: string
+  title: string
+  list_id: string
+  list_name: string
+  /** Index 1..8 into the `--chart-N` palette. */
+  list_color: number
+  column: 'backlog' | 'this_week' | 'today' | 'done'
+}
+
 /** What an edit may change; absent fields keep their value. */
 export interface AgendaSessionChanges {
   started_at?: string

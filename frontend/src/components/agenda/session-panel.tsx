@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
 import { formatDuration } from '@/components/board/format-duration'
@@ -18,12 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { lists as listsApi } from '@/lib/api'
+import { lists as listsApi, sessions as sessionsApi } from '@/lib/api'
 import { clockTime, minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES, dayOf, zonedInstant } from '@/lib/agenda/layout'
 import { sessionErrorMessage, type SessionPreview } from '@/lib/agenda/use-agenda'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, AgendaSessionInput, Board } from '@/types'
+import type { AgendaSession, AgendaSessionInput } from '@/types'
 
 /** The day and the start and end of the session, in minutes since that day's local midnight. */
 export interface PanelTimes {
@@ -61,15 +61,6 @@ interface TaskGroup {
   tasks: TaskOption[]
 }
 
-/** The tasks of a board in every column it shows. */
-function boardTasks(board: Board): TaskOption[] {
-  const { backlog, this_week, today, done } = board.columns
-  // SPEC_DEVIATION: AGENDA-16 asks for every task of the active lists, Done included; the board only
-  // carries the tasks done today and on the last day before, so older done tasks are not offered.
-  // Reason: no API lists every task of a list, and this batch adds no backend route.
-  return [...today.tasks, ...this_week.tasks, ...backlog.tasks, ...done.days.flatMap((day) => day.tasks)]
-}
-
 const parseTime = (value: string): number | null => {
   const match = /^(\d{2}):(\d{2})$/.exec(value)
   return match ? Number(match[1]) * 60 + Number(match[2]) : null
@@ -100,14 +91,13 @@ export function SessionPanel({
 
   const active = useQuery({ queryKey: ['lists', { archived: false }], queryFn: () => listsApi.list({ archived: false }) })
   const activeLists = useMemo(() => active.data?.lists ?? [], [active.data])
-  const boards = useQueries({
-    queries: activeLists.map((list) => ({ queryKey: ['lists', list.id, 'board'], queryFn: () => listsApi.board(list.id) })),
-  })
-  const groups: TaskGroup[] = activeLists.map((list, index) => ({
+  // Every task of the active lists, in any column, Done of any date included (AGENDA-16).
+  const choices = useQuery({ queryKey: ['lists', 'session-tasks'], queryFn: () => sessionsApi.tasks() })
+  const groups: TaskGroup[] = activeLists.map((list) => ({
     list,
-    tasks: boards[index]?.data ? boardTasks(boards[index].data) : [],
+    tasks: (choices.data?.tasks ?? []).filter((task) => task.list_id === list.id).map(({ id, title }) => ({ id, title })),
   }))
-  // The task of an edited session stays among the choices even when the boards no longer show it.
+  // The task of an edited session stays among the choices even when it is no longer offered.
   if (editing?.kind === 'task' && editing.task_id && !groups.some((group) => group.tasks.some((task) => task.id === editing.task_id))) {
     const own = { id: editing.task_id, title: editing.task_title ?? '' }
     const group = groups.find((item) => item.list.id === editing.list_id)

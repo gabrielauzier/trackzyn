@@ -9,7 +9,7 @@ import AgendaPage from './agenda'
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
-  sessions: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  sessions: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), tasks: vi.fn() },
 }))
 
 const workspace = vi.hoisted(() => ({ canWrite: true }))
@@ -54,6 +54,9 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-11-04T17:07:00.000Z'))
   vi.mocked(lists.list).mockResolvedValue({ timezone: SP, lists: [card] })
   vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday] })
+  vi.mocked(sessions.tasks).mockResolvedValue({
+    tasks: [{ id: 't1', title: 'Write the report', list_id: WORK, list_name: 'Work', list_color: 3, column: 'today' }],
+  })
 })
 
 afterEach(async () => {

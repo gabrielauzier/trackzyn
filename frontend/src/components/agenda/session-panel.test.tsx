@@ -5,12 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { lists, sessions } from '@/lib/api'
 import { newSessionTimes } from '@/lib/agenda/layout'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession, AgendaSessionInput, Board, ListCard, TaskCardView } from '@/types'
+import type { AgendaSession, AgendaSessionInput, AgendaTask, ListCard } from '@/types'
 import { SessionDetails, SessionPanel, type PanelTimes } from './session-panel'
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
-  sessions: { create: vi.fn() },
+  sessions: { create: vi.fn(), tasks: vi.fn() },
 }))
 
 const SP = 'America/Sao_Paulo'
@@ -31,30 +31,17 @@ const card = (id: string, name: string, color: number): ListCard => ({
   preview: [],
 })
 
-const task = (id: string, title: string): TaskCardView => ({
+const task = (id: string, title: string, list: ListCard, column: AgendaTask['column'] = 'today'): AgendaTask => ({
   id,
   title,
-  estimate_minutes: null,
-  spent_seconds: 0,
-  position: 1,
-  subtasks: { done: 0, total: 0 },
-  created_via: null,
+  list_id: list.id,
+  list_name: list.name,
+  list_color: list.color,
+  column,
 })
 
-function board(listId: string, name: string, today: TaskCardView[], done: TaskCardView[] = []): Board {
-  const column = { tasks: [], estimate_minutes: 0 }
-  return {
-    list: { id: listId, name, color: 3 },
-    timezone: SP,
-    pending: { count: today.length, estimate_minutes: 0 },
-    columns: {
-      backlog: column,
-      this_week: { ...column, done: 0, total: 0 },
-      today: { tasks: today, estimate_minutes: 0, done: 0, total: today.length },
-      done: { today_count: done.length, days: done.length ? [{ date: '2026-11-04', tasks: done }] : [] },
-    },
-  }
-}
+const WORK = card('work', 'Work', 3)
+const HOME = card('home', 'Home', 5)
 
 const existing: AgendaSession = {
   id: 's1',
@@ -108,12 +95,10 @@ async function chooseTask(user: ReturnType<typeof renderWithProviders>['user'], 
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(lists.list).mockResolvedValue({ timezone: SP, lists: [card('work', 'Work', 3), card('home', 'Home', 5)] })
-  vi.mocked(lists.board).mockImplementation(async (id) =>
-    id === 'work'
-      ? board('work', 'Work', [task('t1', 'Write the report')], [task('t2', 'Send the invoice')])
-      : board('home', 'Home', [task('t3', 'Fix the sink')]),
-  )
+  vi.mocked(lists.list).mockResolvedValue({ timezone: SP, lists: [WORK, HOME] })
+  vi.mocked(sessions.tasks).mockResolvedValue({
+    tasks: [task('t1', 'Write the report', WORK), task('t2', 'Send the invoice', WORK, 'done'), task('t3', 'Fix the sink', HOME)],
+  })
 })
 
 describe('SessionPanel (new)', () => {
@@ -140,6 +125,15 @@ describe('SessionPanel (new)', () => {
     expect(work).toHaveTextContent('Write the report')
     expect(work).toHaveTextContent('Send the invoice')
     expect(screen.getByRole('group', { name: 'Home' })).toHaveTextContent('Fix the sink')
+  })
+
+  it('offers a done task that no board shows any more, from the tasks the API offers (AGENDA-16)', async () => {
+    // Done 10 days ago: the board keeps only today and the last day before.
+    vi.mocked(sessions.tasks).mockResolvedValue({ tasks: [task('t4', 'Ship the release', WORK, 'done')] })
+    const { user } = renderWithProviders(<Panel initial={dragged} />)
+    await user.click(screen.getByRole('combobox', { name: 'Task' }))
+    expect(await screen.findByRole('group', { name: 'Work' })).toHaveTextContent('Ship the release')
+    expect(lists.board).not.toHaveBeenCalled()
   })
 
   it('offers the list of a break, the default one chosen (AGENDA-16)', async () => {
