@@ -771,6 +771,7 @@
     "list": "List",
     "allLists": "All lists",
     "loadError": "Could not load the agenda.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "goToToday": "Go to today"
   }
 }

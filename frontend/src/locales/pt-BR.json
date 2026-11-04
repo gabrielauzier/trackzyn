@@ -771,6 +771,7 @@
     "list": "Lista",
     "allLists": "Todas as listas",
     "loadError": "Não foi possível carregar a agenda.",
-    "retry": "Tentar de novo"
+    "retry": "Tentar de novo",
+    "goToToday": "Ir para hoje"
   }
 }

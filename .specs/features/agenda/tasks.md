@@ -517,9 +517,9 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Escolher 12 de novembro chama `onPick` com `2026-11-12` e fecha o calendário
-- [ ] `Ir para hoje` chama `onPick` com hoje
-- [ ] Gate check passes: Quick
+- [x] Escolher 12 de novembro chama `onPick` com `2026-11-12` e fecha o calendário
+- [x] `Ir para hoje` chama `onPick` com hoje
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
