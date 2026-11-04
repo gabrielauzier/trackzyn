@@ -129,13 +129,13 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Com o mínimo em 5: some a sessão de 4 min 59 s, fica a de 5 min, nos dois sentidos da borda
-- [ ] Uma sessão de 3 h que atravessa a meia-noite com 2 min no segundo dia aparece nos dois dias
-- [ ] A sessão aberta de 1 min aparece
-- [ ] Um dia em que todas as sessões somem não aparece em `days`
-- [ ] `overview` dá os mesmos números com o mínimo ligado e desligado
-- [ ] Os testes atuais da aba Sessões passam sem mudança (mínimo desligado)
-- [ ] Gate check passes: Full (backend)
+- [x] Com o mínimo em 5: some a sessão de 4 min 59 s, fica a de 5 min, nos dois sentidos da borda
+- [x] Uma sessão de 3 h que atravessa a meia-noite com 2 min no segundo dia aparece nos dois dias
+- [x] A sessão aberta de 1 min aparece
+- [x] Um dia em que todas as sessões somem não aparece em `days`
+- [x] `overview` dá os mesmos números com o mínimo ligado e desligado
+- [x] Os testes atuais da aba Sessões passam sem mudança (mínimo desligado)
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

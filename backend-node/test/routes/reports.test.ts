@@ -118,6 +118,26 @@ describe('GET /api/reports/sessions', () => {
     expect(viewers.json()).toEqual({ days: [] })
   })
 
+  it('HIDE-19 leaves out a 2-minute session once the owner sets the workspace minimum to 5, and keeps the 1-hour one', async () => {
+    const { owner, workspaceId, listId } = await setup()
+    const task = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Logged', column: 'today' })).json().id as string
+    const at = (hoursAgo: number, minutes = 0) => new Date(Date.now() - hoursAgo * 3_600_000 + minutes * 60_000).toISOString()
+    const log = async (started_at: string, ended_at: string) =>
+      (await call('POST', '/api/sessions', owner.token, workspaceId, { kind: 'task', task_id: task, started_at, ended_at })).json().id as string
+    const short = await log(at(5), at(5, 2))
+    const long = await log(at(4), at(3))
+    const listed = async () =>
+      ((await call('GET', `/api/reports/sessions?${period(date(-1), date(1))}`, owner.token, workspaceId)).json().days as Array<{
+        sessions: Array<{ id: string }>
+      }>).flatMap((day) => day.sessions.map((session) => session.id))
+
+    expect(await listed()).toEqual(expect.arrayContaining([short, long]))
+    await t.app.inject({ method: 'PATCH', url: `/api/workspaces/${workspaceId}`, headers: bearer(owner.token), payload: { min_session_minutes: 5 } })
+    const after = await listed()
+    expect(after).toContain(long)
+    expect(after).not.toContain(short)
+  })
+
   it('REPORT-13 answers 422 for a reversed period or 367 days and 200 for 366; 404 for a list of another workspace', async () => {
     const { owner, workspaceId, stranger, strangerWorkspaceId } = await setup()
     const get = (query: string) => call('GET', `/api/reports/sessions?${query}`, owner.token, workspaceId)

@@ -22,15 +22,22 @@ export interface SessionsReport {
   days: Array<{ date: string; sessions: SessionRow[] }>
 }
 
-/** Every session of the user in the period, with the same settlement, bounds and filter as the overview (REPORT-20). */
+/**
+ * Every session of the user in the period, with the same settlement, bounds and filter as the overview (REPORT-20).
+ * With a workspace minimum, a closed session shorter than it, measured start to end, is left out on every day it
+ * touches; the open session always stays (HIDE-19 to HIDE-22).
+ */
 export async function sessionsReport(
   tx: Database,
   userId: string,
-  workspace: Pick<Workspace, 'id' | 'timezone'>,
+  workspace: Pick<Workspace, 'id' | 'timezone'> & { minSessionMinutes?: number | null },
   filter: ReportFilter,
   now: Date,
 ): Promise<SessionsReport> {
   const scope = await reportScope(tx, userId, workspace, filter, now)
+  const minimum = workspace.minSessionMinutes ?? null
+  const longEnough =
+    minimum === null ? sql`` : sql`AND (p.ended_at IS NULL OR p.ended_at - p.started_at >= make_interval(mins => ${minimum}))`
   const found = (
     (await tx.execute(sql`
       WITH s AS (${clippedSessions(scope, userId, workspace.id)}),
@@ -45,7 +52,7 @@ export async function sessionsReport(
              CASE WHEN p.pz = coalesce(p.ended_at, ${scope.now}) THEN p.ended_at ELSE p.pz END AS ended_at,
              floor(extract(epoch FROM p.pz - p.pa))::int AS seconds
       FROM pieces p JOIN lists l ON l.id = p.list_id LEFT JOIN tasks t ON t.id = p.task_id
-      WHERE p.pz > p.pa OR p.z = p.a
+      WHERE (p.pz > p.pa OR p.z = p.a) ${longEnough}
       ORDER BY p.pa DESC, p.id`)) as unknown as {
       rows: Array<Omit<SessionRow, 'started_at' | 'ended_at'> & { date: string; started_at: string | Date; ended_at: string | Date | null }>
     }
