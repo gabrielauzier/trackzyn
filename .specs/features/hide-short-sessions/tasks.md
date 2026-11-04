@@ -159,11 +159,11 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Falso com o mínimo nulo, qualquer que seja a duração
-- [ ] Falso para a sessão aberta (`ended_at: null`), mesmo de segundos
-- [ ] Com o mínimo em 5: verdadeiro para 4 min 59 s, falso para exatamente 5 min e para 6 min
-- [ ] `frontend/src/types/index.ts` tem `min_session_minutes: number | null` em `Workspace`
-- [ ] Gate check passes: Quick
+- [x] Falso com o mínimo nulo, qualquer que seja a duração
+- [x] Falso para a sessão aberta (`ended_at: null`), mesmo de segundos
+- [x] Com o mínimo em 5: verdadeiro para 4 min 59 s, falso para exatamente 5 min e para 6 min
+- [x] `frontend/src/types/index.ts` tem `min_session_minutes: number | null` em `Workspace`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
