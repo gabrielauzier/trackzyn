@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { type SQL, and, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type FocusSessionKind, type FocusSessionOrigin, type Workspace, focusSessions, lists, users } from '../db/schema.ts'
+import { type FocusSessionKind, type FocusSessionOrigin, type TaskColumn, type Workspace, focusSessions, lists, users } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { FUTURE_TOLERANCE_MS, invalidTime } from './focus.ts'
 import { settle } from './focus-settle.ts'
@@ -238,4 +238,27 @@ export async function deleteSession(db: Database, actor: SessionActor, workspace
     await endedSession(tx, actor, workspace.id, id)
     await tx.delete(focusSessions).where(eq(focusSessions.id, id))
   })
+}
+
+/** A task a session can go to, with its list (AGENDA-16). */
+export interface SessionTask {
+  id: string
+  title: string
+  list_id: string
+  list_name: string
+  list_color: number
+  column: TaskColumn
+}
+
+/**
+ * The tasks of the active lists of the workspace in every column, Done of any date included, for the
+ * task picker of the agenda panel (AGENDA-16). In list order, then in board order.
+ */
+export async function listSessionTasks(db: Database, workspace: Pick<Workspace, 'id'>): Promise<SessionTask[]> {
+  const found = (await db.execute(sql`
+    SELECT t.id, t.title, t.list_id, l.name AS list_name, l.color AS list_color, t."column"
+    FROM tasks t JOIN lists l ON l.id = t.list_id
+    WHERE l.workspace_id = ${workspace.id} AND NOT l.is_archived
+    ORDER BY l.position, l.created_at, t.position, t.created_at`)) as unknown as { rows: SessionTask[] }
+  return found.rows
 }

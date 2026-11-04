@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
-import { createSession, deleteSession, listSessions, updateSession } from '../services/sessions.ts'
+import { createSession, deleteSession, listSessionTasks, listSessions, updateSession } from '../services/sessions.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 import { periodQuery, toFilter } from './reports.ts'
 
@@ -25,6 +25,15 @@ const sessionSchema = z.object({
   list_color: z.number(),
   started_at: z.string(),
   ended_at: z.string().nullable(),
+})
+
+const sessionTaskSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  list_id: z.string(),
+  list_name: z.string(),
+  list_color: z.number(),
+  column: z.enum(['backlog', 'this_week', 'today', 'done']),
 })
 
 const createBody = z.discriminatedUnion('kind', [
@@ -61,6 +70,13 @@ export function sessionRoutes(ctx: AppContext) {
       async (request) => ({
         sessions: await listSessions(ctx.db, actor(request), request.workspace.workspace, toFilter(request.query), new Date()),
       }),
+    )
+
+    // The tasks the panel offers: every column of the active lists, Done of any date (AGENDA-16).
+    typed.get(
+      '/api/sessions/tasks',
+      { schema: { response: { 200: z.object({ tasks: z.array(sessionTaskSchema) }) } }, preValidation: reading },
+      async (request) => ({ tasks: await listSessionTasks(ctx.db, request.workspace.workspace) }),
     )
 
     typed.post(

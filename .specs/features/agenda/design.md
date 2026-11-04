@@ -164,6 +164,7 @@ interface AgendaSession {
 | Route | In | Out | Status | Requirements |
 | ----- | -- | --- | ------ | ------------ |
 | `GET /api/sessions` | `from`, `to` (datas), `list_id?` | `{ sessions: AgendaSession[] }` | `200`, `422` (mais de 42 dias, `to` antes de `from`) | AGENDA-01 a 11, 45 |
+| `GET /api/sessions/tasks` | - | `{ tasks: { id, title, list_id, list_name, list_color, column }[] }`: as tarefas das listas ativas do workspace, em qualquer coluna, Concluídas de qualquer data inclusive | `200` (qualquer membro); fechada a token (AD-007) | AGENDA-16 |
 | `POST /api/sessions` | `kind`, `task_id` (tarefa) ou `list_id` (intervalo), `started_at`, `ended_at` | `AgendaSession` | `201`, `403` viewer, `404` tarefa, `422` horário | AGENDA-20, 23 a 25, 44 |
 | `PATCH /api/sessions/:id` | `started_at?`, `ended_at?`, `task_id?`, `list_id?` | `AgendaSession` | `200`, `403`, `404` sessão ou tarefa, `409 session_running`, `422` | AGENDA-29 a 31, 33, 34 |
 | `DELETE /api/sessions/:id` | - | - | `204`, `403`, `404`, `409 session_running` | AGENDA-32 a 34 |

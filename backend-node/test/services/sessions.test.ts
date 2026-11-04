@@ -8,7 +8,7 @@ import { HttpError } from '../../src/http/http-error.ts'
 import { spentSeconds } from '../../src/services/focus-settle.ts'
 import { isAwaitingExtend } from '../../src/services/focus-state.ts'
 import { overview } from '../../src/services/reports.ts'
-import { type AgendaFilter, createSession, deleteSession, listSessions, updateSession } from '../../src/services/sessions.ts'
+import { type AgendaFilter, createSession, deleteSession, listSessionTasks, listSessions, updateSession } from '../../src/services/sessions.ts'
 import { migratedDb } from '../support/db.ts'
 import { seedFocus } from '../support/focus.ts'
 
@@ -501,5 +501,38 @@ describe('updateSession and deleteSession', () => {
       SP('2026-11-03T14:00:00').toISOString(),
       SP('2026-11-03T15:00:00').toISOString(),
     ])
+  })
+})
+
+describe('listSessionTasks (AGENDA-16)', () => {
+  it('offers the tasks of the active lists in every column, a task done 10 days ago included', async () => {
+    const today = await seed.addTask({ title: 'Write', column: 'today' })
+    const backlog = await seed.addTask({ title: 'Someday', column: 'backlog' })
+    const week = await seed.addTask({ title: 'This week', column: 'this_week' })
+    const old = await seed.addTask({ title: 'Shipped', column: 'done' })
+    await db.update(tasks).set({ completedAt: new Date(NOW.getTime() - 10 * 24 * 3600_000) }).where(eq(tasks.id, old))
+    const home = await seed.addList()
+    const sink = await seed.addTask({ title: 'Fix the sink', listId: home })
+
+    const found = await listSessionTasks(db, workspace)
+
+    const work = { list_id: seed.listId, list_name: 'Work', list_color: 1 }
+    expect(found).toEqual([
+      { id: today, title: 'Write', ...work, column: 'today' },
+      { id: backlog, title: 'Someday', ...work, column: 'backlog' },
+      { id: week, title: 'This week', ...work, column: 'this_week' },
+      { id: old, title: 'Shipped', ...work, column: 'done' },
+      { id: sink, title: 'Fix the sink', list_id: home, list_name: 'Other', list_color: 2, column: 'today' },
+    ])
+  })
+
+  it('leaves out the tasks of an archived list and of another workspace', async () => {
+    const kept = await seed.addTask({ title: 'Write' })
+    const archivedList = await seed.addList()
+    await seed.addTask({ title: 'Old', listId: archivedList })
+    await db.update(lists).set({ isArchived: true }).where(eq(lists.id, archivedList))
+    await otherWorkspaceTask()
+
+    expect((await listSessionTasks(db, workspace)).map((task) => task.id)).toEqual([kept])
   })
 })

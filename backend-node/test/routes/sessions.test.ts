@@ -110,6 +110,31 @@ describe('GET /api/sessions', () => {
   })
 })
 
+describe('GET /api/sessions/tasks (AGENDA-16)', () => {
+  it('answers the tasks of the active lists to any member, a done one included', async () => {
+    const done = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Shipped', column: 'done' })).json().id as string
+
+    for (const token of [owner.token, viewer.token]) {
+      const found = await call('GET', '/api/sessions/tasks', token, workspaceId)
+      expect(found.statusCode).toBe(200)
+      expect(found.json()).toEqual({
+        tasks: [
+          { id: taskId, title: 'Write', list_id: listId, list_name: 'Work', list_color: 3, column: 'today' },
+          { id: done, title: 'Shipped', list_id: listId, list_name: 'Work', list_color: 3, column: 'done' },
+        ],
+      })
+    }
+  })
+
+  it('answers only the tasks of the workspace asked for', async () => {
+    const theirList = (await call('POST', '/api/lists', stranger.token, strangerWorkspaceId, { name: 'Theirs', color: 1 })).json().id as string
+    await call('POST', '/api/tasks', stranger.token, strangerWorkspaceId, { list_id: theirList, title: 'X', column: 'today' })
+
+    const found = await call('GET', '/api/sessions/tasks', owner.token, workspaceId)
+    expect((found.json().tasks as Array<{ id: string }>).map((task) => task.id)).toEqual([taskId])
+  })
+})
+
 describe('POST /api/sessions', () => {
   it('AGENDA-20 AGENDA-21 AGENDA-22 AGENDA-46 answers 201 with origin manual; focus and reports count it', async () => {
     const created = await create(75, 120)

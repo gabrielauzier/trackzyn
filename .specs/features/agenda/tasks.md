@@ -753,11 +753,11 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] Uma tarefa concluída há 10 dias vem na resposta com `column: 'done'`
-- [ ] Tarefas de lista arquivada e de outro workspace não vêm
-- [ ] `GET /api/sessions/tasks` responde 200 a um viewer e 403 `Route not available for tokens` a um token
-- [ ] `design.md` lista a rota na tabela `Surface`
-- [ ] Gate check passes: Full (backend)
+- [x] Uma tarefa concluída há 10 dias vem na resposta com `column: 'done'`
+- [x] Tarefas de lista arquivada e de outro workspace não vêm
+- [x] `GET /api/sessions/tasks` responde 200 a um viewer e 403 `Route not available for tokens` a um token
+- [x] `design.md` lista a rota na tabela `Surface`
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

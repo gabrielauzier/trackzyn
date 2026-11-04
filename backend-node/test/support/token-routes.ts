@@ -28,6 +28,7 @@ export const MCP_ROUTES: ReadonlyArray<{ method: string; url: string; scope: 'an
 /** The agenda routes declare no scope, so a token gets 403 on them (AD-007, Out of Scope of the agenda). */
 export const CLOSED_AGENDA_ROUTES: ReadonlyArray<{ method: string; url: string }> = [
   { method: 'GET', url: '/api/sessions' },
+  { method: 'GET', url: '/api/sessions/tasks' },
   { method: 'POST', url: '/api/sessions' },
   { method: 'PATCH', url: '/api/sessions/:id' },
   { method: 'DELETE', url: '/api/sessions/:id' },
