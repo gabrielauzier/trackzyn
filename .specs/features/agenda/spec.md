@@ -164,7 +164,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-01 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-02 | P1: Ver as sessões da semana | Tasks | In Tasks |
 | AGENDA-03 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-04 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-04 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-05 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-06 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-07 | P1: Ver as sessões da semana | Tasks | Implementing |

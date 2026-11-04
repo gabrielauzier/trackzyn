@@ -734,6 +734,9 @@
     "errors": {
       "future": "A sessão não pode terminar no futuro.",
       "duration": "Use de 1 minuto a 24 horas."
-    }
+    },
+    "break": "Intervalo",
+    "now": "agora",
+    "range": "{{start}} – {{end}}"
   }
 }

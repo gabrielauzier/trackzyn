@@ -354,9 +354,9 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Uma sessão de 13:01 a 13:26 mostra `13:01 – 13:26`
-- [ ] Um intervalo tem borda tracejada; a sessão aberta tem `agora`
-- [ ] Gate check passes: Quick
+- [x] Uma sessão de 13:01 a 13:26 mostra `13:01 – 13:26`
+- [x] Um intervalo tem borda tracejada; a sessão aberta tem `agora`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
