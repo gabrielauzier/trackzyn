@@ -230,6 +230,8 @@ export interface FocusState {
     estimate_minutes: number | null
     spent_seconds: number
     awaiting_extend: boolean
+    /** Its subtasks done and in all; absent in an answer the server stored before the field existed, read as none. */
+    subtasks?: { done: number; total: number }
   } | null
   /** Totals of Today and its pending tasks in board order, for applying actions offline (SYNC-05). */
   today: {

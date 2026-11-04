@@ -1,6 +1,6 @@
-import { and, desc, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type FocusSession, type Workspace, focusSessions, tasks, workspaces } from '../db/schema.ts'
+import { type FocusSession, type Workspace, focusSessions, subtasks, tasks, workspaces } from '../db/schema.ts'
 import { buildBoard } from './board.ts'
 import { settle, spentSeconds } from './focus-settle.ts'
 
@@ -24,6 +24,8 @@ export interface FocusTaskView {
   estimate_minutes: number | null
   spent_seconds: number
   awaiting_extend: boolean
+  /** Its subtasks done and in all, as the board card counts them. */
+  subtasks: { done: number; total: number }
 }
 
 /** A pending task of Today, as the client needs it to apply skip, complete or start offline. */
@@ -61,6 +63,23 @@ export async function openSession(tx: Database, userId: string): Promise<FocusSe
     .where(and(eq(focusSessions.userId, userId), isNull(focusSessions.endedAt)))
     .limit(1)
   return found ?? null
+}
+
+/** The subtasks done and in all of each task of `taskIds`, in one grouped query; a task without any counts 0/0. */
+async function subtaskCounts(tx: Database, taskIds: string[]): Promise<Map<string, { done: number; total: number }>> {
+  const counts = new Map<string, { done: number; total: number }>()
+  if (taskIds.length === 0) return counts
+  const rows = await tx
+    .select({
+      taskId: subtasks.taskId,
+      done: sql<number>`count(*) filter (where ${subtasks.done})::int`,
+      total: sql<number>`count(*)::int`,
+    })
+    .from(subtasks)
+    .where(inArray(subtasks.taskId, taskIds))
+    .groupBy(subtasks.taskId)
+  for (const row of rows) counts.set(row.taskId, { done: row.done, total: row.total })
+  return counts
 }
 
 /**
@@ -101,6 +120,8 @@ export async function readFocusState(
 
   let task: FocusTaskView | null = null
   const focusedId = session?.kind === 'task' ? session.taskId : (today.tasks[0]?.id ?? null)
+  const counts = await subtaskCounts(tx, [...new Set([...(focusedId ? [focusedId] : []), ...today.tasks.map((card) => card.id)])])
+  const countOf = (id: string) => counts.get(id) ?? { done: 0, total: 0 }
   if (focusedId !== null) {
     const [row] = await tx.select().from(tasks).where(eq(tasks.id, focusedId))
     if (row) {
@@ -111,6 +132,7 @@ export async function readFocusState(
         estimate_minutes: row.estimateMinutes,
         spent_seconds: spent,
         awaiting_extend: await isAwaitingExtend(tx, userId, row, spent),
+        subtasks: countOf(row.id),
       }
     }
   }
@@ -123,6 +145,7 @@ export async function readFocusState(
       estimate_minutes: card.estimate_minutes,
       spent_seconds: card.spent_seconds,
       awaiting_extend: await isAwaitingExtend(tx, userId, { id: card.id, estimateMinutes: card.estimate_minutes }, card.spent_seconds),
+      subtasks: countOf(card.id),
       position: card.position,
     })
   }

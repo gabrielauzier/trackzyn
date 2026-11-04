@@ -40,14 +40,14 @@ describe('readFocusState', () => {
     expect(state).toEqual({
       server_now: at(T0, 20).toISOString(),
       session: null,
-      task: { id: first, title: 'first', estimate_minutes: 60, spent_seconds: 600, awaiting_extend: false },
+      task: { id: first, title: 'first', estimate_minutes: 60, spent_seconds: 600, awaiting_extend: false, subtasks: { done: 0, total: 0 } },
       today: {
         pending: 2,
         done: 1,
         estimate_minutes: 90,
         tasks: [
-          { id: first, title: 'first', estimate_minutes: 60, spent_seconds: 600, awaiting_extend: false, position: 0 },
-          { id: second, title: 'second', estimate_minutes: 30, spent_seconds: 0, awaiting_extend: false, position: 1 },
+          { id: first, title: 'first', estimate_minutes: 60, spent_seconds: 600, awaiting_extend: false, subtasks: { done: 0, total: 0 }, position: 0 },
+          { id: second, title: 'second', estimate_minutes: 30, spent_seconds: 0, awaiting_extend: false, subtasks: { done: 0, total: 0 }, position: 1 },
         ],
       },
       stale: null,
@@ -71,7 +71,7 @@ describe('readFocusState', () => {
       deadline_at: at(T0, 30).toISOString(),
       planned_seconds: null,
     })
-    expect(state.task).toEqual({ id: second, title: 'second', estimate_minutes: 30, spent_seconds: 60, awaiting_extend: false })
+    expect(state.task).toEqual({ id: second, title: 'second', estimate_minutes: 30, spent_seconds: 60, awaiting_extend: false, subtasks: { done: 0, total: 0 } })
   })
 
   it('during a break, shows the break and the first pending task of Today', async () => {
@@ -142,9 +142,9 @@ describe('readFocusState', () => {
     const state = await read(at(T0, 45))
 
     expect(state.today.tasks).toEqual([
-      { id: used, title: 'used', estimate_minutes: 30, spent_seconds: 1800, awaiting_extend: true, position: 0 },
-      { id: counting, title: 'counting', estimate_minutes: null, spent_seconds: 300, awaiting_extend: false, position: 1 },
-      { id: fresh, title: 'fresh', estimate_minutes: 45, spent_seconds: 0, awaiting_extend: false, position: 2 },
+      { id: used, title: 'used', estimate_minutes: 30, spent_seconds: 1800, awaiting_extend: true, subtasks: { done: 0, total: 0 }, position: 0 },
+      { id: counting, title: 'counting', estimate_minutes: null, spent_seconds: 300, awaiting_extend: false, subtasks: { done: 0, total: 0 }, position: 1 },
+      { id: fresh, title: 'fresh', estimate_minutes: 45, spent_seconds: 0, awaiting_extend: false, subtasks: { done: 0, total: 0 }, position: 2 },
     ])
   })
 

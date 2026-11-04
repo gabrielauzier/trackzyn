@@ -39,6 +39,8 @@ const taskViewSchema = z.object({
   estimate_minutes: z.number().nullable(),
   spent_seconds: z.number(),
   awaiting_extend: z.boolean(),
+  // Always read now; only an answer stored before the field existed (resent `action_id`) lacks it.
+  subtasks: z.object({ done: z.number(), total: z.number() }).optional(),
 })
 
 const focusStateSchema = z.object({

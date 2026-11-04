@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
+import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { type User, completedBy, inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, createTestApp } from '../support/test-app.ts'
+import { focusActions } from '../../src/db/schema.ts'
 
 let t: TestApp
 let call: ReturnType<typeof inWorkspace>
@@ -87,6 +89,54 @@ describe('GET /api/focus', () => {
     expect(foreign.statusCode).toBe(404)
     expect(foreign.json()).toMatchObject({ detail: 'List not found' })
     expectServerNow(foreign.json())
+  })
+})
+
+describe('focus state subtasks', () => {
+  it('focus state carries the subtask counts', async () => {
+    const add = async (taskId: string, title: string) =>
+      (await call('POST', `/api/tasks/${taskId}/subtasks`, owner.token, workspaceId, { title })).json().id as string
+    const first = await add(taskA, 'one')
+    await add(taskA, 'two')
+    await add(taskA, 'three')
+    await call('PATCH', `/api/subtasks/${first}`, owner.token, workspaceId, { done: true })
+
+    const read = (await call('GET', `/api/focus?list_id=${listId}`, owner.token, workspaceId)).json()
+    expect(read.task).toMatchObject({ id: taskA, subtasks: { done: 1, total: 3 } })
+    expect(read.today.tasks).toMatchObject([
+      { id: taskA, subtasks: { done: 1, total: 3 } },
+      { id: taskB, subtasks: { done: 0, total: 0 } },
+    ])
+
+    // The answers of the focus actions carry them too, with the counts of now.
+    await add(taskB, 'four')
+    const started = (await start(taskA)).json()
+    expect(started.task).toMatchObject({ id: taskA, subtasks: { done: 1, total: 3 } })
+    expect(started.today.tasks).toMatchObject([
+      { id: taskA, subtasks: { done: 1, total: 3 } },
+      { id: taskB, subtasks: { done: 0, total: 1 } },
+    ])
+
+    // The user's focus, read without a list, carries them as well.
+    const anywhere = (await call('GET', '/api/focus', owner.token, workspaceId)).json()
+    expect(anywhere.task).toMatchObject({ id: taskA, subtasks: { done: 1, total: 3 } })
+    expect(anywhere.today.tasks[1]).toMatchObject({ id: taskB, subtasks: { done: 0, total: 1 } })
+  })
+
+  it('a resent action whose stored answer predates the subtask counts still answers it', async () => {
+    const body = action({ task_id: taskA })
+    const first = (await post('start', body)).json()
+    // An answer stored before this field existed (focus_actions.response).
+    const { subtasks: _gone, ...oldTask } = first.task
+    const oldToday = { ...first.today, tasks: first.today.tasks.map(({ subtasks: _s, ...rest }: Record<string, unknown>) => rest) }
+    await t.ctx.db
+      .update(focusActions)
+      .set({ response: { ...first, task: oldTask, today: oldToday } })
+      .where(eq(focusActions.actionId, body.action_id as string))
+
+    const again = await post('start', body)
+    expect(again.statusCode).toBe(200)
+    expect(again.json().task).not.toHaveProperty('subtasks')
   })
 })
 
