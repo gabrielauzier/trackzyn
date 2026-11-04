@@ -7,7 +7,7 @@ import { i18n, renderWithProviders } from '@/test/utils'
 
 const TASK = 'task-a'
 
-function renderControls(display: Display, pending = 2) {
+function renderControls(display: Display, pending = 2, spentSeconds?: number) {
   const actions = {
     start: vi.fn(),
     pause: vi.fn(),
@@ -16,7 +16,7 @@ function renderControls(display: Display, pending = 2) {
     takeBreak: vi.fn(),
     endBreak: vi.fn(),
   }
-  const result = renderWithProviders(<FocusControls display={display} taskId={TASK} pending={pending} actions={actions} />)
+  const result = renderWithProviders(<FocusControls display={display} taskId={TASK} pending={pending} spentSeconds={spentSeconds} actions={actions} />)
   return { ...result, actions }
 }
 
@@ -81,6 +81,35 @@ describe('FocusControls', () => {
     await user.click(screen.getByRole('button', { name: 'End break' }))
 
     expect(actions.endBreak).toHaveBeenCalledTimes(1)
+  })
+
+  it('a task that never counted shows Start', async () => {
+    const { user, actions } = renderControls({ mode: 'paused', seconds: 2700 }, 2, 0)
+
+    // Start (with the play icon) first, then Skip and Complete.
+    expect(buttonNames().slice(0, 3)).toEqual(['Start', 'Skip', 'Complete'])
+    expect(screen.getByRole('button', { name: 'Start' }).querySelector('svg')).toHaveClass('lucide-play')
+    expect(screen.queryByRole('button', { name: 'Resume' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    expect(actions.start).toHaveBeenCalledWith(TASK)
+  })
+
+  it('a paused task with time spent shows Resume', () => {
+    renderControls({ mode: 'paused', seconds: 2100 }, 2, 600)
+
+    expect(buttonNames().slice(0, 3)).toEqual(['Resume', 'Skip', 'Complete'])
+    expect(screen.queryByRole('button', { name: 'Start' })).not.toBeInTheDocument()
+  })
+
+  it('reads Começar in Portuguese for a task that never counted', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      renderControls({ mode: 'paused', seconds: 2700 }, 2, 0)
+
+      expect(buttonNames()).toEqual(['Começar', 'Pular', 'Concluir', 'Intervalo'])
+    } finally {
+      await i18n.changeLanguage('en')
+    }
   })
 
   it('shows the controls in Portuguese', async () => {

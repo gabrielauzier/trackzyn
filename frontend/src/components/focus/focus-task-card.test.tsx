@@ -23,4 +23,23 @@ describe('FocusTaskCard (FOCUS-02, FOCUS-03, FOCUS-13)', () => {
 
     expect(screen.getByRole('timer')).toHaveTextContent('00:00:59')
   })
+
+  it('a task that never counted is dashed with the stopped badge', () => {
+    const { unmount } = renderWithProviders(<FocusTaskCard title="DEV-1725" display={{ mode: 'paused', seconds: 2700 }} stopped />)
+
+    const card = screen.getByRole('timer').closest('[data-running]')!
+    expect(card).toHaveClass('border-dashed')
+    expect(screen.getByText('Timer stopped')).toBeInTheDocument()
+    // The estimate, in grey.
+    expect(screen.getByRole('timer')).toHaveTextContent('00:45:00')
+    expect(screen.getByRole('timer')).toHaveClass('text-muted-foreground')
+    unmount()
+
+    // A paused task that already counted keeps the solid contour, its time and no badge.
+    renderWithProviders(<FocusTaskCard title="DEV-1725" display={{ mode: 'paused', seconds: 2100 }} />)
+    const paused = screen.getByRole('timer').closest('[data-running]')!
+    expect(paused).not.toHaveClass('border-dashed')
+    expect(screen.queryByText('Timer stopped')).not.toBeInTheDocument()
+    expect(screen.getByRole('timer')).not.toHaveClass('text-muted-foreground')
+  })
 })

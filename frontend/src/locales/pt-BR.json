@@ -563,7 +563,8 @@
     "noteRedo": "Refazer",
     "renameSubtaskHint": "Clique duas vezes para renomear",
     "moveSubtaskUp": "Mover {{title}} para cima",
-    "moveSubtaskDown": "Mover {{title}} para baixo"
+    "moveSubtaskDown": "Mover {{title}} para baixo",
+    "openFocus": "Abrir o foco sem iniciar o cronômetro"
   },
   "focus": {
     "sounds": {
@@ -590,7 +591,8 @@
       "pause": "Pausar",
       "resume": "Retomar",
       "skip": "Pular",
-      "endBreak": "Encerrar intervalo"
+      "endBreak": "Encerrar intervalo",
+      "start": "Começar"
     },
     "elsewhere": {
       "title": "Você já está focando em outro dispositivo.",
@@ -632,7 +634,29 @@
     "widget": {
       "label": "Widget de foco",
       "notes": "Anotações",
-      "expand": "Expandir"
+      "expand": "Expandir",
+      "subtasks": "Subtarefas"
+    },
+    "card": {
+      "stopped": "Cronômetro parado"
+    },
+    "queue": {
+      "move": "Mover {{title}}",
+      "position": "{{title}}: posição {{position}} de {{total}}",
+      "cancelled": "Mover {{title}} foi cancelado",
+      "instructions": "Para levantar uma tarefa, aperte Espaço. Mova com as setas para cima e para baixo, aperte Espaço de novo para soltar ou Esc para cancelar.",
+      "dropToFocus": "Solte para focar nesta agora",
+      "backToTop": "{{title}} volta para o topo da fila.",
+      "backToTopWithTime": "{{title}} volta para o topo da fila, com {{spent}} já registrados.",
+      "subtaskCount_one": "{{count}} subtarefa",
+      "subtaskCount_other": "{{count}} subtarefas"
+    },
+    "subtasks": {
+      "title": "Subtarefas",
+      "summary": "Subtarefas · {{done}}/{{total}}",
+      "allDone": "Tudo feito por aqui.",
+      "completeTask": "Concluir tarefa",
+      "showAll": "Mostrar todas ({{total}})"
     }
   },
   "reports": {

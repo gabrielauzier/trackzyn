@@ -90,11 +90,15 @@ export default function FocusPage() {
   // Start once per list, on the first state the server answers. Coming from `Focar agora` on the
   // desktop, the focus then goes to the widget (WIDGET-01): once the start was answered, or at once when
   // a task of this device already counts here.
-  const collapse = isDesktop() && (location.state as FocusRouteState | null)?.collapse === true
+  // Opened from the board's open-without-starting button, nothing starts and the widget stays closed (#14).
+  const routeState = location.state as FocusRouteState | null
+  const collapse = isDesktop() && routeState?.collapse === true
+  const startOnOpen = routeState?.start !== false
   const started = useRef<string | null>(null)
   useEffect(() => {
     if (!state || !canWrite || started.current === listId) return
     started.current = listId
+    if (!startOnOpen) return
     // Without the server the widget cannot sign in, and a stale session waits for a decision taken here.
     const toWidget = (reachedServer: boolean) => {
       navigate(location.pathname, { replace: true, state: null })
@@ -106,7 +110,7 @@ export default function FocusPage() {
     } else if (collapse && state.session?.kind === 'task' && state.session.device_id === deviceId() && state.session.list_id === listId) {
       toWidget(state.stale === null && navigator.onLine)
     }
-  }, [state, canWrite, listId, actions, collapse, navigate, location.pathname])
+  }, [state, canWrite, listId, actions, collapse, startOnOpen, navigate, location.pathname])
 
   // Compared while rendering, against the state the screen showed last.
   const [seen, setSeen] = useState<{ state: FocusState | null; left: boolean }>({ state: null, left: false })
@@ -130,6 +134,8 @@ export default function FocusPage() {
   const task = state?.task ?? null
   const others = today?.tasks.filter((item) => item.id !== task?.id) ?? []
   const clear = display?.mode === 'all_clear' || display?.mode === 'idle'
+  // Nothing open and the task never counted: the screen waits for `Começar` (#14).
+  const stopped = state?.session === null && task !== null && task.spent_seconds === 0 && display?.mode === 'paused'
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
@@ -192,11 +198,17 @@ export default function FocusPage() {
               {canWrite && <ExtendPrompt onExtend={() => actions.extend(task.id)} onComplete={() => complete(task.id)} />}
             </div>
           ) : (
-            task && <FocusTaskCard title={task.title} display={display} />
+            task && <FocusTaskCard title={task.title} display={display} stopped={stopped} />
           )}
 
           {canWrite && !clear && (
-            <FocusControls display={display} taskId={task?.id ?? null} pending={today.pending} actions={{ ...actions, complete }} />
+            <FocusControls
+              display={display}
+              taskId={task?.id ?? null}
+              pending={today.pending}
+              spentSeconds={task?.spent_seconds}
+              actions={{ ...actions, complete }}
+            />
           )}
 
           {others.length > 0 && (

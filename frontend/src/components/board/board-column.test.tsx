@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
 
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
 import { i18n, renderWithProviders } from '@/test/utils'
+import type { TrackzynApi } from '@/lib/platform'
 import type { Board, BoardProgressColumnView, TaskCardView } from '@/types'
 
 vi.mock('@/lib/api', () => ({ tasks: { create: vi.fn() } }))
@@ -132,6 +133,74 @@ describe('BoardColumn', () => {
       />,
     )
     expect(screen.queryByRole('button', { name: 'Add task' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
+  })
+})
+
+describe('BoardColumn open-without-starting (#14)', () => {
+  const asDesktop = () =>
+    Object.defineProperty(window, 'trackzyn', {
+      value: { isDesktop: true, windowRole: 'main' } as unknown as TrackzynApi,
+      configurable: true,
+    })
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'trackzyn')
+  })
+
+  const today = (tasks: TaskCardView[], canWrite = true, onOpenFocus = vi.fn()) =>
+    renderWithProviders(
+      <BoardColumn
+        column="today"
+        view={progressView({ tasks, estimate_minutes: 60, total: tasks.length })}
+        listId={LIST}
+        canWrite={canWrite}
+        renderTask={renderTask}
+        onFocusNow={vi.fn()}
+        onOpenFocus={onOpenFocus}
+      />,
+    )
+
+  it('desktop shows the open-without-starting button next to Focus now', async () => {
+    asDesktop()
+    const onOpenFocus = vi.fn()
+    const { user } = today([card('a', 'DEV-1725')], true, onOpenFocus)
+
+    const focusNow = screen.getByRole('button', { name: 'Focus now' })
+    const open = screen.getByRole('button', { name: 'Open focus without starting the timer' })
+    expect(open).toBeEnabled()
+    // An icon button (the eye), on the same row as Focus now and to its right, with its height.
+    expect(open.querySelector('svg')).toHaveClass('lucide-eye')
+    expect(open).not.toHaveTextContent(/\S/)
+    expect(open.parentElement).toBe(focusNow.parentElement)
+    expect(focusNow.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(open).toHaveClass('size-9')
+    expect(focusNow).toHaveClass('h-9')
+
+    // The hint says the same as the label.
+    await user.hover(open)
+    expect((await screen.findAllByText('Open focus without starting the timer')).length).toBeGreaterThan(0)
+
+    await user.click(open)
+    expect(onOpenFocus).toHaveBeenCalledTimes(1)
+  })
+
+  it('browser has no open-without-starting button', () => {
+    today([card('a', 'DEV-1725')])
+
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: 'Open focus without starting the timer' })).not.toBeInTheDocument()
+  })
+
+  it('open-without-starting is disabled when Today is empty or read-only', () => {
+    asDesktop()
+    const { unmount } = today([])
+    expect(screen.getByRole('button', { name: 'Open focus without starting the timer' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
+    unmount()
+
+    today([card('a', 'DEV-1725')], false)
+    expect(screen.getByRole('button', { name: 'Open focus without starting the timer' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
   })
 })

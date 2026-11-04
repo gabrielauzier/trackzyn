@@ -340,6 +340,7 @@ export default function ListBoardPage() {
           canWrite={canWrite}
           renderTask={renderTask(column)}
           onFocusNow={() => navigate(`/focus/${listId}`, { state: { collapse: true } satisfies FocusRouteState })}
+          onOpenFocus={() => navigate(`/focus/${listId}`, { state: { start: false } satisfies FocusRouteState })}
           className="h-full"
         />
       </ColumnDrop>

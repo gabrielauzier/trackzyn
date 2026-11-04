@@ -11,9 +11,13 @@ export function windowRole(): 'main' | 'widget' {
   return isDesktop() ? getDesktopApi().windowRole : 'main'
 }
 
-/** What the board's `Focar agora` asks: on the desktop, the focus goes to the widget once it started (WIDGET-01). */
+/**
+ * What the board asks the focus screen: `Focar agora` sends the focus to the widget once it started
+ * (WIDGET-01); the desktop's open-without-starting button opens it with nothing started (#14).
+ */
 export interface FocusRouteState {
   collapse?: boolean
+  start?: false
 }
 
 /** Opens the focus widget and minimizes the main window; nothing in the browser. */

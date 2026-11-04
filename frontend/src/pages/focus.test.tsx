@@ -7,6 +7,7 @@ import HomePage from '@/pages/home'
 import { focus, lists } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import { play } from '@/lib/sounds/synth'
+import * as queue from '@/lib/focus/queue'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
 import { renderWithProviders } from '@/test/utils'
@@ -358,6 +359,44 @@ describe('FocusPage on the desktop (WIDGET-01, WIDGET-02, WIDGET-22, WIDGET-24)'
 
     await waitFor(() => expect(bridge.notifyFocusChanged).toHaveBeenCalledTimes(1))
     expect(sent()).toEqual([expect.objectContaining({ type: 'pause' })])
+  })
+
+  const openWithoutStarting = { pathname: `/focus/${LIST}`, state: { start: false } }
+
+  it('opened without starting, sends no start and keeps the widget closed', async () => {
+    const ofA = { ...taskA, estimate_minutes: 45 }
+    vi.mocked(focus.get).mockResolvedValue(paused({ task: ofA, today: { ...paused().today, tasks: [{ ...ofA, position: 0 }, { ...taskB, position: 1 }] } }))
+    renderFocus(openWithoutStarting)
+
+    expect(await screen.findByRole('button', { name: 'Start' })).toBeInTheDocument()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(focus.send).not.toHaveBeenCalled()
+    expect(queue.pending()).toEqual([])
+    expect(bridge.collapseFocus).not.toHaveBeenCalled()
+    // The task waits, dashed, on its estimate in grey with the stopped badge: Start, Skip, Complete.
+    const card = screen.getByRole('timer').closest('[data-running]')!
+    expect(card).toHaveClass('border-dashed')
+    expect(card).toHaveTextContent(taskA.title)
+    expect(within(card as HTMLElement).getByText('Timer stopped')).toBeInTheDocument()
+    expect(screen.getByRole('timer')).toHaveTextContent('00:45:00')
+    expect(screen.getByRole('timer')).toHaveClass('text-muted-foreground')
+    expect(screen.getByRole('button', { name: 'Skip' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Complete' })).toBeInTheDocument()
+  })
+
+  it('Start on a screen opened without starting begins the task and keeps the widget closed', async () => {
+    const { user } = renderFocus(openWithoutStarting)
+
+    await user.click(await screen.findByRole('button', { name: 'Start' }))
+
+    await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'start', task_id: taskA.id })]))
+    expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument()
+    const card = screen.getByRole('timer').closest('[data-running]')!
+    expect(card).toHaveAttribute('data-running', 'true')
+    expect(card).not.toHaveClass('border-dashed')
+    expect(screen.queryByText('Timer stopped')).not.toBeInTheDocument()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(bridge.collapseFocus).not.toHaveBeenCalled()
   })
 
   it('keeps the list for the widget, which opens on it with a paused task', async () => {
