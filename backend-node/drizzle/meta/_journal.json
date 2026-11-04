@@ -57,6 +57,13 @@
       "when": 1793806561397,
       "tag": "0007_workspace_min_session",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793813276565,
+      "tag": "0008_workspace_merge_gap",
+      "breakpoints": true
     }
   ]
 }

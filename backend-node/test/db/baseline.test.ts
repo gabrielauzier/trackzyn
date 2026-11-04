@@ -56,10 +56,11 @@ describe('migration baseline', () => {
     expect(tablesAfter.map((t) => t.relname)).toEqual(['alembic_version', ...ALL_TABLES])
     const original = new Set(['alembic_version', ...TABLES])
     const columnsAfter = (await columnSignature(client)).filter((c) => original.has(String((c as { table_name: string }).table_name)))
-    // The later migrations only add to the original tables: 0007 appends workspaces.min_session_minutes (#22).
-    const added = { table_name: 'workspaces', column_name: 'min_session_minutes' }
+    // The later migrations only add to the original tables: 0007 appends workspaces.min_session_minutes (#22)
+    // and 0008 appends workspaces.merge_gap_minutes (#23).
+    const added = ['min_session_minutes', 'merge_gap_minutes']
     const isAdded = (c: unknown) =>
-      (c as typeof added).table_name === added.table_name && (c as typeof added).column_name === added.column_name
+      (c as { table_name: string }).table_name === 'workspaces' && added.includes((c as { column_name: string }).column_name)
     expect(columnsAfter.filter((c) => !isAdded(c))).toEqual(columnsBefore)
     expect(columnsAfter.filter(isAdded)).toEqual([
       {
@@ -70,6 +71,15 @@ describe('migration baseline', () => {
         is_nullable: 'YES',
         column_default: null,
         ordinal_position: 11,
+      },
+      {
+        table_name: 'workspaces',
+        column_name: 'merge_gap_minutes',
+        data_type: 'smallint',
+        character_maximum_length: null,
+        is_nullable: 'YES',
+        column_default: null,
+        ordinal_position: 12,
       },
     ])
 

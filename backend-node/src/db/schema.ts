@@ -86,9 +86,14 @@ export const workspaces = pgTable(
     color: varchar('color', { length: 7 }),
     /** Sessions shorter than this many minutes (1 to 60) are hidden in the agenda and the Sessions report; null shows all (#22). */
     minSessionMinutes: smallint('min_session_minutes'),
+    /** Sessions of one list and kind this many minutes apart or less (1 to 60) are drawn as one block in the agenda; null keeps them apart (#23). */
+    mergeGapMinutes: smallint('merge_gap_minutes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
   },
-  (t) => [check('ck_workspaces_min_session_minutes', sql`${t.minSessionMinutes} BETWEEN 1 AND 60`)],
+  (t) => [
+    check('ck_workspaces_min_session_minutes', sql`${t.minSessionMinutes} BETWEEN 1 AND 60`),
+    check('ck_workspaces_merge_gap_minutes', sql`${t.mergeGapMinutes} BETWEEN 1 AND 60`),
+  ],
 )
 
 export const files = pgTable(

@@ -79,10 +79,10 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Um workspace gravado antes da migration lê `merge_gap_minutes = null` depois dela
-- [ ] O banco recusa 0 e 61 e aceita 1 e 60
-- [ ] `pg-columns.json` lido de um PostgreSQL 16 numa base temporária, apagada em seguida; o baseline C38 espera exatamente as duas colunas novas de `workspaces`
-- [ ] Gate check passes: Full (backend)
+- [x] Um workspace gravado antes da migration lê `merge_gap_minutes = null` depois dela
+- [x] O banco recusa 0 e 61 e aceita 1 e 60
+- [x] `pg-columns.json` lido de um PostgreSQL 16 numa base temporária, apagada em seguida; o baseline C38 espera exatamente as duas colunas novas de `workspaces`
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full
