@@ -67,6 +67,12 @@ T11 → T12 → T13 → T14
 T15 → T16 → T17 → T18 → T19
 ```
 
+### Phase 5: Fixes do Verifier (rodada 1)
+
+```
+T20 → T21 → T22 → T23 → T24 → T25 → T26 → T27 → T28 → T29
+```
+
 ---
 
 ## Task Breakdown
@@ -584,12 +590,13 @@ T15 → T16 → T17 → T18 → T19
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1:  T1 → T2 → T3 → T4 → T5
 Phase 2:  T6 → T7 → T8 → T9 → T10
 Phase 3:  T11 → T12 → T13 → T14
 Phase 4:  T15 → T16 → T17 → T18 → T19
+Phase 5:  T20 → T21 → T22 → T23 → T24 → T25 → T26 → T27 → T28 → T29
 ```
 
 19 tasks em 4 fases: no Execute, cabem em 3 lotes (Fase 1 · Fases 2 e 3 · Fase 4) com um worker cada, depois da confirmação.
@@ -643,3 +650,274 @@ Phase 4:  T15 → T16 → T17 → T18 → T19
 | T7, T9 | Funções puras do frontend | unit | unit | ✅ |
 | T8 | Hooks | unit | unit | ✅ |
 | T10 a T19 | Componentes e páginas | unit | unit | ✅ |
+
+---
+
+## Fix Tasks (Verifier round 1)
+
+Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por lacuna, na ordem do ranking do Verifier.
+
+### T20: Mover um bloco para outro dia
+
+**What**: testes que movem um bloco para outro dia: em `use-grid-drag.test.tsx`, um `dayAt` que devolve outro dia e o `onCommit` com o dia novo e a mesma duração, e o dia futuro recusado; na página, a geometria das colunas simulada (`getBoundingClientRect`) para que `columnDayAt` ache a coluna sob o ponteiro e o soltar chame `sessions.update` com o dia novo e a mesma duração.
+**Where**: `frontend/src/pages/agenda.test.tsx` (modify)
+**Depends on**: None
+**Reuses**: `lib/agenda/use-grid-drag.test.tsx` (`Column`, `drag`), o bloco `adjusting a block` de `pages/agenda.test.tsx`
+**Requirement**: AGENDA-30
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Mover um bloco de 14:00–15:00 de terça para quarta, às 09:00, chama `onCommit` com `day` quarta, 09:00–10:00
+- [ ] Mover para um dia futuro não muda o dia do bloco
+- [ ] Na página, soltar o bloco de terça na coluna de segunda chama `sessions.update` com `started_at` e `ended_at` de segunda, 1 h de duração
+- [ ] O mutante "move ignora `dayAt`" (`use-grid-drag.ts:105`) falha nesses testes
+- [ ] Gate check passes: Full (frontend)
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `test(frontend): prove a block moves to another day`
+
+---
+
+### T21: Editar e excluir só no workspace atual
+
+**What**: testes de serviço e de rota em que o mesmo usuário edita e exclui, pelo workspace A, uma sessão dele no workspace B, e recebe 404 `Session not found` sem mudar a linha; o código já filtra por `workspace_id` em `endedSession` (`services/sessions.ts:190`) e deve continuar.
+**Where**: `backend-node/test/services/sessions.test.ts` (modify)
+**Depends on**: T20
+**Reuses**: `otherWorkspaceTask` e o teste `AGENDA-34` de `test/services/sessions.test.ts`; `test/routes/sessions.test.ts`
+**Requirement**: AGENDA-10, AGENDA-34
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `updateSession` e `deleteSession` com o workspace A numa sessão do usuário no workspace B recusam com 404 `Session not found`, e a linha fica igual
+- [ ] `PATCH` e `DELETE /api/sessions/:id` com `x-workspace-id` de A numa sessão do usuário em B respondem 404 `{ detail: 'Session not found' }`
+- [ ] O mutante "sem `workspaceId` na busca" falha nesses testes
+- [ ] Gate check passes: Full (backend)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): prove a session edits and deletes only in its workspace`
+
+---
+
+### T22: Volta do bloco sem a releitura
+
+**What**: em `use-agenda.test.tsx`, uma edição recusada em que a releitura da agenda também falha: o cache volta ao horário anterior só pela restauração do snapshot.
+**Where**: `frontend/src/lib/agenda/use-agenda.test.tsx` (modify)
+**Depends on**: T21
+**Reuses**: o teste `AGENDA-35` de `use-agenda.test.tsx`
+**Requirement**: AGENDA-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com `sessions.list` falhando depois da primeira leitura, uma edição recusada deixa a sessão no cache com `ended_at` 18:00 e mostra o toast
+- [ ] O mutante "sem `restore(snapshot)`" (`use-agenda.ts:100`) falha nesse teste
+- [ ] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(frontend): prove a refused edit restores the block without a refetch`
+
+---
+
+### T23: Rota das tarefas que podem receber sessão
+
+**What**: `listSessionTasks` em `services/sessions.ts` e `GET /api/sessions/tasks` em `routes/sessions.ts`: as tarefas das listas ativas do workspace, em qualquer coluna, Concluídas de qualquer data inclusive, com `id`, `title`, `list_id`, `list_name`, `list_color` e `column`; leitura para qualquer membro, fechada a token (AD-007) em `test/support/token-routes.ts`; a rota entra na tabela `Surface` de `design.md`.
+**Where**: `backend-node/src/services/sessions.ts` (modify)
+**Depends on**: T22
+**Reuses**: `selectSessions` (forma da consulta), as guardas `reading` de `routes/sessions.ts`
+**Requirement**: AGENDA-16, AGENDA-44
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Uma tarefa concluída há 10 dias vem na resposta com `column: 'done'`
+- [ ] Tarefas de lista arquivada e de outro workspace não vêm
+- [ ] `GET /api/sessions/tasks` responde 200 a um viewer e 403 `Route not available for tokens` a um token
+- [ ] `design.md` lista a rota na tabela `Surface`
+- [ ] Gate check passes: Full (backend)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(backend): list the tasks a session can go to`
+
+---
+
+### T24: Painel com todas as tarefas das listas ativas
+
+**What**: `sessions.tasks()` em `lib/api.ts` e o tipo `AgendaTask`; `session-panel.tsx` lê as tarefas dessa rota em vez dos quadros e agrupa por lista; sai o `SPEC_DEVIATION` de AGENDA-16.
+**Where**: `frontend/src/components/agenda/session-panel.tsx` (modify)
+**Depends on**: T23
+**Reuses**: `lib/api.ts` (`sessions`), os grupos por lista de `session-panel.tsx`
+**Requirement**: AGENDA-16
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O painel oferece, no grupo da lista, uma tarefa Concluída que a rota devolve e que nenhum quadro mostra
+- [ ] O painel não lê `lists.board`
+- [ ] Não há `SPEC_DEVIATION` de AGENDA-16 em `session-panel.tsx`
+- [ ] Gate check passes: Full (frontend)
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(frontend): offer every task of the active lists in the session panel`
+
+---
+
+### T25: Sobreposição com o filtro de lista ligado
+
+**What**: em `pages/agenda.tsx`, o aviso de sobreposição do painel usa as sessões do usuário no período sem o filtro de lista (uma query da mesma semana com `listId: null`), não só as da lista filtrada.
+**Where**: `frontend/src/pages/agenda.tsx` (modify)
+**Depends on**: T24
+**Reuses**: `useAgenda` / `agendaKey` (`lib/agenda/use-agenda.ts`)
+**Requirement**: AGENDA-19
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com o filtro na lista `Work`, um rascunho sobre uma sessão da lista `Home` mostra `Overlaps <título> (<HH:MM> – <HH:MM>). The time in common counts in both.`
+- [ ] Gate check passes: Full (frontend)
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(frontend): warn about an overlap on another list while a filter is on`
+
+---
+
+### T26: Rascunho e painel ligados na página
+
+**What**: testes de página para a metade de interface de AGENDA-14, 17, 18 e 20: arrastar na grade abre o painel com o dia e os horários; mudar um horário no painel move o rascunho; puxar uma alça do rascunho muda os campos em passos de 15 min; salvar mostra o bloco na cor da lista e tira o rascunho. Corrige o código se um teste achar um bug.
+**Where**: `frontend/src/pages/agenda.test.tsx` (modify)
+**Depends on**: T25
+**Reuses**: `pages/agenda.test.tsx`, `PX_PER_MINUTE`
+**Requirement**: AGENDA-14, AGENDA-17, AGENDA-18, AGENDA-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Arrastar na terça de 17:32 a 18:41 abre `New session` com `2026-11-03`, `17:30` e `18:45`
+- [ ] Mudar o fim para `19:00` no painel deixa o rascunho em `17:30 – 19:00`
+- [ ] Puxar a alça de baixo do rascunho até 19:22 deixa o campo fim em `19:15`; a de cima até 17:08, o início em `17:15`
+- [ ] Salvar mostra o bloco da tarefa com a cor da lista e sem `[data-draft]`
+- [ ] Gate check passes: Full (frontend)
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `test(frontend): prove the agenda draft and the panel follow each other`
+
+---
+
+### T27: Faixas de sessões encadeadas
+
+**What**: em `layout.test.ts`, A sobrepõe B e B só encosta em C (termina quando C começa): A e B ficam lado a lado, C fica com a largura toda.
+**Where**: `frontend/src/lib/agenda/layout.test.ts` (modify)
+**Depends on**: T26
+**Reuses**: `piece` de `layout.test.ts`
+**Requirement**: AGENDA-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A 10:00–11:00, B 10:30–11:30, C 11:30–12:30 dão A `{lane 0, lanes 2}`, B `{lane 1, lanes 2}`, C `{lane 0, lanes 1}`
+- [ ] O mutante F1 (`layout.ts:122`, `>=` para `>`) falha nesse teste
+- [ ] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(frontend): prove a session that only touches a group keeps the full width`
+
+---
+
+### T28: Erro de edição mostrado uma vez
+
+**What**: uma edição feita pelo painel e recusada mostra o erro só no painel, sem o toast; um ajuste pela grade continua com o toast (AGENDA-35).
+**Where**: `frontend/src/lib/agenda/use-agenda.ts` (modify)
+**Depends on**: T27
+**Reuses**: `sessionErrorMessage`, o `onSave` de `pages/agenda.tsx`
+**Requirement**: AGENDA-31, AGENDA-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Salvar uma edição recusada com 404 `Task not found` mostra `Task not found` no painel e não chama `toast.error`
+- [ ] Um ajuste recusado pela grade ainda chama `toast.error` com a mensagem da API
+- [ ] Gate check passes: Full (frontend)
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(frontend): show a refused panel edit once`
+
+---
+
+### T29: Coluna `origin` lida de um PostgreSQL
+
+**What**: refazer `backend-node/test/fixtures/pg-columns.json` com `information_schema.columns` de um PostgreSQL real que rodou as migrations até 0005, e atualizar o comentário do teste para a 0005; se nenhum PostgreSQL estiver ao alcance, deixar a linha e dizer no comentário que ela espera essa leitura.
+**Where**: `backend-node/test/fixtures/pg-columns.json` (modify)
+**Depends on**: T28
+**Reuses**: o procedimento descrito em `backend-node/test/db/pglite.test.ts:30-63`
+**Requirement**: AGENDA-20, AGENDA-27
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] A linha `origin` de `focus_sessions` vem de um PostgreSQL real, e o comentário de `pglite.test.ts` diz de qual versão e para quais migrations
+- [ ] `matches the PostgreSQL column catalog` passa
+- [ ] Gate check passes: Build
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test(backend): read the session origin column from PostgreSQL`
