@@ -82,7 +82,8 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
 
   return (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
-      <div className="flex border-b">
+      {/* Both reserve the scrollbar's width, so the day headers line up with the columns under them. */}
+      <div data-agenda-header className="flex overflow-y-hidden border-b [scrollbar-gutter:stable]">
         <div className="w-14 shrink-0" />
         {days.map((day) => {
           const total = dayTotal(pieces.get(day) ?? [])
@@ -103,7 +104,7 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
           )
         })}
       </div>
-      <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-14rem)] min-h-80 overflow-y-auto">
+      <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-14rem)] min-h-80 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="relative flex" style={{ height: DAY_MINUTES * PX_PER_MINUTE }}>
           <div className="relative w-14 shrink-0" aria-hidden>
             {HOURS.map((hour) => (

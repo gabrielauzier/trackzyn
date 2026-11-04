@@ -71,6 +71,15 @@ describe('WeekGrid', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(0)
   })
 
+  it('reserves the scrollbar width in the day header as in the scrolling grid, so their columns line up', () => {
+    const { container } = renderWithProviders(<Grid sessions={[]} />)
+    const headerRow = container.querySelector('[data-agenda-header]')!
+    const grid = container.querySelector('[data-agenda-scroll]')!
+    for (const element of [headerRow, grid]) expect(element).toHaveClass('[scrollbar-gutter:stable]')
+    expect(headerRow).toHaveClass('overflow-y-hidden')
+    expect(grid).toHaveClass('overflow-y-auto')
+  })
+
   it('has a line per hour from 00:00 to 24:00 and opens scrolled to 07:00 (AGENDA-01, AGENDA-02)', () => {
     const { container } = renderWithProviders(<Grid sessions={[]} />)
     const scroller = container.querySelector<HTMLElement>('[data-agenda-scroll]')!
