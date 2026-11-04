@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal, ZoomIn } from 'lucide-react'
 
@@ -33,6 +33,7 @@ function dayName(day: WeekDay, locale: string): string {
 export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChange }: AgendaViewMenuProps) {
   const { t, i18n } = useTranslation()
   const id = useId()
+  const trigger = useRef<HTMLButtonElement>(null)
   const filtered = showDays && days.length < ALL_DAYS.length
   const label = filtered ? t('agenda.viewMenu.labelFiltered', { shown: days.length }) : t('agenda.viewMenu.label')
   const shortcut = (target: WeekDay[], text: string) => {
@@ -56,6 +57,7 @@ export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChang
     <Popover>
       <PopoverTrigger asChild>
         <button
+          ref={trigger}
           type="button"
           aria-label={label}
           className="relative inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground data-[state=open]:border-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary"
@@ -66,7 +68,16 @@ export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChang
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" aria-label={t('agenda.viewMenu.label')} className="flex w-72 flex-col gap-3 p-3">
+      <PopoverContent
+        align="start"
+        aria-label={t('agenda.viewMenu.label')}
+        className="flex w-72 flex-col gap-3 p-3"
+        // A non-modal popover gives the focus back on Esc only; every close, a click outside too, returns it (DAYS-04).
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          trigger.current?.focus()
+        }}
+      >
         {showDays && (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between px-2">

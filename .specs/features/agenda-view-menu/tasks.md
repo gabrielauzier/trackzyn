@@ -220,8 +220,8 @@ T6 → T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Depois de um clique fora, o menu fecha e o botão tem o foco
-- [ ] Gate check passes: Quick
+- [x] Depois de um clique fora, o menu fecha e o botão tem o foco
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

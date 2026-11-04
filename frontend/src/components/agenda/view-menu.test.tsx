@@ -37,6 +37,7 @@ describe('AgendaViewMenu', () => {
     await open(user)
     await user.click(document.body)
     expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('button', { name: 'View options' })).toHaveFocus()
   })
 
   it('DAYS-07 lists the seven days from Monday to Sunday, each checked as shown', async () => {
