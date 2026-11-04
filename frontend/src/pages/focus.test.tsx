@@ -407,6 +407,19 @@ describe('FocusPage on the desktop (WIDGET-01, WIDGET-02, WIDGET-22, WIDGET-24)'
     expect(screen.getByRole('button', { name: 'Complete' })).toBeInTheDocument()
   })
 
+  it('a paused task with time spent keeps Resume and a solid card without the stopped badge', async () => {
+    const spent = { ...taskA, estimate_minutes: 45, spent_seconds: 600 }
+    vi.mocked(focus.get).mockResolvedValue(paused({ task: spent, today: { ...paused().today, tasks: [{ ...spent, position: 0 }, { ...taskB, position: 1 }] } }))
+    renderFocus(openWithoutStarting)
+
+    expect(await screen.findByRole('button', { name: 'Resume' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Start' })).not.toBeInTheDocument()
+    const card = screen.getByRole('timer').closest('[data-running]')!
+    expect(card).not.toHaveClass('border-dashed')
+    expect(within(card as HTMLElement).queryByText('Timer stopped')).not.toBeInTheDocument()
+    expect(screen.getByRole('timer')).not.toHaveClass('text-muted-foreground')
+  })
+
   it('Start on a screen opened without starting begins the task and keeps the widget closed', async () => {
     const { user } = renderFocus(openWithoutStarting)
 
