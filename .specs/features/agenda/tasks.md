@@ -86,9 +86,9 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] A migration roda no PGlite dos testes, e uma sessão gravada antes dela lê `origin = 'focus'`
-- [ ] `backend-node/src/db/schema.ts` tem `origin` e `'manual'` em `FOCUS_END_REASONS`
-- [ ] Gate check passes: Full (backend)
+- [x] A migration roda no PGlite dos testes, e uma sessão gravada antes dela lê `origin = 'focus'`
+- [x] `backend-node/src/db/schema.ts` tem `origin` e `'manual'` em `FOCUS_END_REASONS`
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

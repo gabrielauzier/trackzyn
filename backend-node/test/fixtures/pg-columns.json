@@ -167,6 +167,12 @@
       "type": "character varying",
       "nullable": true,
       "maxLength": 16
+    },
+    {
+      "column": "origin",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 8
     }
   ],
   "lists": [

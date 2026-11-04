@@ -36,6 +36,13 @@
       "when": 1793658091873,
       "tag": "0004_access_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793768876010,
+      "tag": "0005_session_origin",
+      "breakpoints": true
     }
   ]
 }

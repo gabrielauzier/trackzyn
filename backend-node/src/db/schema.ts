@@ -229,8 +229,13 @@ export const FOCUS_END_REASONS = [
   'task_left',
   'leave',
   'crash_cut',
+  'manual',
 ] as const
 export type FocusEndReason = (typeof FOCUS_END_REASONS)[number]
+
+/** How a session came in: the focus timer, or recorded on the agenda (AD-008). */
+export const FOCUS_SESSION_ORIGINS = ['focus', 'manual'] as const
+export type FocusSessionOrigin = (typeof FOCUS_SESSION_ORIGINS)[number]
 
 /** One stretch of focus on a task, or one break. A user has at most one open session (SYNC-01). */
 export const focusSessions = pgTable(
@@ -258,6 +263,7 @@ export const focusSessions = pgTable(
     plannedSeconds: integer('planned_seconds'),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
     endReason: varchar('end_reason', { length: 16 }).$type<FocusEndReason>(),
+    origin: varchar('origin', { length: 8 }).$type<FocusSessionOrigin>().notNull().default('focus'),
   },
   (t) => [
     uniqueIndex('ix_focus_sessions_open_user').on(t.userId).where(sql`${t.endedAt} IS NULL`),

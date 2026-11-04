@@ -1,0 +1,1 @@
+ALTER TABLE "focus_sessions" ADD COLUMN "origin" varchar(8) DEFAULT 'focus' NOT NULL;

@@ -180,14 +180,14 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-17 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-18 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-19 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
-| AGENDA-20 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
+| AGENDA-20 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
 | AGENDA-21 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-22 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-23 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-24 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-25 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-26 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
-| AGENDA-27 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
+| AGENDA-27 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-28 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
 | AGENDA-29 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
 | AGENDA-30 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
