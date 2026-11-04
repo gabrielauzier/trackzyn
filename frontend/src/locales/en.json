@@ -766,6 +766,7 @@
       },
       "running": "The running session has no handles: its end is now. To adjust it, pause it in the focus.",
       "openFocus": "Open the focus",
+      "pickHint": "Pick a session to see its details, edit or delete it.",
       "deleteTitle": "Delete this session?",
       "deleteDescription": "{{title}} · {{when}} will be deleted, and its time leaves the task."
     },

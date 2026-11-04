@@ -251,12 +251,12 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] O painel mostra `Produto · 3 sessions`, o dia, `10:20 – 11:40` e `Pick a session to see its details, edit or delete it.`
-- [ ] Cada sessão é um botão com o título, `recorded by the focus` ou `recorded on the agenda`, `HH:MM – HH:MM · <duração>`, em ordem de início
-- [ ] Clicar num botão chama `onPick` com a sessão
-- [ ] `SessionDetails` com `onBack` mostra `‹ Produto · 3 sessions` e o chama; sem `onBack`, fica como hoje
-- [ ] Os textos em português: `Produto · 3 sessões`, `Escolha uma sessão para ver os detalhes, editar ou excluir.`
-- [ ] Gate check passes: Quick
+- [x] O painel mostra `Produto · 3 sessions`, o dia, `10:20 – 11:40` e `Pick a session to see its details, edit or delete it.`
+- [x] Cada sessão é um botão com o título, `recorded by the focus` ou `recorded on the agenda`, `HH:MM – HH:MM · <duração>`, em ordem de início
+- [x] Clicar num botão chama `onPick` com a sessão
+- [x] `SessionDetails` com `onBack` mostra `‹ Produto · 3 sessions` e o chama; sem `onBack`, fica como hoje
+- [x] Os textos em português: `Produto · 3 sessões`, `Escolha uma sessão para ver os detalhes, editar ou excluir.`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

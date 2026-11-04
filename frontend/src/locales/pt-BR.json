@@ -766,6 +766,7 @@
       },
       "running": "A sessão em andamento não tem alças: o fim é agora. Para ajustar, pause no foco.",
       "openFocus": "Abrir o foco",
+      "pickHint": "Escolha uma sessão para ver os detalhes, editar ou excluir.",
       "deleteTitle": "Excluir esta sessão?",
       "deleteDescription": "{{title}} · {{when}} será excluída, e o tempo dela sai da tarefa."
     },

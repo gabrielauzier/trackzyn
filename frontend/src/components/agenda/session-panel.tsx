@@ -304,6 +304,10 @@ interface SessionDetailsProps {
   onEdit?: () => void
   /** Deletes the session once confirmed; absent for a user who cannot write (AGENDA-44). */
   onDelete?: () => void
+  /** Goes back to the list of the joined block the session was chosen from (MERGE-33); absent otherwise. */
+  onBack?: () => void
+  /** The count of sessions of that block, for the way back. */
+  groupCount?: number
 }
 
 /** `<weekday>, <day> <month> · HH:MM – HH:MM · <duration>` of a session (AGENDA-27). */
@@ -323,7 +327,7 @@ function sessionWhen(session: AgendaSession, timezone: string, now: Date, locale
  * where it was recorded, and `Editar`, `Excluir` with its confirmation (AGENDA-32) and `Fechar`. The
  * running session offers no edit nor delete, only the way to the focus (AGENDA-33).
  */
-export function SessionDetails({ session, timezone, now, onClose, onEdit, onDelete }: SessionDetailsProps) {
+export function SessionDetails({ session, timezone, now, onClose, onEdit, onDelete, onBack, groupCount = 0 }: SessionDetailsProps) {
   const { t, i18n } = useTranslation()
   const [confirming, setConfirming] = useState(false)
   const running = session.ended_at === null
@@ -340,6 +344,15 @@ export function SessionDetails({ session, timezone, now, onClose, onEdit, onDele
 
   return (
     <aside aria-labelledby="session-details-title" className="flex w-full flex-col gap-3 rounded-xl border bg-card p-4 lg:w-80">
+      {onBack && (
+        <button
+          type="button"
+          className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline"
+          onClick={onBack}
+        >
+          {`‹ ${session.list_name} · ${t('agenda.sessionCount', { count: groupCount })}`}
+        </button>
+      )}
       <div className="flex flex-col gap-1">
         <h2 id="session-details-title" className="text-base font-semibold">
           {title}
