@@ -17,6 +17,14 @@ interface SubtaskListProps {
   canWrite: boolean
   /** The x/y counter; a card already shows it in its own row. */
   showSummary?: boolean
+  /** Called once a change was answered, so a screen that counts the subtasks too reads them again. */
+  onSettled?: () => void
+  /** With more subtasks than this, only this many pending ones show, and `Mostrar todas` shows them all. */
+  limit?: number
+  /** Without subtasks, only `Adicionar subtarefa`, which opens the `Nova subtarefa` field. */
+  addCollapsed?: boolean
+  /** Only the checkboxes: no renaming, moving, deleting or adding (the desktop widget). */
+  toggleOnly?: boolean
 }
 
 /** A subtask the server has not confirmed yet; it cannot be changed until it has an id of its own. */
@@ -49,18 +57,29 @@ function titleError(title: string): string | null {
   return null
 }
 
-export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskListProps) {
+export function SubtaskList({
+  taskId,
+  canWrite,
+  showSummary = true,
+  onSettled,
+  limit,
+  addCollapsed = false,
+  toggleOnly = false,
+}: SubtaskListProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { data: task } = useTask(taskId)
   const [newTitle, setNewTitle] = useState('')
   const [newError, setNewError] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
+  const [adding, setAdding] = useState(false)
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['lists'] })
   // Refetching while another change is still in flight would drop it from the list until it is confirmed.
   const settle = () => {
     if (queryClient.isMutating() <= 1) void refresh()
+    onSettled?.()
   }
   const onError = (e: unknown) => setServerError(extractApiError(e, t('common.error')))
 
@@ -148,6 +167,11 @@ export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskLis
 
   const items = task?.subtasks ?? []
   const done = items.filter((item) => item.done).length
+  // A long list shows its first pending subtasks until `Mostrar todas` (#16).
+  const collapsed = limit !== undefined && items.length > limit && !expanded
+  const shown = collapsed ? new Set(items.filter((item) => !item.done).slice(0, limit).map((item) => item.id)) : null
+  const editable = canWrite && !toggleOnly
+  const opener = addCollapsed && items.length === 0 && !adding
 
   const onAdd = (event: FormEvent) => {
     event.preventDefault()
@@ -162,11 +186,12 @@ export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskLis
         <p className="text-xs text-muted-foreground">{t('board.subtaskSummary', { done, total: items.length })}</p>
       )}
       <ul className="space-y-0.5">
-        {items.map((item, index) => (
+        {items.map((item, index) => (shown && !shown.has(item.id) ? null : (
           <SubtaskRow
             key={item.id}
             subtask={item}
             canWrite={canWrite && !isPending(item)}
+            toggleOnly={toggleOnly}
             // A subtask goes up before the one above it, and down before the one two below (or last).
             // One that is next to a subtask the server has not confirmed waits for it.
             onMoveUp={index > 0 && !isPending(items[index - 1]) ? () => move.mutate({ id: item.id, before: items[index - 1].id }) : undefined}
@@ -179,12 +204,23 @@ export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskLis
             onRename={(title) => update.mutate({ id: item.id, payload: { title } })}
             onDelete={() => remove.mutate(item.id)}
           />
-        ))}
+        )))}
       </ul>
-      {canWrite && (
+      {collapsed && (
+        <Button type="button" variant="link" size="xs" className="px-1" onClick={() => setExpanded(true)}>
+          {t('focus.subtasks.showAll', { total: items.length })}
+        </Button>
+      )}
+      {editable && opener && (
+        <Button type="button" variant="ghost" size="sm" className="px-1 text-muted-foreground" onClick={() => setAdding(true)}>
+          <Plus size={16} /> {t('board.addSubtask')}
+        </Button>
+      )}
+      {editable && !opener && (
         <form className="flex items-start gap-2" onSubmit={onAdd} noValidate>
           <div className="flex-1 space-y-1">
             <Input
+              autoFocus={adding}
               aria-label={t('board.newSubtask')}
               placeholder={t('board.newSubtask')}
               value={newTitle}
@@ -210,6 +246,8 @@ export function SubtaskList({ taskId, canWrite, showSummary = true }: SubtaskLis
 interface SubtaskRowProps {
   subtask: Subtask
   canWrite: boolean
+  /** Only the checkbox and the title. */
+  toggleOnly?: boolean
   onToggle: (done: boolean) => void
   onRename: (title: string) => void
   onDelete: () => void
@@ -218,7 +256,7 @@ interface SubtaskRowProps {
   onMoveDown?: () => void
 }
 
-function SubtaskRow({ subtask, canWrite, onToggle, onRename, onDelete, onMoveUp, onMoveDown }: SubtaskRowProps) {
+function SubtaskRow({ subtask, canWrite, toggleOnly = false, onToggle, onRename, onDelete, onMoveUp, onMoveDown }: SubtaskRowProps) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(subtask.title)
@@ -269,7 +307,7 @@ function SubtaskRow({ subtask, canWrite, onToggle, onRename, onDelete, onMoveUp,
         aria-label={subtask.title}
         onCheckedChange={(checked) => onToggle(checked === true)}
       />
-      {canWrite ? (
+      {canWrite && !toggleOnly ? (
         // Renamed in place: double-click the title, or Enter on it.
         <button
           type="button"
@@ -284,7 +322,7 @@ function SubtaskRow({ subtask, canWrite, onToggle, onRename, onDelete, onMoveUp,
       ) : (
         label
       )}
-      {canWrite && (
+      {canWrite && !toggleOnly && (
         <div className="flex shrink-0 items-center opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(hover:none)]:opacity-100">
           <Button
             variant="ghost"

@@ -13,7 +13,7 @@ interface FocusTaskCardProps {
   stopped?: boolean
   /** While a next task is dragged over it: the card is the drop area, with this line under `Solte para focar nesta agora` (#15). */
   dropHint?: string | null
-  /** Under the title and the timer, past a line: the subtasks of the task (#16). */
+  /** Under the title and the timer: the subtasks of the task (#16). */
   children?: ReactNode
   className?: string
 }
@@ -54,7 +54,7 @@ export function FocusTaskCard({ title, display, stopped = false, dropHint = null
       <span role="timer" className={cn('shrink-0 font-mono text-2xl font-bold tabular-nums', stopped && 'text-muted-foreground')}>
         {formatClock(display.mode === 'awaiting_extend' ? 0 : display.seconds)}
       </span>
-      {children && <div className="col-span-2 -mx-4 mt-3 border-t px-3 pt-3">{children}</div>}
+      {children && <div className="col-span-2">{children}</div>}
     </div>
   )
 }

@@ -14,13 +14,15 @@ interface WidgetNotesProps {
   taskId: string
   /** Called once the notes were saved (or nothing changed) and the widget is compact again. */
   onClose: () => void
+  /** Whether closing shrinks the widget back; not when another panel takes the notes' place (#16). */
+  shrinkOnClose?: () => boolean
 }
 
 /**
  * The notes of the task in focus, in the widget: opening grows the widget (WIDGET-14); leaving the
  * field saves the text, at most 10 000 characters, and shrinks it back (WIDGET-15).
  */
-export function WidgetNotes({ taskId, onClose }: WidgetNotesProps) {
+export function WidgetNotes({ taskId, onClose, shrinkOnClose = () => true }: WidgetNotesProps) {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const { data: task } = useTask(taskId)
@@ -32,7 +34,7 @@ export function WidgetNotes({ taskId, onClose }: WidgetNotesProps) {
   }, [])
 
   const close = () => {
-    void resizeWidget('compact')
+    if (shrinkOnClose()) void resizeWidget('compact')
     onClose()
   }
 

@@ -26,6 +26,7 @@ import { formatDuration } from '@/components/board/format-duration'
 import { ElsewhereDialog } from '@/components/focus/elsewhere-dialog'
 import { ExtendPrompt } from '@/components/focus/extend-prompt'
 import { FocusControls } from '@/components/focus/focus-controls'
+import { FocusSubtasks } from '@/components/focus/focus-subtasks'
 import { FocusTaskCard } from '@/components/focus/focus-task-card'
 import { FocusDrop, NextTaskItem, NextTaskOverlay } from '@/components/focus/next-tasks'
 import { OfflineConflicts } from '@/components/focus/offline-conflicts'
@@ -334,7 +335,9 @@ export default function FocusPage() {
                           : t('focus.queue.backToTop', { title: task.title })
                         : null
                     }
-                  />
+                  >
+                    <FocusSubtasks taskId={task.id} canWrite={canWrite} onComplete={() => complete(task.id)} />
+                  </FocusTaskCard>
                 </FocusDrop>
               )
             )}

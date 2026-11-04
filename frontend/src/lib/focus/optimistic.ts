@@ -243,7 +243,15 @@ function toState(model: Model, nowMs: number): FocusState {
   const focused = session?.kind === 'task' ? findTask(model, session.task_id) : model.today[0]
   const view = focused && toView(focused)
   const task: FocusState['task'] = view
-    ? { id: view.id, title: view.title, estimate_minutes: view.estimate_minutes, spent_seconds: view.spent_seconds, awaiting_extend: view.awaiting_extend }
+    ? {
+        id: view.id,
+        title: view.title,
+        estimate_minutes: view.estimate_minutes,
+        spent_seconds: view.spent_seconds,
+        awaiting_extend: view.awaiting_extend,
+        // Absent in an answer stored before the counts existed (#16).
+        ...(view.subtasks && { subtasks: view.subtasks }),
+      }
     : null
   let sessionView: FocusSession | null = null
   let stale: FocusState['stale'] = null
