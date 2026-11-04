@@ -139,41 +139,41 @@ Um bloco de trabalho interrompido por pausas curtas, como pausar o foco para ate
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| MERGE-01 | P1: Configurar | Design | Pending |
-| MERGE-02 | P1: Configurar | Design | Pending |
-| MERGE-03 | P1: Configurar | Design | Pending |
-| MERGE-04 | P1: Configurar | Design | Pending |
-| MERGE-05 | P1: Configurar | Design | Pending |
-| MERGE-06 | P1: Configurar | Design | Pending |
-| MERGE-07 | P1: Configurar | Design | Pending |
-| MERGE-08 | P1: Configurar | Design | Pending |
-| MERGE-09 | P1: Configurar | Design | Pending |
-| MERGE-10 | P1: Configurar | Design | Pending |
-| MERGE-11 | P1: Juntar | Design | Pending |
-| MERGE-12 | P1: Juntar | Design | Pending |
-| MERGE-13 | P1: Juntar | Design | Pending |
-| MERGE-14 | P1: Juntar | Design | Pending |
-| MERGE-15 | P1: Juntar | Design | Pending |
-| MERGE-16 | P1: Juntar | Design | Pending |
-| MERGE-17 | P1: Juntar | Design | Pending |
-| MERGE-18 | P1: Juntar | Design | Pending |
-| MERGE-19 | P1: Juntar | Design | Pending |
-| MERGE-20 | P1: Juntar | Design | Pending |
-| MERGE-21 | P1: Juntar | Design | Pending |
-| MERGE-22 | P1: Juntar | Design | Pending |
-| MERGE-23 | P1: Juntar | Design | Pending |
-| MERGE-24 | P1: Juntar | Design | Pending |
-| MERGE-25 | P1: Escolher | Design | Pending |
-| MERGE-26 | P1: Escolher | Design | Pending |
-| MERGE-27 | P1: Escolher | Design | Pending |
-| MERGE-28 | P1: Escolher | Design | Pending |
-| MERGE-29 | P1: Escolher | Design | Pending |
-| MERGE-30 | P1: Escolher | Design | Pending |
-| MERGE-31 | P1: Escolher | Design | Pending |
-| MERGE-32 | P1: Escolher | Design | Pending |
-| MERGE-33 | P1: Escolher | Design | Pending |
+| MERGE-01 | P1: Configurar | T1 | In Tasks |
+| MERGE-02 | P1: Configurar | T2 | In Tasks |
+| MERGE-03 | P1: Configurar | T2 | In Tasks |
+| MERGE-04 | P1: Configurar | T2 | In Tasks |
+| MERGE-05 | P1: Configurar | T2 | In Tasks |
+| MERGE-06 | P1: Configurar | T9 | In Tasks |
+| MERGE-07 | P1: Configurar | T9 | In Tasks |
+| MERGE-08 | P1: Configurar | T9 | In Tasks |
+| MERGE-09 | P1: Configurar | T9 | In Tasks |
+| MERGE-10 | P1: Configurar | T9 | In Tasks |
+| MERGE-11 | P1: Juntar | T3, T5 | In Tasks |
+| MERGE-12 | P1: Juntar | T3 | In Tasks |
+| MERGE-13 | P1: Juntar | T3 | In Tasks |
+| MERGE-14 | P1: Juntar | T3 | In Tasks |
+| MERGE-15 | P1: Juntar | T3 | In Tasks |
+| MERGE-16 | P1: Juntar | T3 | In Tasks |
+| MERGE-17 | P1: Juntar | T3 | In Tasks |
+| MERGE-18 | P1: Juntar | T3 | In Tasks |
+| MERGE-19 | P1: Juntar | T5, T6 | In Tasks |
+| MERGE-20 | P1: Juntar | T5, T6 | In Tasks |
+| MERGE-21 | P1: Juntar | T5, T6 | In Tasks |
+| MERGE-22 | P1: Juntar | T3 | In Tasks |
+| MERGE-23 | P1: Juntar | T5, T6, T8 | In Tasks |
+| MERGE-24 | P1: Juntar | T8 | In Tasks |
+| MERGE-25 | P1: Escolher | T4 | In Tasks |
+| MERGE-26 | P1: Escolher | T4 | In Tasks |
+| MERGE-27 | P1: Escolher | T5, T6, T7, T8 | In Tasks |
+| MERGE-28 | P1: Escolher | T7, T8 | In Tasks |
+| MERGE-29 | P1: Escolher | T5, T8 | In Tasks |
+| MERGE-30 | P1: Escolher | T5, T6 | In Tasks |
+| MERGE-31 | P1: Escolher | T8 | In Tasks |
+| MERGE-32 | P1: Escolher | T4 | In Tasks |
+| MERGE-33 | P1: Escolher | T7 | In Tasks |
 
-**Coverage:** 33 total, 0 mapped to tasks, 33 unmapped ⚠️
+**Coverage:** 33 total, 33 mapped to tasks, 0 unmapped
 
 ---
 
