@@ -913,9 +913,9 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] A linha `origin` de `focus_sessions` vem de um PostgreSQL real, e o comentário de `pglite.test.ts` diz de qual versão e para quais migrations
-- [ ] `matches the PostgreSQL column catalog` passa
-- [ ] Gate check passes: Build
+- [x] A linha `origin` de `focus_sessions` vem de um PostgreSQL real, e o comentário de `pglite.test.ts` diz de qual versão e para quais migrations
+- [x] `matches the PostgreSQL column catalog` passa
+- [x] Gate check passes: Build
 
 **Tests**: integration
 **Gate**: build

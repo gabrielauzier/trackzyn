@@ -28,11 +28,10 @@ describe('the Drizzle schema on PGlite', () => {
   })
 
   it('matches the PostgreSQL column catalog', async () => {
-    // pg-columns.json was read once from information_schema.columns of a PostgreSQL 16
-    // that ran the same migrations (npm run migrate).
-    // SPEC_DEVIATION: migration 0004 was read from a PostgreSQL 14.18, not a 16.
-    // Reason: no PostgreSQL 16 was at hand; every older table came out identical on 14, and the
-    // types involved (uuid, varchar, json, timestamptz) read the same in information_schema.
+    // pg-columns.json is information_schema.columns of a PostgreSQL 16 that ran the same migrations.
+    // Last read on 2026-11-04 from a PostgreSQL 16.15, through 0005_session_origin, in a scratch
+    // database that got the drizzle/*.sql files in journal order: every table, the origin column of
+    // focus_sessions included, came out as the fixture already had it.
     const expected = JSON.parse(readFileSync(join(import.meta.dirname, '../fixtures/pg-columns.json'), 'utf8')) as Record<
       string,
       Array<{ column: string; type: string; nullable: boolean; maxLength: number | null }>
