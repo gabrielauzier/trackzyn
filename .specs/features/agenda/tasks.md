@@ -249,10 +249,10 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Uma sessão de 23:30 a 00:30 em `America/Sao_Paulo` vira dois pedaços, 30 min em cada dia
-- [ ] Duas sessões sobrepostas recebem `lanes = 2` e faixas 0 e 1; uma terceira que não se sobrepõe fica com `lanes = 1`
-- [ ] `dayTotal` não soma intervalos
-- [ ] Gate check passes: Quick
+- [x] Uma sessão de 23:30 a 00:30 em `America/Sao_Paulo` vira dois pedaços, 30 min em cada dia
+- [x] Duas sessões sobrepostas recebem `lanes = 2` e faixas 0 e 1; uma terceira que não se sobrepõe fica com `lanes = 1`
+- [x] `dayTotal` não soma intervalos
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
