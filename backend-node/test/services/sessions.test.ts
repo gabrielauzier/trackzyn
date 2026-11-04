@@ -8,7 +8,7 @@ import { HttpError } from '../../src/http/http-error.ts'
 import { spentSeconds } from '../../src/services/focus-settle.ts'
 import { isAwaitingExtend } from '../../src/services/focus-state.ts'
 import { overview } from '../../src/services/reports.ts'
-import { type AgendaFilter, createSession, listSessions } from '../../src/services/sessions.ts'
+import { type AgendaFilter, createSession, deleteSession, listSessions, updateSession } from '../../src/services/sessions.ts'
 import { migratedDb } from '../support/db.ts'
 import { seedFocus } from '../support/focus.ts'
 
@@ -329,5 +329,150 @@ describe('createSession', () => {
     await createSession(db, actor(), workspace, { kind: 'task', taskId: write, ...YESTERDAY }, NOW)
 
     expect(await isAwaitingExtend(db, seed.userId, task, 25 * 60 + 4500)).toBe(false)
+  })
+})
+
+describe('updateSession and deleteSession', () => {
+  const focusHour = async (taskId: string) =>
+    seed.addSession({ kind: 'task', taskId, startedAt: SP('2026-11-03T14:00:00'), endedAt: SP('2026-11-03T15:00:00') })
+
+  it('AGENDA-29 AGENDA-31 moving the end of a focus session from 15:00 to 15:30 adds 1800 s and keeps origin focus', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const id = await focusHour(write)
+    expect((await spentSeconds(db, [write], NOW)).get(write)).toBe(3600)
+
+    const updated = await updateSession(db, actor(), workspace, id, { endedAt: SP('2026-11-03T15:30:00') }, NOW)
+
+    expect(updated).toMatchObject({
+      id,
+      origin: 'focus',
+      task_id: write,
+      started_at: SP('2026-11-03T14:00:00').toISOString(),
+      ended_at: SP('2026-11-03T15:30:00').toISOString(),
+    })
+    expect((await spentSeconds(db, [write], NOW)).get(write)).toBe(3600 + 1800)
+    expect((await seed.session(id)).origin).toBe('focus')
+  })
+
+  it('AGENDA-30 moving the whole session keeps its length', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const id = await focusHour(write)
+
+    const updated = await updateSession(
+      db,
+      actor(),
+      workspace,
+      id,
+      { startedAt: SP('2026-11-02T09:00:00'), endedAt: SP('2026-11-02T10:00:00') },
+      NOW,
+    )
+
+    expect([updated.started_at, updated.ended_at]).toEqual([SP('2026-11-02T09:00:00').toISOString(), SP('2026-11-02T10:00:00').toISOString()])
+    expect((await spentSeconds(db, [write], NOW)).get(write)).toBe(3600)
+  })
+
+  it('AGENDA-31 changing the task moves the time to the new task and its list', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const other = await seed.addList()
+    const plan = await seed.addTask({ title: 'Plan', listId: other })
+    const id = await focusHour(write)
+
+    const updated = await updateSession(db, actor(), workspace, id, { taskId: plan }, NOW)
+
+    expect(updated).toMatchObject({ task_id: plan, task_title: 'Plan', list_id: other, list_name: 'Other' })
+    const spent = await spentSeconds(db, [write, plan], NOW)
+    expect([spent.get(write), spent.get(plan)]).toEqual([undefined, 3600])
+  })
+
+  it('AGENDA-31 changing the list of a break', async () => {
+    const other = await seed.addList()
+    const id = await seed.addSession({ kind: 'break', startedAt: SP('2026-11-03T12:00:00'), endedAt: SP('2026-11-03T12:10:00') })
+
+    const updated = await updateSession(db, actor(), workspace, id, { listId: other }, NOW)
+
+    expect(updated).toMatchObject({ kind: 'break', task_id: null, list_id: other, list_name: 'Other' })
+  })
+
+  it('AGENDA-31 applies the checks of creation: invalid_time, invalid_duration and 404 Task not found', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const id = await focusHour(write)
+    const theirs = await otherWorkspaceTask()
+
+    expect(await failure(updateSession(db, actor(), workspace, id, { endedAt: new Date(NOW.getTime() + 60_000) }, NOW))).toMatchObject({
+      status: 422,
+      code: 'invalid_time',
+    })
+    expect(await failure(updateSession(db, actor(), workspace, id, { endedAt: SP('2026-11-03T14:00:30') }, NOW))).toMatchObject({
+      status: 422,
+      code: 'invalid_duration',
+    })
+    expect(await failure(updateSession(db, actor(), workspace, id, { startedAt: SP('2026-11-02T13:59:59') }, NOW))).toMatchObject({
+      status: 422,
+      code: 'invalid_duration',
+    })
+    expect(await failure(updateSession(db, actor(), workspace, id, { taskId: theirs }, NOW))).toMatchObject({
+      status: 404,
+      detail: 'Task not found',
+    })
+    const row = await seed.session(id)
+    expect([row.taskId, row.startedAt.toISOString(), row.endedAt?.toISOString()]).toEqual([
+      write,
+      SP('2026-11-03T14:00:00').toISOString(),
+      SP('2026-11-03T15:00:00').toISOString(),
+    ])
+  })
+
+  it('AGENDA-32 deleting takes the length out of the time spent and the session out of the agenda', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const id = await focusHour(write)
+    await seed.addSession({ kind: 'task', taskId: write, startedAt: SP('2026-11-03T16:00:00'), endedAt: SP('2026-11-03T16:30:00') })
+
+    await deleteSession(db, actor(), workspace, id, NOW)
+
+    expect((await spentSeconds(db, [write], NOW)).get(write)).toBe(1800)
+    expect((await listSessions(db, actor(), workspace, WEEK, NOW)).map((s) => s.id)).not.toContain(id)
+  })
+
+  it('AGENDA-33 editing or deleting the open session is refused with 409 session_running', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const id = await seed.addSession({ kind: 'task', taskId: write, startedAt: SP('2026-11-04T11:00:00') })
+
+    expect(await failure(updateSession(db, actor(), workspace, id, { startedAt: SP('2026-11-04T10:30:00') }, NOW))).toMatchObject({
+      status: 409,
+      code: 'session_running',
+    })
+    expect(await failure(deleteSession(db, actor(), workspace, id, NOW))).toMatchObject({ status: 409, code: 'session_running' })
+    const row = await seed.session(id)
+    expect([row.startedAt.toISOString(), row.endedAt]).toEqual([SP('2026-11-04T11:00:00').toISOString(), null])
+  })
+
+  it('AD-001 a session past its deadline is settled first and can then be edited', async () => {
+    const write = await seed.addTask({ title: 'Write', estimate: 25 })
+    const id = await seed.addSession({ kind: 'task', taskId: write, startedAt: SP('2026-11-04T10:00:00'), deadlineAt: SP('2026-11-04T10:25:00') })
+
+    const updated = await updateSession(db, actor(), workspace, id, { endedAt: SP('2026-11-04T10:30:00') }, NOW)
+
+    expect(updated.ended_at).toBe(SP('2026-11-04T10:30:00').toISOString())
+  })
+
+  it('AGENDA-34 a session of another user or that does not exist answers 404 Session not found', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const theirs = await seed.addSession({
+      kind: 'task',
+      taskId: write,
+      userId: await seed.addUser(),
+      startedAt: SP('2026-11-03T14:00:00'),
+      endedAt: SP('2026-11-03T15:00:00'),
+    })
+
+    for (const id of [theirs, randomUUID()]) {
+      expect(await failure(updateSession(db, actor(), workspace, id, { endedAt: SP('2026-11-03T15:30:00') }, NOW))).toMatchObject({
+        status: 404,
+        detail: 'Session not found',
+      })
+      expect(await failure(deleteSession(db, actor(), workspace, id, NOW))).toMatchObject({ status: 404, detail: 'Session not found' })
+    }
+    const row = await seed.session(theirs)
+    expect(row.endedAt?.toISOString()).toBe(SP('2026-11-03T15:00:00').toISOString())
   })
 })

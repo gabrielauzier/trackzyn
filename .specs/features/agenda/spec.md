@@ -189,12 +189,12 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-26 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-27 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-28 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
-| AGENDA-29 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
-| AGENDA-30 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
-| AGENDA-31 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
-| AGENDA-32 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
-| AGENDA-33 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
-| AGENDA-34 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
+| AGENDA-29 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
+| AGENDA-30 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
+| AGENDA-31 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
+| AGENDA-32 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
+| AGENDA-33 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
+| AGENDA-34 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-35 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
 | AGENDA-36 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
 | AGENDA-37 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |

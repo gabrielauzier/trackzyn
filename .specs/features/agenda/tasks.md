@@ -168,11 +168,11 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Editar uma sessão do foco de 14:00–15:00 para 14:00–15:30 soma 1800 s no tempo gasto e mantém `origin = 'focus'`
-- [ ] Excluir tira a duração do tempo gasto
-- [ ] Editar ou excluir a sessão aberta recusa com 409 `session_running`
-- [ ] Sessão de outro usuário recusa com 404
-- [ ] Gate check passes: Full (backend)
+- [x] Editar uma sessão do foco de 14:00–15:00 para 14:00–15:30 soma 1800 s no tempo gasto e mantém `origin = 'focus'`
+- [x] Excluir tira a duração do tempo gasto
+- [x] Editar ou excluir a sessão aberta recusa com 409 `session_running`
+- [x] Sessão de outro usuário recusa com 404
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

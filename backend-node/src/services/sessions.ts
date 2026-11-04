@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { type SQL, eq, sql } from 'drizzle-orm'
+import { type SQL, and, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type FocusSessionKind, type FocusSessionOrigin, type Workspace, focusSessions, lists, users } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
@@ -36,12 +36,26 @@ export interface AgendaSession {
 type Workspaceish = Pick<Workspace, 'id' | 'timezone'>
 
 /** A session to record: a task session names its task, a break names its list (AGENDA-16). */
-export type SessionInput =
-  | { kind: 'task'; taskId: string; startedAt: Date; endedAt: Date }
-  | { kind: 'break'; listId: string; startedAt: Date; endedAt: Date }
+type SessionOwner = { kind: 'task'; taskId: string } | { kind: 'break'; listId: string }
+export type SessionInput = SessionOwner & { startedAt: Date; endedAt: Date }
 
 const MIN_DURATION_MS = 60_000
 const MAX_DURATION_MS = 24 * 60 * 60 * 1000
+
+/** What an edit may change; absent fields keep their value (AGENDA-31). */
+export interface SessionChanges {
+  startedAt?: Date
+  endedAt?: Date
+  /** Only for a task session. */
+  taskId?: string
+  /** Only for a break. */
+  listId?: string
+}
+
+const sessionNotFound = () => new HttpError(404, 'Session not found')
+
+const sessionRunning = () =>
+  new HttpError(409, 'The session is still running; pause it in the focus first', {}, { code: 'session_running' })
 
 const invalidDuration = () =>
   new HttpError(422, 'A session lasts from 1 minute to 24 hours', {}, { code: 'invalid_duration' })
@@ -92,7 +106,7 @@ function checkInterval(startedAt: Date, endedAt: Date, now: Date): void {
 async function sessionTarget(
   tx: Database,
   workspaceId: string,
-  input: SessionInput,
+  input: SessionOwner,
 ): Promise<{ listId: string; taskId: string | null }> {
   if (input.kind === 'break') return { listId: (await getList(tx, input.listId, workspaceId)).id, taskId: null }
   const task = await findTask(tx, input.taskId, workspaceId)
@@ -161,5 +175,67 @@ export function createSession(
     })
     const [created] = await selectSessions(tx, sql`fs.id = ${id}`)
     return created!
+  })
+}
+
+/**
+ * The ended session `id` of the user in the workspace, locked: 404 when it is not theirs (AGENDA-34),
+ * 409 `session_running` while it is open (AGENDA-33). Runs after settling, so a session past its
+ * deadline is already ended.
+ */
+async function endedSession(tx: Database, actor: SessionActor, workspaceId: string, id: string) {
+  const [session] = await tx
+    .select()
+    .from(focusSessions)
+    .where(and(eq(focusSessions.id, id), eq(focusSessions.userId, actor.userId), eq(focusSessions.workspaceId, workspaceId)))
+    .for('update')
+  if (!session) throw sessionNotFound()
+  if (session.endedAt === null) throw sessionRunning()
+  return { ...session, endedAt: session.endedAt }
+}
+
+/**
+ * Changes the start, the end and, when sent, the task (task session) or the list (break) of an ended
+ * session, with the checks of `createSession` (AGENDA-29 to AGENDA-31). The origin stays.
+ */
+export function updateSession(
+  db: Database,
+  actor: SessionActor,
+  workspace: Workspaceish,
+  id: string,
+  changes: SessionChanges,
+  now: Date,
+): Promise<AgendaSession> {
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    await lockUser(tx, actor.userId)
+    await settle(tx, actor.userId, now)
+    const session = await endedSession(tx, actor, workspace.id, id)
+    const startedAt = changes.startedAt ?? session.startedAt
+    const endedAt = changes.endedAt ?? session.endedAt
+    checkInterval(startedAt, endedAt, now)
+    let target = { listId: session.listId, taskId: session.taskId }
+    if (session.kind === 'task' && changes.taskId !== undefined) {
+      target = await sessionTarget(tx, workspace.id, { kind: 'task', taskId: changes.taskId })
+    } else if (session.kind === 'break' && changes.listId !== undefined) {
+      target = await sessionTarget(tx, workspace.id, { kind: 'break', listId: changes.listId })
+    }
+    await tx
+      .update(focusSessions)
+      .set({ startedAt, endedAt, listId: target.listId, taskId: target.taskId })
+      .where(eq(focusSessions.id, id))
+    const [updated] = await selectSessions(tx, sql`fs.id = ${id}`)
+    return updated!
+  })
+}
+
+/** Deletes an ended session of the user; its length leaves the time spent and the reports (AGENDA-32). */
+export async function deleteSession(db: Database, actor: SessionActor, workspace: Workspaceish, id: string, now: Date): Promise<void> {
+  await db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    await lockUser(tx, actor.userId)
+    await settle(tx, actor.userId, now)
+    await endedSession(tx, actor, workspace.id, id)
+    await tx.delete(focusSessions).where(eq(focusSessions.id, id))
   })
 }
