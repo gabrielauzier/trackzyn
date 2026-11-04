@@ -5,7 +5,7 @@ import { Route, Routes } from 'react-router-dom'
 
 import FocusPage from '@/pages/focus'
 import HomePage from '@/pages/home'
-import { focus, lists, tasks } from '@/lib/api'
+import { focus, lists, subtasks, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import { play } from '@/lib/sounds/synth'
 import * as queue from '@/lib/focus/queue'
@@ -785,5 +785,188 @@ describe('FocusPage reordering on the desktop (#15)', () => {
     await keyboardDrag(user, taskB.title, '{ArrowUp}{ArrowUp}')
     await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'start', task_id: taskB.id })]))
     await waitFor(() => expect(bridge.notifyFocusChanged).toHaveBeenCalledTimes(2))
+  })
+})
+
+const sub = (id: string, title: string, done = false, position = 0): Subtask => ({ id, task_id: taskA.id, title, done, position })
+const four = () => [sub('s1', 'Write the cases', true, 0), sub('s2', 'Drop at the end', false, 1), sub('s3', 'Move by keyboard', false, 2), sub('s4', 'Announce the position', false, 3)]
+
+describe('FocusPage subtasks of the task in focus (#16)', () => {
+  /** A counting here with `items` as its subtasks, B with two of its own, C with none. */
+  function withSubtasks(items: Subtask[]) {
+    const done = items.filter((item) => item.done).length
+    const state = inOrder([taskA.id, taskB.id, taskC.id], counting(deviceId(), paused({ task: { ...taskA, subtasks: { done, total: items.length } } })))
+    state.today.tasks = state.today.tasks.map((item) =>
+      item.id === taskA.id
+        ? { ...item, subtasks: { done, total: items.length } }
+        : item.id === taskB.id
+          ? { ...item, subtasks: { done: 1, total: 2 } }
+          : { ...item, subtasks: { done: 0, total: 0 } },
+    )
+    vi.mocked(focus.get).mockResolvedValue(state)
+    vi.mocked(tasks.get).mockImplementation(async (id: string) => taskWith(id, id === taskA.id ? items : []))
+  }
+
+  const card = () => screen.getByRole('timer').closest<HTMLElement>('[data-running]')!
+
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('the focused card lists its subtasks with the counter', async () => {
+    withSubtasks(four())
+    renderFocus()
+
+    expect(await within(await screen.findByRole('timer').then(() => card())).findByText('Subtasks')).toBeInTheDocument()
+    const inCard = within(card())
+    expect(inCard.getByText('1/4')).toBeInTheDocument()
+    expect(inCard.getByRole('progressbar', { name: 'Subtasks' })).toHaveAttribute('aria-valuenow', '25')
+    expect(inCard.getAllByRole('checkbox').map((box) => box.getAttribute('aria-label'))).toEqual([
+      'Write the cases',
+      'Drop at the end',
+      'Move by keyboard',
+      'Announce the position',
+    ])
+    expect(inCard.getByRole('checkbox', { name: 'Write the cases' })).toHaveAttribute('aria-checked', 'true')
+    expect(inCard.getByRole('textbox', { name: 'New subtask' })).toBeInTheDocument()
+    // Under the title and the timer, past a line.
+    const section = inCard.getByText('Subtasks').closest('.border-t')!
+    expect(screen.getByRole('timer').compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('ticking a subtask in focus updates the counter', async () => {
+    withSubtasks(four())
+    let answer!: (subtask: Subtask) => void
+    vi.mocked(subtasks.update).mockImplementation(() => new Promise((resolve) => (answer = resolve)))
+    const { user, queryClient } = renderFocus()
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
+    await screen.findByText('Drop at the end')
+
+    await user.click(within(card()).getByRole('checkbox', { name: 'Drop at the end' }))
+
+    // At once, before the server answers: struck through, the bar and the counter moved.
+    expect(subtasks.update).toHaveBeenCalledWith('s2', { done: true })
+    expect(within(card()).getByText('2/4')).toBeInTheDocument()
+    expect(within(card()).getByRole('progressbar', { name: 'Subtasks' })).toHaveAttribute('aria-valuenow', '50')
+    expect(within(card()).getByText('Drop at the end')).toHaveClass('line-through')
+
+    // Once answered, the board and the focus read the counts again.
+    const reads = vi.mocked(focus.get).mock.calls.length
+    vi.mocked(tasks.get).mockImplementation(async (id: string) =>
+      taskWith(id, id === taskA.id ? four().map((item) => (item.id === 's2' ? { ...item, done: true } : item)) : []),
+    )
+    answer(sub('s2', 'Drop at the end', true, 1))
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['lists'] }))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['focus'] })
+    await waitFor(() => expect(vi.mocked(focus.get).mock.calls.length).toBeGreaterThan(reads))
+
+    // Unticking strikes it back to normal.
+    vi.mocked(subtasks.update).mockImplementation(() => new Promise(() => undefined))
+    await waitFor(() => expect(within(card()).getByRole('checkbox', { name: 'Drop at the end' })).toHaveAttribute('aria-checked', 'true'))
+    await user.click(within(card()).getByRole('checkbox', { name: 'Drop at the end' }))
+    expect(subtasks.update).toHaveBeenLastCalledWith('s2', { done: false })
+    expect(within(card()).getByText('1/4')).toBeInTheDocument()
+    expect(within(card()).getByText('Drop at the end')).not.toHaveClass('line-through')
+  })
+
+  it('adding a subtask in focus appends it', async () => {
+    withSubtasks(four())
+    vi.mocked(subtasks.create).mockImplementation(() => new Promise(() => undefined))
+    const { user } = renderFocus()
+    await screen.findByText('Drop at the end')
+    const field = within(card()).getByRole('textbox', { name: 'New subtask' })
+
+    // Empty, or past 255 characters: the board list's errors, and nothing sent.
+    await user.click(field)
+    await user.keyboard('{Enter}')
+    expect(within(card()).getByText('Enter a title')).toBeInTheDocument()
+    await user.type(field, 'x'.repeat(256))
+    await user.keyboard('{Enter}')
+    expect(within(card()).getByText('Use at most 255 characters')).toBeInTheDocument()
+    expect(subtasks.create).not.toHaveBeenCalled()
+
+    await user.clear(field)
+    await user.type(field, 'Check the widget{Enter}')
+
+    expect(subtasks.create).toHaveBeenCalledWith(taskA.id, 'Check the widget')
+    expect(within(card()).getAllByRole('checkbox').at(-1)).toHaveAttribute('aria-label', 'Check the widget')
+    expect(within(card()).getByText('1/5')).toBeInTheDocument()
+
+    // 255 characters are fine.
+    await user.type(field, `${'y'.repeat(255)}{Enter}`)
+    expect(subtasks.create).toHaveBeenLastCalledWith(taskA.id, 'y'.repeat(255))
+  })
+
+  it('a task without subtasks shows only Add subtask', async () => {
+    withSubtasks([])
+    const { user } = renderFocus()
+    const add = await within(await screen.findByRole('timer').then(() => card())).findByRole('button', { name: 'Add subtask' })
+
+    expect(within(card()).queryByText('Subtasks')).not.toBeInTheDocument()
+    expect(within(card()).queryByRole('textbox', { name: 'New subtask' })).not.toBeInTheDocument()
+    expect(within(card()).queryAllByRole('checkbox')).toEqual([])
+
+    await user.click(add)
+    expect(within(card()).getByRole('textbox', { name: 'New subtask' })).toHaveFocus()
+  })
+
+  it('all subtasks done offers Complete task', async () => {
+    withSubtasks([sub('s1', 'Write the cases', true, 0), sub('s2', 'Drop at the end', true, 1)])
+    vi.mocked(focus.send).mockResolvedValue(inOrder([taskB.id, taskC.id], paused({ task: taskB })))
+    const { user } = renderFocus()
+
+    const done = await within(await screen.findByRole('timer').then(() => card())).findByText('All done here.')
+    expect(done).toBeInTheDocument()
+    expect(within(card()).getByText('2/2')).toBeInTheDocument()
+    expect(within(card()).getByRole('progressbar', { name: 'Subtasks' })).toHaveAttribute('aria-valuenow', '100')
+
+    await user.click(within(card()).getByRole('button', { name: 'Complete task' }))
+    await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'complete', task_id: taskA.id })]))
+  })
+
+  it('more than five subtasks collapse behind Show all', async () => {
+    const seven = [
+      sub('s1', 'Done one', true, 0),
+      sub('s2', 'Done two', true, 1),
+      ...['Three', 'Four', 'Five', 'Six', 'Seven'].map((title, index) => sub(`p${index}`, title, false, index + 2)),
+    ]
+    // Seven subtasks, two done: a sixth pending one would be hidden too.
+    seven.push(sub('p9', 'Eight', false, 9))
+    withSubtasks(seven)
+    const { user } = renderFocus()
+    await screen.findByText('Three')
+
+    const names = () => within(card()).getAllByRole('checkbox').map((box) => box.getAttribute('aria-label'))
+    expect(names()).toEqual(['Three', 'Four', 'Five', 'Six', 'Seven'])
+    await user.click(within(card()).getByRole('button', { name: 'Show all (8)' }))
+
+    expect(names()).toEqual(['Done one', 'Done two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'])
+    expect(within(card()).queryByRole('button', { name: /^Show all/ })).not.toBeInTheDocument()
+  })
+
+  it('a viewer sees the subtasks read-only', async () => {
+    role.canWrite = false
+    withSubtasks(four())
+    renderFocus()
+    await screen.findByText('Drop at the end')
+
+    const boxes = within(card()).getAllByRole('checkbox')
+    expect(boxes).toHaveLength(4)
+    for (const box of boxes) expect(box).toBeDisabled()
+    expect(within(card()).getByText('1/4')).toBeInTheDocument()
+    expect(within(card()).queryByRole('textbox', { name: 'New subtask' })).not.toBeInTheDocument()
+    expect(within(card()).queryByRole('button', { name: 'Add subtask' })).not.toBeInTheDocument()
+    expect(within(card()).queryByRole('button', { name: /^Rename / })).not.toBeInTheDocument()
+  })
+
+  it('a next task shows its subtask count', async () => {
+    withSubtasks(four())
+    renderFocus()
+    await screen.findByText('DEV-1727')
+
+    const item = (title: string) => within(screen.getByRole('list', { name: 'Next tasks' })).getByText(title).closest('li')!
+    expect(within(item(taskB.title)).getByText('2 subtasks · 30min')).toBeInTheDocument()
+    expect(within(item(taskC.title)).getByText('20min')).toBeInTheDocument()
+    expect(item(taskC.title)).not.toHaveTextContent('subtask')
   })
 })

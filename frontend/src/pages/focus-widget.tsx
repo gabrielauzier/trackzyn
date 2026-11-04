@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { OfflineConflicts } from '@/components/focus/offline-conflicts'
 import { WidgetControls } from '@/components/focus/widget-controls'
 import { WidgetNotes } from '@/components/focus/widget-notes'
+import { WidgetSubtasks } from '@/components/focus/widget-subtasks'
 import { Button } from '@/components/ui/button'
 import { useWorkspace } from '@/contexts/workspace-context'
 import {
@@ -41,7 +42,16 @@ export default function FocusWidgetPage() {
   const sessionList = state?.session?.list_id
   if (sessionList && sessionList !== listId) setListId(sessionList)
 
-  const [notesOpen, setNotesOpen] = useState(false)
+  // The notes and the subtasks of the task in focus share the room below the controls: one replaces the other (#16).
+  const [open, setOpen] = useState<'notes' | 'subtasks' | null>(null)
+  // What is open, as the handlers read it between renders (a blur and the click that caused it).
+  const opened = useRef(open)
+  const show = (next: typeof open) => {
+    opened.current = next
+    setOpen(next)
+  }
+  // The pointer went down on `Subtarefas` while the notes are open: leaving the notes field then keeps the size.
+  const toSubtasks = useRef(false)
   const [picking, setPicking] = useState(false)
   const [acknowledged, setAcknowledged] = useState(0)
 
@@ -69,10 +79,10 @@ export default function FocusWidgetPage() {
   // The size the widget was last asked for; the notes field sizes it by itself.
   const sized = useRef(false)
   useEffect(() => {
-    if (notesOpen || panel === sized.current) return
+    if (open !== null || panel === sized.current) return
     sized.current = panel
     void resizeWidget(panel ? 'notes' : 'compact')
-  }, [panel, notesOpen])
+  }, [panel, open])
 
   // The other window reads the server again once the action was answered.
   const tell = (action: unknown) => {
@@ -105,20 +115,40 @@ export default function FocusWidgetPage() {
         actions={widgetActions}
         onNotes={() => {
           sized.current = true
-          setNotesOpen(true)
+          show('notes')
+        }}
+        subtasksOpen={open === 'subtasks'}
+        onSubtasksPointerDown={() => {
+          if (opened.current === 'notes') toSubtasks.current = true
+        }}
+        onSubtasks={() => {
+          toSubtasks.current = false
+          if (opened.current === 'subtasks') {
+            sized.current = false
+            void resizeWidget('compact')
+            show(null)
+            return
+          }
+          sized.current = true
+          show('subtasks')
         }}
         onExpand={() => void expandFocus()}
         onPanelChange={setPicking}
       />
-      {notesOpen && task ? (
+      {open === 'notes' && task ? (
         <WidgetNotes
           taskId={task.id}
+          shrinkOnClose={() => opened.current === 'notes' && !toSubtasks.current}
           onClose={() => {
-            sized.current = false
-            setNotesOpen(false)
             notifyFocusChanged()
+            // Going on to the subtasks: they take the notes' place at the same size.
+            if (opened.current !== 'notes' || toSubtasks.current) return
+            sized.current = false
+            show(null)
           }}
         />
+      ) : open === 'subtasks' && task ? (
+        <WidgetSubtasks key={task.id} taskId={task.id} canWrite={canWrite} />
       ) : (
         warnings && (
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-3 [-webkit-app-region:no-drag]">

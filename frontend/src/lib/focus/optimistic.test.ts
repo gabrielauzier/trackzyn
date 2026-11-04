@@ -181,6 +181,20 @@ describe('applyOptimistic on a state older than the action, as offline', () => {
     expect(state.task).toMatchObject({ spent_seconds: 720, awaiting_extend: false })
   })
 
+  it('keeps the subtask counts of the task in focus and of Today, and none where the answer had none (#16)', () => {
+    const counts = { done: 1, total: 4 }
+    const withCounts: FocusState = {
+      ...counting,
+      task: { ...counting.task!, subtasks: counts },
+      today: { ...counting.today, tasks: counting.today.tasks.map((task) => ({ ...task, subtasks: counts })) },
+    }
+
+    const state = applyOptimistic(withCounts, pause(12), ms(12))
+    expect(state.task?.subtasks).toEqual(counts)
+    expect(state.today.tasks[0]!.subtasks).toEqual(counts)
+    expect(applyOptimistic(counting, pause(12), ms(12)).task).not.toHaveProperty('subtasks')
+  })
+
   it('FOCUS-11 a deadline reached before the click already ended the session, so pause is refused', () => {
     expect(() => applyOptimistic(counting, pause(35), ms(35))).toThrow(
       expect.objectContaining({ status: 409, code: 'invalid_transition' }),

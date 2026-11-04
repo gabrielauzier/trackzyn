@@ -1,18 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 
 import FocusWidgetPage from '@/pages/focus-widget'
-import { focus, tasks } from '@/lib/api'
+import { focus, subtasks, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
 import { play } from '@/lib/sounds/synth'
 import { renderWithProviders, selectContents } from '@/test/utils'
-import type { FocusState } from '@/types'
+import type { FocusState, Subtask, Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   tasks: { get: vi.fn(), update: vi.fn() },
+  subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn(), move: vi.fn() },
 }))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace', timezone: null }, canWrite: true }),
@@ -248,5 +249,96 @@ describe('FocusWidgetPage', () => {
 
     expect(bridge.reportFocusState).not.toHaveBeenCalled()
     expect(bridge.onPauseRequest).not.toHaveBeenCalled()
+  })
+})
+
+describe('FocusWidgetPage subtasks (#16)', () => {
+  const items: Subtask[] = [
+    { id: 's1', task_id: taskA.id, title: 'Write the cases', done: true, position: 0 },
+    { id: 's2', task_id: taskA.id, title: 'Drop at the end', done: false, position: 1 },
+  ]
+  const withItems = (list: Subtask[]) => ({ id: taskA.id, title: taskA.title, notes: '', subtasks: list }) as unknown as Task
+
+  beforeEach(() => {
+    const withCounts = { ...taskA, subtasks: { done: 1, total: 2 } }
+    vi.mocked(focus.get).mockImplementation(async () =>
+      counting(paused({ task: withCounts, today: { ...paused().today, tasks: [{ ...withCounts, position: 0 }, { ...taskB, position: 1 }] } })),
+    )
+    vi.mocked(tasks.get).mockResolvedValue(withItems(items))
+  })
+
+  const panel = () => screen.queryByRole('region', { name: 'Subtasks' })
+
+  it('the subtasks icon opens the subtask panel at the notes size', async () => {
+    const { user, hover } = renderWidget()
+    expect(await screen.findByText('1/2')).toBeInTheDocument()
+    await hover()
+    expect(bridge.resizeWidget).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Subtasks' }))
+
+    // 300x240, the size of the notes panel, with the subtasks to tick under the controls.
+    await waitFor(() => expect(bridge.resizeWidget.mock.calls).toEqual([['notes']]))
+    const opened = await screen.findByRole('region', { name: 'Subtasks' })
+    expect(await within(opened).findByRole('checkbox', { name: 'Drop at the end' })).toBeEnabled()
+    expect(within(opened).getByRole('checkbox', { name: 'Write the cases' })).toHaveAttribute('aria-checked', 'true')
+    expect(within(opened).getByText('Subtasks · 1/2')).toBeInTheDocument()
+    // Only ticking: no field to add, nothing to rename, move or delete.
+    expect(within(opened).queryByRole('textbox')).not.toBeInTheDocument()
+    expect(within(opened).queryAllByRole('button')).toEqual([])
+    const controls = screen.getByRole('group', { name: 'Focus widget' })
+    expect(controls.compareDocumentPosition(opened) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Subtasks' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('notes and subtasks panels replace each other', async () => {
+    const { user, hover } = renderWidget()
+    await screen.findByText('1/2')
+    await hover()
+
+    await user.click(screen.getByRole('button', { name: 'Subtasks' }))
+    expect(await screen.findByRole('region', { name: 'Subtasks' })).toBeInTheDocument()
+
+    // Notes take the subtasks' place, at the same size.
+    await user.click(screen.getByRole('button', { name: 'Notes' }))
+    const notes = await screen.findByRole('textbox', { name: 'Notes' })
+    expect(panel()).not.toBeInTheDocument()
+
+    // And the subtasks take the notes' place again, from inside the notes field, the size kept the whole way.
+    await user.click(notes)
+    await user.click(screen.getByRole('button', { name: 'Subtasks' }))
+    expect(await screen.findByRole('region', { name: 'Subtasks' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
+    expect(bridge.resizeWidget.mock.calls.every((call) => (call as unknown[])[0] === 'notes')).toBe(true)
+
+    // Closing the panel shrinks the widget back to 300x64.
+    await user.click(screen.getByRole('button', { name: 'Subtasks' }))
+    await waitFor(() => expect(panel()).not.toBeInTheDocument())
+    expect(bridge.resizeWidget.mock.calls.at(-1)).toEqual(['compact'])
+  })
+
+  it('ticking a subtask in the widget tells the main window', async () => {
+    let answer!: (subtask: Subtask) => void
+    vi.mocked(subtasks.update).mockImplementation(() => new Promise((resolve) => (answer = resolve)))
+    const { user, hover } = renderWidget()
+    await screen.findByText('1/2')
+    await hover()
+    await user.click(screen.getByRole('button', { name: 'Subtasks' }))
+    const opened = await screen.findByRole('region', { name: 'Subtasks' })
+
+    await user.click(await within(opened).findByRole('checkbox', { name: 'Drop at the end' }))
+    expect(subtasks.update).toHaveBeenCalledWith('s2', { done: true })
+    expect(within(opened).getByText('Subtasks · 2/2')).toBeInTheDocument()
+    expect(bridge.notifyFocusChanged).not.toHaveBeenCalled()
+
+    // Answered: the main window is told, and the widget reads its counter again.
+    const withCounts = { ...taskA, subtasks: { done: 2, total: 2 } }
+    vi.mocked(focus.get).mockImplementation(async () =>
+      counting(paused({ task: withCounts, today: { ...paused().today, tasks: [{ ...withCounts, position: 0 }, { ...taskB, position: 1 }] } })),
+    )
+    vi.mocked(tasks.get).mockResolvedValue(withItems(items.map((item) => ({ ...item, done: true }))))
+    answer({ ...items[1]!, done: true })
+    await waitFor(() => expect(bridge.notifyFocusChanged).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText('2/2')).toBeInTheDocument()
   })
 })
