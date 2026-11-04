@@ -101,14 +101,14 @@ T1 → T2 → T3 → T4 → T5
 
 **Done when**:
 
-- [ ] Clicar no botão abre o menu e põe `aria-expanded="true"`; Esc e clique fora fecham e devolvem o foco ao botão
-- [ ] Com os dias pedidos, o menu mostra `Dias da semana` com as sete caixas, de segunda a domingo, marcadas conforme a seleção; sem, não mostra
-- [ ] Desmarcar um dia chama `onDaysChange` na hora com a nova seleção, e o menu continua aberto; os atalhos também
-- [ ] Com um dia só, a caixa dele está desabilitada
-- [ ] Com cinco de sete, o botão mostra o ponto e se chama `View options, 5 of 7 days`
-- [ ] A lupa mostra `1x`, `2x`, `3x`, uma marcada, e clicar chama `onZoomChange` com o menu aberto
-- [ ] Os textos em português: `Opções de exibição`, `Dias da semana`, `Todos`, `Seg – Sex`, `Lupa`
-- [ ] Gate check passes: Quick
+- [x] Clicar no botão abre o menu e põe `aria-expanded="true"`; Esc e clique fora fecham e devolvem o foco ao botão
+- [x] Com os dias pedidos, o menu mostra `Dias da semana` com as sete caixas, de segunda a domingo, marcadas conforme a seleção; sem, não mostra
+- [x] Desmarcar um dia chama `onDaysChange` na hora com a nova seleção, e o menu continua aberto; os atalhos também
+- [x] Com um dia só, a caixa dele está desabilitada
+- [x] Com cinco de sete, o botão mostra o ponto e se chama `View options, 5 of 7 days`
+- [x] A lupa mostra `1x`, `2x`, `3x`, uma marcada, e clicar chama `onZoomChange` com o menu aberto
+- [x] Os textos em português: `Opções de exibição`, `Dias da semana`, `Todos`, `Seg – Sex`, `Lupa`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

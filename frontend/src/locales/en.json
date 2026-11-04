@@ -783,6 +783,13 @@
     "view": "View",
     "zoom": "Zoom",
     "zoomLevel": "{{level}}x",
+    "viewMenu": {
+      "label": "View options",
+      "labelFiltered": "View options, {{shown}} of 7 days",
+      "days": "Week days",
+      "allDays": "All",
+      "workDays": "Mon – Fri"
+    },
     "list": "List",
     "allLists": "All lists",
     "loadError": "Could not load the agenda.",

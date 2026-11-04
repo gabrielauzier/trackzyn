@@ -783,6 +783,13 @@
     "view": "Visão",
     "zoom": "Lupa",
     "zoomLevel": "{{level}}x",
+    "viewMenu": {
+      "label": "Opções de exibição",
+      "labelFiltered": "Opções de exibição, {{shown}} de 7 dias",
+      "days": "Dias da semana",
+      "allDays": "Todos",
+      "workDays": "Seg – Sex"
+    },
     "list": "Lista",
     "allLists": "Todas as listas",
     "loadError": "Não foi possível carregar a agenda.",
