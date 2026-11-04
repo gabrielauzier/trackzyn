@@ -54,20 +54,20 @@ The desktop app does not hot-reload the frontend. Its window loads the frontend'
 | `backend-node/` (local mode only) | `npm run build:backend` |
 | Several of them, or not sure | `npm run build:all` |
 
-To run it from the repository:
+To run it from the repository, install and build everything the first time (later, rebuild only what changed), then start it:
 
 ```bash
-cd desktop && npm install
-npm run build:all   # first time, then only what changed
+cd desktop && npm install && npm run build:all
+```
+
+```bash
 npm run dev
 ```
 
-To update the installed app (macOS), package it again and replace the copy in Applications:
+To update the installed app (macOS), quit it (⌘Q), then package it again from `desktop/` and replace the copy in Applications. `package:dir` runs `build:all` and writes `release/mac-arm64/trackzyn.app`; the copy only runs if packaging succeeded:
 
 ```bash
-cd desktop
-npm run package:dir   # runs build:all, then writes release/mac-arm64/trackzyn.app
-rm -rf /Applications/trackzyn.app && cp -R release/mac-arm64/trackzyn.app /Applications/
+npm run package:dir && rm -rf /Applications/trackzyn.app && cp -R release/mac-arm64/trackzyn.app /Applications/
 ```
 
 `package:dir` signs the app ad hoc, so the first launch may need right-click → Open. The settings, the local database and the files live in `~/Library/Application Support/trackzyn`. Replacing the app does not touch that folder, and running from the repository uses the same folder. Migrations apply when local mode starts.
