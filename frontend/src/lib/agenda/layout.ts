@@ -16,6 +16,8 @@ export interface Piece {
   running: boolean
   /** Length of this piece. */
   seconds: number
+  /** The sessions a joined block stands for, in start order; absent on a common block (MERGE-11). */
+  members?: AgendaSession[]
 }
 
 export type LaidOutPiece = Piece & { lane: number; lanes: number }

@@ -42,6 +42,7 @@ const workspace = (minSessionMinutes: number | null): Workspace => ({
   icon: null,
   color: null,
   min_session_minutes: minSessionMinutes,
+  merge_gap_minutes: null,
   created_at: '2026-10-01T00:00:00.000Z',
   created_by_user_id: 'u1',
   managed_by_user_id: null,

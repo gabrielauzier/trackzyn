@@ -134,15 +134,15 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Com 5: 10:20–11:01 e 11:05–11:16 da mesma lista viram um pedaço de 10:20 a 11:16, com os dois em `members`, em ordem de início
-- [ ] Exatamente 5 min se junta; 5 min e 1 s não
-- [ ] A cadeia: três sessões a 4 e 2 min viram um pedaço só
-- [ ] Duas sessões sobrepostas da mesma lista e tipo se juntam
-- [ ] Outra lista, ou uma tarefa e um intervalo, ficam separados
-- [ ] Um intervalo entre duas tarefas da mesma lista não impede a junção das tarefas
-- [ ] A sessão aberta, a que passa da meia-noite e a `apartId` ficam fora de qualquer grupo
-- [ ] Com o espaço nulo, os pedaços voltam sem mudança
-- [ ] Gate check passes: Quick
+- [x] Com 5: 10:20–11:01 e 11:05–11:16 da mesma lista viram um pedaço de 10:20 a 11:16, com os dois em `members`, em ordem de início
+- [x] Exatamente 5 min se junta; 5 min e 1 s não
+- [x] A cadeia: três sessões a 4 e 2 min viram um pedaço só
+- [x] Duas sessões sobrepostas da mesma lista e tipo se juntam
+- [x] Outra lista, ou uma tarefa e um intervalo, ficam separados
+- [x] Um intervalo entre duas tarefas da mesma lista não impede a junção das tarefas
+- [x] A sessão aberta, a que passa da meia-noite e a `apartId` ficam fora de qualquer grupo
+- [x] Com o espaço nulo, os pedaços voltam sem mudança
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

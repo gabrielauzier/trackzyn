@@ -85,6 +85,8 @@ export interface Workspace {
   color: string | null
   /** Sessions shorter than this many minutes are hidden in the agenda and the Sessions report; null shows all. */
   min_session_minutes: number | null
+  /** Sessions of one list and kind this many minutes apart or less are drawn as one block in the agenda; null keeps them apart. */
+  merge_gap_minutes: number | null
   created_at: string
   created_by_user_id: string | null
   managed_by_user_id: string | null
