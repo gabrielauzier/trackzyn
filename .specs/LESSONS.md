@@ -212,6 +212,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: AGENDA-43 frontend/src/components/agenda/day-timeline.tsx:160 (specs)
 - last seen: 2026-11-04T06:16:43Z
 
+### L-034 - When a page renders different components per viewport, test each feature behaviour at the page level in every viewport, not only on the component with the prop passed by hand
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/pages` · harmful: 0
+- features: hide-short-sessions
+- evidence: F10 frontend/src/pages/agenda.tsx:274 (frontend/pages)
+- last seen: 2026-11-04T16:09:11Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

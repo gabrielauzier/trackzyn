@@ -55,6 +55,12 @@ T1 → T2 → T3
 T4 → T5 → T6 → T7 → T8
 ```
 
+### Phase 3: Fixes do Verifier (rodada 1)
+
+```
+T9 → T10 → T11
+```
+
 ---
 
 ## Task Breakdown
@@ -285,6 +291,84 @@ T4 → T5 → T6 → T7 → T8
 
 ---
 
+### T9: Provar o dia escondendo sessões na página da Agenda
+
+**What**: Teste da página na largura de celular (390 px) com o mínimo em 5: o bloco de 1 h aparece, o de 2 min não, e o total do dia soma os dois. Fecha o mutante F10 (tirar `hidden` do `DayTimeline` em `agenda.tsx`).
+**Where**: `frontend/src/pages/agenda.test.tsx`
+**Depends on**: None
+**Reuses**: `setWidth` do bloco de telas estreitas do mesmo arquivo
+**Requirement**: HIDE-11, HIDE-14
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Na largura de 390 px, com o mínimo em 5, o bloco 10:30 – 10:32 não aparece e o 10:00 – 11:00 aparece
+- [ ] O título do dia mostra o total com as duas sessões (1 h 2 min)
+- [ ] Tirar `hidden={hidden}` do `DayTimeline` faz o teste falhar
+- [ ] Gate check passes: Full (frontend)
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `test(frontend): prove the agenda day view hides short sessions`
+
+---
+
+### T10: Provar que a aba Sessões usa o mínimo de cada workspace
+
+**What**: Teste de rota com dois workspaces do mesmo dono, um com o mínimo em 5 e outro desligado, cada um com uma sessão de 2 min: a aba Sessões esconde a do primeiro e lista a do segundo.
+**Where**: `backend-node/test/routes/reports.test.ts`
+**Depends on**: T9
+**Reuses**: o teste HIDE-19 de rota do mesmo arquivo
+**Requirement**: HIDE-19, HIDE-24
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] No workspace com o mínimo em 5, a sessão de 2 min não aparece
+- [ ] No outro workspace, desligado, a sessão de 2 min aparece
+- [ ] Gate check passes: Full (backend)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): prove the sessions report reads each workspace minimum`
+
+---
+
+### T11: Provar a mensagem de erro em português
+
+**What**: O teste em português da tela do workspace também afirma `Entre 1 e 60 minutos.` para um valor fora da faixa.
+**Where**: `frontend/src/pages/workspace-settings.test.tsx`
+**Depends on**: T10
+**Reuses**: o teste em português do mesmo arquivo
+**Requirement**: HIDE-09
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com o idioma em português e o valor 0, aparece `Entre 1 e 60 minutos.`
+- [ ] Gate check passes: Build
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `test(frontend): prove the minimum error message in Portuguese`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -292,6 +376,7 @@ Phase 1 → Phase 2
 
 Phase 1:  T1 ------→ T2 ------→ T3
 Phase 2:  T4 ------→ T5 ------→ T6 ------→ T7 ------→ T8
+Phase 3:  T9 ------→ T10 -----→ T11
 ```
 
 8 tasks: um batch só, executado no contexto principal, sem sub-agentes. O Verifier roda depois de T8.

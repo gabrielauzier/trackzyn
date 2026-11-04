@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 34,
+  "next_id": 35,
   "lessons": [
     {
       "id": "L-001",
@@ -598,6 +598,24 @@
       ],
       "created": "2026-11-04T06:16:43Z",
       "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-034",
+      "key": "surviving_mutant::when a page renders different components per viewport test each feature behaviour at the page level in every viewport not only on the component with the prop passed by hand",
+      "text": "When a page renders different components per viewport, test each feature behaviour at the page level in every viewport, not only on the component with the prop passed by hand",
+      "signal": "surviving_mutant",
+      "scope": "frontend/pages",
+      "status": "candidate",
+      "features": [
+        "hide-short-sessions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F10 frontend/src/pages/agenda.tsx:274 (frontend/pages)"
+      ],
+      "created": "2026-11-04T16:09:11Z",
+      "last_seen": "2026-11-04T16:09:11Z"
     }
   ]
 }
