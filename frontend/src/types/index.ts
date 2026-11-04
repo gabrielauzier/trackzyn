@@ -304,3 +304,34 @@ export interface ReportSession {
 export interface SessionsReport {
   days: { date: string; sessions: ReportSession[] }[]
 }
+
+/** One session as the agenda shows it: whole, never cut at midnight or at the period edges. */
+export interface AgendaSession {
+  id: string
+  kind: 'task' | 'break'
+  /** How the session was born: by the focus or recorded on the agenda. */
+  origin: 'focus' | 'manual'
+  task_id: string | null
+  /** Null for a break, shown as `Intervalo`. */
+  task_title: string | null
+  list_id: string
+  list_name: string
+  /** Index 1..8 into the `--chart-N` palette. */
+  list_color: number
+  started_at: string
+  /** Null while the session is open. */
+  ended_at: string | null
+}
+
+/** A session to record: a task session names its task, a break names its list (`started_at`/`ended_at` ISO). */
+export type AgendaSessionInput =
+  | { kind: 'task'; task_id: string; started_at: string; ended_at: string }
+  | { kind: 'break'; list_id: string; started_at: string; ended_at: string }
+
+/** What an edit may change; absent fields keep their value. */
+export interface AgendaSessionChanges {
+  started_at?: string
+  ended_at?: string
+  task_id?: string
+  list_id?: string
+}

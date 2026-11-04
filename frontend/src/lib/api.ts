@@ -4,6 +4,9 @@ import { writesBlocked } from '@/lib/write-lock'
 import type { NumberFormat, DateFormat } from '@/lib/format'
 import type {
   AccessToken,
+  AgendaSession,
+  AgendaSessionChanges,
+  AgendaSessionInput,
   AccessTokenScope,
   CreatedAccessToken,
   User,
@@ -446,6 +449,25 @@ export const reports = {
   sessions: async (query: ReportQuery): Promise<SessionsReport> => {
     const { data } = await api.get('/reports/sessions', { params: query })
     return data
+  },
+}
+
+// Sessions: the logged-in user's own agenda (`from`/`to` are YYYY-MM-DD, at most 42 days)
+export const sessions = {
+  list: async (query: ReportQuery): Promise<{ sessions: AgendaSession[] }> => {
+    const { data } = await api.get('/sessions', { params: query })
+    return data
+  },
+  create: async (payload: AgendaSessionInput): Promise<AgendaSession> => {
+    const { data } = await api.post('/sessions', payload)
+    return data
+  },
+  update: async (id: string, payload: AgendaSessionChanges): Promise<AgendaSession> => {
+    const { data } = await api.patch(`/sessions/${id}`, payload)
+    return data
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.delete(`/sessions/${id}`)
   },
 }
 

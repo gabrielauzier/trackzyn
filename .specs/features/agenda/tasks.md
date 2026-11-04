@@ -224,8 +224,8 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Os quatro métodos e o tipo existem com a forma da tabela `Surface`
-- [ ] Gate check passes: Build
+- [x] Os quatro métodos e o tipo existem com a forma da tabela `Surface`
+- [x] Gate check passes: Build
 
 **Tests**: none
 **Gate**: build
