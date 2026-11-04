@@ -73,6 +73,24 @@ describe('useAgenda', () => {
     expect(cached(client)?.[0]).toEqual(expect.objectContaining({ started_at: ended.started_at, ended_at: ended.ended_at }))
   })
 
+  it('puts a refused edit back from what it held, even when reading the agenda again fails (AGENDA-35)', async () => {
+    // Offline after the first read: only the kept copy can bring the block back.
+    vi.mocked(sessions.list).mockReset().mockResolvedValueOnce({ sessions: [ended] }).mockRejectedValue(new Error('offline'))
+    vi.mocked(sessions.update).mockRejectedValue(apiError(404, 'Session not found'))
+    const { client, hook } = setup()
+    await waitFor(() => expect(hook.result.current.query.data).toBeDefined())
+
+    await act(async () => {
+      await hook.result.current.update
+        .mutateAsync({ id: 's1', changes: { ended_at: '2026-11-02T18:30:00.000Z' } })
+        .catch(() => undefined)
+    })
+    await waitFor(() => expect(sessions.list).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(hook.result.current.query.isFetching).toBe(false))
+    expect(toast.error).toHaveBeenCalledWith('Session not found')
+    expect(cached(client)?.[0]).toEqual(expect.objectContaining({ started_at: ended.started_at, ended_at: ended.ended_at }))
+  })
+
   it('reads a refused duration in the app words, not the API detail (AGENDA-24)', async () => {
     vi.mocked(sessions.update).mockRejectedValue(apiError(422, 'A session lasts from 1 minute to 24 hours', 'invalid_duration'))
     const { hook } = setup()

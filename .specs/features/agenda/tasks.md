@@ -727,9 +727,9 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] Com `sessions.list` falhando depois da primeira leitura, uma edição recusada deixa a sessão no cache com `ended_at` 18:00 e mostra o toast
-- [ ] O mutante "sem `restore(snapshot)`" (`use-agenda.ts:100`) falha nesse teste
-- [ ] Gate check passes: Quick
+- [x] Com `sessions.list` falhando depois da primeira leitura, uma edição recusada deixa a sessão no cache com `ended_at` 18:00 e mostra o toast
+- [x] O mutante "sem `restore(snapshot)`" (`use-agenda.ts:100`) falha nesse teste
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
