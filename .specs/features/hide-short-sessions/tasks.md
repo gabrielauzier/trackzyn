@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/hide-short-sessions/design.md`
-**Status**: In Progress
+**Status**: Done
 **Pré-requisito**: a Agenda (#19), na branch `feat/agenda`, de onde esta feature parte.
 
 ---

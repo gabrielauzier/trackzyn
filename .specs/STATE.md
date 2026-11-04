@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/agenda`
-- **Phase / Task**: Execute concluído (T1–T29); Verifier PASS na rodada 2 (`41c138f`)
-- **Completed**: as 6 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda)
+- **Feature**: `.specs/features/hide-short-sessions` (#22)
+- **Phase / Task**: Execute concluído (T1–T11); Verifier PASS na rodada 2 (`edf510c`)
+- **Completed**: as 7 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions)
 - **In-progress** (file:line): none
-- **Next step**: abrir o PR da `feat/agenda` para a `main` e testar a Agenda no app (arrastar, alças, mover entre dias, celular); seguem sem teste a premissa de que uma sessão manual move o corte de `lastChange` (AD-002) e o arraste na visão do dia, que hoje só ajusta pelos campos do painel
+- **Next step**: abrir o PR da `feat/agenda` (Agenda, #21 e #22) para a `main` e testar no app: ligar o limite na tela do workspace e ver a Agenda e a aba Sessões. Da Agenda seguem sem teste a premissa de que uma sessão manual move o corte de `lastChange` (AD-002) e o arraste na visão do dia
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: feat/agenda

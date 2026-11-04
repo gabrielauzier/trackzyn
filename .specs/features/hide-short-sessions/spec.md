@@ -120,32 +120,32 @@ Um foco iniciado e pausado em poucos segundos vira uma sessão como qualquer out
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| HIDE-01 | P1: Configurar | T1 | In Tasks |
-| HIDE-02 | P1: Configurar | T2 | In Tasks |
-| HIDE-03 | P1: Configurar | T2 | In Tasks |
-| HIDE-04 | P1: Configurar | T2 | In Tasks |
-| HIDE-05 | P1: Configurar | T2 | In Tasks |
-| HIDE-06 | P1: Configurar | T8 | In Tasks |
-| HIDE-07 | P1: Configurar | T8 | In Tasks |
-| HIDE-08 | P1: Configurar | T8 | In Tasks |
-| HIDE-09 | P1: Configurar | T8 | In Tasks |
-| HIDE-10 | P1: Configurar | T8 | In Tasks |
-| HIDE-11 | P1: Agenda | T4, T5, T6, T7 | In Tasks |
-| HIDE-12 | P1: Agenda | T4, T5 | In Tasks |
-| HIDE-13 | P1: Agenda | T4 | In Tasks |
-| HIDE-14 | P1: Agenda | T5, T6 | In Tasks |
-| HIDE-15 | P1: Agenda | T5, T6, T7 | In Tasks |
-| HIDE-16 | P1: Agenda | T4, T7 | In Tasks |
-| HIDE-17 | P1: Agenda | T7 | In Tasks |
-| HIDE-18 | P1: Agenda | T7 | In Tasks |
-| HIDE-19 | P1: Sessões | T3 | In Tasks |
-| HIDE-20 | P1: Sessões | T3 | In Tasks |
-| HIDE-21 | P1: Sessões | T3 | In Tasks |
-| HIDE-22 | P1: Sessões | T3 | In Tasks |
-| HIDE-23 | P1: Sessões | T3 | In Tasks |
-| HIDE-24 | P1: Sessões | T3 | In Tasks |
+| HIDE-01 | P1: Configurar | T1 | Verified |
+| HIDE-02 | P1: Configurar | T2 | Verified |
+| HIDE-03 | P1: Configurar | T2 | Verified |
+| HIDE-04 | P1: Configurar | T2 | Verified |
+| HIDE-05 | P1: Configurar | T2 | Verified |
+| HIDE-06 | P1: Configurar | T8 | Verified |
+| HIDE-07 | P1: Configurar | T8 | Verified |
+| HIDE-08 | P1: Configurar | T8 | Verified |
+| HIDE-09 | P1: Configurar | T8 | Verified |
+| HIDE-10 | P1: Configurar | T8 | Verified |
+| HIDE-11 | P1: Agenda | T4, T5, T6, T7 | Verified |
+| HIDE-12 | P1: Agenda | T4, T5 | Verified |
+| HIDE-13 | P1: Agenda | T4 | Verified |
+| HIDE-14 | P1: Agenda | T5, T6 | Verified |
+| HIDE-15 | P1: Agenda | T5, T6, T7 | Verified |
+| HIDE-16 | P1: Agenda | T4, T7 | Verified |
+| HIDE-17 | P1: Agenda | T7 | Verified |
+| HIDE-18 | P1: Agenda | T7 | Verified |
+| HIDE-19 | P1: Sessões | T3 | Verified |
+| HIDE-20 | P1: Sessões | T3 | Verified |
+| HIDE-21 | P1: Sessões | T3 | Verified |
+| HIDE-22 | P1: Sessões | T3 | Verified |
+| HIDE-23 | P1: Sessões | T3 | Verified |
+| HIDE-24 | P1: Sessões | T3 | Verified |
 
-**Coverage:** 24 total, 24 mapped to tasks, 0 unmapped
+**Coverage:** 24 total, 24 mapped to tasks, 24 verified (Verifier round 2 PASS)
 
 ---
 
