@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import type { LaidOutPiece } from '@/lib/agenda/layout'
@@ -27,11 +28,40 @@ function laid(overrides: Partial<AgendaSession>, piece: Partial<LaidOutPiece> = 
 }
 
 describe('SessionBlock', () => {
-  it('shows the task title and 13:01 – 13:26 with two digits (AGENDA-03)', () => {
+  it('carries no visible text, and names the task and 13:01 – 13:26 with two digits (AGENDA-03)', () => {
     renderWithProviders(<SessionBlock piece={laid({})} pxPerMinute={1} timezone={SP} />)
     const block = screen.getByRole('button', { name: 'Write the report, 13:01 – 13:26' })
-    expect(block).toHaveTextContent('Write the report')
-    expect(block).toHaveTextContent('13:01 – 13:26')
+    expect(block.textContent).toBe('')
+  })
+
+  it('rests translucent and, on hover, turns opaque with an outline in the color of its list', () => {
+    renderWithProviders(<SessionBlock piece={laid({ list_color: 5 })} pxPerMinute={1} timezone={SP} />)
+    const block = screen.getByRole('button')
+    expect(block).toHaveClass('opacity-75', 'hover:opacity-100', 'hover:outline-(--block-color)')
+    expect(block.style.getPropertyValue('--block-color')).toBe('var(--chart-5)')
+  })
+
+  it('shows the whole title and the time in a tooltip on hover', async () => {
+    const long = 'Write the quarterly report for the finance team, with every chart and the appendix'
+    renderWithProviders(<SessionBlock piece={laid({ task_title: long })} pxPerMinute={1} timezone={SP} />)
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+
+    await userEvent.hover(screen.getByRole('button'))
+
+    const tooltip = await screen.findByRole('tooltip')
+    expect(tooltip).toHaveTextContent(long)
+    expect(tooltip).toHaveTextContent('13:01 – 13:26')
+    expect(document.querySelector('[data-slot="tooltip-content"] .truncate')).toBeNull()
+  })
+
+  it('names a break Break and an open session now in its tooltip', async () => {
+    renderWithProviders(
+      <SessionBlock piece={laid({ kind: 'break', task_id: null, task_title: null, ended_at: null }, { running: true })} pxPerMinute={1} timezone={SP} />,
+    )
+    await userEvent.hover(screen.getByRole('button'))
+    const tooltip = await screen.findByRole('tooltip')
+    expect(tooltip).toHaveTextContent('Break')
+    expect(tooltip).toHaveTextContent('13:01 – now')
   })
 
   it('starts at its start time with a height of its duration (AGENDA-03)', () => {
@@ -39,19 +69,6 @@ describe('SessionBlock', () => {
     const block = screen.getByRole('button')
     expect(block.style.top).toBe('1562px')
     expect(block.style.height).toBe('50px')
-  })
-
-  it('puts the title and the time on one line below 15 minutes, and on two lines from 15 minutes', () => {
-    const layoutOf = (end: number) => {
-      const { unmount } = renderWithProviders(<SessionBlock piece={laid({}, { start: 781, end })} pxPerMinute={2.4} timezone={SP} />)
-      const content = screen.getByText('Write the report').parentElement!
-      const oneLine = content.classList.contains('items-baseline')
-      const twoLines = content.classList.contains('flex-col')
-      unmount()
-      return { oneLine, twoLines }
-    }
-    expect(layoutOf(795)).toEqual({ oneLine: true, twoLines: false })
-    expect(layoutOf(796)).toEqual({ oneLine: false, twoLines: true })
   })
 
   it('takes the color of its list (AGENDA-04)', () => {
