@@ -233,14 +233,19 @@ export default function FocusPage() {
     if (!over || !canWrite) return
     if (over.id === FOCUS_DROP_ID) {
       if (!accepts || !task) return
-      // The task in focus goes back to the top of the queue, with its time kept (#15, rule 2).
+      // The dragged task becomes the first of Today and the one that was in focus goes right after it, on
+      // top of the queue with its time kept (#15, rule 2). With no session open the server reads the first
+      // task of Today as the one in focus, so without the move a pause would bring the old one back.
       const rest = ids.filter((id) => id !== activeId)
       void actions.start(activeId)
-      const serverQueue = (today?.tasks ?? []).map((item) => item.id).filter((id) => id !== activeId)
-      if (serverQueue[0] !== task.id && rest.length > 0) {
-        setOrder([task.id, ...rest])
-        moveMutation.mutate({ id: task.id, before: rest[0]! })
-      }
+      setOrder([task.id, ...rest])
+      const todayIds = (today?.tasks ?? []).map((item) => item.id)
+      const afterActive = todayIds.filter((id) => id !== activeId)
+      const moves: { id: string; before: string | null }[] = []
+      if (todayIds[0] !== activeId && todayIds[0] !== undefined) moves.push({ id: activeId, before: todayIds[0] })
+      if (afterActive[0] !== task.id && afterActive[0] !== undefined) moves.push({ id: task.id, before: afterActive[0] })
+      // One after the other: in parallel the server could apply them in either order.
+      void moves.reduce<Promise<unknown>>((previous, move) => previous.then(() => moveMutation.mutateAsync(move)), Promise.resolve()).catch(() => undefined)
       return
     }
     const from = ids.indexOf(activeId)
