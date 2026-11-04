@@ -187,11 +187,11 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Uma sessão escondida não tem bloco, e a visível do mesmo dia tem
-- [ ] O total do cabeçalho do dia soma a escondida
-- [ ] Um bloco que se sobrepõe só a uma escondida ocupa a largura inteira (`width: 100%`)
-- [ ] Sem `hidden`, todas as sessões aparecem (os testes atuais passam sem mudança)
-- [ ] Gate check passes: Quick
+- [x] Uma sessão escondida não tem bloco, e a visível do mesmo dia tem
+- [x] O total do cabeçalho do dia soma a escondida
+- [x] Um bloco que se sobrepõe só a uma escondida ocupa a largura inteira (`width: 100%`)
+- [x] Sem `hidden`, todas as sessões aparecem (os testes atuais passam sem mudança)
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

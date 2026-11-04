@@ -32,6 +32,8 @@ interface WeekGridProps {
   onSelect?: (session: AgendaSession) => void
   /** Pixels per minute, from the zoom; the default zoom's scale when absent. */
   pxPerMinute?: number
+  /** Whether a saved session stays off the grid (HIDE-11); it still counts in the day total (HIDE-14). */
+  hidden?: (session: AgendaSession) => boolean
 }
 
 /** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
@@ -50,7 +52,17 @@ function weekdayLabel(day: string, locale: string): string {
  * time of its task sessions; the sessions as blocks, side by side where they overlap (AGENDA-06); the now
  * line on today (AGENDA-05) and the time after now hatched, where no drag starts (AGENDA-23).
  */
-export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = null, onSelect, pxPerMinute = PX_PER_MINUTE }: WeekGridProps) {
+export function WeekGrid({
+  days,
+  sessions,
+  timezone,
+  now,
+  drag,
+  selectedId = null,
+  onSelect,
+  pxPerMinute = PX_PER_MINUTE,
+  hidden,
+}: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute)
@@ -76,6 +88,8 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
     [sessions, adjusting, timezone],
   )
   const pieces = useMemo(() => dayPieces(shown, days, timezone, now), [shown, days, timezone, now])
+  // Decided on the saved sessions, so a block dragged shorter than the minimum stays until it is saved.
+  const hiddenIds = useMemo(() => new Set(hidden ? sessions.filter(hidden).map((session) => session.id) : []), [sessions, hidden])
 
 
   return (
@@ -117,7 +131,7 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
           </div>
           {days.map((day) => {
             const limit = dayLimit(day, now, timezone)
-            const laid = assignLanes(pieces.get(day) ?? [])
+            const laid = assignLanes((pieces.get(day) ?? []).filter((piece) => !hiddenIds.has(piece.session.id)))
             return (
               <div
                 key={day}

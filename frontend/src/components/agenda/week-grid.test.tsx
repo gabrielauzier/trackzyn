@@ -1,6 +1,7 @@
 import { fireEvent, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { isHiddenSession } from '@/lib/agenda/hide'
 import { dayLimit, weekDays } from '@/lib/agenda/layout'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { renderWithProviders } from '@/test/utils'
@@ -33,13 +34,15 @@ function Grid({
   sessions,
   onCommit = vi.fn(),
   selectedId = null,
+  hidden,
 }: {
   sessions: AgendaSession[]
   onCommit?: (draft: Draft) => void
   selectedId?: string | null
+  hidden?: (session: AgendaSession) => boolean
 }) {
   const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit })
-  return <WeekGrid days={WEEK} sessions={sessions} timezone={SP} now={NOW} drag={drag} selectedId={selectedId} />
+  return <WeekGrid days={WEEK} sessions={sessions} timezone={SP} now={NOW} drag={drag} selectedId={selectedId} hidden={hidden} />
 }
 
 const header = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-day-header="${day}"]`)!
@@ -87,6 +90,43 @@ describe('WeekGrid', () => {
     expect(within(scroller).getByText('07:00')).toBeInTheDocument()
     expect(within(scroller).getByText('23:00')).toBeInTheDocument()
     expect((scroller.firstElementChild as HTMLElement).style.height).toBe(`${y(24)}px`)
+  })
+
+  describe('hidden sessions (#22)', () => {
+    // Monday 10:00-11:00 and 10:20-10:22 in São Paulo; the 2-minute one is under a 5-minute minimum.
+    const long = session('long', '2026-11-02T13:00:00.000Z', '2026-11-02T14:00:00.000Z')
+    const short = session('short', '2026-11-02T13:20:00.000Z', '2026-11-02T13:22:00.000Z')
+    const hidden = (item: AgendaSession) => isHiddenSession(item, 5)
+
+    it('HIDE-11 HIDE-12 draws no block for the hidden session and keeps the visible one of the same day', () => {
+      const { container } = renderWithProviders(<Grid sessions={[long, short]} hidden={hidden} />)
+      expect(container.querySelector('[data-session-id="short"]')).toBeNull()
+      expect(container.querySelector('[data-session-id="long"]')).not.toBeNull()
+    })
+
+    it('HIDE-14 counts the hidden session in the day total of the header', () => {
+      const { container } = renderWithProviders(<Grid sessions={[long, short]} hidden={hidden} />)
+      expect(header(container, '2026-11-02')).toHaveTextContent('1hr 2min')
+    })
+
+    it('HIDE-15 gives the whole column width to a block that overlaps only a hidden one', () => {
+      const { container } = renderWithProviders(<Grid sessions={[long, short]} hidden={hidden} />)
+      expect(container.querySelector<HTMLElement>('[data-session-id="long"]')!.style.width).toBe('100%')
+    })
+
+    it('HIDE-16 draws every session without a hidden rule, side by side', () => {
+      const { container } = renderWithProviders(<Grid sessions={[long, short]} />)
+      expect(container.querySelector<HTMLElement>('[data-session-id="short"]')).not.toBeNull()
+      expect(container.querySelector<HTMLElement>('[data-session-id="long"]')!.style.width).toBe('50%')
+    })
+
+    it('keeps the block of a session being dragged shorter than the minimum until it is saved', () => {
+      const { container } = renderWithProviders(<Grid sessions={[long]} hidden={hidden} selectedId="long" />)
+      const handle = container.querySelector<HTMLElement>('[data-handle="bottom"]')!
+      fireEvent.pointerDown(handle, { clientY: y(11), button: 0 })
+      fireEvent.pointerMove(window, { clientY: y(10, 15) })
+      expect(container.querySelector<HTMLElement>('[data-session-id="long"]')!.style.height).toBe(`${15 * PX_PER_MINUTE}px`)
+    })
   })
 
   it('places overlapping sessions side by side (AGENDA-06)', () => {
