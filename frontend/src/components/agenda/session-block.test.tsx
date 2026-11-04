@@ -34,11 +34,21 @@ describe('SessionBlock', () => {
     expect(block.textContent).toBe('')
   })
 
-  it('rests translucent and, on hover, turns opaque with an outline in the color of its list', () => {
+  it('fills over the card with the theme share of its list colour, edged in that colour, and takes more of it with an outline on hover', () => {
     renderWithProviders(<SessionBlock piece={laid({ list_color: 5 })} pxPerMinute={1} timezone={SP} />)
     const block = screen.getByRole('button')
-    expect(block).toHaveClass('opacity-75', 'hover:opacity-100', 'hover:outline-(--block-color)')
+    expect(block.style.backgroundColor).toBe('color-mix(in oklab, var(--chart-5) var(--session-tint), var(--card))')
+    const edge = 'color-mix(in oklab, var(--chart-5) var(--session-edge), var(--foreground))'
+    expect([block.style.borderTopColor, block.style.borderRightColor, block.style.borderBottomColor]).toEqual([edge, edge, edge])
+    expect(block.style.borderLeftColor).toBe('var(--chart-5)')
+    expect(block).toHaveClass('border', 'border-l-4', 'hover:[--session-tint:var(--session-tint-hover)]', 'hover:outline-(--block-color)')
+    expect(block).not.toHaveClass('opacity-75')
     expect(block.style.getPropertyValue('--block-color')).toBe('var(--chart-5)')
+  })
+
+  it('edges a break in the full muted foreground', () => {
+    renderWithProviders(<SessionBlock piece={laid({ kind: 'break', task_id: null, task_title: null })} pxPerMinute={1} timezone={SP} />)
+    expect(screen.getByRole('button')).toHaveClass('border-dashed', 'border-muted-foreground')
   })
 
   it('shows the whole title and the time in a tooltip on hover', async () => {

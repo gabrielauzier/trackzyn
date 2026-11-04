@@ -7,6 +7,12 @@ import type { LaidOutPiece } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
 import type { AgendaSession } from '@/types'
 
+/** The edge of a block in its list colour, the left stripe pure and the other sides mixed to keep 3:1 (WCAG 1.4.11). */
+function edgeColors(color: string): CSSProperties {
+  const edge = `color-mix(in oklab, ${color} var(--session-edge), var(--foreground))`
+  return { borderTopColor: edge, borderRightColor: edge, borderBottomColor: edge, borderLeftColor: color }
+}
+
 interface SessionBlockProps {
   piece: LaidOutPiece
   pxPerMinute: number
@@ -47,8 +53,10 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
     height: Math.max(1, (piece.end - piece.start) * pxPerMinute),
     left: `${(piece.lane / piece.lanes) * 100}%`,
     width: `${100 / piece.lanes}%`,
-    ...(isBreak ? {} : { backgroundColor: `color-mix(in oklab, ${color} 18%, var(--background))` }),
-    ...(isBreak || piece.running ? {} : { borderLeftColor: color }),
+    // Mixed with the card the grid is drawn on, in a share each theme sets (index.css), so the block stands out
+    // from the column in light and dark; the edge keeps 3:1 against it (WCAG 1.4.11).
+    ...(isBreak ? {} : { backgroundColor: `color-mix(in oklab, ${color} var(--session-tint), var(--card))` }),
+    ...(isBreak || piece.running ? {} : edgeColors(color)),
   }
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return
@@ -70,12 +78,13 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
             data-running={piece.running || undefined}
             data-joined={members ? true : undefined}
             className={cn(
-              'absolute overflow-hidden rounded-md opacity-75 select-none transition-[opacity,outline-color]',
-              'outline-2 outline-transparent hover:z-20 hover:opacity-100 hover:outline-(--block-color)',
-              'focus-visible:opacity-100 focus-visible:outline-(--block-color)',
-              isBreak ? 'border border-dashed border-muted-foreground/60 bg-muted' : 'border-l-4',
+              'absolute overflow-hidden rounded-md select-none transition-[background-color,outline-color]',
+              // Hovered or focused, the fill takes more of the list colour and the outline shows.
+              'outline-2 outline-transparent hover:z-20 hover:[--session-tint:var(--session-tint-hover)] hover:outline-(--block-color)',
+              'focus-visible:[--session-tint:var(--session-tint-hover)] focus-visible:outline-(--block-color)',
+              isBreak ? 'border border-dashed border-muted-foreground bg-muted' : 'border border-l-4',
               piece.running && 'border-2 border-primary',
-              selected && 'z-10 opacity-100 ring-2 ring-ring ring-offset-1 ring-offset-background',
+              selected && 'z-10 [--session-tint:var(--session-tint-hover)] ring-2 ring-ring ring-offset-1 ring-offset-background',
             )}
             style={style}
             onClick={onSelect}
