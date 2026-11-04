@@ -699,8 +699,9 @@ describe('FocusPage reordering the next tasks (#15)', () => {
     const state = queryClient.getQueryData<FocusState>(['focus', LIST])!
     expect(state.task?.id).toBe(taskC.id)
     expect(state.today.tasks.find((item) => item.id === taskA.id)!.spent_seconds).toBeGreaterThanOrEqual(600)
-    // A was already first in Today, so nothing else moves.
-    expect(tasks.move).not.toHaveBeenCalled()
+    // C becomes the first task of Today, ahead of A, so it stays in focus once no session is open.
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(taskC.id, { column: 'today', before_task_id: taskA.id }))
+    expect(tasks.move).toHaveBeenCalledTimes(1)
 
     // The server answers the same: C counting, A first of the queue with its time.
     answer(inOrder([taskA.id, taskB.id, taskC.id], counting(deviceId(), paused({ task: taskC }))))
@@ -709,9 +710,12 @@ describe('FocusPage reordering the next tasks (#15)', () => {
 
   it('dropping on the focused card puts the task that was in focus back on top of the queue', async () => {
     // A was focused out of order: Today reads B, A, C.
-    vi.mocked(focus.get).mockResolvedValue(inOrder([taskB.id, taskA.id, taskC.id], queued()))
+    const swapped = inOrder([taskC.id, taskA.id, taskB.id], counting(deviceId(), paused({ task: taskC })))
+    // Read again after the start and the moves, the server has C counting and Today as C, A, B.
+    vi.mocked(focus.get).mockImplementation(async () => (sent().length > 0 ? swapped : inOrder([taskB.id, taskA.id, taskC.id], queued())))
     vi.mocked(focus.send).mockResolvedValue(inOrder([taskB.id, taskA.id, taskC.id], counting(deviceId(), paused({ task: taskC }))))
-    vi.mocked(tasks.move).mockImplementation(() => new Promise(() => undefined))
+    // The two moves go one after the other: in parallel, the server could apply them in either order.
+    vi.mocked(tasks.move).mockResolvedValue({ id: taskC.id } as Task)
     const { user } = renderFocus()
     await screen.findByText('DEV-1727')
     expect(queueTitles()).toEqual(['DEV-1726', 'DEV-1727'])
@@ -720,7 +724,42 @@ describe('FocusPage reordering the next tasks (#15)', () => {
 
     await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'start', task_id: taskC.id })]))
     expect(queueTitles()).toEqual(['DEV-1725', 'DEV-1726'])
-    expect(tasks.move).toHaveBeenCalledWith(taskA.id, { column: 'today', before_task_id: taskB.id })
+    // Today becomes C, A, B: C first (before B), then A on top of the queue (before B).
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(tasks.move).mock.calls).toEqual([
+      [taskC.id, { column: 'today', before_task_id: taskB.id }],
+      [taskA.id, { column: 'today', before_task_id: taskB.id }],
+    ])
+  })
+
+  it('after a swap, pausing keeps the new task in focus', async () => {
+    // C counted for two minutes before the pause, so the paused card reads Resume.
+    const countedC = { ...taskC, spent_seconds: 120 }
+    vi.mocked(focus.send).mockImplementation(async (entry) => {
+      const action = (entry as QueuedAction).action
+      // The server reads the first task of Today as the one in focus once no session is open.
+      if (action.type === 'pause') return inOrder([taskC.id, taskA.id, taskB.id], paused({ task: countedC }))
+      return inOrder([taskC.id, taskA.id, taskB.id], counting(deviceId(), paused({ task: taskC })))
+    })
+    vi.mocked(tasks.move).mockResolvedValue({ id: taskC.id } as Task)
+    // Read again after the swap, the server has C counting and first in Today; after the pause, C paused.
+    vi.mocked(focus.get).mockImplementation(async () => {
+      const types = sent().map((action) => action.type)
+      if (types.includes('pause')) return inOrder([taskC.id, taskA.id, taskB.id], paused({ task: countedC }))
+      if (types.includes('start')) return inOrder([taskC.id, taskA.id, taskB.id], counting(deviceId(), paused({ task: taskC })))
+      return queued()
+    })
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    await keyboardDrag(user, taskC.title, '{ArrowUp}{ArrowUp}')
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(taskC.id, { column: 'today', before_task_id: taskA.id }))
+    await user.click(await screen.findByRole('button', { name: 'Pause' }))
+
+    await waitFor(() => expect(sent().map((action) => action.type)).toEqual(['start', 'pause']))
+    expect(await screen.findByRole('button', { name: 'Resume' })).toBeInTheDocument()
+    expect(screen.getByRole('timer').closest('[data-running]')).toHaveTextContent('DEV-1727')
+    expect(queueTitles()).toEqual(['DEV-1725', 'DEV-1726'])
   })
 
   it('the focused card refuses drops during a break, extend, stale or elsewhere', async () => {
