@@ -69,6 +69,7 @@ export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChang
         </button>
       </PopoverTrigger>
       <PopoverContent
+        side="bottom"
         align="start"
         aria-label={t('agenda.viewMenu.label')}
         className="flex w-72 flex-col gap-3 p-3"

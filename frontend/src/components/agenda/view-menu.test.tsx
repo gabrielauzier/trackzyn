@@ -23,7 +23,8 @@ describe('AgendaViewMenu', () => {
     const { user } = menu()
     const button = screen.getByRole('button', { name: 'View options' })
     expect(button).toHaveAttribute('aria-expanded', 'false')
-    expect(await open(user)).toBeInTheDocument()
+    const panel = await open(user)
+    expect(panel).toHaveAttribute('data-side', 'bottom')
     expect(button).toHaveAttribute('aria-expanded', 'true')
   })
 

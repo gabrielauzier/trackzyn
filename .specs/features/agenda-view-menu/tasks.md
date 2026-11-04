@@ -296,8 +296,8 @@ T6 → T7 → T8 → T9
 
 **Done when**:
 
-- [ ] O menu aberto tem `data-side="bottom"`
-- [ ] Gate check passes: Build
+- [x] O menu aberto tem `data-side="bottom"`
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build
