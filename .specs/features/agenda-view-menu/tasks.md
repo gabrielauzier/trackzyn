@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: decisões abaixo (feature média, só no frontend, sem contrato novo; o desenho visual aprovado é o canvas `Agenda · menu de exibição`)
-**Status**: Draft
+**Status**: In Progress
 **Pré-requisito**: a Agenda (#19) e a lupa, na branch `feat/agenda`.
 
 ### Decisões técnicas
@@ -73,11 +73,11 @@ T1 → T2 → T3 → T4 → T5
 
 **Done when**:
 
-- [ ] Sem nada guardado, com lixo, com uma lista vazia ou com o storage bloqueado, a leitura devolve os sete dias
-- [ ] Gravar `[0,1,2,3,4]` e ler de novo devolve `[0,1,2,3,4]`
-- [ ] `Seg – Sex` dá `[0,1,2,3,4]`; `Todos` dá os sete
-- [ ] Desmarcar o único dia marcado não muda a seleção; marcar um dia o coloca no seu lugar da semana
-- [ ] Gate check passes: Quick
+- [x] Sem nada guardado, com lixo, com uma lista vazia ou com o storage bloqueado, a leitura devolve os sete dias
+- [x] Gravar `[0,1,2,3,4]` e ler de novo devolve `[0,1,2,3,4]`
+- [x] `Seg – Sex` dá `[0,1,2,3,4]`; `Todos` dá os sete
+- [x] Desmarcar o único dia marcado não muda a seleção; marcar um dia o coloca no seu lugar da semana
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
