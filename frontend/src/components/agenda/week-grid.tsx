@@ -9,8 +9,8 @@ import type { DragTarget, useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { cn } from '@/lib/utils'
 import type { AgendaSession } from '@/types'
 
-/** 48 px per hour. */
-export const PX_PER_MINUTE = 0.8
+/** 144 px per hour. */
+export const PX_PER_MINUTE = 2.4
 /** The grid opens scrolled to this hour (AGENDA-02). */
 const FIRST_HOUR = 7
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
