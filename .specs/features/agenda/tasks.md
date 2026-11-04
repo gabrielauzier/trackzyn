@@ -861,9 +861,9 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] A 10:00–11:00, B 10:30–11:30, C 11:30–12:30 dão A `{lane 0, lanes 2}`, B `{lane 1, lanes 2}`, C `{lane 0, lanes 1}`
-- [ ] O mutante F1 (`layout.ts:122`, `>=` para `>`) falha nesse teste
-- [ ] Gate check passes: Quick
+- [x] A 10:00–11:00, B 10:30–11:30, C 11:30–12:30 dão A `{lane 0, lanes 2}`, B `{lane 1, lanes 2}`, C `{lane 0, lanes 1}`
+- [x] O mutante F1 (`layout.ts:122`, `>=` para `>`) falha nesse teste
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

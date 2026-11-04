@@ -69,6 +69,13 @@ describe('assignLanes', () => {
     expect(byId).toEqual({ a: { lane: 0, lanes: 2 }, b: { lane: 1, lanes: 2 }, c: { lane: 0, lanes: 1 } })
   })
 
+  it('keeps a session that only touches an overlapping pair at the full width (AGENDA-06)', () => {
+    // A overlaps B; B ends exactly when C starts.
+    const laid = assignLanes([piece('a', 600, 660), piece('b', 630, 690), piece('c', 690, 750)])
+    const byId = Object.fromEntries(laid.map((p) => [p.session.id, { lane: p.lane, lanes: p.lanes }]))
+    expect(byId).toEqual({ a: { lane: 0, lanes: 2 }, b: { lane: 1, lanes: 2 }, c: { lane: 0, lanes: 1 } })
+  })
+
   it('does not count sessions that only touch as overlapping', () => {
     const laid = assignLanes([piece('a', 600, 660), piece('b', 660, 720)])
     expect(laid.map((p) => [p.lane, p.lanes])).toEqual([[0, 1], [0, 1]])
