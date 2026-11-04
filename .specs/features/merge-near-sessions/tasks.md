@@ -166,11 +166,11 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] O bloco de 3 sessões de Produto mostra `3` e nenhum outro texto
-- [ ] O nome acessível é `Produto, 3 sessions, 10:20 – 11:40` (em inglês nos testes) e `Produto, 3 sessões, …` em português
-- [ ] O tooltip mostra `Produto · 3 sessions`, uma linha por sessão com o título (ou `Break`) e o horário, e `Click to pick a session`
-- [ ] Um bloco comum fica como hoje (os testes atuais passam sem mudança)
-- [ ] Gate check passes: Quick
+- [x] O bloco de 3 sessões de Produto mostra `3` e nenhum outro texto
+- [x] O nome acessível é `Produto, 3 sessions, 10:20 – 11:40` (em inglês nos testes) e `Produto, 3 sessões, …` em português
+- [x] O tooltip mostra `Produto · 3 sessions`, uma linha por sessão com o título (ou `Break`) e o horário, e `Click to pick a session`
+- [x] Um bloco comum fica como hoje (os testes atuais passam sem mudança)
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

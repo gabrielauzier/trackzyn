@@ -743,6 +743,9 @@
     "break": "Intervalo",
     "now": "agora",
     "range": "{{start}} – {{end}}",
+    "sessionCount_one": "{{count}} sessão",
+    "sessionCount_other": "{{count}} sessões",
+    "pickSession": "Clique para escolher uma sessão",
     "panel": {
       "newTitle": "Nova sessão",
       "task": "Tarefa",

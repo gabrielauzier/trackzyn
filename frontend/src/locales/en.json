@@ -743,6 +743,9 @@
     "break": "Break",
     "now": "now",
     "range": "{{start}} – {{end}}",
+    "sessionCount_one": "{{count}} session",
+    "sessionCount_other": "{{count}} sessions",
+    "pickSession": "Click to pick a session",
     "panel": {
       "newTitle": "New session",
       "task": "Task",

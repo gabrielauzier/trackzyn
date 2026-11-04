@@ -1,9 +1,9 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
 import type { LaidOutPiece } from '@/lib/agenda/layout'
-import { renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders } from '@/test/utils'
 import type { AgendaSession } from '@/types'
 import { SessionBlock } from './session-block'
 
@@ -98,5 +98,77 @@ describe('SessionBlock', () => {
     renderWithProviders(<SessionBlock piece={laid({}, { lane: 1, lanes: 2 })} pxPerMinute={1} timezone={SP} />)
     const block = screen.getByRole('button')
     expect([block.style.left, block.style.width]).toEqual(['50%', '50%'])
+  })
+})
+
+describe('SessionBlock of a joined block (#23)', () => {
+  // Three sessions of Produto in São Paulo: 10:20–10:50, 10:52–11:10 (a break of the task, then the same task again) and
+  // 11:14–11:40, of two tasks.
+  const members: AgendaSession[] = [
+    laid({ id: 'a', task_title: 'Write the spec', list_name: 'Produto', started_at: '2026-11-02T13:20:00.000Z', ended_at: '2026-11-02T13:50:00.000Z' }).session,
+    laid({ id: 'b', task_title: 'Review the design', list_name: 'Produto', started_at: '2026-11-02T13:52:00.000Z', ended_at: '2026-11-02T14:10:00.000Z' }).session,
+    laid({ id: 'c', task_title: 'Write the spec', list_name: 'Produto', started_at: '2026-11-02T14:14:00.000Z', ended_at: '2026-11-02T14:40:00.000Z' }).session,
+  ]
+  const joined = (sessions = members) =>
+    laid({}, { session: sessions[0]!, start: 620, end: 700, seconds: (30 + 18 + 26) * 60, members: sessions })
+
+  it('MERGE-32 carries the count 3 in its top right corner and no other text', () => {
+    renderWithProviders(<SessionBlock piece={joined()} pxPerMinute={1} timezone={SP} />)
+    const block = screen.getByRole('button')
+    expect(block.textContent).toBe('3')
+    expect(block).toHaveAttribute('data-joined')
+    const badge = block.querySelector('[data-slot="session-count"]')!
+    expect(badge.textContent).toBe('3')
+    expect(badge).toHaveClass('absolute', 'top-0', 'right-0')
+  })
+
+  it('MERGE-25 names the block with its list, 3 sessions and the span from the first start to the last end', () => {
+    renderWithProviders(<SessionBlock piece={joined()} pxPerMinute={1} timezone={SP} />)
+    expect(screen.getByRole('button', { name: 'Produto, 3 sessions, 10:20 – 11:40' })).toBeInTheDocument()
+  })
+
+  it('MERGE-25 names it in Portuguese with N sessões', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      renderWithProviders(<SessionBlock piece={joined()} pxPerMinute={1} timezone={SP} />)
+      expect(screen.getByRole('button', { name: 'Produto, 3 sessões, 10:20 – 11:40' })).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('MERGE-26 lists each session in start order with its own title and time in the tooltip, and how to pick one', async () => {
+    renderWithProviders(<SessionBlock piece={joined()} pxPerMinute={1} timezone={SP} />)
+    await userEvent.hover(screen.getByRole('button'))
+    const tooltip = await screen.findByRole('tooltip')
+    expect(tooltip).toHaveTextContent('Produto · 3 sessions')
+    const lines = within(tooltip).getAllByRole('listitem').map((li) => li.textContent)
+    expect(lines).toEqual(['Write the spec10:20 – 10:50', 'Review the design10:52 – 11:10', 'Write the spec11:14 – 11:40'])
+    expect(tooltip).toHaveTextContent('Click to pick a session')
+  })
+
+  it('MERGE-26 shows the tooltip when the focus reaches the block, and names breaks Break', async () => {
+    const breaks = members.map((m) => ({ ...m, kind: 'break' as const, task_id: null, task_title: null }))
+    renderWithProviders(<SessionBlock piece={joined(breaks)} pxPerMinute={1} timezone={SP} />)
+    await userEvent.tab()
+    const tooltip = await screen.findByRole('tooltip')
+    const lines = within(tooltip).getAllByRole('listitem').map((li) => li.textContent)
+    expect(lines).toEqual(['Break10:20 – 10:50', 'Break10:52 – 11:10', 'Break11:14 – 11:40'])
+    expect(tooltip).toHaveTextContent('Click to pick a session')
+  })
+
+  it('MERGE-26 shows the tooltip text in Portuguese', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      const breaks = members.map((m) => ({ ...m, kind: 'break' as const, task_id: null, task_title: null }))
+      renderWithProviders(<SessionBlock piece={joined(breaks)} pxPerMinute={1} timezone={SP} />)
+      await userEvent.hover(screen.getByRole('button'))
+      const tooltip = await screen.findByRole('tooltip')
+      expect(tooltip).toHaveTextContent('Produto · 3 sessões')
+      expect(tooltip).toHaveTextContent('Intervalo10:20 – 10:50')
+      expect(tooltip).toHaveTextContent('Clique para escolher uma sessão')
+    } finally {
+      await i18n.changeLanguage('en')
+    }
   })
 })

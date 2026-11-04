@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { clockTime } from '@/lib/agenda/format'
 import type { LaidOutPiece } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
+import type { AgendaSession } from '@/types'
 
 interface SessionBlockProps {
   piece: LaidOutPiece
@@ -22,16 +23,23 @@ interface SessionBlockProps {
  * One session on the grid (AGENDA-03 to AGENDA-05), in the color of its list; a break in grey with a dashed
  * border; an open session with an indigo border. The block carries no text: hovering or focusing it opens a
  * tooltip with the whole title (or `Intervalo`) and `HH:MM – HH:MM`, `agora` for the end of an open session.
+ * A joined block (`piece.members`) carries only the count of its sessions in its top right corner, and its
+ * tooltip lists each session (MERGE-25, MERGE-26, MERGE-32).
  */
 export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, onSelect, onPointerDown, children }: SessionBlockProps) {
   const { t } = useTranslation()
   const { session } = piece
   const isBreak = session.kind === 'break'
-  const title = isBreak ? t('agenda.break') : (session.task_title ?? '')
-  const range = t('agenda.range', {
-    start: clockTime(session.started_at, timezone),
-    end: session.ended_at === null ? t('agenda.now') : clockTime(session.ended_at, timezone),
-  })
+  const members = piece.members
+  const titleOf = (member: AgendaSession) => (member.kind === 'break' ? t('agenda.break') : (member.task_title ?? ''))
+  const rangeOf = (start: string, end: string | null) =>
+    t('agenda.range', { start: clockTime(start, timezone), end: end === null ? t('agenda.now') : clockTime(end, timezone) })
+  const title = titleOf(session)
+  const range = rangeOf(session.started_at, session.ended_at)
+  const count = members ? t('agenda.sessionCount', { count: members.length }) : ''
+  // A joined block spans from its first start to the latest end of its sessions.
+  const lastEnd = members && new Date(Math.max(...members.map((member) => Date.parse(member.ended_at!)))).toISOString()
+  const label = lastEnd ? `${session.list_name}, ${count}, ${rangeOf(session.started_at, lastEnd)}` : `${title}, ${range}`
   const color = `var(--chart-${session.list_color})`
   const style: CSSProperties & Record<'--block-color', string> = {
     '--block-color': isBreak ? 'var(--muted-foreground)' : color,
@@ -55,11 +63,12 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
           <div
             role="button"
             tabIndex={0}
-            aria-label={`${title}, ${range}`}
+            aria-label={label}
             aria-pressed={selected}
             data-session-id={session.id}
             data-kind={session.kind}
             data-running={piece.running || undefined}
+            data-joined={members ? true : undefined}
             className={cn(
               'absolute overflow-hidden rounded-md opacity-75 select-none transition-[opacity,outline-color]',
               'outline-2 outline-transparent hover:z-20 hover:opacity-100 hover:outline-(--block-color)',
@@ -73,13 +82,36 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
             onKeyDown={onKeyDown}
             onPointerDown={onPointerDown}
           >
+            {members && (
+              <span
+                data-slot="session-count"
+                className="absolute top-0 right-0 rounded-bl-md bg-background/80 px-1 text-[10px] font-medium tabular-nums"
+              >
+                {members.length}
+              </span>
+            )}
             {children}
           </div>
         </TooltipTrigger>
-        <TooltipContent side="right" className="flex flex-col gap-0.5">
-          <span className="font-medium break-words whitespace-normal">{title}</span>
-          <span className="tabular-nums opacity-80">{range}</span>
-        </TooltipContent>
+        {members ? (
+          <TooltipContent side="right" className="flex flex-col gap-1">
+            <span className="font-medium break-words whitespace-normal">{`${session.list_name} · ${count}`}</span>
+            <ul className="flex flex-col gap-0.5">
+              {members.map((member) => (
+                <li key={member.id} className="flex gap-2">
+                  <span className="break-words whitespace-normal">{titleOf(member)}</span>
+                  <span className="ml-auto tabular-nums opacity-80">{rangeOf(member.started_at, member.ended_at)}</span>
+                </li>
+              ))}
+            </ul>
+            <span className="opacity-80">{t('agenda.pickSession')}</span>
+          </TooltipContent>
+        ) : (
+          <TooltipContent side="right" className="flex flex-col gap-0.5">
+            <span className="font-medium break-words whitespace-normal">{title}</span>
+            <span className="tabular-nums opacity-80">{range}</span>
+          </TooltipContent>
+        )}
       </Tooltip>
     </TooltipProvider>
   )
