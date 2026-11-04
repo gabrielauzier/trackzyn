@@ -2,7 +2,7 @@ import { fireEvent, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { dayLimit, weekDays } from '@/lib/agenda/layout'
-import { useGridDrag } from '@/lib/agenda/use-grid-drag'
+import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { renderWithProviders } from '@/test/utils'
 import type { AgendaSession } from '@/types'
 import { PX_PER_MINUTE, WeekGrid } from './week-grid'
@@ -29,9 +29,17 @@ function session(id: string, startedAt: string, endedAt: string | null, override
 }
 
 /** The grid as the page wires it, with the drag gestures. */
-function Grid({ sessions, onCommit = vi.fn() }: { sessions: AgendaSession[]; onCommit?: () => void }) {
+function Grid({
+  sessions,
+  onCommit = vi.fn(),
+  selectedId = null,
+}: {
+  sessions: AgendaSession[]
+  onCommit?: (draft: Draft) => void
+  selectedId?: string | null
+}) {
   const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit })
-  return <WeekGrid days={WEEK} sessions={sessions} timezone={SP} now={NOW} drag={drag} />
+  return <WeekGrid days={WEEK} sessions={sessions} timezone={SP} now={NOW} drag={drag} selectedId={selectedId} />
 }
 
 const header = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-day-header="${day}"]`)!
@@ -129,5 +137,51 @@ describe('WeekGrid', () => {
     fireEvent.pointerUp(window, { clientY: y(10) })
     expect(container.querySelector('[data-draft]')).toBeNull()
     expect(onCommit).not.toHaveBeenCalled()
+  })
+
+  // Tuesday 14:00 to 15:00 in São Paulo.
+  const ended = () => session('a', '2026-11-03T17:00:00.000Z', '2026-11-03T18:00:00.000Z')
+
+  it('puts a handle on the top and the bottom edge of the selected ended block only (AGENDA-28)', () => {
+    renderWithProviders(<Grid sessions={[ended(), session('b', '2026-11-03T19:00:00.000Z', '2026-11-03T20:00:00.000Z')]} selectedId="a" />)
+    const selected = screen.getByRole('button', { name: 'Task a, 14:00 – 15:00' })
+    expect([...selected.querySelectorAll<HTMLElement>('[data-handle]')].map((handle) => handle.dataset.handle)).toEqual(['top', 'bottom'])
+    expect(screen.getByRole('button', { name: 'Task b, 16:00 – 17:00' }).querySelector('[data-handle]')).toBeNull()
+  })
+
+  it('moves a whole ended block keeping its length, snapped to 15 min (AGENDA-30)', () => {
+    const onCommit = vi.fn()
+    renderWithProviders(<Grid sessions={[ended()]} onCommit={onCommit} />)
+    const block = screen.getByRole('button', { name: 'Task a, 14:00 – 15:00' })
+    fireEvent.pointerDown(block, { clientY: y(14, 10), button: 0 })
+    fireEvent.pointerMove(window, { clientY: y(15, 17) })
+    // The block follows the pointer before it is released.
+    expect(screen.getByRole('button', { name: 'Task a, 15:00 – 16:00' })).toBeInTheDocument()
+    fireEvent.pointerUp(window, { clientY: y(15, 17) })
+    expect(onCommit).toHaveBeenCalledWith({ mode: 'move', day: '2026-11-03', start: 15 * 60, end: 16 * 60, sessionId: 'a' })
+  })
+
+  it('pulls the bottom handle of the selected block (AGENDA-29)', () => {
+    const onCommit = vi.fn()
+    const { container } = renderWithProviders(<Grid sessions={[ended()]} onCommit={onCommit} selectedId="a" />)
+    fireEvent.pointerDown(container.querySelector('[data-handle="bottom"]')!, { clientY: y(15), button: 0 })
+    fireEvent.pointerMove(window, { clientY: y(15, 32) })
+    fireEvent.pointerUp(window, { clientY: y(15, 32) })
+    expect(onCommit).toHaveBeenCalledWith({ mode: 'bottom', day: '2026-11-03', start: 14 * 60, end: 15 * 60 + 30, sessionId: 'a' })
+  })
+
+  it('gives the running session no handles and does not move it (AGENDA-33)', () => {
+    const onCommit = vi.fn()
+    const { container } = renderWithProviders(
+      <Grid sessions={[session('a', '2026-11-04T16:00:00.000Z', null)]} onCommit={onCommit} selectedId="a" />,
+    )
+    const open = screen.getByRole('button', { name: 'Task a, 13:00 – now' })
+    expect(open.querySelector('[data-handle]')).toBeNull()
+    fireEvent.pointerDown(open, { clientY: y(13, 10), button: 0 })
+    fireEvent.pointerMove(window, { clientY: y(12, 10) })
+    fireEvent.pointerUp(window, { clientY: y(12, 10) })
+    expect(onCommit).not.toHaveBeenCalled()
+    expect(container.querySelector('[data-draft]')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Task a, 13:00 – now' })).toBeInTheDocument()
   })
 })

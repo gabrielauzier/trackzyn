@@ -188,7 +188,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-25 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
 | AGENDA-26 | P1: Registrar uma sessão pela grade | Tasks | Implementing |
 | AGENDA-27 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-28 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
+| AGENDA-28 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-29 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-30 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-31 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |

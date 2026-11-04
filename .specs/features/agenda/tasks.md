@@ -490,10 +490,10 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Puxar o fim de um bloco de 14:00–15:00 até 15:30 chama `sessions.update` com `ended_at` 15:30
-- [ ] O bloco da sessão aberta não tem alças
-- [ ] Uma falha da atualização volta o bloco para 14:00–15:00
-- [ ] Gate check passes: Quick
+- [x] Puxar o fim de um bloco de 14:00–15:00 até 15:30 chama `sessions.update` com `ended_at` 15:30
+- [x] O bloco da sessão aberta não tem alças
+- [x] Uma falha da atualização volta o bloco para 14:00–15:00
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

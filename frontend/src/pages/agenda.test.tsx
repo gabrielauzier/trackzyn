@@ -181,4 +181,39 @@ describe('AgendaPage', () => {
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
   })
+  describe('adjusting a block (AGENDA-29, AGENDA-35)', () => {
+    // Tuesday 14:00 to 15:00 in São Paulo.
+    const tuesday: AgendaSession = { ...monday, id: 's2', started_at: '2026-11-03T17:00:00.000Z', ended_at: '2026-11-03T18:00:00.000Z' }
+    const block = (range: string) => screen.findByRole('button', { name: `Write the report, ${range}` })
+
+    async function pullEndTo1530(user: ReturnType<typeof renderWithProviders>['user'], container: HTMLElement) {
+      await user.click(await block('14:00 – 15:00'))
+      fireEvent.pointerDown(container.querySelector('[data-handle="bottom"]')!, { clientY: 15 * 60 * PX_PER_MINUTE, button: 0 })
+      fireEvent.pointerMove(window, { clientY: (15 * 60 + 30) * PX_PER_MINUTE })
+      fireEvent.pointerUp(window, { clientY: (15 * 60 + 30) * PX_PER_MINUTE })
+    }
+
+    beforeEach(() => vi.mocked(sessions.list).mockResolvedValue({ sessions: [tuesday] }))
+
+    it('saves the end pulled from 15:00 to 15:30', async () => {
+      const saved = { ...tuesday, ended_at: '2026-11-03T18:30:00.000Z' }
+      vi.mocked(sessions.update).mockImplementation(async () => {
+        vi.mocked(sessions.list).mockResolvedValue({ sessions: [saved] })
+        return saved
+      })
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await pullEndTo1530(user, container)
+      await waitFor(() => expect(sessions.update).toHaveBeenCalledWith('s2', { ended_at: '2026-11-03T18:30:00.000Z' }))
+      expect(await block('14:00 – 15:30')).toBeInTheDocument()
+    })
+
+    it('puts the block back at 14:00 – 15:00 when the save fails', async () => {
+      vi.mocked(sessions.update).mockRejectedValue({ response: { status: 404, data: { detail: 'Session not found' } } })
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await pullEndTo1530(user, container)
+      await waitFor(() => expect(sessions.update).toHaveBeenCalledTimes(1))
+      expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Write the report, 14:00 – 15:30' })).toBeNull()
+    })
+  })
 })

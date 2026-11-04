@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { formatDuration } from '@/components/board/format-duration'
 import { SessionBlock } from '@/components/agenda/session-block'
 import { minuteClock } from '@/lib/agenda/format'
-import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf } from '@/lib/agenda/layout'
-import type { useGridDrag } from '@/lib/agenda/use-grid-drag'
+import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf, zonedInstant, type Piece } from '@/lib/agenda/layout'
+import type { DragTarget, useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { cn } from '@/lib/utils'
 import type { AgendaSession } from '@/types'
 
@@ -33,6 +33,13 @@ interface WeekGridProps {
   onSelect?: (session: AgendaSession) => void
 }
 
+/** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
+function targetOf(piece: Piece, timezone: string): DragTarget {
+  const midnight = zonedInstant(piece.day, 0, timezone).getTime()
+  const minutes = (instant: string) => Math.round((Date.parse(instant) - midnight) / 60_000)
+  return { day: piece.day, start: minutes(piece.session.started_at), end: minutes(piece.session.ended_at!), sessionId: piece.session.id }
+}
+
 function weekdayLabel(day: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`))
 }
@@ -48,14 +55,30 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
   const scroller = useRef<HTMLDivElement>(null)
   const today = dayOf(now, timezone)
   const nowMinute = minuteOf(now, timezone)
-  const pieces = useMemo(() => dayPieces(sessions, days, timezone, now), [sessions, days, timezone, now])
+  const draft = drag?.draft ?? null
+  const newDraft = draft !== null && draft.sessionId === null ? draft : null
+  const adjusting = draft !== null && draft.sessionId !== null ? draft : null
+  // The session being adjusted follows the pointer until it is released.
+  const shown = useMemo(
+    () =>
+      adjusting === null
+        ? sessions
+        : sessions.map((session) =>
+            session.id === adjusting.sessionId
+              ? {
+                  ...session,
+                  started_at: zonedInstant(adjusting.day, adjusting.start, timezone).toISOString(),
+                  ended_at: zonedInstant(adjusting.day, adjusting.end, timezone).toISOString(),
+                }
+              : session,
+          ),
+    [sessions, adjusting, timezone],
+  )
+  const pieces = useMemo(() => dayPieces(shown, days, timezone, now), [shown, days, timezone, now])
 
   useLayoutEffect(() => {
     if (scroller.current) scroller.current.scrollTop = FIRST_HOUR * 60 * PX_PER_MINUTE
   }, [])
-
-  const draft = drag?.draft ?? null
-  const newDraft = draft !== null && draft.sessionId === null ? draft : null
 
   return (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
@@ -120,17 +143,42 @@ export function WeekGrid({ days, sessions, timezone, now, drag, selectedId = nul
                   />
                 )}
                 <div className="absolute inset-0 mx-0.5">
-                  {laid.map((piece) => (
-                    <SessionBlock
-                      key={piece.session.id}
-                      piece={piece}
-                      pxPerMinute={PX_PER_MINUTE}
-                      timezone={timezone}
-                      selected={piece.session.id === selectedId}
-                      onSelect={onSelect && (() => onSelect(piece.session))}
-                      onPointerDown={(event) => event.stopPropagation()}
-                    />
-                  ))}
+                  {laid.map((piece) => {
+                    // The running session ends now: it has no handles and does not move (AGENDA-33).
+                    const target = drag && piece.session.ended_at !== null ? targetOf(piece, timezone) : null
+                    const selected = piece.session.id === selectedId
+                    return (
+                      <SessionBlock
+                        key={piece.session.id}
+                        piece={piece}
+                        pxPerMinute={PX_PER_MINUTE}
+                        timezone={timezone}
+                        selected={selected}
+                        onSelect={onSelect && (() => onSelect(piece.session))}
+                        onPointerDown={(event) => (target ? drag!.startMove(event, target) : event.stopPropagation())}
+                      >
+                        {target &&
+                          selected &&
+                          (['top', 'bottom'] as const)
+                            // Each handle sits on the day that holds its edge.
+                            .filter((edge) => (edge === 'top' ? target.start >= 0 : target.end <= DAY_MINUTES))
+                            .map((edge) => (
+                              <div
+                                key={edge}
+                                aria-hidden
+                                data-handle={edge}
+                                className={cn(
+                                  'absolute inset-x-0 flex h-2 cursor-ns-resize justify-center',
+                                  edge === 'top' ? 'top-0' : 'bottom-0',
+                                )}
+                                onPointerDown={(event) => drag!.startResize(event, edge, target)}
+                              >
+                                <span className="mt-0.5 h-1 w-6 rounded-full bg-foreground/50" />
+                              </div>
+                            ))}
+                      </SessionBlock>
+                    )
+                  })}
                   {newDraft && newDraft.day === day && (
                     <div
                       data-draft

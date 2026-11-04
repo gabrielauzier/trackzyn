@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { lists } from '@/lib/api'
-import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays } from '@/lib/agenda/layout'
+import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { useAgenda } from '@/lib/agenda/use-agenda'
-import { useGridDrag } from '@/lib/agenda/use-grid-drag'
+import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { cn } from '@/lib/utils'
 import type { AgendaSession, AgendaSessionChanges, ListCard } from '@/types'
 
@@ -36,6 +36,15 @@ function weekLabel(monday: string, locale: string): string {
     at(monday),
     at(addDays(monday, 6)),
   )
+}
+
+/** The day of the grid column under `clientX`, so a block can move to another day (AGENDA-30). */
+function columnDayAt(clientX: number): string | null {
+  for (const column of document.querySelectorAll<HTMLElement>('[data-agenda-column]')) {
+    const rect = column.getBoundingClientRect()
+    if (rect.width > 0 && clientX >= rect.left && clientX < rect.right) return column.dataset.agendaColumn ?? null
+  }
+  return null
 }
 
 /** The day and times of a session, as the panel edits them. */
@@ -68,7 +77,24 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     setEditTimes(null)
   }
 
-  const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, now, timezone), onCommit: () => {} })
+  /** A released handle or block saves its new times (AGENDA-29, AGENDA-30); a new draft waits for the panel. */
+  const commit = (final: Draft) => {
+    if (final.sessionId === null) return
+    const at = (minute: number) => zonedInstant(final.day, minute, timezone).toISOString()
+    const changes: AgendaSessionChanges =
+      final.mode === 'top'
+        ? { started_at: at(final.start) }
+        : final.mode === 'bottom'
+          ? { ended_at: at(final.end) }
+          : { started_at: at(final.start), ended_at: at(final.end) }
+    update.mutate({ id: final.sessionId, changes })
+  }
+  const drag = useGridDrag({
+    pxPerMinute: PX_PER_MINUTE,
+    limit: (day) => dayLimit(day, now, timezone),
+    dayAt: columnDayAt,
+    onCommit: commit,
+  })
   const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null
   const shownDay = days.includes(today) ? today : monday
 
