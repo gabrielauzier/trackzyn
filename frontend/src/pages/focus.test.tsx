@@ -1,26 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { toast } from 'sonner'
 import { Route, Routes } from 'react-router-dom'
 
 import FocusPage from '@/pages/focus'
 import HomePage from '@/pages/home'
-import { focus, lists } from '@/lib/api'
+import { focus, lists, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import { play } from '@/lib/sounds/synth'
 import * as queue from '@/lib/focus/queue'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
 import { renderWithProviders } from '@/test/utils'
-import type { FocusState, ListCard } from '@/types'
+import type { FocusState, ListCard, Subtask, Task } from '@/types'
+
+const role = vi.hoisted(() => ({ canWrite: true }))
 
 vi.mock('@/lib/api', () => ({
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   lists: { list: vi.fn(), move: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
-  tasks: { create: vi.fn() },
+  tasks: { create: vi.fn(), move: vi.fn(), get: vi.fn() },
+  subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn(), move: vi.fn() },
   authHeaders: () => ({}),
 }))
 vi.mock('@/contexts/workspace-context', () => ({
-  useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace', timezone: null }, canWrite: true }),
+  useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace', timezone: null }, canWrite: role.canWrite }),
 }))
 vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => ({ user: { email: 'ana@example.com', preferences: { display_name: 'Ana' } } }),
@@ -34,6 +38,23 @@ const taskA = { id: 'task-a', title: 'DEV-1725', estimate_minutes: 60, spent_sec
 const taskB = { id: 'task-b', title: 'DEV-1726', estimate_minutes: 30, spent_seconds: 0, awaiting_extend: false }
 
 const now = () => new Date().toISOString()
+
+/** The task `id` as `GET /api/tasks/:id` answers it, with `items` as its subtasks. */
+function taskWith(id: string, items: Subtask[]): Task {
+  return {
+    id,
+    list_id: LIST,
+    title: id,
+    notes: '',
+    estimate_minutes: 60,
+    column: 'today',
+    position: 0,
+    completed_at: null,
+    created_at: '2026-10-24T10:00:00Z',
+    subtasks: items,
+    created_via: null,
+  }
+}
 
 /** Today of the list with A and B pending, nothing running. */
 function paused(overrides: Partial<FocusState> = {}): FocusState {
@@ -103,10 +124,12 @@ const sent = () => vi.mocked(focus.send).mock.calls.map(([entry]) => (entry as Q
 
 beforeEach(() => {
   vi.clearAllMocks()
+  role.canWrite = true
   vi.mocked(lists.list).mockResolvedValue({ timezone: 'America/Sao_Paulo', lists: [listCard(LIST, 'Week')] })
   vi.mocked(focus.get).mockResolvedValue(paused())
   vi.mocked(focus.send).mockImplementation(async () => counting(deviceId()))
   vi.mocked(focus.heartbeat).mockResolvedValue(counting(deviceId()))
+  vi.mocked(tasks.get).mockImplementation(async (id: string) => taskWith(id, []))
 })
 
 afterEach(() => {
@@ -414,5 +437,353 @@ describe('FocusPage in the browser with Focus now (WIDGET-24)', () => {
     await waitFor(() => expect(sent()).toHaveLength(1))
     expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument()
     expect(window.trackzyn).toBeUndefined()
+  })
+})
+
+const taskC = { id: 'task-c', title: 'DEV-1727', estimate_minutes: 20, spent_seconds: 0, awaiting_extend: false }
+
+/** Today of the list in `order` (ids of A, B and C), the task in focus from `base`. */
+function inOrder(order: string[], base: FocusState): FocusState {
+  const all = [base.task!, taskB, taskC, taskA].filter((item, index, list) => list.findIndex((other) => other.id === item.id) === index)
+  const byId = new Map(all.map((item) => [item.id, item]))
+  return {
+    ...base,
+    today: {
+      pending: order.length,
+      done: 0,
+      estimate_minutes: order.reduce((sum, id) => sum + (byId.get(id)!.estimate_minutes ?? 0), 0),
+      tasks: order.map((id, position) => ({ ...byId.get(id)!, position })),
+    },
+  }
+}
+
+/** A counting here (with 10 min already tracked), then B and C in the queue. */
+const queued = () => inOrder([taskA.id, taskB.id, taskC.id], counting(deviceId(), paused({ task: { ...taskA, spent_seconds: 600 } })))
+
+/**
+ * jsdom has no layout: the card in focus on top, the next tasks below it one under the other, in the
+ * order they are in the page, so the sensors find what is above or below.
+ */
+function layOutFocus() {
+  const original = HTMLElement.prototype.getBoundingClientRect
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    if (this.dataset.focusDrop !== undefined) return DOMRect.fromRect({ x: 0, y: 0, width: 400, height: 100 })
+    // The lifted task starts where its item is.
+    if (this.dataset.overlay) {
+      const item = document.querySelector<HTMLElement>(`li[data-task-id="${this.dataset.overlay}"]`)
+      if (item) return item.getBoundingClientRect()
+    }
+    if (this.dataset.taskId) {
+      const index = Array.from(this.parentElement?.children ?? []).indexOf(this)
+      return DOMRect.fromRect({ x: 0, y: 200 + index * 60, width: 400, height: 50 })
+    }
+    return original.call(this)
+  })
+}
+
+const queueTitles = () =>
+  within(screen.getByRole('list', { name: 'Next tasks' }))
+    .getAllByRole('listitem')
+    .map((item) => within(item).getByText(/^DEV-\d{4}$/).textContent)
+
+const handle = (title: string) => screen.getByRole('button', { name: `Move ${title}` })
+
+/** Lifts the next task `title` from the keyboard, presses `keys`, and drops it with Space. */
+async function keyboardDrag(user: ReturnType<typeof renderFocus>['user'], title: string, keys: string, drop = true) {
+  handle(title).focus()
+  await user.keyboard(' ')
+  if (keys) await user.keyboard(keys)
+  if (drop) await user.keyboard(' ')
+}
+
+describe('FocusPage reordering the next tasks (#15)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.mocked(focus.get).mockResolvedValue(queued())
+    layOutFocus()
+  })
+
+  it('each next task has a move handle', async () => {
+    renderFocus()
+    await screen.findByText('DEV-1727')
+
+    for (const title of [taskB.title, taskC.title]) {
+      const item = within(screen.getByRole('list', { name: 'Next tasks' })).getByText(title).closest('li')!
+      const grip = handle(title)
+      expect(grip.tagName).toBe('BUTTON')
+      // On the left of the item, with the six dots.
+      expect(item.firstElementChild).toBe(grip)
+      expect(grip.querySelector('svg')).toHaveClass('lucide-grip-vertical')
+    }
+    // The task in focus is not in the queue, so it has no handle.
+    expect(screen.queryByRole('button', { name: `Move ${taskA.title}` })).not.toBeInTheDocument()
+  })
+
+  it('a viewer has no move handles', async () => {
+    role.canWrite = false
+    renderFocus()
+    await screen.findByText('DEV-1727')
+
+    expect(screen.queryByRole('button', { name: /^Move / })).not.toBeInTheDocument()
+    const list = screen.getByRole('list', { name: 'Next tasks' })
+    expect(list.querySelector('[aria-roledescription]')).toBeNull()
+    expect(list.querySelector('[tabindex]')).toBeNull()
+  })
+
+  it('dropping a next task shows the new order at once', async () => {
+    vi.mocked(tasks.move).mockImplementation(() => new Promise(() => undefined))
+    renderFocus()
+    await screen.findByText('DEV-1727')
+    expect(queueTitles()).toEqual(['DEV-1726', 'DEV-1727'])
+
+    // By the mouse: C, by its handle, up over B.
+    const grip = handle(taskC.title)
+    fireEvent.pointerDown(grip, { isPrimary: true, button: 0, clientX: 20, clientY: 285 })
+    fireEvent.pointerMove(document, { isPrimary: true, clientX: 20, clientY: 270 })
+    fireEvent.pointerMove(document, { isPrimary: true, clientX: 20, clientY: 215 })
+
+    // Lifted with a shadow, and a dashed space where it will fall.
+    const overlay = await waitFor(() => {
+      const found = document.querySelector('[data-overlay]')
+      expect(found).not.toBeNull()
+      return found as HTMLElement
+    })
+    expect(overlay).toHaveClass('shadow-lg')
+    expect(overlay).toHaveTextContent('DEV-1727')
+    const placeholder = document.querySelector<HTMLElement>(`[data-task-id="${taskC.id}"]`)!
+    expect(placeholder).toHaveAttribute('data-placeholder', 'true')
+    expect(placeholder).toHaveClass('border-dashed')
+
+    fireEvent.pointerUp(document, { isPrimary: true, clientX: 20, clientY: 215 })
+
+    // The move has not answered, and the queue already reads C, B.
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726']))
+    expect(tasks.move).toHaveBeenCalledWith(taskC.id, { column: 'today', before_task_id: taskB.id })
+    expect(document.querySelector('[data-overlay]')).toBeNull()
+  })
+
+  it('keyboard reorder announces the new position', async () => {
+    vi.mocked(tasks.move).mockImplementation(() => new Promise(() => undefined))
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    await keyboardDrag(user, taskC.title, '', false)
+    expect(await screen.findByText('DEV-1727: position 2 of 2')).toBeInTheDocument()
+    await user.keyboard('{ArrowUp}')
+    expect(await screen.findByText('DEV-1727: position 1 of 2')).toBeInTheDocument()
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726']))
+    expect(tasks.move).toHaveBeenCalledWith(taskC.id, { column: 'today', before_task_id: taskB.id })
+    // The announcements are read from a live region.
+    expect(screen.getByText('DEV-1727: position 1 of 2').closest('[aria-live]')).not.toBeNull()
+  })
+
+  it('reorder sends move with the task below or null at the end', async () => {
+    // The server keeps the order the last move asked for, as the board reads it.
+    let order = [taskA.id, taskB.id, taskC.id]
+    vi.mocked(focus.get).mockImplementation(async () => inOrder(order, queued()))
+    vi.mocked(tasks.move).mockImplementation(async (id, { before_task_id }) => {
+      order = order.filter((other) => other !== id)
+      order.splice(before_task_id ? order.indexOf(before_task_id) : order.length, 0, id)
+      return { id } as Task
+    })
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    // B down below C: last in the queue, so before nothing.
+    await keyboardDrag(user, taskB.title, '{ArrowDown}')
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledTimes(1))
+    expect(tasks.move).toHaveBeenLastCalledWith(taskB.id, { column: 'today', before_task_id: null })
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726']))
+
+    // B back up above C: before C, never before A, the task in focus.
+    await keyboardDrag(user, taskB.title, '{ArrowUp}')
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledTimes(2))
+    expect(tasks.move).toHaveBeenLastCalledWith(taskB.id, { column: 'today', before_task_id: taskC.id })
+    for (const [, body] of vi.mocked(tasks.move).mock.calls) expect(body.before_task_id).not.toBe(taskA.id)
+
+    // Read again, the focus screen shows the order the board keeps.
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1726', 'DEV-1727']))
+    expect(order).toEqual([taskA.id, taskB.id, taskC.id])
+    expect(focus.send).not.toHaveBeenCalled()
+  })
+
+  it('a failed move restores the order and shows the error', async () => {
+    let fail!: (error: unknown) => void
+    vi.mocked(tasks.move).mockImplementation(() => new Promise((_, reject) => (fail = reject)))
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    await keyboardDrag(user, taskC.title, '{ArrowUp}')
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726']))
+
+    fail({ response: { status: 422, data: { detail: 'Task not found in Today' } } })
+
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1726', 'DEV-1727']))
+    expect(toast.error).toHaveBeenCalledWith('Task not found in Today')
+  })
+
+  it('a poll answering before the move keeps the new order', async () => {
+    let answer!: (task: Task) => void
+    vi.mocked(tasks.move).mockImplementation(() => new Promise((resolve) => (answer = resolve)))
+    const { user, queryClient } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    await keyboardDrag(user, taskC.title, '{ArrowUp}')
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726']))
+
+    // A poll reads the server before the move reached it: the old order.
+    const polls = vi.mocked(focus.get).mock.calls.length
+    await queryClient.invalidateQueries({ queryKey: ['focus', LIST] })
+    expect(vi.mocked(focus.get).mock.calls.length).toBeGreaterThan(polls)
+    expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726'])
+
+    // The move answers, and the state read then has the new order.
+    vi.mocked(focus.get).mockResolvedValue(inOrder([taskA.id, taskC.id, taskB.id], queued()))
+    answer({ id: taskC.id } as Task)
+    await waitFor(() => expect(focus.get).toHaveBeenCalledTimes(polls + 2))
+    expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726'])
+  })
+
+  it('dragging over the focused card shows the drop zone', async () => {
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    await keyboardDrag(user, taskB.title, '{ArrowUp}', false)
+
+    const zone = await waitFor(() => {
+      const found = document.querySelector<HTMLElement>('[data-drop-zone]')
+      expect(found).not.toBeNull()
+      return found!
+    })
+    expect(zone).toHaveClass('border-dashed')
+    expect(within(zone).getByText('Drop to focus on this now')).toBeInTheDocument()
+    expect(screen.getByText('DEV-1725 goes back to the top of the queue, with 10min already tracked.')).toBeInTheDocument()
+    // The controls are dimmed while the card is the drop area.
+    expect(screen.getByRole('button', { name: 'Pause' }).closest('[data-dimmed]')).toHaveClass('opacity-40')
+
+    await user.keyboard('{Escape}')
+    expect(await screen.findByRole('timer')).toBeInTheDocument()
+    expect(document.querySelector('[data-drop-zone]')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Pause' }).closest('[data-dimmed]')).toBeNull()
+    expect(focus.send).not.toHaveBeenCalled()
+  })
+
+  it('dropping on the focused card focuses the dragged task', async () => {
+    let answer!: (state: FocusState) => void
+    vi.mocked(focus.send).mockImplementation(() => new Promise((resolve) => (answer = resolve)))
+    const { user, queryClient } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    await keyboardDrag(user, taskC.title, '{ArrowUp}{ArrowUp}')
+
+    await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'start', task_id: taskC.id, takeover: false })]))
+    // C is in focus; A, which was, is at the top of the queue with its 10 minutes kept.
+    const card = screen.getByRole('timer').closest('[data-running]')!
+    expect(card).toHaveTextContent('DEV-1727')
+    expect(queueTitles()).toEqual(['DEV-1725', 'DEV-1726'])
+    const state = queryClient.getQueryData<FocusState>(['focus', LIST])!
+    expect(state.task?.id).toBe(taskC.id)
+    expect(state.today.tasks.find((item) => item.id === taskA.id)!.spent_seconds).toBeGreaterThanOrEqual(600)
+    // A was already first in Today, so nothing else moves.
+    expect(tasks.move).not.toHaveBeenCalled()
+
+    // The server answers the same: C counting, A first of the queue with its time.
+    answer(inOrder([taskA.id, taskB.id, taskC.id], counting(deviceId(), paused({ task: taskC }))))
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1725', 'DEV-1726']))
+  })
+
+  it('dropping on the focused card puts the task that was in focus back on top of the queue', async () => {
+    // A was focused out of order: Today reads B, A, C.
+    vi.mocked(focus.get).mockResolvedValue(inOrder([taskB.id, taskA.id, taskC.id], queued()))
+    vi.mocked(focus.send).mockResolvedValue(inOrder([taskB.id, taskA.id, taskC.id], counting(deviceId(), paused({ task: taskC }))))
+    vi.mocked(tasks.move).mockImplementation(() => new Promise(() => undefined))
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1727')
+    expect(queueTitles()).toEqual(['DEV-1726', 'DEV-1727'])
+
+    await keyboardDrag(user, taskC.title, '{ArrowUp}{ArrowUp}')
+
+    await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'start', task_id: taskC.id })]))
+    expect(queueTitles()).toEqual(['DEV-1725', 'DEV-1726'])
+    expect(tasks.move).toHaveBeenCalledWith(taskA.id, { column: 'today', before_task_id: taskB.id })
+  })
+
+  it('the focused card refuses drops during a break, extend, stale or elsewhere', async () => {
+    const base = queued()
+    const breakSession: FocusState = {
+      ...base,
+      session: { ...base.session!, kind: 'break', task_id: null, deadline_at: new Date(Date.now() + 300_000).toISOString(), planned_seconds: 300 },
+    }
+    const usedA = { ...taskA, spent_seconds: 3600, awaiting_extend: true }
+    const extend = inOrder([taskA.id, taskB.id, taskC.id], paused({ task: usedA }))
+    extend.today.tasks[0] = { ...usedA, position: 0 }
+    const stale: FocusState = { ...base, stale: { session_id: base.session!.id, last_seen_at: new Date(Date.now() - 300_000).toISOString(), seconds: 300 } }
+    const elsewhere = inOrder([taskA.id, taskB.id, taskC.id], counting(OTHER_DEVICE, paused({ task: { ...taskA, spent_seconds: 600 } })))
+
+    for (const [name, state] of [
+      ['break', breakSession],
+      ['extend', extend],
+      ['stale', stale],
+      ['elsewhere', elsewhere],
+    ] as const) {
+      vi.mocked(focus.send).mockClear()
+      vi.mocked(tasks.move).mockClear()
+      vi.mocked(focus.get).mockResolvedValue(state)
+      const { user, unmount } = renderFocus({ pathname: `/focus/${LIST}`, state: { start: false } })
+      await screen.findByText('DEV-1727')
+
+      await keyboardDrag(user, taskB.title, '{ArrowUp}', false)
+      expect(document.querySelector('[data-drop-zone]'), name).toBeNull()
+      await user.keyboard(' ')
+      await new Promise((resolve) => setTimeout(resolve, 20))
+
+      expect(focus.send, name).not.toHaveBeenCalled()
+      expect(tasks.move, name).not.toHaveBeenCalled()
+      expect(queueTitles(), name).toEqual(['DEV-1726', 'DEV-1727'])
+      unmount()
+    }
+  })
+})
+
+describe('FocusPage reordering on the desktop (#15)', () => {
+  let bridge: { collapseFocus: ReturnType<typeof vi.fn>; notifyFocusChanged: ReturnType<typeof vi.fn> }
+
+  beforeEach(() => {
+    bridge = { collapseFocus: vi.fn(async () => undefined), notifyFocusChanged: vi.fn() }
+    Object.defineProperty(window, 'trackzyn', {
+      value: { isDesktop: true, windowRole: 'main', onWidgetState: vi.fn(() => () => undefined), ...bridge } as unknown as TrackzynApi,
+      configurable: true,
+    })
+    vi.mocked(focus.get).mockResolvedValue(queued())
+    layOutFocus()
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'trackzyn')
+    localStorage.clear()
+  })
+
+  it('reorder and swap tell the widget', async () => {
+    let answer!: (task: Task) => void
+    vi.mocked(tasks.move).mockImplementation(() => new Promise((resolve) => (answer = resolve)))
+    const { user } = renderFocus()
+    await screen.findByText('DEV-1727')
+
+    // A reorder tells the widget once the server answered the move.
+    await keyboardDrag(user, taskC.title, '{ArrowUp}')
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledTimes(1))
+    expect(bridge.notifyFocusChanged).not.toHaveBeenCalled()
+    vi.mocked(focus.get).mockResolvedValue(inOrder([taskA.id, taskC.id, taskB.id], queued()))
+    answer({ id: taskC.id } as Task)
+    await waitFor(() => expect(bridge.notifyFocusChanged).toHaveBeenCalledTimes(1))
+
+    // A swap tells it once the start was answered, and the widget then shows the new task in focus.
+    vi.mocked(focus.send).mockResolvedValue(inOrder([taskA.id, taskC.id, taskB.id], counting(deviceId(), paused({ task: taskC }))))
+    await waitFor(() => expect(queueTitles()).toEqual(['DEV-1727', 'DEV-1726']))
+    await keyboardDrag(user, taskB.title, '{ArrowUp}{ArrowUp}')
+    await waitFor(() => expect(sent()).toEqual([expect.objectContaining({ type: 'start', task_id: taskB.id })]))
+    await waitFor(() => expect(bridge.notifyFocusChanged).toHaveBeenCalledTimes(2))
   })
 })
