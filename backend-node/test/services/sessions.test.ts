@@ -475,4 +475,31 @@ describe('updateSession and deleteSession', () => {
     const row = await seed.session(theirs)
     expect(row.endedAt?.toISOString()).toBe(SP('2026-11-03T15:00:00').toISOString())
   })
+
+  it('AGENDA-10 AGENDA-34 a session of the same user in another workspace answers 404 Session not found and stays', async () => {
+    const otherWorkspace = randomUUID()
+    const otherList = randomUUID()
+    await db.insert(workspaces).values({ id: otherWorkspace, name: 'Other', timezone: 'America/Sao_Paulo', createdAt: NOW })
+    await db.insert(lists).values({ id: otherList, workspaceId: otherWorkspace, name: 'Elsewhere', color: 3, position: 0, createdByUserId: seed.userId, createdAt: NOW })
+    const elsewhere = await seed.addSession({
+      kind: 'break',
+      workspaceId: otherWorkspace,
+      listId: otherList,
+      startedAt: SP('2026-11-03T14:00:00'),
+      endedAt: SP('2026-11-03T15:00:00'),
+    })
+
+    expect(await failure(updateSession(db, actor(), workspace, elsewhere, { endedAt: SP('2026-11-03T15:30:00') }, NOW))).toEqual({
+      status: 404,
+      detail: 'Session not found',
+      code: undefined,
+    })
+    expect(await failure(deleteSession(db, actor(), workspace, elsewhere, NOW))).toEqual({ status: 404, detail: 'Session not found', code: undefined })
+    const row = await seed.session(elsewhere)
+    expect([row.workspaceId, row.startedAt.toISOString(), row.endedAt?.toISOString()]).toEqual([
+      otherWorkspace,
+      SP('2026-11-03T14:00:00').toISOString(),
+      SP('2026-11-03T15:00:00').toISOString(),
+    ])
+  })
 })

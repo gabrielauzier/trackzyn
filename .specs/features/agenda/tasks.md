@@ -700,10 +700,10 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] `updateSession` e `deleteSession` com o workspace A numa sessão do usuário no workspace B recusam com 404 `Session not found`, e a linha fica igual
-- [ ] `PATCH` e `DELETE /api/sessions/:id` com `x-workspace-id` de A numa sessão do usuário em B respondem 404 `{ detail: 'Session not found' }`
-- [ ] O mutante "sem `workspaceId` na busca" falha nesses testes
-- [ ] Gate check passes: Full (backend)
+- [x] `updateSession` e `deleteSession` com o workspace A numa sessão do usuário no workspace B recusam com 404 `Session not found`, e a linha fica igual
+- [x] `PATCH` e `DELETE /api/sessions/:id` com `x-workspace-id` de A numa sessão do usuário em B respondem 404 `{ detail: 'Session not found' }`
+- [x] O mutante "sem `workspaceId` na busca" falha nesses testes
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

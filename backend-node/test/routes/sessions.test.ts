@@ -246,6 +246,27 @@ describe('PATCH /api/sessions/:id', () => {
   })
 })
 
+describe('a session of the same user in another workspace (AGENDA-10, AGENDA-34)', () => {
+  it('answers 404 Session not found to PATCH and DELETE through this workspace and keeps it', async () => {
+    const other = (await t.app.inject({ method: 'POST', url: '/api/workspaces', headers: bearer(owner.token), payload: { name: 'Mine too', self_membership: true } }))
+      .json().id as string
+    const otherList = (await call('POST', '/api/lists', owner.token, other, { name: 'Elsewhere', color: 1 })).json().id as string
+    const elsewhere = (
+      await call('POST', '/api/sessions', owner.token, other, { kind: 'break', list_id: otherList, started_at: ago(60), ended_at: ago(30) })
+    ).json()
+
+    const edited = await call('PATCH', `/api/sessions/${elsewhere.id}`, owner.token, workspaceId, { ended_at: ago(20) })
+    expect(edited.statusCode).toBe(404)
+    expect(edited.json()).toEqual({ detail: 'Session not found' })
+    const deleted = await call('DELETE', `/api/sessions/${elsewhere.id}`, owner.token, workspaceId)
+    expect(deleted.statusCode).toBe(404)
+    expect(deleted.json()).toEqual({ detail: 'Session not found' })
+
+    const kept = await call('GET', `/api/sessions?${week()}`, owner.token, other)
+    expect(kept.json().sessions).toEqual([expect.objectContaining({ id: elsewhere.id, started_at: elsewhere.started_at, ended_at: elsewhere.ended_at })])
+  })
+})
+
 describe('DELETE /api/sessions/:id', () => {
   it('AGENDA-32 AGENDA-46 answers 204 and takes the time out of the task', async () => {
     const created = (await create(60, 120)).json()
