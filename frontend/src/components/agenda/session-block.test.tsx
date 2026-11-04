@@ -41,6 +41,19 @@ describe('SessionBlock', () => {
     expect(block.style.height).toBe('50px')
   })
 
+  it('puts the title and the time on one line below 15 minutes, and on two lines from 15 minutes', () => {
+    const layoutOf = (end: number) => {
+      const { unmount } = renderWithProviders(<SessionBlock piece={laid({}, { start: 781, end })} pxPerMinute={2.4} timezone={SP} />)
+      const content = screen.getByText('Write the report').parentElement!
+      const oneLine = content.classList.contains('items-baseline')
+      const twoLines = content.classList.contains('flex-col')
+      unmount()
+      return { oneLine, twoLines }
+    }
+    expect(layoutOf(795)).toEqual({ oneLine: true, twoLines: false })
+    expect(layoutOf(796)).toEqual({ oneLine: false, twoLines: true })
+  })
+
   it('takes the color of its list (AGENDA-04)', () => {
     renderWithProviders(<SessionBlock piece={laid({ list_color: 5 })} pxPerMinute={1} timezone={SP} />)
     const block = screen.getByRole('button')

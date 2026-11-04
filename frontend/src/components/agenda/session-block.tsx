@@ -6,7 +6,7 @@ import type { LaidOutPiece } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
 
 /** Below this length a block shows its title and time on a single line. */
-const ONE_LINE_MINUTES = 40
+const ONE_LINE_MINUTES = 15
 
 interface SessionBlockProps {
   piece: LaidOutPiece
