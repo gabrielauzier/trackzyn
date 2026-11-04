@@ -216,4 +216,93 @@ describe('AgendaPage', () => {
       expect(screen.queryByRole('button', { name: 'Write the report, 14:00 – 15:30' })).toBeNull()
     })
   })
+  describe('narrow screens and the calendar (AGENDA-36, AGENDA-40, AGENDA-41)', () => {
+    const realMatchMedia = window.matchMedia
+    const realWidth = window.innerWidth
+
+    /** A window `px` wide, whose media queries answer for that width. */
+    function setWidth(px: number) {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: px })
+      window.matchMedia = ((query: string) => {
+        const max = /max-width:\s*(\d+)px/.exec(query)
+        return {
+          matches: max ? px <= Number(max[1]) : false,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }
+      }) as unknown as typeof window.matchMedia
+    }
+
+    afterEach(() => {
+      window.matchMedia = realMatchMedia
+      Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: realWidth })
+    })
+
+    const pickInCalendar = async (user: ReturnType<typeof renderWithProviders>['user'], day: string) => {
+      await user.click(await screen.findByRole('button', { name: 'Today' }))
+      await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: day }))
+    }
+
+    it('shows the day timeline at 390 px', async () => {
+      setWidth(390)
+      const { container } = renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('group', { name: 'Days of the week' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026')
+      expect(container.querySelectorAll('[data-agenda-column]')).toHaveLength(1)
+      expect(screen.queryByRole('group', { name: 'View' })).toBeNull()
+    })
+
+    it('shows the week grid at 1024 px', async () => {
+      setWidth(1024)
+      const { container } = renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
+      expect(container.querySelectorAll('[data-agenda-column]')).toHaveLength(7)
+      expect(screen.queryByRole('group', { name: 'Days of the week' })).toBeNull()
+    })
+
+    it('opens the week of 12 November when it is chosen in the week view (AGENDA-40)', async () => {
+      setWidth(1024)
+      const { user } = renderWithProviders(<AgendaPage />)
+      await pickInCalendar(user, '12')
+      expect(await weekHeading()).toHaveTextContent('November 9 – 15, 2026')
+      expect(screen.queryByRole('dialog')).toBeNull()
+      await waitFor(() => expect(sessions.list).toHaveBeenCalledWith({ from: '2026-11-09', to: '2026-11-15' }))
+    })
+
+    it('opens Thursday 12 November itself when it is chosen in the day view (AGENDA-41)', async () => {
+      setWidth(390)
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await pickInCalendar(user, '12')
+      expect(await weekHeading()).toHaveTextContent('Thursday, November 12, 2026')
+      expect(container.querySelector('[data-day-pill="2026-11-12"]')).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.queryByRole('dialog')).toBeNull()
+      await waitFor(() => expect(sessions.list).toHaveBeenCalledWith({ from: '2026-11-09', to: '2026-11-15' }))
+    })
+
+    it('moves the day view to the Monday of the next week (AGENDA-38)', async () => {
+      setWidth(390)
+      const { user } = renderWithProviders(<AgendaPage />)
+      await user.click(await screen.findByRole('button', { name: 'Next week' }))
+      expect(await weekHeading()).toHaveTextContent('Monday, November 9, 2026')
+    })
+
+    it('shows the day of a tapped pill and opens New session on it from + (AGENDA-37, AGENDA-43)', async () => {
+      setWidth(390)
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('group', { name: 'Days of the week' })
+      await user.click(container.querySelector<HTMLElement>('[data-day-pill="2026-11-02"]')!)
+      expect(await weekHeading()).toHaveTextContent('Monday, November 2, 2026 · 1hr')
+      expect(screen.getByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'New session' }))
+      expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Date')).toHaveValue('2026-11-02')
+      expect(screen.getByLabelText('Start')).toHaveValue('14:00')
+      expect(screen.getByLabelText('End')).toHaveValue('14:05')
+    })
+  })
 })

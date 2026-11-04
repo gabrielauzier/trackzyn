@@ -4,12 +4,15 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
+import { DatePickerChip } from '@/components/agenda/date-picker-chip'
+import { DayTimeline } from '@/components/agenda/day-timeline'
 import { SessionDetails, SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
 import { PX_PER_MINUTE, WeekGrid } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { lists } from '@/lib/api'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { useAgenda } from '@/lib/agenda/use-agenda'
@@ -60,9 +63,14 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const { canWrite } = useWorkspace()
   const now = useNow()
   const today = dayOf(now, timezone)
-  const [monday, setMonday] = useState(() => mondayOf(today))
+  /** The day the agenda is on; the week shown is the one that holds it. */
+  const [day, setDay] = useState(today)
+  const monday = mondayOf(day)
   const [listId, setListId] = useState<string | null>(null)
-  const [view, setView] = useState<'week' | 'day'>('week')
+  const [chosenView, setView] = useState<'week' | 'day'>('week')
+  // Below 768 px the agenda shows one day at a time (AGENDA-36).
+  const narrow = useIsMobile()
+  const view = narrow ? 'day' : chosenView
   const days = useMemo(() => weekDays(monday), [monday])
   const { query, create, update, remove } = useAgenda({ from: monday, to: addDays(monday, 6), listId })
   const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
@@ -96,44 +104,55 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     onCommit: commit,
   })
   const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null
-  const shownDay = days.includes(today) ? today : monday
 
   /** Another week closes the panel without recording (AGENDA-47). */
-  const goTo = (nextMonday: string) => {
-    drag.setDraft(null)
-    closeSelected()
-    setMonday(nextMonday)
+  const goTo = (next: string) => {
+    if (mondayOf(next) !== monday) {
+      drag.setDraft(null)
+      closeSelected()
+    }
+    setDay(next)
   }
 
-  const openNew = () => {
+  /** `Nova sessão` on `on`, with the times of now (AGENDA-15, AGENDA-43). */
+  const openNew = (on: string = today) => {
     closeSelected()
-    const times = newSessionTimes(now, timezone)
-    setMonday(mondayOf(times.day))
-    drag.setDraft({ mode: 'create', ...times, sessionId: null })
+    const { start, end } = newSessionTimes(now, timezone)
+    setDay(on)
+    drag.setDraft({ mode: 'create', day: on, start, end, sessionId: null })
   }
 
   const changeTimes = (times: PanelTimes) => {
-    if (!days.includes(times.day)) setMonday(mondayOf(times.day))
+    setDay(times.day)
     drag.setDraft({ mode: 'create', ...times, sessionId: null })
+  }
+
+  const select = (session: AgendaSession) => {
+    drag.setDraft(null)
+    setEditTimes(null)
+    setSelectedId(session.id)
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={() => goTo(mondayOf(today))}>
-          {t('agenda.today')}
-        </Button>
-        <div className="flex items-center">
-          <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.previousWeek')} onClick={() => goTo(addDays(monday, -7))}>
-            <ChevronLeft size={16} />
-          </Button>
-          <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.nextWeek')} onClick={() => goTo(addDays(monday, 7))}>
-            <ChevronRight size={16} />
-          </Button>
-        </div>
-        <h2 className="text-base font-semibold" aria-live="polite">
-          {weekLabel(monday, i18n.language)}
-        </h2>
+        {/* The week opens on the chosen day's week, the day view on the day itself (AGENDA-40, AGENDA-41). */}
+        <DatePickerChip today={today} shown={day} onPick={goTo} />
+        {view === 'week' && (
+          <>
+            <div className="flex items-center">
+              <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.previousWeek')} onClick={() => goTo(addDays(monday, -7))}>
+                <ChevronLeft size={16} />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.nextWeek')} onClick={() => goTo(addDays(monday, 7))}>
+                <ChevronRight size={16} />
+              </Button>
+            </div>
+            <h2 className="text-base font-semibold" aria-live="polite">
+              {weekLabel(monday, i18n.language)}
+            </h2>
+          </>
+        )}
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Select value={listId ?? ALL_LISTS} onValueChange={(value) => setListId(value === ALL_LISTS ? null : value)}>
             <SelectTrigger size="sm" aria-label={t('agenda.list')} className="w-44">
@@ -148,24 +167,27 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               ))}
             </SelectContent>
           </Select>
-          <div role="group" aria-label={t('agenda.view')} className="flex rounded-lg bg-muted p-0.5">
-            {(['day', 'week'] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={view === option}
-                className={cn(
-                  'rounded-md px-3 py-1 text-sm font-medium',
-                  view === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
-                )}
-                onClick={() => setView(option)}
-              >
-                {t(`agenda.${option}`)}
-              </button>
-            ))}
-          </div>
-          {canWrite && (
-            <Button type="button" size="sm" onClick={openNew}>
+          {!narrow && (
+            <div role="group" aria-label={t('agenda.view')} className="flex rounded-lg bg-muted p-0.5">
+              {(['day', 'week'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={view === option}
+                  className={cn(
+                    'rounded-md px-3 py-1 text-sm font-medium',
+                    view === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                  )}
+                  onClick={() => setView(option)}
+                >
+                  {t(`agenda.${option}`)}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* The day view has its own + button. */}
+          {canWrite && view === 'week' && (
+            <Button type="button" size="sm" onClick={() => openNew()}>
               <Plus size={14} />
               {t('agenda.newSession')}
             </Button>
@@ -185,19 +207,30 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1">
-            <WeekGrid
-              days={view === 'week' ? days : [shownDay]}
-              sessions={sessions}
-              timezone={timezone}
-              now={now}
-              drag={canWrite ? drag : undefined}
-              selectedId={selected?.id ?? null}
-              onSelect={(session) => {
-                drag.setDraft(null)
-                setEditTimes(null)
-                setSelectedId(session.id)
-              }}
-            />
+            {view === 'week' ? (
+              <WeekGrid
+                days={days}
+                sessions={sessions}
+                timezone={timezone}
+                now={now}
+                drag={canWrite ? drag : undefined}
+                selectedId={selected?.id ?? null}
+                onSelect={select}
+              />
+            ) : (
+              <DayTimeline
+                day={day}
+                sessions={sessions}
+                timezone={timezone}
+                now={now}
+                onPickDay={goTo}
+                // Another week opens on its Monday (AGENDA-38).
+                onWeek={(direction) => goTo(addDays(monday, 7 * direction))}
+                onNew={canWrite ? () => openNew(day) : undefined}
+                selectedId={selected?.id ?? null}
+                onSelect={select}
+              />
+            )}
           </div>
           {canWrite && draft && (
             <SessionPanel

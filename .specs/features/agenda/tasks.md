@@ -570,9 +570,9 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Com 390 px de largura a página mostra a timeline do dia, com 1024 px a grade da semana
-- [ ] Na semana, escolher 12 de novembro no calendário mostra `9 – 15 de novembro de 2026`; no dia, mostra a quinta, 12 de novembro
-- [ ] Gate check passes: Build
+- [x] Com 390 px de largura a página mostra a timeline do dia, com 1024 px a grade da semana
+- [x] Na semana, escolher 12 de novembro no calendário mostra `9 – 15 de novembro de 2026`; no dia, mostra a quinta, 12 de novembro
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

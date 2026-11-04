@@ -196,14 +196,14 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-33 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-34 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-35 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-36 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-37 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-38 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-39 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-40 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-41 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-42 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
-| AGENDA-43 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
+| AGENDA-36 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
+| AGENDA-37 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
+| AGENDA-38 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
+| AGENDA-39 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
+| AGENDA-40 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
+| AGENDA-41 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
+| AGENDA-42 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
+| AGENDA-43 | P2: Agenda do dia e escolha da data | Tasks | Implementing |
 | AGENDA-44 | Edge cases | Tasks | Implementing |
 | AGENDA-45 | Edge cases | Tasks | Implementing |
 | AGENDA-46 | Edge cases | Tasks | Implementing |
