@@ -7,6 +7,7 @@ import { SessionBlock } from '@/components/agenda/session-block'
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { minuteClock } from '@/lib/agenda/format'
+import { joinPieces } from '@/lib/agenda/join'
 import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf, mondayOf, weekDays } from '@/lib/agenda/layout'
 import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
 import { cn } from '@/lib/utils'
@@ -33,6 +34,14 @@ interface DayTimelineProps {
   pxPerMinute?: number
   /** Whether a session stays off the timeline (HIDE-11); it still counts in the total and the empty message (HIDE-14). */
   hidden?: (session: AgendaSession) => boolean
+  /** Sessions of one list and kind this many minutes apart or less are drawn as one block (MERGE-11); null keeps them apart. */
+  joinGap?: number | null
+  /** The session chosen from a joined block, drawn on its own (MERGE-29). */
+  apartId?: string | null
+  /** A click on a joined block, with its sessions in start order (MERGE-27). */
+  onSelectGroup?: (members: AgendaSession[]) => void
+  /** The ids of the sessions of the chosen joined block; the block shows selected. */
+  selectedGroup?: string[] | null
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -54,6 +63,10 @@ export function DayTimeline({
   onSelect,
   pxPerMinute = PX_PER_MINUTE,
   hidden,
+  joinGap = null,
+  apartId = null,
+  onSelectGroup,
+  selectedGroup = null,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -62,7 +75,7 @@ export function DayTimeline({
   const pieces = useMemo(() => dayPieces(sessions, days, timezone, now), [sessions, days, timezone, now])
   const today = dayOf(now, timezone)
   const ofDay = pieces.get(day) ?? []
-  const laid = assignLanes(hidden ? ofDay.filter((piece) => !hidden(piece.session)) : ofDay)
+  const laid = assignLanes(joinPieces(hidden ? ofDay.filter((piece) => !hidden(piece.session)) : ofDay, joinGap, apartId))
   const total = dayTotal(ofDay)
   const limit = dayLimit(day, now, timezone)
 
@@ -145,16 +158,19 @@ export function DayTimeline({
               />
             )}
             <div className="absolute inset-0 mx-0.5">
-              {laid.map((piece) => (
-                <SessionBlock
-                  key={piece.session.id}
-                  piece={piece}
-                  pxPerMinute={pxPerMinute}
-                  timezone={timezone}
-                  selected={piece.session.id === selectedId}
-                  onSelect={onSelect && (() => onSelect(piece.session))}
-                />
-              ))}
+              {laid.map((piece) => {
+                const members = piece.members
+                return (
+                  <SessionBlock
+                    key={members ? `group:${piece.session.id}` : piece.session.id}
+                    piece={piece}
+                    pxPerMinute={pxPerMinute}
+                    timezone={timezone}
+                    selected={members ? members.some((member) => selectedGroup?.includes(member.id)) : piece.session.id === selectedId}
+                    onSelect={members ? onSelectGroup && (() => onSelectGroup(members)) : onSelect && (() => onSelect(piece.session))}
+                  />
+                )
+              })}
             </div>
             {day === today && (
               <div

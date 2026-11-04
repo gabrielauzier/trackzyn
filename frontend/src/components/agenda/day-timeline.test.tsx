@@ -140,3 +140,62 @@ describe('DayTimeline with hidden sessions (#22)', () => {
     expect(screen.queryByText('No sessions on this day. Tap + to record one.')).toBeNull()
   })
 })
+
+describe('DayTimeline with joined sessions (#23)', () => {
+  // Tuesday in São Paulo: Produto 10:20-11:01 and 11:05-11:16, and Suporte 10:30-11:00.
+  const produto = { ...tuesday, list_name: 'Produto' }
+  const a: AgendaSession = { ...produto, id: 'a', started_at: '2026-11-03T13:20:00.000Z', ended_at: '2026-11-03T14:01:00.000Z' }
+  const b: AgendaSession = { ...produto, id: 'b', task_title: 'Review', started_at: '2026-11-03T14:05:00.000Z', ended_at: '2026-11-03T14:16:00.000Z' }
+  const c: AgendaSession = {
+    ...tuesday,
+    id: 'c',
+    task_title: 'Answer tickets',
+    list_id: 'l2',
+    list_name: 'Suporte',
+    started_at: '2026-11-03T13:30:00.000Z',
+    ended_at: '2026-11-03T14:00:00.000Z',
+  }
+
+  it('MERGE-11 MERGE-20 MERGE-21 MERGE-23 draws the Produto sessions as one block beside Suporte, and heads the day with the sum of the sessions', () => {
+    const { container } = timeline('2026-11-03', { sessions: [a, b, c], joinGap: 5 })
+    const joined = screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' })
+    expect(joined).toHaveAttribute('data-joined')
+    expect(container.querySelector('[data-session-id="b"]')).toBeNull()
+    expect([joined.style.left, joined.style.width]).toEqual(['0%', '50%'])
+    expect(screen.getByRole('button', { name: 'Answer tickets, 10:30 – 11:00' }).style.width).toBe('50%')
+    // 41 + 11 + 30 minutes, without the 4 minutes between the Produto sessions.
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tuesday, November 3, 2026 · 1hr 22min')
+  })
+
+  it('MERGE-21 gives a joined block alone the whole width', () => {
+    timeline('2026-11-03', { sessions: [a, b], joinGap: 5 })
+    expect(screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' }).style.width).toBe('100%')
+  })
+
+  it('MERGE-19 leaves a hidden session out, so it does not bridge the gap', () => {
+    // 10:20-11:01, a hidden 2-minute one at 11:03-11:05, and 11:08-11:16: 7 minutes apart without it.
+    const short: AgendaSession = { ...produto, id: 'short', started_at: '2026-11-03T14:03:00.000Z', ended_at: '2026-11-03T14:05:00.000Z' }
+    const later: AgendaSession = { ...produto, id: 'later', started_at: '2026-11-03T14:08:00.000Z', ended_at: '2026-11-03T14:16:00.000Z' }
+    const { container } = timeline('2026-11-03', { sessions: [a, short, later], joinGap: 5, hidden: (s) => isHiddenSession(s, 5) })
+    expect(container.querySelector('[data-joined]')).toBeNull()
+    expect(container.querySelector('[data-session-id="short"]')).toBeNull()
+    expect(container.querySelectorAll('[data-session-id]')).toHaveLength(2)
+  })
+
+  it('MERGE-27 MERGE-30 calls onSelectGroup with the sessions in start order on a click, and gives the block no handles', async () => {
+    const onSelectGroup = vi.fn()
+    const { user, container } = timeline('2026-11-03', { sessions: [b, a], joinGap: 5, onSelectGroup, selectedGroup: ['a', 'b'] })
+    const joined = screen.getByRole('button', { name: 'Produto, 2 sessions, 10:20 – 11:16' })
+    expect(joined).toHaveAttribute('aria-pressed', 'true')
+    expect(container.querySelector('[data-handle]')).toBeNull()
+    await user.click(joined)
+    expect(onSelectGroup).toHaveBeenCalledWith([a, b])
+  })
+
+  it('MERGE-29 draws the apart session on its own', () => {
+    const { container } = timeline('2026-11-03', { sessions: [a, b], joinGap: 5, apartId: 'b', selectedId: 'b' })
+    expect(container.querySelector('[data-joined]')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Review, 11:05 – 11:16' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
+  })
+})

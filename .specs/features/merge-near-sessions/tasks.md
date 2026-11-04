@@ -224,10 +224,10 @@ T7 → T8 → T9
 
 **Done when**:
 
-- [ ] Com 5, as duas sessões de Produto viram um bloco, e o título do dia mostra a soma das sessões
-- [ ] Clicar no bloco chama `onSelectGroup`; ele não tem alças
-- [ ] Com `apartId`, a sessão aparece sozinha
-- [ ] Gate check passes: Build
+- [x] Com 5, as duas sessões de Produto viram um bloco, e o título do dia mostra a soma das sessões
+- [x] Clicar no bloco chama `onSelectGroup`; ele não tem alças
+- [x] Com `apartId`, a sessão aparece sozinha
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build
