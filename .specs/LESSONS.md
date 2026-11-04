@@ -224,6 +224,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: MERGE-05 (validation.md, backend-node/test/routes/workspaces.test.ts:192) (workspace-settings)
 - last seen: 2026-11-04T18:04:33Z
 
+### L-036 - Assert where focus lands after every close path the spec names, not only after Esc
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-components` · harmful: 0
+- features: agenda-view-menu
+- evidence: DAYS-04 view-menu.test.tsx:38-39 (frontend-components)
+- last seen: 2026-11-04T20:16:50Z
+
+### L-037 - When a spec says hidden items still count, make the test depend on an item that is actually hidden
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-view-menu
+- evidence: M26 M28 pages/agenda.test.tsx:195-203 (frontend-pages)
+- last seen: 2026-11-04T20:16:50Z
+
+### L-038 - Give every spec edge case its own test with the edge condition set up, not a nearby happy path
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-view-menu
+- evidence: M29 edge case 2, pages/agenda.test.tsx:790 (frontend-pages)
+- last seen: 2026-11-04T20:16:51Z
+
+### L-039 - State in the criterion which views a state-driven indicator applies to when the feature behaves differently per view
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: agenda-view-menu
+- evidence: DAYS-14 view-menu.tsx:36 (spec)
+- last seen: 2026-11-04T20:16:51Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

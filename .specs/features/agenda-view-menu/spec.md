@@ -78,7 +78,7 @@ Quem não trabalha no fim de semana vê na Agenda duas colunas sempre vazias, e 
 11. WHEN `Seg – Sex` is clicked THEN the Agenda SHALL show Monday to Friday and hide Saturday and Sunday at once.  <!-- event-driven -->
 12. WHEN `Todos` is clicked THEN the Agenda SHALL show the seven days at once.  <!-- event-driven -->
 13. IF only one day is checked THEN its checkbox SHALL be disabled, so the week always shows at least one day.  <!-- unwanted-behavior -->
-14. WHILE at least one day is hidden, the button SHALL show a dot and be named `Opções de exibição, N de 7 dias`.  <!-- state-driven -->
+14. WHILE the Agenda is in the week view and at least one day is hidden, the button SHALL show a dot and be named `Opções de exibição, N de 7 dias`; in the day view, where the days are not filtered (DAYS-08), it SHALL show neither.  <!-- state-driven -->
 15. WHEN the Agenda opens THEN it SHALL show the days chosen last on this device, or the seven days the first time, or if storage holds no valid choice.  <!-- event-driven -->
 16. The Agenda SHALL keep the day total of each shown day, the week navigation by whole weeks, and the overlap warning (AGENDA-19) as they are, hidden days included in the warning.  <!-- ubiquitous -->
 

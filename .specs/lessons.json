@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 36,
+  "next_id": 40,
   "lessons": [
     {
       "id": "L-001",
@@ -634,6 +634,78 @@
       ],
       "created": "2026-11-04T18:04:33Z",
       "last_seen": "2026-11-04T18:04:33Z"
+    },
+    {
+      "id": "L-036",
+      "key": "ac_gap::assert where focus lands after every close path the spec names not only after esc",
+      "text": "Assert where focus lands after every close path the spec names, not only after Esc",
+      "signal": "ac_gap",
+      "scope": "frontend-components",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DAYS-04 view-menu.test.tsx:38-39 (frontend-components)"
+      ],
+      "created": "2026-11-04T20:16:50Z",
+      "last_seen": "2026-11-04T20:16:50Z"
+    },
+    {
+      "id": "L-037",
+      "key": "surviving_mutant::when a spec says hidden items still count make the test depend on an item that is actually hidden",
+      "text": "When a spec says hidden items still count, make the test depend on an item that is actually hidden",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M26 M28 pages/agenda.test.tsx:195-203 (frontend-pages)"
+      ],
+      "created": "2026-11-04T20:16:50Z",
+      "last_seen": "2026-11-04T20:16:50Z"
+    },
+    {
+      "id": "L-038",
+      "key": "surviving_mutant::give every spec edge case its own test with the edge condition set up not a nearby happy path",
+      "text": "Give every spec edge case its own test with the edge condition set up, not a nearby happy path",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M29 edge case 2, pages/agenda.test.tsx:790 (frontend-pages)"
+      ],
+      "created": "2026-11-04T20:16:51Z",
+      "last_seen": "2026-11-04T20:16:51Z"
+    },
+    {
+      "id": "L-039",
+      "key": "spec_precision_gap::state in the criterion which views a state driven indicator applies to when the feature behaves differently per view",
+      "text": "State in the criterion which views a state-driven indicator applies to when the feature behaves differently per view",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DAYS-14 view-menu.tsx:36 (spec)"
+      ],
+      "created": "2026-11-04T20:16:51Z",
+      "last_seen": "2026-11-04T20:16:51Z"
     }
   ]
 }

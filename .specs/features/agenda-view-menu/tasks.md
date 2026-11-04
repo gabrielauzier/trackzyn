@@ -54,6 +54,12 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 T1 → T2 → T3 → T4 → T5
 ```
 
+### Phase 2: Fixes do Verifier (rodada 1)
+
+```
+T6 → T7 → T8 → T9
+```
+
 ---
 
 ## Task Breakdown
@@ -199,10 +205,112 @@ T1 → T2 → T3 → T4 → T5
 
 ---
 
+### T6: Devolver o foco ao botão depois de um clique fora
+
+**What**: O menu devolve o foco ao botão em todo fechamento, também no clique fora, que o `Popover` não modal do Radix não devolve.
+**Where**: `frontend/src/components/agenda/view-menu.tsx`
+**Depends on**: None
+**Reuses**: `onCloseAutoFocus` do `PopoverContent`
+**Requirement**: DAYS-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Depois de um clique fora, o menu fecha e o botão tem o foco
+- [ ] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(frontend): give the focus back to the view menu button on every close`
+
+---
+
+### T7: Provar o aviso e a Nova sessão com o dia de hoje escondido
+
+**What**: Teste da página com a quarta-feira (hoje) escondida: `Nova sessão` abre o painel em hoje, e o aviso cita a sessão de hoje, que está num dia escondido.
+**Where**: `frontend/src/pages/agenda.test.tsx`
+**Depends on**: T6
+**Reuses**: o teste DAYS-16 do mesmo arquivo
+**Requirement**: DAYS-16
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com `agenda.days = [0,1,3,4,5,6]`, `Nova sessão` abre o painel em quarta-feira, 4 de novembro
+- [ ] O aviso diz `Overlaps Quick call (14:01 – 14:03).`, sessão de um dia escondido
+- [ ] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(frontend): prove a hidden today still opens New session and warns`
+
+---
+
+### T8: Provar que a visão Dia fica no seu dia mesmo escondido
+
+**What**: Teste da página na largura de 390 px com só segunda e terça mostradas: a linha do tempo continua em quarta-feira, 4 de novembro.
+**Where**: `frontend/src/pages/agenda.test.tsx`
+**Depends on**: T7
+**Reuses**: `setWidth` do bloco de telas estreitas
+**Requirement**: DAYS-08
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com `agenda.days = [0,1]` a 390 px, o título do dia é `Wednesday, November 4, 2026`
+- [ ] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(frontend): prove the day view stays on a hidden day`
+
+---
+
+### T9: Abrir o menu abaixo do botão
+
+**What**: O menu abre explicitamente abaixo do botão (`side="bottom"`), alinhado ao início.
+**Where**: `frontend/src/components/agenda/view-menu.tsx`
+**Depends on**: T8
+**Reuses**: `PopoverContent`
+**Requirement**: DAYS-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O menu aberto tem `data-side="bottom"`
+- [ ] Gate check passes: Build
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): open the agenda view menu below its button`
+
+---
+
 ## Phase Execution Map
 
 ```
 Phase 1:  T1 ------→ T2 ------→ T3 ------→ T4 ------→ T5
+Phase 2:  T6 ------→ T7 ------→ T8 ------→ T9
 ```
 
 5 tasks: um batch só, no contexto principal, sem sub-agentes. O Verifier roda depois de T5.
