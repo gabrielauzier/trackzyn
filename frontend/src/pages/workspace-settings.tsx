@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -39,7 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { AlertTriangle, Archive, Plus, Save, Trash2, Users } from 'lucide-react'
+import { AlertTriangle, Archive, Info, Plus, Save, Trash2, Users } from 'lucide-react'
 import { SUPPORTED_LANGS } from '@/lib/i18n'
 import type { WorkspaceMember, WorkspaceRole } from '@/types'
 
@@ -451,9 +452,25 @@ export default function WorkspaceSettingsPage() {
                 onCheckedChange={toggleHideShort}
                 disabled={!canManage}
               />
-              <Label id="ws-hide-short-label" htmlFor="ws-hide-short" className="text-[13px]">
-                {t('workspace.hideShortSessions')}
-              </Label>
+              <div className="flex items-center gap-1">
+                <Label id="ws-hide-short-label" htmlFor="ws-hide-short" className="text-[13px]">
+                  {t('workspace.hideShortSessions')}
+                </Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t('workspace.hideShortSessionsInfo')}
+                        className="inline-flex size-6 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <Info className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('workspace.hideShortSessionsHint')}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               {hideShort && (
                 <div className="flex items-center gap-2">
                   <Label htmlFor="ws-min-minutes" className="text-[13px] text-muted-foreground">
@@ -482,7 +499,6 @@ export default function WorkspaceSettingsPage() {
                 {t('workspace.minSessionInvalid')}
               </p>
             )}
-            <p className="text-[11px] text-muted-foreground leading-relaxed">{t('workspace.hideShortSessionsHint')}</p>
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center gap-3">

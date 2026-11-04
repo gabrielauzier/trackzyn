@@ -74,6 +74,21 @@ describe('workspace settings: hide short sessions (#22)', () => {
     expect(screen.getByText('minutes')).toBeInTheDocument()
   })
 
+  it('keeps the explanation of hiding short sessions in the tooltip of an info button next to it, for an editor too', async () => {
+    const hint =
+      'Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.'
+    state.canManage = false
+    state.workspace = { ...workspace(10), role: 'editor' }
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    const info = await screen.findByRole('button', { name: 'About hiding short sessions' })
+    expect(screen.queryByText(hint)).toBeNull()
+    expect(info).toBeEnabled()
+    expect(screen.getByText('Hide short sessions').parentElement).toContainElement(info)
+
+    await user.hover(info)
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(hint)
+  })
+
   it('HIDE-06 opens on with the stored minimum', async () => {
     state.workspace = workspace(15)
     renderWithProviders(<WorkspaceSettingsPage />)

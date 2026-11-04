@@ -472,6 +472,7 @@
     "mergeGapLabel": "Up to",
     "mergeGapUnit": "minutes",
     "hideShortSessionsHint": "Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.",
+    "hideShortSessionsInfo": "About hiding short sessions",
     "you": "you",
     "youManageThis": "You manage this workspace"
   },

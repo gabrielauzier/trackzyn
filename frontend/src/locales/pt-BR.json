@@ -472,6 +472,7 @@
     "mergeGapLabel": "Até",
     "mergeGapUnit": "minutos",
     "hideShortSessionsHint": "Sessões encerradas mais curtas que isso somem da Agenda e da aba Sessões dos Relatórios para todos os membros. Elas continuam contando em todos os totais.",
+    "hideShortSessionsInfo": "Sobre esconder sessões curtas",
     "you": "você",
     "youManageThis": "Você gerencia este workspace"
   },
