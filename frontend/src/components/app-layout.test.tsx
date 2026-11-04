@@ -200,6 +200,16 @@ describe('app layout sidebar', () => {
     expect(within(nav).queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
   })
 
+  it('offers Agenda, leading to /agenda, between the lists and Reports (AGENDA-13)', () => {
+    state.canWrite = true
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const links = within(screen.getByRole('navigation')).getAllByRole('link').map((link) => link.getAttribute('aria-label') ?? link.textContent)
+    expect(within(screen.getByRole('navigation')).getByRole('link', { name: 'Agenda' })).toHaveAttribute('href', '/agenda')
+    expect(links.indexOf('Agenda')).toBe(links.indexOf('Archived lists') + 1)
+    expect(links.indexOf('Reports')).toBe(links.indexOf('Agenda') + 1)
+  })
+
   it('selects Archived lists on its page', () => {
     state.canWrite = true
     renderWithProviders(<AppLayout />, { route: '/lists/archived' })

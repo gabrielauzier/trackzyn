@@ -329,8 +329,8 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] A barra lateral mostra `Agenda` antes de `Relatórios`, com link para `/agenda`
-- [ ] Gate check passes: Quick
+- [x] A barra lateral mostra `Agenda` antes de `Relatórios`, com link para `/agenda`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

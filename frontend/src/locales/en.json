@@ -335,7 +335,8 @@
     "newList": "Create new list",
     "allLists": "All my lists",
     "archivedLists": "Archived lists",
-    "reports": "Reports"
+    "reports": "Reports",
+    "agenda": "Agenda"
   },
   "privacy": {
     "hide": "Hide values",
