@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/merge-near-sessions/design.md`
-**Status**: Draft
+**Status**: Done
 **Pré-requisito**: a Agenda (#19) e o esconder sessões curtas (#22), na branch `feat/agenda`, de onde esta feature parte.
 
 ---

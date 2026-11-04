@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 35,
+  "next_id": 36,
   "lessons": [
     {
       "id": "L-001",
@@ -616,6 +616,24 @@
       ],
       "created": "2026-11-04T16:09:11Z",
       "last_seen": "2026-11-04T16:09:11Z"
+    },
+    {
+      "id": "L-035",
+      "key": "spec_precision_gap::name every role allowed to change a workspace setting in the acceptance criterion itself not only in the assumptions table",
+      "text": "Name every role allowed to change a workspace setting in the acceptance criterion itself, not only in the assumptions table",
+      "signal": "spec_precision_gap",
+      "scope": "workspace-settings",
+      "status": "candidate",
+      "features": [
+        "merge-near-sessions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MERGE-05 (validation.md, backend-node/test/routes/workspaces.test.ts:192) (workspace-settings)"
+      ],
+      "created": "2026-11-04T18:04:33Z",
+      "last_seen": "2026-11-04T18:04:33Z"
     }
   ]
 }

@@ -66,12 +66,12 @@ Um bloco de trabalho interrompido por pausas curtas, como pausar o foco para ate
 2. WHEN a workspace is read THEN the system SHALL return its join gap as `merge_gap_minutes`, `null` when off, to every member.  <!-- event-driven -->
 3. WHEN the owner sends `merge_gap_minutes` with a whole number from 1 to 60 or `null` in `PATCH /api/workspaces/:id` THEN the system SHALL save it and return it.  <!-- event-driven -->
 4. IF `merge_gap_minutes` is below 1, above 60 or not a whole number THEN the system SHALL answer 422 and keep the stored value.  <!-- unwanted-behavior -->
-5. IF a member who is not the owner sends `merge_gap_minutes` THEN the system SHALL answer 403 and keep the stored value.  <!-- unwanted-behavior -->
+5. IF a member who is neither the owner nor the manager sends `merge_gap_minutes` THEN the system SHALL answer 403 and keep the stored value.  <!-- unwanted-behavior -->
 6. WHEN the owner opens the workspace settings THEN the system SHALL show, below `Esconder sessões curtas`, the switch `Juntar sessões próximas` and, while it is on, the field `Até` with the minutes.  <!-- event-driven -->
 7. WHEN the owner turns the switch on for a workspace that has it off THEN the system SHALL fill the field with 1.  <!-- event-driven -->
 8. WHEN the owner saves the settings with the switch off THEN the system SHALL send `merge_gap_minutes: null`.  <!-- event-driven -->
 9. IF the field holds a value outside 1 to 60 or not a whole number while the switch is on THEN the system SHALL show `Entre 1 e 60 minutos.` under it and send nothing.  <!-- unwanted-behavior -->
-10. WHILE the viewer is not the owner the system SHALL show the switch and the field disabled, with the stored value.  <!-- state-driven -->
+10. WHILE the viewer is neither the owner nor the manager the system SHALL show the switch and the field disabled, with the stored value.  <!-- state-driven -->
 
 **Independent Test**: Como dono, ligar a junção com 5 minutos, salvar, recarregar e ver o interruptor ligado com 5; como editor, ver os dois desabilitados.
 
@@ -139,41 +139,41 @@ Um bloco de trabalho interrompido por pausas curtas, como pausar o foco para ate
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| MERGE-01 | P1: Configurar | T1 | In Tasks |
-| MERGE-02 | P1: Configurar | T2 | In Tasks |
-| MERGE-03 | P1: Configurar | T2 | In Tasks |
-| MERGE-04 | P1: Configurar | T2 | In Tasks |
-| MERGE-05 | P1: Configurar | T2 | In Tasks |
-| MERGE-06 | P1: Configurar | T9 | In Tasks |
-| MERGE-07 | P1: Configurar | T9 | In Tasks |
-| MERGE-08 | P1: Configurar | T9 | In Tasks |
-| MERGE-09 | P1: Configurar | T9 | In Tasks |
-| MERGE-10 | P1: Configurar | T9 | In Tasks |
-| MERGE-11 | P1: Juntar | T3, T5 | In Tasks |
-| MERGE-12 | P1: Juntar | T3 | In Tasks |
-| MERGE-13 | P1: Juntar | T3 | In Tasks |
-| MERGE-14 | P1: Juntar | T3 | In Tasks |
-| MERGE-15 | P1: Juntar | T3 | In Tasks |
-| MERGE-16 | P1: Juntar | T3 | In Tasks |
-| MERGE-17 | P1: Juntar | T3 | In Tasks |
-| MERGE-18 | P1: Juntar | T3 | In Tasks |
-| MERGE-19 | P1: Juntar | T5, T6 | In Tasks |
-| MERGE-20 | P1: Juntar | T5, T6 | In Tasks |
-| MERGE-21 | P1: Juntar | T5, T6 | In Tasks |
-| MERGE-22 | P1: Juntar | T3 | In Tasks |
-| MERGE-23 | P1: Juntar | T5, T6, T8 | In Tasks |
-| MERGE-24 | P1: Juntar | T8 | In Tasks |
-| MERGE-25 | P1: Escolher | T4 | In Tasks |
-| MERGE-26 | P1: Escolher | T4 | In Tasks |
-| MERGE-27 | P1: Escolher | T5, T6, T7, T8 | In Tasks |
-| MERGE-28 | P1: Escolher | T7, T8 | In Tasks |
-| MERGE-29 | P1: Escolher | T5, T8 | In Tasks |
-| MERGE-30 | P1: Escolher | T5, T6 | In Tasks |
-| MERGE-31 | P1: Escolher | T8 | In Tasks |
-| MERGE-32 | P1: Escolher | T4 | In Tasks |
-| MERGE-33 | P1: Escolher | T7 | In Tasks |
+| MERGE-01 | P1: Configurar | T1 | Verified |
+| MERGE-02 | P1: Configurar | T2 | Verified |
+| MERGE-03 | P1: Configurar | T2 | Verified |
+| MERGE-04 | P1: Configurar | T2 | Verified |
+| MERGE-05 | P1: Configurar | T2 | Verified |
+| MERGE-06 | P1: Configurar | T9 | Verified |
+| MERGE-07 | P1: Configurar | T9 | Verified |
+| MERGE-08 | P1: Configurar | T9 | Verified |
+| MERGE-09 | P1: Configurar | T9 | Verified |
+| MERGE-10 | P1: Configurar | T9 | Verified |
+| MERGE-11 | P1: Juntar | T3, T5 | Verified |
+| MERGE-12 | P1: Juntar | T3 | Verified |
+| MERGE-13 | P1: Juntar | T3 | Verified |
+| MERGE-14 | P1: Juntar | T3 | Verified |
+| MERGE-15 | P1: Juntar | T3 | Verified |
+| MERGE-16 | P1: Juntar | T3 | Verified |
+| MERGE-17 | P1: Juntar | T3 | Verified |
+| MERGE-18 | P1: Juntar | T3 | Verified |
+| MERGE-19 | P1: Juntar | T5, T6 | Verified |
+| MERGE-20 | P1: Juntar | T5, T6 | Verified |
+| MERGE-21 | P1: Juntar | T5, T6 | Verified |
+| MERGE-22 | P1: Juntar | T3 | Verified |
+| MERGE-23 | P1: Juntar | T5, T6, T8 | Verified |
+| MERGE-24 | P1: Juntar | T8 | Verified |
+| MERGE-25 | P1: Escolher | T4 | Verified |
+| MERGE-26 | P1: Escolher | T4 | Verified |
+| MERGE-27 | P1: Escolher | T5, T6, T7, T8 | Verified |
+| MERGE-28 | P1: Escolher | T7, T8 | Verified |
+| MERGE-29 | P1: Escolher | T5, T8 | Verified |
+| MERGE-30 | P1: Escolher | T5, T6 | Verified |
+| MERGE-31 | P1: Escolher | T8 | Verified |
+| MERGE-32 | P1: Escolher | T4 | Verified |
+| MERGE-33 | P1: Escolher | T7 | Verified |
 
-**Coverage:** 33 total, 33 mapped to tasks, 0 unmapped
+**Coverage:** 33 total, 33 mapped to tasks, 33 verified (Verifier PASS)
 
 ---
 

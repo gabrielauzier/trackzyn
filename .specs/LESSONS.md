@@ -218,6 +218,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: F10 frontend/src/pages/agenda.tsx:274 (frontend/pages)
 - last seen: 2026-11-04T16:09:11Z
 
+### L-035 - Name every role allowed to change a workspace setting in the acceptance criterion itself, not only in the assumptions table
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `workspace-settings` · harmful: 0
+- features: merge-near-sessions
+- evidence: MERGE-05 (validation.md, backend-node/test/routes/workspaces.test.ts:192) (workspace-settings)
+- last seen: 2026-11-04T18:04:33Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

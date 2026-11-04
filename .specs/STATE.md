@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/hide-short-sessions` (#22)
-- **Phase / Task**: Execute concluído (T1–T11); Verifier PASS na rodada 2 (`edf510c`)
-- **Completed**: as 7 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions)
+- **Feature**: `.specs/features/merge-near-sessions` (#23)
+- **Phase / Task**: Execute concluído (T1–T9, dois batches); Verifier PASS na rodada 1 (`e6a97a5`)
+- **Completed**: as 8 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions, merge-near-sessions)
 - **In-progress** (file:line): none
-- **Next step**: abrir o PR da `feat/agenda` (Agenda, #21 e #22) para a `main` e testar no app: ligar o limite na tela do workspace e ver a Agenda e a aba Sessões. Da Agenda seguem sem teste a premissa de que uma sessão manual move o corte de `lastChange` (AD-002) e o arraste na visão do dia
+- **Next step**: testar no app (ligar a junção na tela do workspace e clicar num bloco unido) e abrir o PR da `feat/agenda` (Agenda, #21, #22 e #23) para a `main`. Fora da spec, o Verifier apontou que `frontend/src/pages/agenda.tsx:354-356` limpa o grupo antes de a exclusão terminar: se ela falhar, os detalhes ficam sem o botão de voltar
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: feat/agenda
