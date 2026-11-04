@@ -11,8 +11,8 @@ vi.mock('sonner', () => ({ toast: { warning: vi.fn() } }))
 const PAUSE: FocusConflict = {
   action_id: 'action-1',
   action: { type: 'pause', occurred_at: '2026-10-24T13:15:00.000Z', device_id: 'device-a', list_id: 'list-1' },
-  status: 409,
-  code: 'invalid_transition',
+  status: 422,
+  code: 'invalid_time',
 }
 
 function renderConflicts(conflicts: FocusConflict[] = [PAUSE], expired = 0) {
@@ -35,6 +35,14 @@ describe('OfflineConflicts (SYNC-07)', () => {
     const item = screen.getByRole('listitem')
     expect(item).toHaveTextContent('Pause')
     expect(within(item).getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+    expect(within(item).getByRole('button', { name: 'Discard' })).toBeInTheDocument()
+  })
+
+  it('offers only Discard for an action the focus no longer allows', () => {
+    renderConflicts([{ ...PAUSE, status: 409, code: 'invalid_transition' }])
+
+    const item = screen.getByRole('listitem')
+    expect(within(item).queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument()
     expect(within(item).getByRole('button', { name: 'Discard' })).toBeInTheDocument()
   })
 

@@ -206,7 +206,7 @@ describe('FocusWidgetPage', () => {
   })
 
   it('shows an action the server refused in the widget, grown for it (Edge Case, SYNC-07)', async () => {
-    vi.mocked(focus.send).mockRejectedValue({ response: { status: 409, data: { code: 'invalid_transition' } } })
+    vi.mocked(focus.send).mockRejectedValue({ response: { status: 422, data: { code: 'invalid_time' } } })
     const { user, hover } = renderWidget()
     await screen.findByText('DEV-1725')
     await hover()
