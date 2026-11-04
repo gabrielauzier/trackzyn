@@ -42,6 +42,8 @@ const workspaceUpdateBody = z.object({
   color: z.string().max(7).nullish(),
   locale: z.string().max(10).nullish(),
   timezone: z.string().max(64).nullish(),
+  /** Absent keeps the value; null turns the minimum off (#22). */
+  min_session_minutes: z.number().int().min(1).max(60).nullable().optional(),
 })
 
 const memberInviteBody = z.object({
@@ -113,6 +115,7 @@ export function workspaceRoutes(ctx: AppContext) {
           if (body.timezone !== null && !isValidTimezone(body.timezone)) throw new HttpError(400, 'Invalid IANA timezone')
           updates.timezone = body.timezone
         }
+        if (body.min_session_minutes !== undefined) updates.minSessionMinutes = body.min_session_minutes
         if (Object.keys(updates).length > 0) await ctx.db.update(workspaces).set(updates).where(eq(workspaces.id, id))
         const updated = (await getWorkspace(ctx.db, id)) ?? workspace
         return toWorkspaceRead(updated, member.role)

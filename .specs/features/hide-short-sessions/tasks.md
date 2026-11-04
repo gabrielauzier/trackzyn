@@ -101,11 +101,11 @@ T4 → T5 → T6 → T7 → T8
 
 **Done when**:
 
-- [ ] `GET /api/workspaces` e `GET /api/workspaces/current` devolvem `min_session_minutes` (`null` por padrão) para dono, editor e leitor
-- [ ] O dono grava 5, lê 5; grava `null`, lê `null`; um `PATCH` sem o campo mantém o valor
-- [ ] 0, 61, 1.5 e `"5"` respondem 422 e mantêm o valor
-- [ ] Editor e leitor recebem 403 e o valor fica
-- [ ] Gate check passes: Full (backend)
+- [x] `GET /api/workspaces` e `GET /api/workspaces/current` devolvem `min_session_minutes` (`null` por padrão) para dono, editor e leitor
+- [x] O dono grava 5, lê 5; grava `null`, lê `null`; um `PATCH` sem o campo mantém o valor
+- [x] 0, 61, 1.5 e `"5"` respondem 422 e mantêm o valor
+- [x] Editor e leitor recebem 403 e o valor fica
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full
