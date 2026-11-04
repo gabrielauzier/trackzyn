@@ -276,9 +276,9 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Uma edição que falha volta a sessão ao horário anterior e mostra o toast com a mensagem da API
-- [ ] Depois de criar, as queries `['lists']` e `['focus']` ficam invalidadas
-- [ ] Gate check passes: Quick
+- [x] Uma edição que falha volta a sessão ao horário anterior e mostra o toast com a mensagem da API
+- [x] Depois de criar, as queries `['lists']` e `['focus']` ficam invalidadas
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

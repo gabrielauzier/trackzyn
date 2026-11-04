@@ -728,5 +728,11 @@
       "period": "Período: {{period}}",
       "list": "Lista: {{name}}"
     }
+  },
+  "agenda": {
+    "errors": {
+      "future": "A sessão não pode terminar no futuro.",
+      "duration": "Use de 1 minuto a 24 horas."
+    }
   }
 }

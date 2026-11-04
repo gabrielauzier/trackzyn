@@ -172,7 +172,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-09 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-10 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-11 | P1: Ver as sessões da semana | Tasks | Implementing |
-| AGENDA-12 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-12 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-13 | P1: Ver as sessões da semana | Tasks | In Tasks |
 | AGENDA-14 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
 | AGENDA-15 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
@@ -195,7 +195,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-32 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-33 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-34 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
-| AGENDA-35 | P2: Ajustar e excluir uma sessão | Tasks | In Tasks |
+| AGENDA-35 | P2: Ajustar e excluir uma sessão | Tasks | Implementing |
 | AGENDA-36 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
 | AGENDA-37 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
 | AGENDA-38 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
@@ -206,7 +206,7 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 | AGENDA-43 | P2: Agenda do dia e escolha da data | Tasks | In Tasks |
 | AGENDA-44 | Edge cases | Tasks | Implementing |
 | AGENDA-45 | Edge cases | Tasks | Implementing |
-| AGENDA-46 | Edge cases | Tasks | In Tasks |
+| AGENDA-46 | Edge cases | Tasks | Implementing |
 | AGENDA-47 | Edge cases | Tasks | In Tasks |
 
 **Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
