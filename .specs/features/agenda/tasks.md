@@ -672,11 +672,11 @@ Origem: `.specs/features/agenda/validation.md` (FAIL, 2026-11-04). Uma task por 
 
 **Done when**:
 
-- [ ] Mover um bloco de 14:00–15:00 de terça para quarta, às 09:00, chama `onCommit` com `day` quarta, 09:00–10:00
-- [ ] Mover para um dia futuro não muda o dia do bloco
-- [ ] Na página, soltar o bloco de terça na coluna de segunda chama `sessions.update` com `started_at` e `ended_at` de segunda, 1 h de duração
-- [ ] O mutante "move ignora `dayAt`" (`use-grid-drag.ts:105`) falha nesses testes
-- [ ] Gate check passes: Full (frontend)
+- [x] Mover um bloco de 14:00–15:00 de terça para quarta, às 09:00, chama `onCommit` com `day` quarta, 09:00–10:00
+- [x] Mover para um dia futuro não muda o dia do bloco
+- [x] Na página, soltar o bloco de terça na coluna de segunda chama `sessions.update` com `started_at` e `ended_at` de segunda, 1 h de duração
+- [x] O mutante "move ignora `dayAt`" (`use-grid-drag.ts:105`) falha nesses testes
+- [x] Gate check passes: Full (frontend)
 
 **Tests**: unit
 **Gate**: full

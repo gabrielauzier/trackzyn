@@ -14,12 +14,18 @@ function Column({
   limit,
   onCommit,
   block,
+  limitOf,
+  dayAt,
 }: {
   limit: number
   onCommit: (draft: Draft) => void
   block?: DragTarget
+  /** The limit of each day, when the days differ; `limit` for every day otherwise. */
+  limitOf?: (day: string) => number
+  /** The day under the pointer, to move a block to another day. */
+  dayAt?: (clientX: number) => string | null
 }) {
-  const drag = useGridDrag({ pxPerMinute: 1, limit: () => limit, onCommit })
+  const drag = useGridDrag({ pxPerMinute: 1, limit: limitOf ?? (() => limit), dayAt, onCommit })
   return (
     <div data-agenda-column data-testid="column" onPointerDown={(event) => drag.startCreate(event, DAY)}>
       {block && (
@@ -33,10 +39,10 @@ function Column({
   )
 }
 
-function drag(element: HTMLElement, from: number, to: number) {
-  fireEvent.pointerDown(element, { clientY: from, button: 0 })
-  fireEvent.pointerMove(window, { clientY: to })
-  fireEvent.pointerUp(window, { clientY: to })
+function drag(element: HTMLElement, from: number, to: number, toX = 0) {
+  fireEvent.pointerDown(element, { clientX: 0, clientY: from, button: 0 })
+  fireEvent.pointerMove(window, { clientX: toX, clientY: to })
+  fireEvent.pointerUp(window, { clientX: toX, clientY: to })
 }
 
 const oneHour: DragTarget = { day: DAY, start: at(14, 0), end: at(15, 0), sessionId: 's1' }
@@ -71,6 +77,24 @@ describe('useGridDrag', () => {
     drag(screen.getByTestId('block'), at(14, 10), at(15, 27))
     expect(onCommit).toHaveBeenCalledWith({ mode: 'move', day: DAY, start: at(15, 15), end: at(16, 15), sessionId: 's1' })
     expect(onCommit).toHaveBeenCalledTimes(1)
+  })
+
+  it('moves a block to the day under the pointer, keeping 1 h (AGENDA-30)', () => {
+    const onCommit = vi.fn()
+    // The column under x = 300 is Wednesday.
+    const dayAt = (clientX: number) => (clientX >= 200 ? '2026-11-04' : DAY)
+    render(<Column limit={24 * 60} onCommit={onCommit} block={oneHour} dayAt={dayAt} />)
+    drag(screen.getByTestId('block'), at(14, 10), at(9, 10), 300)
+    expect(onCommit).toHaveBeenCalledWith({ mode: 'move', day: '2026-11-04', start: at(9, 0), end: at(10, 0), sessionId: 's1' })
+    expect(onCommit).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not move a block to a day that has not begun (AGENDA-23, AGENDA-30)', () => {
+    const onCommit = vi.fn()
+    const limitOf = (day: string) => (day === '2026-11-05' ? 0 : 24 * 60)
+    render(<Column limit={24 * 60} onCommit={onCommit} block={oneHour} limitOf={limitOf} dayAt={() => '2026-11-05'} />)
+    drag(screen.getByTestId('block'), at(14, 10), at(9, 10), 300)
+    expect(onCommit).not.toHaveBeenCalled()
   })
 
   it('pulls the bottom edge from 15:00 to 15:30 (AGENDA-29)', () => {

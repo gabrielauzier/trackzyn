@@ -207,6 +207,35 @@ describe('AgendaPage', () => {
       expect(await block('14:00 – 15:30')).toBeInTheDocument()
     })
 
+    describe('across days', () => {
+      // Each column is 100 px wide, Monday at x = 0, and starts at the top of the screen.
+      beforeEach(() => {
+        const real = HTMLElement.prototype.getBoundingClientRect
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+          const day = this.dataset.agendaColumn
+          if (!day) return real.call(this)
+          const left = (Number(day.slice(8)) - 2) * 100
+          return DOMRect.fromRect({ x: left, y: 0, width: 100, height: 24 * 60 * PX_PER_MINUTE })
+        })
+      })
+      afterEach(() => vi.restoreAllMocks())
+
+      it('saves a block moved from Tuesday to Monday with the same hour (AGENDA-30)', async () => {
+        vi.mocked(sessions.update).mockResolvedValue({ ...tuesday, started_at: '2026-11-02T17:00:00.000Z', ended_at: '2026-11-02T18:00:00.000Z' })
+        renderWithProviders(<AgendaPage />)
+        const moved = await block('14:00 – 15:00')
+        fireEvent.pointerDown(moved, { clientX: 150, clientY: (14 * 60 + 10) * PX_PER_MINUTE, button: 0 })
+        fireEvent.pointerMove(window, { clientX: 50, clientY: (14 * 60 + 10) * PX_PER_MINUTE })
+        fireEvent.pointerUp(window, { clientX: 50, clientY: (14 * 60 + 10) * PX_PER_MINUTE })
+        await waitFor(() =>
+          expect(sessions.update).toHaveBeenCalledWith('s2', {
+            started_at: '2026-11-02T17:00:00.000Z',
+            ended_at: '2026-11-02T18:00:00.000Z',
+          }),
+        )
+      })
+    })
+
     it('puts the block back at 14:00 – 15:00 when the save fails', async () => {
       vi.mocked(sessions.update).mockRejectedValue({ response: { status: 404, data: { detail: 'Session not found' } } })
       const { user, container } = renderWithProviders(<AgendaPage />)
