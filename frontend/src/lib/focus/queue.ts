@@ -50,18 +50,23 @@ export function enqueue(action: FocusAction): QueuedAction {
 export const pending = (): QueuedAction[] => load().pending
 export const conflicts = (): FocusConflict[] => load().conflicts
 
-/** `Tentar de novo`: the refused action goes back to the queue, in the order of its click. */
-export function retry(actionId: string): void {
+/**
+ * `Tentar de novo`: the refused action goes back to the end of the queue as a new click at `nowMs`.
+ * Resent with its old id and time, the server would answer the same refusal forever: it refuses a time
+ * before its last change.
+ */
+export function retry(actionId: string, nowMs = serverNow()): void {
   const stored = load()
   const conflict = stored.conflicts.find((entry) => entry.action_id === actionId)
   if (!conflict) return
   stored.conflicts = stored.conflicts.filter((entry) => entry !== conflict)
-  const entry: QueuedAction = { action_id: conflict.action_id, action: conflict.action }
-  stored.pending = [...stored.pending, entry].sort(
-    (a, b) => Date.parse(a.action.occurred_at) - Date.parse(b.action.occurred_at),
-  )
+  const action = { ...conflict.action, occurred_at: new Date(nowMs).toISOString() }
+  stored.pending = [...stored.pending, { action_id: uuid(), action }]
   save(stored)
 }
+
+/** Whether `Tentar de novo` can succeed: a transition the focus no longer allows stays refused. */
+export const canRetry = (conflict: FocusConflict): boolean => conflict.code !== 'invalid_transition'
 
 /** `Descartar`: the refused action is dropped. */
 export function discard(actionId: string): void {

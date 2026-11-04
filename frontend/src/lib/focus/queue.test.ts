@@ -77,24 +77,40 @@ describe('the offline focus queue', () => {
   it.each([
     [409, 'invalid_transition'],
     [422, 'invalid_time'],
-  ])('SYNC-07 an action refused with %i becomes a conflict, which retry sends again', async (status, code) => {
+  ])('SYNC-07 an action refused with %i becomes a conflict, which retry sends again as a new click now', async (status, code) => {
     const refused = enqueue(pause(MIN))
     await flush(async () => Promise.reject(refusal(status, code)), NOW)
 
     expect(pending()).toEqual([])
     expect(conflicts()).toEqual([{ ...refused, status, code }])
 
-    retry(refused.action_id)
+    retry(refused.action_id, NOW)
     expect(conflicts()).toEqual([])
-    expect(pending()).toEqual([refused])
+    const [resent] = pending()
+    expect(resent!.action).toEqual({ ...refused.action, occurred_at: new Date(NOW).toISOString() })
+    expect(resent!.action_id).not.toBe(refused.action_id)
 
     const send = vi.fn<Send>(async () => answered)
     await flush(send, NOW)
-    expect(send).toHaveBeenCalledWith(refused)
+    expect(send).toHaveBeenCalledWith(resent)
     expect(pending()).toEqual([])
   })
 
-  it('SYNC-05 SYNC-07 a retried action goes back in the order of its click, before the later ones still queued', async () => {
+  it('SYNC-07 a retried action is not refused again for its old time once a later change was applied', async () => {
+    const refused = enqueue(pause(5 * MIN))
+    const lastChange = NOW - MIN
+    const server: Send = async (entry) =>
+      Date.parse(entry.action.occurred_at) < lastChange ? Promise.reject(refusal(422, 'invalid_time')) : answered
+    await flush(server, NOW)
+
+    retry(refused.action_id, NOW)
+    await flush(server, NOW)
+
+    expect(conflicts()).toEqual([])
+    expect(pending()).toEqual([])
+  })
+
+  it('SYNC-05 SYNC-07 a retried action goes after the ones still queued, as the latest click', async () => {
     const first = enqueue(pause(3 * MIN))
     const refused = enqueue(pause(2 * MIN))
     const later = enqueue(pause(MIN))
@@ -106,12 +122,14 @@ describe('the offline focus queue', () => {
     expect(pending()).toEqual([later])
     expect(conflicts().map((entry) => entry.action_id)).toEqual([refused.action_id])
 
-    retry(refused.action_id)
+    retry(refused.action_id, NOW)
 
-    expect(pending()).toEqual([refused, later])
+    const [queued, resent] = pending()
+    expect(queued).toEqual(later)
+    expect(resent!.action.occurred_at).toBe(new Date(NOW).toISOString())
     const send = vi.fn<Send>(async () => answered)
     await flush(send, NOW)
-    expect(send.mock.calls.map(([entry]) => entry.action_id)).toEqual([refused.action_id, later.action_id])
+    expect(send.mock.calls.map(([entry]) => entry.action_id)).toEqual([later.action_id, resent!.action_id])
   })
 
   it('SYNC-07 discard drops a conflict without sending it', async () => {
