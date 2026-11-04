@@ -95,15 +95,16 @@ export default function FocusPage() {
   useEffect(() => {
     if (!state || !canWrite || started.current === listId) return
     started.current = listId
-    const toWidget = () => {
+    // Without the server the widget cannot sign in, and a stale session waits for a decision taken here.
+    const toWidget = (reachedServer: boolean) => {
       navigate(location.pathname, { replace: true, state: null })
-      void collapseFocus()
+      if (reachedServer) void collapseFocus()
     }
     if (shouldStart(state, listId)) {
       const start = actions.start(state.today.tasks[0]!.id)
-      if (collapse) void start.then(toWidget)
+      if (collapse) void start.then((result) => toWidget(!result.offline))
     } else if (collapse && state.session?.kind === 'task' && state.session.device_id === deviceId() && state.session.list_id === listId) {
-      toWidget()
+      toWidget(state.stale === null && navigator.onLine)
     }
   }, [state, canWrite, listId, actions, collapse, navigate, location.pathname])
 
