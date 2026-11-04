@@ -140,11 +140,11 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Uma sessão manual de 1h 15min soma 4500 s no tempo gasto da tarefa (`spentSeconds`)
-- [ ] O relatório do dia (`overview`) soma a sessão manual em `task_seconds`
-- [ ] Fim no futuro recusa com `invalid_time`; duração de 0 s, 30 s e 24 h + 1 s recusa com `invalid_duration`; 1 min e 24 h passam
-- [ ] Tarefa de outro workspace ou de lista arquivada recusa com 404
-- [ ] Gate check passes: Full (backend)
+- [x] Uma sessão manual de 1h 15min soma 4500 s no tempo gasto da tarefa (`spentSeconds`)
+- [x] O relatório do dia (`overview`) soma a sessão manual em `task_seconds`
+- [x] Fim no futuro recusa com `invalid_time`; duração de 0 s, 30 s e 24 h + 1 s recusa com `invalid_duration`; 1 min e 24 h passam
+- [x] Tarefa de outro workspace ou de lista arquivada recusa com 404
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

@@ -1,9 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import type { PGlite } from '@electric-sql/pglite'
+import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { lists, workspaces } from '../../src/db/schema.ts'
-import { type AgendaFilter, listSessions } from '../../src/services/sessions.ts'
+import { lists, tasks, workspaces } from '../../src/db/schema.ts'
+import { HttpError } from '../../src/http/http-error.ts'
+import { spentSeconds } from '../../src/services/focus-settle.ts'
+import { isAwaitingExtend } from '../../src/services/focus-state.ts'
+import { overview } from '../../src/services/reports.ts'
+import { type AgendaFilter, createSession, listSessions } from '../../src/services/sessions.ts'
 import { migratedDb } from '../support/db.ts'
 import { seedFocus } from '../support/focus.ts'
 
@@ -26,6 +31,27 @@ afterEach(async () => {
 })
 
 const actor = () => ({ userId: seed.userId })
+
+/** The status, detail and code of the HttpError `promise` rejects with. */
+async function failure(promise: Promise<unknown>) {
+  const error = await promise.then(
+    () => null,
+    (caught: unknown) => caught,
+  )
+  expect(error).toBeInstanceOf(HttpError)
+  const http = error as HttpError
+  return { status: http.statusCode, detail: http.detail, code: http.extra.code }
+}
+
+async function otherWorkspaceTask() {
+  const workspaceId = randomUUID()
+  const listId = randomUUID()
+  const taskId = randomUUID()
+  await db.insert(workspaces).values({ id: workspaceId, name: 'Other', timezone: 'America/Sao_Paulo', createdAt: NOW })
+  await db.insert(lists).values({ id: listId, workspaceId, name: 'Elsewhere', color: 3, position: 0, createdByUserId: seed.userId, createdAt: NOW })
+  await db.insert(tasks).values({ id: taskId, listId, title: 'Theirs', column: 'today', position: 0, createdAt: NOW })
+  return taskId
+}
 
 describe('listSessions', () => {
   it('AGENDA-01 AGENDA-03 AGENDA-04 returns each session uncut with task, list, color and origin; a break has no task', async () => {
@@ -159,5 +185,149 @@ describe('listSessions', () => {
     await seed.addSession({ kind: 'task', taskId: write, startedAt: SP('2026-10-26T09:00:00'), endedAt: SP('2026-10-26T10:00:00') })
 
     expect(await listSessions(db, actor(), workspace, WEEK, NOW)).toEqual([])
+  })
+})
+
+describe('createSession', () => {
+  const YESTERDAY = { startedAt: SP('2026-11-03T17:30:00'), endedAt: SP('2026-11-03T18:45:00') }
+
+  it('AGENDA-20 records a task session with origin manual and answers it as the agenda shows it', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+
+    const created = await createSession(db, actor(), workspace, { kind: 'task', taskId: write, ...YESTERDAY }, NOW)
+
+    expect(created).toEqual({
+      id: expect.any(String),
+      kind: 'task',
+      origin: 'manual',
+      task_id: write,
+      task_title: 'Write',
+      list_id: seed.listId,
+      list_name: 'Work',
+      list_color: 1,
+      started_at: YESTERDAY.startedAt.toISOString(),
+      ended_at: YESTERDAY.endedAt.toISOString(),
+    })
+    const row = await seed.session(created.id)
+    expect(row).toMatchObject({
+      userId: seed.userId,
+      workspaceId: seed.workspaceId,
+      origin: 'manual',
+      deviceId: 'agenda',
+      endReason: 'manual',
+      deadlineAt: null,
+    })
+    expect(row.lastSeenAt.toISOString()).toBe(YESTERDAY.endedAt.toISOString())
+  })
+
+  it('AGENDA-21 a manual session of 1h 15min adds 4500 s to the time spent on the task', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    await seed.addSession({ kind: 'task', taskId: write, startedAt: SP('2026-11-03T09:00:00'), endedAt: SP('2026-11-03T09:10:00') })
+    expect((await spentSeconds(db, [write], NOW)).get(write)).toBe(600)
+
+    await createSession(db, actor(), workspace, { kind: 'task', taskId: write, ...YESTERDAY }, NOW)
+
+    expect((await spentSeconds(db, [write], NOW)).get(write)).toBe(600 + 4500)
+  })
+
+  it('AGENDA-22 the overview of the day counts the manual session in task_seconds', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+
+    await createSession(db, actor(), workspace, { kind: 'task', taskId: write, ...YESTERDAY }, NOW)
+
+    const day = await overview(db, seed.userId, workspace, { from: '2026-11-03', to: '2026-11-03', listId: null }, NOW)
+    expect(day.tiles.task_seconds).toBe(4500)
+    expect(day.daily).toEqual([{ date: '2026-11-03', task_seconds: 4500, break_seconds: 0 }])
+  })
+
+  it('AGENDA-16 records a break on the chosen list', async () => {
+    const other = await seed.addList()
+
+    const created = await createSession(
+      db,
+      actor(),
+      workspace,
+      { kind: 'break', listId: other, startedAt: SP('2026-11-03T12:00:00'), endedAt: SP('2026-11-03T12:30:00') },
+      NOW,
+    )
+
+    expect(created).toMatchObject({ kind: 'break', origin: 'manual', task_id: null, task_title: null, list_id: other, list_name: 'Other' })
+    const day = await overview(db, seed.userId, workspace, { from: '2026-11-03', to: '2026-11-03', listId: null }, NOW)
+    expect(day.break_seconds).toBe(1800)
+  })
+
+  it('records time on a task already in Done (spec assumption: any column of an active list)', async () => {
+    const done = await seed.addTask({ title: 'Shipped', column: 'done' })
+
+    const created = await createSession(db, actor(), workspace, { kind: 'task', taskId: done, ...YESTERDAY }, NOW)
+
+    expect(created.task_id).toBe(done)
+  })
+
+  it('AGENDA-23 refuses an end in the future with invalid_time, with 5 s of tolerance', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const end = (seconds: number) => new Date(NOW.getTime() + seconds * 1000)
+
+    expect(
+      await failure(createSession(db, actor(), workspace, { kind: 'task', taskId: write, startedAt: SP('2026-11-04T11:00:00'), endedAt: end(6) }, NOW)),
+    ).toMatchObject({ status: 422, code: 'invalid_time' })
+    const tolerated = await createSession(
+      db,
+      actor(),
+      workspace,
+      { kind: 'task', taskId: write, startedAt: SP('2026-11-04T11:00:00'), endedAt: end(5) },
+      NOW,
+    )
+    expect(tolerated.ended_at).toBe(end(5).toISOString())
+  })
+
+  it('AGENDA-24 refuses 0 s, 30 s, 24 h + 1 s and an end before the start with invalid_duration; 1 min and 24 h pass', async () => {
+    const write = await seed.addTask({ title: 'Write' })
+    const end = SP('2026-11-04T11:00:00')
+    const lasting = (seconds: number) => ({ kind: 'task' as const, taskId: write, startedAt: new Date(end.getTime() - seconds * 1000), endedAt: end })
+
+    for (const seconds of [0, 30, 24 * 3600 + 1, -60]) {
+      expect(await failure(createSession(db, actor(), workspace, lasting(seconds), NOW))).toMatchObject({ status: 422, code: 'invalid_duration' })
+    }
+    const minute = await createSession(db, actor(), workspace, lasting(60), NOW)
+    const day = await createSession(db, actor(), workspace, lasting(24 * 3600), NOW)
+    expect([minute.started_at, day.started_at]).toEqual([
+      new Date(end.getTime() - 60_000).toISOString(),
+      new Date(end.getTime() - 24 * 3600_000).toISOString(),
+    ])
+    expect((await spentSeconds(db, [write], NOW)).get(write)).toBe(60 + 24 * 3600)
+  })
+
+  it('AGENDA-25 refuses a task of another workspace or of an archived list with 404 Task not found', async () => {
+    const theirs = await otherWorkspaceTask()
+    const archivedList = await seed.addList()
+    const archived = await seed.addTask({ title: 'Old', listId: archivedList })
+    await db.update(lists).set({ isArchived: true }).where(eq(lists.id, archivedList))
+
+    for (const taskId of [theirs, archived, randomUUID()]) {
+      expect(await failure(createSession(db, actor(), workspace, { kind: 'task', taskId, ...YESTERDAY }, NOW))).toEqual({
+        status: 404,
+        detail: 'Task not found',
+        code: undefined,
+      })
+    }
+    expect(await listSessions(db, actor(), workspace, WEEK, NOW)).toEqual([])
+  })
+
+  it('design risk: a manual session after the estimate ran out takes the task out of awaiting Estender', async () => {
+    const write = await seed.addTask({ title: 'Write', estimate: 25 })
+    await seed.addSession({
+      kind: 'task',
+      taskId: write,
+      startedAt: SP('2026-11-03T09:00:00'),
+      endedAt: SP('2026-11-03T09:25:00'),
+      endReason: 'estimate',
+    })
+    const task = { id: write, estimateMinutes: 25 }
+    expect(await isAwaitingExtend(db, seed.userId, task, 25 * 60)).toBe(true)
+
+    await createSession(db, actor(), workspace, { kind: 'task', taskId: write, ...YESTERDAY }, NOW)
+
+    expect(await isAwaitingExtend(db, seed.userId, task, 25 * 60 + 4500)).toBe(false)
   })
 })
