@@ -17,7 +17,7 @@ import { lists, sessions as sessionsApi } from '@/lib/api'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
-import { DEFAULT_ZOOM, ZOOMS, type Zoom, pxPerMinuteAt } from '@/lib/agenda/zoom'
+import { ZOOMS, type Zoom, pxPerMinuteAt, readZoom, saveZoom } from '@/lib/agenda/zoom'
 import { cn } from '@/lib/utils'
 import type { AgendaSession, AgendaSessionChanges, ListCard } from '@/types'
 
@@ -69,7 +69,12 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const monday = mondayOf(day)
   const [listId, setListId] = useState<string | null>(null)
   const [chosenView, setView] = useState<'week' | 'day'>('week')
-  const [zoom, setZoom] = useState<Zoom>(DEFAULT_ZOOM)
+  // The last zoom picked on this device, 3x the first time.
+  const [zoom, setZoom] = useState<Zoom>(readZoom)
+  const pickZoom = (next: Zoom) => {
+    setZoom(next)
+    saveZoom(next)
+  }
   const pxPerMinute = pxPerMinuteAt(zoom)
   // Below 768 px the agenda shows one day at a time (AGENDA-36).
   const narrow = useIsMobile()
@@ -207,7 +212,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                   'rounded-md px-2.5 py-1 text-sm font-medium tabular-nums',
                   zoom === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
                 )}
-                onClick={() => setZoom(option)}
+                onClick={() => pickZoom(option)}
               >
                 {t('agenda.zoomLevel', { level: option })}
               </button>

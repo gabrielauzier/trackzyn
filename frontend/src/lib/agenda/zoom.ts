@@ -8,3 +8,25 @@ const HOUR_PX = 48
 export function pxPerMinuteAt(zoom: Zoom): number {
   return (HOUR_PX * zoom) / 60
 }
+
+/** Where this device remembers the last zoom picked. */
+export const ZOOM_STORAGE_KEY = 'agenda.zoom'
+
+/** The zoom this device last picked, or the default when none is stored, the value is unknown or storage is off. */
+export function readZoom(): Zoom {
+  try {
+    const stored = Number(localStorage.getItem(ZOOM_STORAGE_KEY))
+    return ZOOMS.find((zoom) => zoom === stored) ?? DEFAULT_ZOOM
+  } catch {
+    return DEFAULT_ZOOM
+  }
+}
+
+/** Remembers `zoom` on this device; without storage, the zoom only lasts the visit. */
+export function saveZoom(zoom: Zoom): void {
+  try {
+    localStorage.setItem(ZOOM_STORAGE_KEY, String(zoom))
+  } catch {
+    // Storage is off (private window, blocked site data): nothing to remember.
+  }
+}

@@ -111,6 +111,19 @@ describe('AgendaPage', () => {
     expect(gridHeight()).toBe(`${24 * 96}px`)
   })
 
+  it('opens on the zoom picked last on this device', async () => {
+    const first = renderWithProviders(<AgendaPage />)
+    const zoom = await screen.findByRole('group', { name: 'Zoom' })
+    await first.user.click(within(zoom).getByRole('button', { name: '1x' }))
+    first.unmount()
+
+    renderWithProviders(<AgendaPage />)
+    const again = await screen.findByRole('group', { name: 'Zoom' })
+    expect(within(again).getByRole('button', { name: '1x' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(again).getByRole('button', { name: '3x' })).toHaveAttribute('aria-pressed', 'false')
+    expect((await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })).style.height).toBe('48px')
+  })
+
   it('names the zoom Lupa in Portuguese', async () => {
     await i18n.changeLanguage('pt-BR')
     renderWithProviders(<AgendaPage />)
