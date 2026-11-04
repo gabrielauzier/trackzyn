@@ -112,11 +112,11 @@ T15 → T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Uma sessão de 23:30 a 00:30 aparece ao pedir só o primeiro dia e ao pedir só o segundo
-- [ ] Uma sessão de outro usuário ou de outro workspace não aparece
-- [ ] Uma sessão com o prazo vencido vem fechada no prazo (liquidada)
-- [ ] O filtro de lista deixa só as sessões dela
-- [ ] Gate check passes: Full (backend)
+- [x] Uma sessão de 23:30 a 00:30 aparece ao pedir só o primeiro dia e ao pedir só o segundo
+- [x] Uma sessão de outro usuário ou de outro workspace não aparece
+- [x] Uma sessão com o prazo vencido vem fechada no prazo (liquidada)
+- [x] O filtro de lista deixa só as sessões dela
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

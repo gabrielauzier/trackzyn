@@ -161,17 +161,17 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AGENDA-01 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-01 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-02 | P1: Ver as sessões da semana | Tasks | In Tasks |
 | AGENDA-03 | P1: Ver as sessões da semana | Tasks | In Tasks |
 | AGENDA-04 | P1: Ver as sessões da semana | Tasks | In Tasks |
-| AGENDA-05 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-05 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-06 | P1: Ver as sessões da semana | Tasks | In Tasks |
-| AGENDA-07 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-07 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-08 | P1: Ver as sessões da semana | Tasks | In Tasks |
-| AGENDA-09 | P1: Ver as sessões da semana | Tasks | In Tasks |
-| AGENDA-10 | P1: Ver as sessões da semana | Tasks | In Tasks |
-| AGENDA-11 | P1: Ver as sessões da semana | Tasks | In Tasks |
+| AGENDA-09 | P1: Ver as sessões da semana | Tasks | Implementing |
+| AGENDA-10 | P1: Ver as sessões da semana | Tasks | Implementing |
+| AGENDA-11 | P1: Ver as sessões da semana | Tasks | Implementing |
 | AGENDA-12 | P1: Ver as sessões da semana | Tasks | In Tasks |
 | AGENDA-13 | P1: Ver as sessões da semana | Tasks | In Tasks |
 | AGENDA-14 | P1: Registrar uma sessão pela grade | Tasks | In Tasks |
