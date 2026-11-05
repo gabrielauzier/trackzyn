@@ -110,12 +110,12 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Criar e duplicar gravam `updated_at` igual ao `now` da criação
-- [ ] Mudar título, anotações ou estimativa grava; um `PATCH` sem mudança não grava
-- [ ] Mover para outra coluna grava; reordenar na mesma coluna não grava, nem renumerar as vizinhas
-- [ ] Mover para outra lista grava
-- [ ] Criar, mudar e excluir uma subtarefa gravam na tarefa dela
-- [ ] Gate check passes: Full (backend)
+- [x] Criar e duplicar gravam `updated_at` igual ao `now` da criação
+- [x] Mudar título, anotações ou estimativa grava; um `PATCH` sem mudança não grava
+- [x] Mover para outra coluna grava; reordenar na mesma coluna não grava, nem renumerar as vizinhas
+- [x] Mover para outra lista grava
+- [x] Criar, mudar e excluir uma subtarefa gravam na tarefa dela
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

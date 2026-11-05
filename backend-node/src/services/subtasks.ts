@@ -18,8 +18,19 @@ async function findSubtask(db: Database, subtaskId: string, workspaceId: string)
   return row.subtask
 }
 
+/** A change to a subtask is an update of its task (PICK-01). */
+async function touchTask(db: Database, taskId: string, now: Date): Promise<void> {
+  await db.update(tasks).set({ updatedAt: now }).where(eq(tasks.id, taskId))
+}
+
 /** Adds a subtask at the end of the task's subtasks. */
-export async function createSubtask(db: Database, taskId: string, workspaceId: string, title: string): Promise<Subtask> {
+export async function createSubtask(
+  db: Database,
+  taskId: string,
+  workspaceId: string,
+  title: string,
+  now: Date = new Date(),
+): Promise<Subtask> {
   const task = await findTask(db, taskId, workspaceId)
   const [last] = await db
     .select({ next: sql<number>`coalesce(max(${subtasks.position}) + 1, 0)::int` })
@@ -27,6 +38,7 @@ export async function createSubtask(db: Database, taskId: string, workspaceId: s
     .where(eq(subtasks.taskId, task.id))
   const subtask: Subtask = { id: randomUUID(), taskId: task.id, title, done: false, position: last?.next ?? 0 }
   await db.insert(subtasks).values(subtask)
+  await touchTask(db, task.id, now)
   return subtask
 }
 
@@ -35,16 +47,21 @@ export async function updateSubtask(
   subtaskId: string,
   workspaceId: string,
   changes: { title?: string; done?: boolean },
+  now: Date = new Date(),
 ): Promise<Subtask> {
   const subtask = await findSubtask(db, subtaskId, workspaceId)
   const given = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined))
-  if (Object.keys(given).length > 0) await db.update(subtasks).set(given).where(eq(subtasks.id, subtask.id))
+  if (Object.keys(given).length > 0) {
+    await db.update(subtasks).set(given).where(eq(subtasks.id, subtask.id))
+    await touchTask(db, subtask.taskId, now)
+  }
   return { ...subtask, ...given }
 }
 
-export async function deleteSubtask(db: Database, subtaskId: string, workspaceId: string): Promise<void> {
+export async function deleteSubtask(db: Database, subtaskId: string, workspaceId: string, now: Date = new Date()): Promise<void> {
   const subtask = await findSubtask(db, subtaskId, workspaceId)
   await db.delete(subtasks).where(eq(subtasks.id, subtask.id))
+  await touchTask(db, subtask.taskId, now)
 }
 
 /**

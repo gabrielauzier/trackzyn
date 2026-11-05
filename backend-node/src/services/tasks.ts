@@ -101,10 +101,12 @@ export async function updateTask(
   taskId: string,
   workspaceId: string,
   changes: { title?: string; estimateMinutes?: number | null; notes?: string },
+  now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const task = await findTask(db, taskId, workspaceId)
   const given = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined))
-  if (Object.keys(given).length > 0) await db.update(tasks).set(given).where(eq(tasks.id, task.id))
+  // A change of a field is an update of the task (PICK-01).
+  if (Object.keys(given).length > 0) await db.update(tasks).set({ ...given, updatedAt: now }).where(eq(tasks.id, task.id))
   return getTask(db, task.id, workspaceId)
 }
 
@@ -150,7 +152,9 @@ export async function moveTask(
     const stays = current.column === 'done'
     const completedAt = target.column !== 'done' ? null : stays ? current.completedAt : now
     const completedByUserId = target.column !== 'done' ? null : stays ? current.completedByUserId : target.byUserId
-    await tx.update(tasks).set({ column: target.column, completedAt, completedByUserId }).where(eq(tasks.id, current.id))
+    // Entering another column is an update of the task; reordering inside the same one is not (PICK-01).
+    const updated = current.column !== target.column ? { updatedAt: now } : {}
+    await tx.update(tasks).set({ column: target.column, completedAt, completedByUserId, ...updated }).where(eq(tasks.id, current.id))
     if (target.column !== 'today') await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
     for (const [position, id] of entered.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
     if (current.column !== target.column) {
@@ -232,7 +236,7 @@ export async function moveTaskToList(
       .select({ next: sql<number>`coalesce(max(${tasks.position}) + 1, 0)::int` })
       .from(tasks)
       .where(and(eq(tasks.listId, target.id), eq(tasks.column, current.column)))
-    await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0 }).where(eq(tasks.id, current.id))
+    await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0, updatedAt: now }).where(eq(tasks.id, current.id))
     await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
     // The task takes its recorded time with it: reports and the agenda group by the session's list (#21).
     await tx.update(focusSessions).set({ listId: target.id }).where(eq(focusSessions.taskId, current.id))
