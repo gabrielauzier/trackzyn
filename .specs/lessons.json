@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 40,
+  "next_id": 42,
   "lessons": [
     {
       "id": "L-001",
@@ -706,6 +706,42 @@
       ],
       "created": "2026-11-04T20:16:51Z",
       "last_seen": "2026-11-04T20:16:51Z"
+    },
+    {
+      "id": "L-040",
+      "key": "ac_gap::when a spec says a value comes from the search text whenever there is one test the entry point with a search that has results not only the empty result path",
+      "text": "When a spec says a value comes from the search text whenever there is one, test the entry point with a search that has results, not only the empty-result path.",
+      "signal": "ac_gap",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "session-task-picker"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PICK-12 frontend/src/components/agenda/session-task-picker.tsx:183 (frontend)"
+      ],
+      "created": "2026-11-05T02:02:02Z",
+      "last_seen": "2026-11-05T02:02:02Z"
+    },
+    {
+      "id": "L-041",
+      "key": "surviving_mutant::test esc for every layered overlay state popover open modal open and assert the underlying panel stays open in each",
+      "text": "Test Esc for every layered overlay state (popover open, modal open) and assert the underlying panel stays open in each.",
+      "signal": "surviving_mutant",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "session-task-picker"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant 40 frontend/src/components/agenda/session-panel.tsx:119 (frontend)"
+      ],
+      "created": "2026-11-05T02:02:02Z",
+      "last_seen": "2026-11-05T02:02:02Z"
     }
   ]
 }

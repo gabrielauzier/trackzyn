@@ -64,6 +64,12 @@ T1 → T2 → T3 → T4 → T5
 T6 → T7 → T8
 ```
 
+### Phase 3: Fixes do Verifier (rodada 1)
+
+```
+T9 → T10 → T11
+```
+
 ---
 
 ## Task Breakdown
@@ -294,6 +300,85 @@ T6 → T7 → T8
 
 ---
 
+### T9: Levar a pesquisa para o modal também com resultados
+
+**What**: `Criar nova tarefa` passa ao modal o texto da pesquisa sempre que há um, não só quando nada foi encontrado.
+**Where**: `frontend/src/components/agenda/session-task-picker.tsx`
+**Depends on**: None
+**Reuses**: o `onCreate` do seletor
+**Requirement**: PICK-12
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com "revis" pesquisado e resultados na tela, `Create new task` chama `onCreate('revis')`
+- [ ] Sem pesquisa, continua chamando `onCreate('')`
+- [ ] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(frontend): carry the search into the new task modal`
+
+---
+
+### T10: Provar o Esc com só o seletor aberto
+
+**What**: Teste do painel: com o seletor aberto, Esc fecha o seletor e não fecha o painel.
+**Where**: `frontend/src/components/agenda/session-panel.test.tsx`
+**Depends on**: T9
+**Reuses**: os testes do #27 do mesmo arquivo
+**Requirement**: PICK-19
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Esc com o seletor aberto fecha o popover e não chama `onCancel`
+- [ ] Tirar `!pickerOpen` da guarda do Esc faz o teste falhar (mutante 40)
+- [ ] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(frontend): prove Esc closes only the task picker`
+
+---
+
+### T11: Leitor não cria nada, lista inicial e arrumação
+
+**What**: O teste de 403 confere que nada foi criado; um teste do modal cobre a primeira lista quando a lista do filtro não está ativa; o JSDoc de `listSessionTasks` volta para cima da função; os helpers iguais do teste do painel viram um só.
+**Where**: `backend-node/test/routes/sessions.test.ts`
+**Depends on**: T10
+**Reuses**: os testes de PICK-20 e de PICK-12
+**Requirement**: PICK-12, PICK-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Depois do 403 do leitor, a contagem de tarefas não mudou
+- [ ] Com `defaultListId` de uma lista que não está entre as ativas, o modal abre na primeira lista
+- [ ] O JSDoc de `listSessionTasks` está em cima dela; `chooseTask` e `pickTask` viram um helper
+- [ ] Gate check passes: Build
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `test: prove a viewer creates nothing and the modal falls back to the first list`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -301,6 +386,7 @@ Phase 1 → Phase 2
 
 Phase 1:  T1 ------→ T2 ------→ T3 ------→ T4 ------→ T5
 Phase 2:  T6 ------→ T7 ------→ T8
+Phase 3:  T9 ------→ T10 -----→ T11
 ```
 
 8 tasks: um batch só, no contexto principal, sem sub-agentes. O Verifier roda depois de T8.

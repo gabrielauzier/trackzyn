@@ -248,6 +248,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: DAYS-14 view-menu.tsx:36 (spec)
 - last seen: 2026-11-04T20:16:51Z
 
+### L-040 - When a spec says a value comes from the search text whenever there is one, test the entry point with a search that has results, not only the empty-result path.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: session-task-picker
+- evidence: PICK-12 frontend/src/components/agenda/session-task-picker.tsx:183 (frontend)
+- last seen: 2026-11-05T02:02:02Z
+
+### L-041 - Test Esc for every layered overlay state (popover open, modal open) and assert the underlying panel stays open in each.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: session-task-picker
+- evidence: mutant 40 frontend/src/components/agenda/session-panel.tsx:119 (frontend)
+- last seen: 2026-11-05T02:02:02Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
