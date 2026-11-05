@@ -168,11 +168,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] O painel mostra o título (ou `Intervalo`), a lista, `Novo horário — ainda não salvo`, `qua., 4 nov · 11:00 – 12:00` riscado e `qua., 4 nov · 13:00 – 14:00 · 1h`, `Cancelar` e `Salvar horário`
-- [ ] `Salvar horário` chama `onSave` uma vez e fica desabilitado enquanto ele não responde; uma recusa mostra a mensagem em `role="alert"` e os botões continuam
-- [ ] `Cancelar` e Esc chamam `onCancel`
-- [ ] Com outra sessão no novo horário, o painel mostra o aviso de sobreposição; com a própria sessão, não; os testes do aviso no `SessionPanel` continuam passando
-- [ ] Gate check passes: Quick
+- [x] O painel mostra o título (ou `Intervalo`), a lista, `Novo horário — ainda não salvo`, `qua., 4 nov · 11:00 – 12:00` riscado e `qua., 4 nov · 13:00 – 14:00 · 1h`, `Cancelar` e `Salvar horário`
+- [x] `Salvar horário` chama `onSave` uma vez e fica desabilitado enquanto ele não responde; uma recusa mostra a mensagem em `role="alert"` e os botões continuam
+- [x] `Cancelar` e Esc chamam `onCancel`
+- [x] Com outra sessão no novo horário, o painel mostra o aviso de sobreposição; com a própria sessão, não; os testes do aviso no `SessionPanel` continuam passando
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

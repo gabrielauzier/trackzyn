@@ -153,3 +153,15 @@ export function newSessionTimes(now: Date, timeZone: string): { day: string; sta
   const end = Math.floor(minuteOf(now, timeZone) / 5) * 5
   return { day: dayOf(now, timeZone), start: Math.max(0, Math.ceil(end / 60) * 60 - 60), end }
 }
+
+/**
+ * The first session of `sessions`, other than `ownId`, that shares time with `start`–`end`; an open session runs to
+ * `now` (AGENDA-19, ADJ-07).
+ */
+export function findOverlap(sessions: AgendaSession[], start: Date, end: Date, now: Date, ownId?: string): AgendaSession | undefined {
+  return sessions.find((session) => {
+    if (session.id === ownId) return false
+    const sessionEnd = session.ended_at === null ? now.getTime() : Date.parse(session.ended_at)
+    return Date.parse(session.started_at) < end.getTime() && sessionEnd > start.getTime()
+  })
+}

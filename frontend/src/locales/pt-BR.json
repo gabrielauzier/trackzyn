@@ -803,6 +803,10 @@
     "view": "Visão",
     "zoom": "Lupa",
     "zoomLevel": "{{level}}x",
+    "moveConfirm": {
+      "pending": "Novo horário — ainda não salvo",
+      "save": "Salvar horário"
+    },
     "viewMenu": {
       "label": "Opções de exibição",
       "labelFiltered": "Opções de exibição, {{shown}} de 7 dias",

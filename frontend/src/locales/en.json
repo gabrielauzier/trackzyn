@@ -803,6 +803,10 @@
     "view": "View",
     "zoom": "Zoom",
     "zoomLevel": "{{level}}x",
+    "moveConfirm": {
+      "pending": "New time — not saved yet",
+      "save": "Save time"
+    },
     "viewMenu": {
       "label": "View options",
       "labelFiltered": "View options, {{shown}} of 7 days",

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { lists as listsApi, sessions as sessionsApi } from '@/lib/api'
 import { clockTime, minuteClock } from '@/lib/agenda/format'
-import { DAY_MINUTES, dayOf, zonedInstant } from '@/lib/agenda/layout'
+import { DAY_MINUTES, dayOf, findOverlap, zonedInstant } from '@/lib/agenda/layout'
 import { sessionErrorMessage, type SessionPreview } from '@/lib/agenda/use-agenda'
 import { cn } from '@/lib/utils'
 import type { AgendaSession, AgendaSessionInput, AgendaTask } from '@/types'
@@ -125,11 +125,7 @@ export function SessionPanel({
   const startAt = zonedInstant(times.day, times.start, timezone)
   const endAt = zonedInstant(times.day, times.end, timezone)
   const seconds = Math.max(0, (endAt.getTime() - startAt.getTime()) / 1000)
-  const overlap = sessions.find((session) => {
-    if (session.id === editing?.id) return false
-    const end = session.ended_at === null ? now.getTime() : Date.parse(session.ended_at)
-    return Date.parse(session.started_at) < endAt.getTime() && end > startAt.getTime()
-  })
+  const overlap = findOverlap(sessions, startAt, endAt, now, editing?.id)
 
   const change = (next: Partial<PanelTimes>) => {
     setError(null)
