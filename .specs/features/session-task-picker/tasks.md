@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: decisões abaixo; o desenho visual aprovado é o canvas `Agenda · escolher ou criar tarefa`
-**Status**: In Progress
+**Status**: Done
 **Pré-requisito**: a Agenda (#19), na branch `feat/agenda`.
 
 ### Decisões técnicas

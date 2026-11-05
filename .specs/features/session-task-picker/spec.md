@@ -102,28 +102,28 @@ O painel `Nova sessão` da Agenda escolhe a tarefa num select com todas as taref
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PICK-01 | P1: Achar | T1, T2 | In Tasks |
-| PICK-02 | P1: Achar | T1 | In Tasks |
-| PICK-03 | P1: Achar | T4 | In Tasks |
-| PICK-04 | P1: Achar | T4 | In Tasks |
-| PICK-05 | P1: Achar | T4 | In Tasks |
-| PICK-06 | P1: Achar | T6, T8 | In Tasks |
-| PICK-07 | P1: Achar | T6 | In Tasks |
-| PICK-08 | P1: Achar | T6 | In Tasks |
-| PICK-09 | P1: Achar | T6 | In Tasks |
-| PICK-10 | P1: Achar | T6 | In Tasks |
-| PICK-11 | P1: Achar | T6 | In Tasks |
-| PICK-12 | P1: Criar | T7, T8 | In Tasks |
-| PICK-13 | P1: Criar | T7 | In Tasks |
-| PICK-14 | P1: Criar | T7 | In Tasks |
-| PICK-15 | P1: Criar | T5, T7 | In Tasks |
-| PICK-16 | P1: Criar | T8 | In Tasks |
-| PICK-17 | P1: Criar | T3 | In Tasks |
-| PICK-18 | P1: Criar | T7 | In Tasks |
-| PICK-19 | P1: Criar | T7, T8 | In Tasks |
-| PICK-20 | P1: Criar | T5 | In Tasks |
+| PICK-01 | P1: Achar | T1, T2 | Verified |
+| PICK-02 | P1: Achar | T1 | Verified |
+| PICK-03 | P1: Achar | T4 | Verified |
+| PICK-04 | P1: Achar | T4 | Verified |
+| PICK-05 | P1: Achar | T4 | Verified |
+| PICK-06 | P1: Achar | T6, T8 | Verified |
+| PICK-07 | P1: Achar | T6 | Verified |
+| PICK-08 | P1: Achar | T6 | Verified |
+| PICK-09 | P1: Achar | T6 | Verified |
+| PICK-10 | P1: Achar | T6 | Verified |
+| PICK-11 | P1: Achar | T6 | Verified |
+| PICK-12 | P1: Criar | T7, T8 | Verified |
+| PICK-13 | P1: Criar | T7 | Verified |
+| PICK-14 | P1: Criar | T7 | Verified |
+| PICK-15 | P1: Criar | T5, T7 | Verified |
+| PICK-16 | P1: Criar | T8 | Verified |
+| PICK-17 | P1: Criar | T3 | Verified |
+| PICK-18 | P1: Criar | T7 | Verified |
+| PICK-19 | P1: Criar | T7, T8 | Verified |
+| PICK-20 | P1: Criar | T5 | Verified |
 
-**Coverage:** 20 total, 20 mapped to tasks, 0 unmapped
+**Coverage:** 20 total, 20 mapped to tasks, 20 verified (Verifier round 2 PASS)
 
 ---
 

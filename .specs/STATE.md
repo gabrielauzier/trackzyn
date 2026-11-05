@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/agenda-view-menu` (#26)
-- **Phase / Task**: Execute concluído (T1–T9); Verifier PASS na rodada 2 (`c1fc90c`)
-- **Completed**: as 9 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions, merge-near-sessions, agenda-view-menu)
+- **Feature**: `.specs/features/session-task-picker` (#27)
+- **Phase / Task**: Execute concluído (T1–T11); Verifier PASS na rodada 2 (`32cbc83`)
+- **Completed**: as 10 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions, merge-near-sessions, agenda-view-menu, session-task-picker)
 - **In-progress** (file:line): none
-- **Next step**: testar no app (o botão no canto da semana e do dia, o filtro de dias e a lupa no menu; na visão Dia, conferir se o botão cobre o rótulo da primeira hora ao rolar) e enviar os commits para o PR #24
+- **Next step**: testar no app (o seletor de tarefa da Nova sessão, a pesquisa e o modal Nova tarefa) e enviar os commits para o PR #24. O backend de dev aplica as migrations a cada recarga (`buildContext` em `src/context.ts`): o backup de antes de uma migration precisa ser feito antes de salvar o arquivo dela
 - **Blockers**: none
 - **Uncommitted files**: none
 - **Branch**: feat/agenda
