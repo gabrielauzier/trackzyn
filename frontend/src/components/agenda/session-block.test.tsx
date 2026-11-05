@@ -64,6 +64,12 @@ describe('SessionBlock', () => {
     expect(document.querySelector('[data-slot="tooltip-content"] .truncate')).toBeNull()
   })
 
+  it('opens its tooltip at once on hover, without the 200 ms wait of the app tooltips', async () => {
+    renderWithProviders(<SessionBlock piece={laid({})} pxPerMinute={1} timezone={SP} />)
+    await userEvent.hover(screen.getByRole('button'))
+    expect(await screen.findByRole('tooltip', {}, { timeout: 50 })).toBeInTheDocument()
+  })
+
   it('names a break Break and an open session now in its tooltip', async () => {
     renderWithProviders(
       <SessionBlock piece={laid({ kind: 'break', task_id: null, task_title: null, ended_at: null }, { running: true })} pxPerMinute={1} timezone={SP} />,

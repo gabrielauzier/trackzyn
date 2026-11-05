@@ -67,7 +67,8 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
   }
 
   return (
-    <TooltipProvider>
+    // The tooltip opens at once, without the 200 ms wait of the app tooltips.
+    <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
