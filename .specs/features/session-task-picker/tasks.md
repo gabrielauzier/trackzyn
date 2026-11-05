@@ -341,9 +341,9 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] Esc com o seletor aberto fecha o popover e não chama `onCancel`
-- [ ] Tirar `!pickerOpen` da guarda do Esc faz o teste falhar (mutante 40)
-- [ ] Gate check passes: Quick
+- [x] Esc com o seletor aberto fecha o popover e não chama `onCancel`
+- [x] Tirar `!pickerOpen` da guarda do Esc faz o teste falhar (mutante 40)
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

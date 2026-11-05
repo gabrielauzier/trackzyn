@@ -365,6 +365,17 @@ describe('SessionPanel (new): the task picker and the new task modal (#27)', () 
     expect(onCancel).not.toHaveBeenCalled()
   })
 
+  it('PICK-19 closes only the picker on Esc, not the panel under it', async () => {
+    const onCancel = vi.fn()
+    const { user } = renderWithProviders(<Panel initial={dragged} onCancel={onCancel} />)
+    await user.click(screen.getByRole('combobox', { name: 'Task' }))
+    await screen.findByRole('dialog', { name: 'Tasks' })
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Tasks' })).toBeNull())
+    expect(onCancel).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'New session' })).toBeInTheDocument()
+  })
+
   it('PICK-19 closes only the modal on Esc, not the panel under it', async () => {
     const onCancel = vi.fn()
     const { user } = renderWithProviders(<Panel initial={dragged} onCancel={onCancel} />)
