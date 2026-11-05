@@ -367,10 +367,10 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] Depois do 403 do leitor, a contagem de tarefas não mudou
-- [ ] Com `defaultListId` de uma lista que não está entre as ativas, o modal abre na primeira lista
-- [ ] O JSDoc de `listSessionTasks` está em cima dela; `chooseTask` e `pickTask` viram um helper
-- [ ] Gate check passes: Build
+- [x] Depois do 403 do leitor, a contagem de tarefas não mudou
+- [x] Com `defaultListId` de uma lista que não está entre as ativas, o modal abre na primeira lista
+- [x] O JSDoc de `listSessionTasks` está em cima dela; `chooseTask` e `pickTask` viram um helper
+- [x] Gate check passes: Build
 
 **Tests**: integration
 **Gate**: build

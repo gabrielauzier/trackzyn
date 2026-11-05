@@ -250,10 +250,6 @@ export interface SessionTask {
   column: TaskColumn
 }
 
-/**
- * The tasks of the active lists of the workspace in every column, Done of any date included, for the
- * task picker of the agenda panel (AGENDA-16). In list order, then in board order.
- */
 /** A task the panel's picker offers, with when it was last updated (PICK-03). */
 export interface RecentSessionTask extends SessionTask {
   updated_at: string
@@ -278,6 +274,10 @@ export async function searchSessionTasks(db: Database, workspace: Pick<Workspace
   return found.rows.map((row) => ({ ...row, updated_at: new Date(row.updated_at).toISOString() }))
 }
 
+/**
+ * The tasks of the active lists of the workspace in every column, Done of any date included, for the
+ * select of `Editar sessão` (AGENDA-16). In list order, then in board order.
+ */
 export async function listSessionTasks(db: Database, workspace: Pick<Workspace, 'id'>): Promise<SessionTask[]> {
   const found = (await db.execute(sql`
     SELECT t.id, t.title, t.list_id, l.name AS list_name, l.color AS list_color, t."column"

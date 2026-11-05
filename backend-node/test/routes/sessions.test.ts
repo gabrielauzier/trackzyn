@@ -253,7 +253,10 @@ describe('POST /api/sessions/tasks (#27)', () => {
   })
 
   it('PICK-20 answers 403 to a viewer, 409 for an archived list and 404 for a list of another workspace', async () => {
+    const count = async () => (await t.ctx.db.select({ id: tasks.id }).from(tasks)).length
+    const before = await count()
     expect((await createTask({ list_id: listId, title: 'No' }, viewer.token)).statusCode).toBe(403)
+    expect(await count()).toBe(before)
     const archived = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Old', color: 2 })).json().id as string
     await call('PATCH', `/api/lists/${archived}`, owner.token, workspaceId, { is_archived: true })
     expect((await createTask({ list_id: archived, title: 'No' })).statusCode).toBe(409)

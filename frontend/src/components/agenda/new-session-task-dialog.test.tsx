@@ -49,6 +49,12 @@ describe('NewSessionTaskDialog', () => {
     expect(within(modal).getByRole('button', { name: 'Add' })).toBeInTheDocument()
   })
 
+  it('PICK-12 starts on the first list when the list given is not an active one', async () => {
+    dialog({ defaultListId: 'archived-list' })
+    const modal = await screen.findByRole('dialog', { name: 'New task' })
+    expect(within(modal).getByRole('combobox', { name: 'List' })).toHaveTextContent('Frete')
+  })
+
   it('PICK-13 shows the notes editor while Add notes is on', async () => {
     const { user } = dialog()
     await user.click(await screen.findByRole('switch', { name: 'Add notes' }))

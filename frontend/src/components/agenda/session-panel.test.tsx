@@ -88,14 +88,8 @@ function Panel({
 
 const dragged: PanelTimes = { day: '2026-11-03', start: at(17, 30), end: at(18, 45) }
 
-/** Edit: the select of today keeps every task (AGENDA-31). */
+/** Opens the Task field, the picker of a new session or the select of an edit, and picks `title`. */
 async function chooseTask(user: ReturnType<typeof renderWithProviders>['user'], title: string) {
-  await user.click(screen.getByRole('combobox', { name: 'Task' }))
-  await user.click(await screen.findByRole('option', { name: title }))
-}
-
-/** New: the picker of #27, from the field to the option. */
-async function pickTask(user: ReturnType<typeof renderWithProviders>['user'], title: string) {
   await user.click(screen.getByRole('combobox', { name: 'Task' }))
   await user.click(await screen.findByRole('option', { name: title }))
 }
@@ -162,7 +156,7 @@ describe('SessionPanel (new)', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'Overlaps Plan the sprint (18:00 – 18:30). The time in common counts in both.',
     )
-    await pickTask(user, 'Write the report')
+    await chooseTask(user, 'Write the report')
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
   })
 
@@ -174,7 +168,7 @@ describe('SessionPanel (new)', () => {
   it('records the chosen task with the times of the panel (AGENDA-20)', async () => {
     vi.mocked(sessions.create).mockResolvedValue(existing)
     const { user } = renderWithProviders(<Panel initial={dragged} />)
-    await pickTask(user, 'Write the report')
+    await chooseTask(user, 'Write the report')
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(sessions.create).toHaveBeenCalledWith({
       kind: 'task',
@@ -189,7 +183,7 @@ describe('SessionPanel (new)', () => {
       response: { status: 422, data: { detail: 'occurred_at is outside the accepted window', code: 'invalid_time' } },
     })
     const { user } = renderWithProviders(<Panel initial={dragged} />)
-    await pickTask(user, 'Write the report')
+    await chooseTask(user, 'Write the report')
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('The session cannot end in the future.')
   })
@@ -199,7 +193,7 @@ describe('SessionPanel (new)', () => {
       response: { status: 422, data: { detail: 'A session lasts from 1 minute to 24 hours', code: 'invalid_duration' } },
     })
     const { user } = renderWithProviders(<Panel initial={dragged} />)
-    await pickTask(user, 'Write the report')
+    await chooseTask(user, 'Write the report')
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Use 1 minute to 24 hours.')
   })
