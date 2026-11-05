@@ -30,6 +30,7 @@ export const CLOSED_AGENDA_ROUTES: ReadonlyArray<{ method: string; url: string }
   { method: 'GET', url: '/api/sessions' },
   { method: 'GET', url: '/api/sessions/tasks' },
   { method: 'GET', url: '/api/sessions/tasks/search' },
+  { method: 'POST', url: '/api/sessions/tasks' },
   { method: 'POST', url: '/api/sessions' },
   { method: 'PATCH', url: '/api/sessions/:id' },
   { method: 'DELETE', url: '/api/sessions/:id' },

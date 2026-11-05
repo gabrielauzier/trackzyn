@@ -22,7 +22,7 @@ const subtaskReadSchema = z.object({
   position: z.number(),
 })
 
-const taskReadSchema = z.object({
+export const taskReadSchema = z.object({
   id: z.string(),
   list_id: z.string(),
   title: z.string(),

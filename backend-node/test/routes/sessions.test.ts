@@ -212,6 +212,62 @@ describe('GET /api/sessions/tasks/search (#27)', () => {
   })
 })
 
+describe('POST /api/sessions/tasks (#27)', () => {
+  const createTask = (payload: object, token = owner.token) => call('POST', '/api/sessions/tasks', token, workspaceId, payload)
+
+  it('PICK-15 creates the task concluded now by the user in Done, from the agenda, with its estimate and notes', async () => {
+    const before = Date.now()
+    const created = await createTask({ list_id: listId, title: 'Reunião com o jurídico', estimate_minutes: 45, notes: '<p>Pauta</p>' })
+    expect(created.statusCode).toBe(201)
+    expect(created.json()).toMatchObject({
+      list_id: listId,
+      title: 'Reunião com o jurídico',
+      column: 'done',
+      estimate_minutes: 45,
+      notes: '<p>Pauta</p>',
+      created_via: 'Agenda',
+    })
+    const [row] = await t.ctx.db.select().from(tasks).where(eq(tasks.id, created.json().id as string))
+    expect(row).toMatchObject({ createdFrom: 'agenda', completedByUserId: owner.id, column: 'done' })
+    expect(row!.completedAt!.getTime()).toBeGreaterThanOrEqual(before - 1000)
+    expect((await call('GET', `/api/tasks/${row!.id}`, owner.token, workspaceId)).json().created_via).toBe('Agenda')
+  })
+
+  it('PICK-15 creates it without notes and without an estimate when they are not sent', async () => {
+    const created = await createTask({ list_id: listId, title: 'Quick' })
+    expect(created.json()).toMatchObject({ notes: '', estimate_minutes: null, column: 'done' })
+  })
+
+  it('PICK-14 answers 422 for an empty title, 256 characters or an estimate outside 1 to 1440, and creates nothing', async () => {
+    const count = async () => (await t.ctx.db.select({ id: tasks.id }).from(tasks)).length
+    const before = await count()
+    for (const payload of [
+      { list_id: listId, title: '' },
+      { list_id: listId, title: 'a'.repeat(256) },
+      { list_id: listId, title: 'Ok', estimate_minutes: 0 },
+      { list_id: listId, title: 'Ok', estimate_minutes: 1441 },
+    ]) {
+      expect((await createTask(payload)).statusCode).toBe(422)
+    }
+    expect(await count()).toBe(before)
+  })
+
+  it('PICK-20 answers 403 to a viewer, 409 for an archived list and 404 for a list of another workspace', async () => {
+    expect((await createTask({ list_id: listId, title: 'No' }, viewer.token)).statusCode).toBe(403)
+    const archived = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Old', color: 2 })).json().id as string
+    await call('PATCH', `/api/lists/${archived}`, owner.token, workspaceId, { is_archived: true })
+    expect((await createTask({ list_id: archived, title: 'No' })).statusCode).toBe(409)
+    const theirs = (await call('POST', '/api/lists', stranger.token, strangerWorkspaceId, { name: 'Theirs', color: 1 })).json().id as string
+    expect((await createTask({ list_id: theirs, title: 'No' })).statusCode).toBe(404)
+  })
+
+  it('makes the created task the first of the recent tasks', async () => {
+    const created = await createTask({ list_id: listId, title: 'Brand new' })
+    const recent = (await call('GET', '/api/sessions/tasks/search', owner.token, workspaceId)).json().tasks as Array<{ id: string }>
+    expect(recent[0]!.id).toBe(created.json().id)
+  })
+})
+
 describe('POST /api/sessions', () => {
   it('AGENDA-20 AGENDA-21 AGENDA-22 AGENDA-46 answers 201 with origin manual; focus and reports count it', async () => {
     const created = await create(75, 120)

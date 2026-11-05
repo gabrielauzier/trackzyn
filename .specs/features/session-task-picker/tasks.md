@@ -195,11 +195,11 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Cria em `done`, com `completed_at`, concluída pelo usuário, `created_from = 'agenda'`, a estimativa e as anotações enviadas; responde 201 com `created_via: "Agenda"`
-- [ ] Título vazio, com mais de 255 caracteres ou estimativa fora de 1 a 1440 respondem 422 e não criam nada
-- [ ] Um leitor recebe 403; uma lista arquivada, 409; uma lista de outro workspace, 404
-- [ ] A rota responde 403 a um token (`CLOSED_AGENDA_ROUTES`)
-- [ ] Gate check passes: Build
+- [x] Cria em `done`, com `completed_at`, concluída pelo usuário, `created_from = 'agenda'`, a estimativa e as anotações enviadas; responde 201 com `created_via: "Agenda"`
+- [x] Título vazio, com mais de 255 caracteres ou estimativa fora de 1 a 1440 respondem 422 e não criam nada
+- [x] Um leitor recebe 403; uma lista arquivada, 409; uma lista de outro workspace, 404
+- [x] A rota responde 403 a um token (`CLOSED_AGENDA_ROUTES`)
+- [x] Gate check passes: Build
 
 **Tests**: integration
 **Gate**: build

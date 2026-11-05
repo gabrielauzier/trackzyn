@@ -5,6 +5,8 @@ import type { AppContext } from '../context.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
 import { createSession, deleteSession, listSessionTasks, listSessions, searchSessionTasks, updateSession } from '../services/sessions.ts'
+import { createTask } from '../services/tasks.ts'
+import { createTaskBody, taskReadSchema, toTaskRead } from './tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 import { periodQuery, toFilter } from './reports.ts'
 
@@ -90,6 +92,32 @@ export function sessionRoutes(ctx: AppContext) {
         preValidation: reading,
       },
       async (request) => ({ tasks: await searchSessionTasks(ctx.db, request.workspace.workspace, request.query.q) }),
+    )
+
+    // A task the session needs and nobody made yet: concluded, from the agenda (PICK-15, PICK-20).
+    typed.post(
+      '/api/sessions/tasks',
+      {
+        schema: {
+          body: createTaskBody.pick({ list_id: true, title: true, estimate_minutes: true, notes: true }),
+          response: { 201: taskReadSchema },
+        },
+        preValidation: writing,
+      },
+      async (request, reply) => {
+        const body = request.body
+        const task = await createTask(ctx.db, request.workspace.workspace.id, {
+          listId: body.list_id.toLowerCase(),
+          title: body.title,
+          estimateMinutes: body.estimate_minutes ?? null,
+          notes: body.notes,
+          column: 'done',
+          userId: request.workspace.user.id,
+          createdFrom: 'agenda',
+          rejectArchived: true,
+        })
+        return reply.code(201).send(toTaskRead(task))
+      },
     )
 
     typed.post(
