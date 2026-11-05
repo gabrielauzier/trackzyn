@@ -109,7 +109,7 @@ export async function buildBoard(
                CASE WHEN t."column" = 'done' THEN (${completedDate})::text END AS completed_date,
                count(s.id) FILTER (WHERE s.done)::int AS subtasks_done,
                count(s.id)::int AS subtasks_total,
-               p.name AS created_via
+               coalesce(p.name, CASE WHEN t.created_from = 'agenda' THEN 'Agenda' END) AS created_via
         FROM tasks t
         LEFT JOIN subtasks s ON s.task_id = t.id
         LEFT JOIN personal_access_tokens p ON p.id = t.created_via_token_id

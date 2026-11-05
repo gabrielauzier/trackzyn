@@ -139,9 +139,9 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Uma tarefa com `created_from = 'agenda'` lê `created_via: "Agenda"` em `GET /api/tasks/:id` e no quadro
-- [ ] Uma tarefa de token continua com o nome do token; uma comum, `null`
-- [ ] Gate check passes: Full (backend)
+- [x] Uma tarefa com `created_from = 'agenda'` lê `created_via: "Agenda"` em `GET /api/tasks/:id` e no quadro
+- [x] Uma tarefa de token continua com o nome do token; uma comum, `null`
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

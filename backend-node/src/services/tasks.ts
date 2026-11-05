@@ -23,6 +23,11 @@ export async function findTask(db: Database, taskId: string, workspaceId: string
   return row.task
 }
 
+/** What `via …` shows: the name of the token that made the task, else `Agenda` for a task from the agenda (PICK-17). */
+export function createdVia(tokenName: string | null, createdFrom: TaskOrigin | null): string | null {
+  return tokenName ?? (createdFrom === 'agenda' ? 'Agenda' : null)
+}
+
 export async function getTask(db: Database, taskId: string, workspaceId: string): Promise<TaskWithSubtasks> {
   const [row] = await db
     .select({ task: tasks, createdVia: personalAccessTokens.name })
@@ -33,7 +38,7 @@ export async function getTask(db: Database, taskId: string, workspaceId: string)
     .limit(1)
   if (!row) throw notFound()
   const found = await db.select().from(subtasks).where(eq(subtasks.taskId, row.task.id)).orderBy(asc(subtasks.position))
-  return { ...row.task, subtasks: found, createdVia: row.createdVia }
+  return { ...row.task, subtasks: found, createdVia: createdVia(row.createdVia, row.task.createdFrom) }
 }
 
 /** Serialises every change to the order of a list's tasks (two moves at once: the last one wins). */
