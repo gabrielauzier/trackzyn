@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { build } from 'esbuild'
@@ -9,6 +9,11 @@ import { writeZip } from '../src/main/zip'
 const desktop = path.resolve(__dirname, '..')
 let work = ''
 let harness = ''
+let template = ''
+
+// Every test runs the harness four times in a row, each a new Node process that boots PGlite. On a shared
+// 2-vCPU CI runner, with the other test files running at the same time, that is several seconds.
+const SPAWNING_TEST_TIMEOUT = 30_000
 
 beforeAll(async () => {
   work = mkdtempSync(path.join(tmpdir(), 'trackzyn-crash-'))
@@ -29,6 +34,13 @@ beforeAll(async () => {
     nodePaths: [path.join(desktop, 'node_modules')],
     logLevel: 'error',
   })
+  // Creating the database (initdb and the migrations) is most of a child's time: done once, then copied.
+  template = mkdtempSync(path.join(work, 'template-'))
+  expect(child('recover', template).status).toBe(0)
+  for (const [name, text] of Object.entries(ORIGINAL)) {
+    mkdirSync(path.dirname(path.join(template, 'files', name)), { recursive: true })
+    writeFileSync(path.join(template, 'files', name), text)
+  }
 }, 60_000)
 afterAll(() => rmSync(work, { recursive: true, force: true }))
 
@@ -60,20 +72,17 @@ function child(mode: string, userData: string, point = '', zip = '') {
 const ORIGINAL = { 'old.txt': 'original', 'sub/o.txt': 'o' }
 const IMPORTED = { 'new.txt': 'imported' }
 
+/** A copy of the new installation made once in `beforeAll`: a database with no users and the original files. */
 function newInstallation(): string {
   const userData = mkdtempSync(path.join(work, 'ud-'))
-  expect(child('recover', userData).status).toBe(0)
-  for (const [name, text] of Object.entries(ORIGINAL)) {
-    mkdirSync(path.dirname(path.join(userData, 'files', name)), { recursive: true })
-    writeFileSync(path.join(userData, 'files', name), text)
-  }
+  cpSync(template, userData, { recursive: true })
   return userData
 }
 
 const leftovers = (userData: string) =>
   ['files.import-old', 'files.import-new', 'import.journal.json'].filter((name) => existsSync(path.join(userData, name)))
 
-describe('an import killed by SIGKILL', () => {
+describe('an import killed by SIGKILL', { timeout: SPAWNING_TEST_TIMEOUT }, () => {
   // The points where a crash must leave the database and the files both before or both after.
   const POINTS: Array<[string, 'before' | 'after']> = [
     ['staged', 'before'],
