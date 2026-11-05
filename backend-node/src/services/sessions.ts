@@ -254,6 +254,30 @@ export interface SessionTask {
  * The tasks of the active lists of the workspace in every column, Done of any date included, for the
  * task picker of the agenda panel (AGENDA-16). In list order, then in board order.
  */
+/** A task the panel's picker offers, with when it was last updated (PICK-03). */
+export interface RecentSessionTask extends SessionTask {
+  updated_at: string
+}
+
+/** Matches `text` anywhere, `%`, `_` and `\\` taken as plain characters. */
+const containing = (text: string) => `%${text.replace(/[\\%_]/g, (char) => `\\${char}`)}%`
+
+/**
+ * The tasks of the active lists of the workspace, updated last first: the 10 latest without a search, or up to the
+ * 50 latest whose title contains `query`, ignoring case (PICK-03 to PICK-05).
+ */
+export async function searchSessionTasks(db: Database, workspace: Pick<Workspace, 'id'>, query: string): Promise<RecentSessionTask[]> {
+  const text = query.trim()
+  const matching = text === '' ? sql`` : sql`AND t.title ILIKE ${containing(text)}`
+  const found = (await db.execute(sql`
+    SELECT t.id, t.title, t.list_id, l.name AS list_name, l.color AS list_color, t."column", t.updated_at
+    FROM tasks t JOIN lists l ON l.id = t.list_id
+    WHERE l.workspace_id = ${workspace.id} AND NOT l.is_archived ${matching}
+    ORDER BY t.updated_at DESC, t.id
+    LIMIT ${text === '' ? 10 : 50}`)) as unknown as { rows: Array<SessionTask & { updated_at: string | Date }> }
+  return found.rows.map((row) => ({ ...row, updated_at: new Date(row.updated_at).toISOString() }))
+}
+
 export async function listSessionTasks(db: Database, workspace: Pick<Workspace, 'id'>): Promise<SessionTask[]> {
   const found = (await db.execute(sql`
     SELECT t.id, t.title, t.list_id, l.name AS list_name, l.color AS list_color, t."column"

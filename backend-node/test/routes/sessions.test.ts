@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
+import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { tasks } from '../../src/db/schema.ts'
 import { type User, inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
 
@@ -132,6 +134,81 @@ describe('GET /api/sessions/tasks (AGENDA-16)', () => {
 
     const found = await call('GET', '/api/sessions/tasks', owner.token, workspaceId)
     expect((found.json().tasks as Array<{ id: string }>).map((task) => task.id)).toEqual([taskId])
+  })
+})
+
+describe('GET /api/sessions/tasks/search (#27)', () => {
+  /** Creates a task in `list` and sets when it was last updated, `minutes` ago. */
+  const task = async (title: string, minutes: number, list = listId, column = 'today') => {
+    const id = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list, title, column })).json().id as string
+    await t.ctx.db.update(tasks).set({ updatedAt: new Date(Date.now() - minutes * MINUTE) }).where(eq(tasks.id, id))
+    return id
+  }
+  const search = async (query = '') => {
+    const found = await call('GET', `/api/sessions/tasks/search${query}`, owner.token, workspaceId)
+    expect(found.statusCode).toBe(200)
+    return (found.json().tasks as Array<{ id: string; title: string; updated_at: string }>)
+  }
+
+  it('PICK-03 answers without q the 10 tasks updated last, most recent first, with when each was updated', async () => {
+    await t.ctx.db.update(tasks).set({ updatedAt: new Date(Date.now() - 500 * MINUTE) }).where(eq(tasks.id, taskId))
+    const ids: string[] = []
+    for (let index = 0; index < 11; index += 1) ids.push(await task(`Task ${index}`, index + 1))
+
+    const found = await search()
+    expect(found.map((item) => item.id)).toEqual(ids.slice(0, 10))
+    expect(Date.parse(found[0]!.updated_at)).toBeGreaterThan(Date.parse(found[9]!.updated_at))
+  })
+
+  it('PICK-04 answers with q the tasks whose title contains it, ignoring case, across lists, concluded included, the latest first', async () => {
+    const other = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Home', color: 5 })).json().id as string
+    const pr = await task('Revisar PR da fila', 1)
+    const contract = await task('Revisão do contrato', 3, listId, 'done')
+    const budget = await task('Pré-revisão do orçamento', 2, other)
+    await task('Escrever testes', 0)
+
+    expect((await search('?q=REVIS')).map((item) => item.id)).toEqual([pr, budget, contract])
+  })
+
+  it('PICK-04 answers up to 50 matches, the latest first', async () => {
+    const ids: string[] = []
+    for (let index = 0; index < 52; index += 1) ids.push(await task(`Match ${index}`, index + 1))
+    const found = await search('?q=match')
+    expect(found).toHaveLength(50)
+    expect(found.map((item) => item.id)).toEqual(ids.slice(0, 50))
+  })
+
+  it('PICK-04 takes % and _ in q as plain characters', async () => {
+    const percent = await task('50% pronto', 1)
+    await task('500 pronto', 2)
+    await task('axb', 3)
+    expect((await search(`?q=${encodeURIComponent('50%')}`)).map((item) => item.id)).toEqual([percent])
+    expect(await search('?q=a_b')).toEqual([])
+  })
+
+  it('PICK-05 answers q of only spaces as without q', async () => {
+    await t.ctx.db.update(tasks).set({ updatedAt: new Date(Date.now() - 500 * MINUTE) }).where(eq(tasks.id, taskId))
+    const latest = await task('Latest', 1)
+    expect((await search('?q=%20%20%20')).map((item) => item.id)).toEqual((await search()).map((item) => item.id))
+    expect((await search('?q=%20%20%20'))[0]!.id).toBe(latest)
+  })
+
+  it('PICK-03 PICK-04 leaves out archived lists and other workspaces', async () => {
+    const archived = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Old', color: 2 })).json().id as string
+    const old = await task('Old task', 1, archived)
+    expect((await call('PATCH', `/api/lists/${archived}`, owner.token, workspaceId, { is_archived: true })).statusCode).toBe(200)
+    const theirList = (await call('POST', '/api/lists', stranger.token, strangerWorkspaceId, { name: 'Theirs', color: 1 })).json().id as string
+    await call('POST', '/api/tasks', stranger.token, strangerWorkspaceId, { list_id: theirList, title: 'Old task elsewhere', column: 'today' })
+
+    expect((await search()).map((item) => item.id)).not.toContain(old)
+    expect(await search('?q=old')).toEqual([])
+  })
+
+  it('answers 422 for a q of more than 255 characters, and keeps GET /api/sessions/tasks answering every task', async () => {
+    const tooLong = await call('GET', `/api/sessions/tasks/search?q=${'a'.repeat(256)}`, owner.token, workspaceId)
+    expect(tooLong.statusCode).toBe(422)
+    for (let index = 0; index < 11; index += 1) await task(`Task ${index}`, index + 1)
+    expect((await call('GET', '/api/sessions/tasks', owner.token, workspaceId)).json().tasks).toHaveLength(12)
   })
 })
 

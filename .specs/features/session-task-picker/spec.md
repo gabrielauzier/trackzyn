@@ -54,8 +54,8 @@ O painel `Nova sessão` da Agenda escolhe a tarefa num select com todas as taref
 
 1. The system SHALL keep, for each task, the instant it was last updated, set when the task is created and when its title, notes, estimate, column or list changes, or one of its subtasks is created, changed or deleted.  <!-- ubiquitous -->
 2. WHEN the migration runs THEN every existing task SHALL get, as its last update, the later of its creation and its completion.  <!-- event-driven -->
-3. WHEN `GET /api/sessions/tasks` is called without `q` THEN the system SHALL answer the 10 tasks of the non-archived lists of the workspace updated last, most recent first.  <!-- event-driven -->
-4. WHEN `GET /api/sessions/tasks` is called with `q` THEN the system SHALL answer up to the 50 tasks updated last whose title contains `q`, trimmed, ignoring case, from the non-archived lists of the workspace, concluded or not.  <!-- event-driven -->
+3. WHEN `GET /api/sessions/tasks/search` is called without `q` THEN the system SHALL answer the 10 tasks of the non-archived lists of the workspace updated last, most recent first.  <!-- event-driven -->
+4. WHEN `GET /api/sessions/tasks/search` is called with `q` THEN the system SHALL answer up to the 50 tasks updated last whose title contains `q`, trimmed, ignoring case, from the non-archived lists of the workspace, concluded or not.  <!-- event-driven -->
 5. IF `q` is empty or only spaces THEN the system SHALL answer as without `q`.  <!-- unwanted-behavior -->
 6. WHEN the `Tarefa` field of `Nova sessão` is clicked THEN the Agenda SHALL open a popover below it with a search field that has the focus, `As 10 atualizadas por último`, the 10 tasks grouped by list, and the button `Criar nova tarefa` after the list.  <!-- event-driven -->
 7. The popover SHALL group the tasks under the name and the color of their list, in the order of the lists of the workspace, the most recently updated first in each group, and mark a concluded task with `Concluída`.  <!-- ubiquitous -->

@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
-import { createSession, deleteSession, listSessionTasks, listSessions, updateSession } from '../services/sessions.ts'
+import { createSession, deleteSession, listSessionTasks, listSessions, searchSessionTasks, updateSession } from '../services/sessions.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 import { periodQuery, toFilter } from './reports.ts'
 
@@ -77,6 +77,19 @@ export function sessionRoutes(ctx: AppContext) {
       '/api/sessions/tasks',
       { schema: { response: { 200: z.object({ tasks: z.array(sessionTaskSchema) }) } }, preValidation: reading },
       async (request) => ({ tasks: await listSessionTasks(ctx.db, request.workspace.workspace) }),
+    )
+
+    // The picker of a new session: the tasks updated last, or the ones whose title matches (PICK-03 to PICK-05).
+    typed.get(
+      '/api/sessions/tasks/search',
+      {
+        schema: {
+          querystring: z.object({ q: z.string().max(255).default('') }),
+          response: { 200: z.object({ tasks: z.array(sessionTaskSchema.extend({ updated_at: z.string() })) }) },
+        },
+        preValidation: reading,
+      },
+      async (request) => ({ tasks: await searchSessionTasks(ctx.db, request.workspace.workspace, request.query.q) }),
     )
 
     typed.post(

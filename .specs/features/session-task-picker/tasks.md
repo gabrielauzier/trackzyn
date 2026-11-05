@@ -19,7 +19,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 | Data de atualização | Coluna `tasks.updated_at timestamptz NOT NULL`, migration `0009_task_updated_and_origin.sql` que preenche `greatest(created_at, coalesce(completed_at, created_at))` | Não existe hoje; PICK-01 e PICK-02 |
 | Quem atualiza | Os serviços que escrevem: `createTask`, `duplicateTask` (a cópia nasce agora), `updateTask` quando muda um campo, `moveTask` quando a coluna muda, `moveTaskToList`, e `createSubtask`, `updateSubtask` e `deleteSubtask` na tarefa da subtarefa; renumerar posições não conta | Lista confirmada do que é atualizar (#27) |
 | Origem | Coluna `tasks.created_from varchar(16)` nula, com `CHECK (created_from IN ('agenda'))`; a leitura do `created_via` passa a ser `coalesce(<nome do token>, CASE created_from WHEN 'agenda' THEN 'Agenda' END)`, no `getTask` (`services/tasks.ts`) e no quadro (`services/board.ts`) | A etiqueta de hoje vem só do token; o frontend já mostra `via {{name}}` |
-| Pesquisa | `GET /api/sessions/tasks` ganha `q` (até 255 caracteres): `ILIKE` com `%`, `_` e `\` escapados, `ORDER BY updated_at DESC`, `LIMIT 50`; sem `q`, `LIMIT 10` | PICK-03 a PICK-05; o padrão de busca do Postgres e do PGlite |
+| Pesquisa | Rota nova `GET /api/sessions/tasks/search` com `q` (até 255 caracteres), e a `GET /api/sessions/tasks` fica como está, porque o select de `Editar sessão` precisa de todas as tarefas: `ILIKE` com `%`, `_` e `\` escapados, `ORDER BY updated_at DESC`, `LIMIT 50`; sem `q`, `LIMIT 10` | PICK-03 a PICK-05; o padrão de busca do Postgres e do PGlite |
 | Criação | `POST /api/sessions/tasks` com `list_id`, `title`, `estimate_minutes?`, `notes?`: chama `createTask` com `column: 'done'`, `createdFrom: 'agenda'` e `rejectArchived`, exige escrita e fica fechado a tokens (AD-007) como as rotas da Agenda | Reaproveita a validação e a conclusão de `createTask` (AD-006) |
 | Seletor | `SessionTaskPicker` num `Popover`, com a consulta por `useQuery(['agenda-tasks', q])` e o texto atrasado em 300 ms por um `useDebouncedValue` | PICK-06 a PICK-11 |
 | Modal | `NewSessionTaskDialog` com `Dialog`, `react-hook-form` e as regras de `add-task-form.tsx` (título e estimativa), `Select` de listas, `Switch` e o `NoteEditor` de `task-dialog.tsx` | Mesmos campos e mensagens do quadro (PICK-14) e o mesmo editor (PICK-13) |
@@ -152,7 +152,7 @@ T6 → T7 → T8
 
 ### T4: As tarefas recentes e a pesquisa
 
-**What**: `GET /api/sessions/tasks` responde as 10 tarefas atualizadas por último sem `q`, e até 50 com `q`, pelo título.
+**What**: `GET /api/sessions/tasks/search` responde as 10 tarefas atualizadas por último sem `q`, e até 50 com `q`, pelo título.
 **Where**: `backend-node/src/services/sessions.ts`
 **Depends on**: T3
 **Reuses**: `listSessionTasks` e a rota de `routes/sessions.ts`
@@ -165,12 +165,13 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Com 12 tarefas, sem `q`, vêm as 10 mais recentes, da mais recente à menos
-- [ ] Com `q=REVIS`, vêm só as com "revis" no título, de várias listas, concluídas também, até 50
-- [ ] `q=50%` acha `50% pronto` e não `500 pronto`; `q=a_b` não acha `axb`
-- [ ] `q="   "` responde como sem `q`; uma lista arquivada fica de fora
-- [ ] Cada tarefa traz `updated_at`; um `q` com mais de 255 caracteres responde 422
-- [ ] Gate check passes: Full (backend)
+- [x] Com 12 tarefas, sem `q`, vêm as 10 mais recentes, da mais recente à menos
+- [x] Com `q=REVIS`, vêm só as com "revis" no título, de várias listas, concluídas também, até 50
+- [x] `q=50%` acha `50% pronto` e não `500 pronto`; `q=a_b` não acha `axb`
+- [x] `q="   "` responde como sem `q`; uma lista arquivada fica de fora
+- [x] Cada tarefa traz `updated_at`; um `q` com mais de 255 caracteres responde 422; a rota fica fechada a tokens (`CLOSED_AGENDA_ROUTES`)
+- [x] `GET /api/sessions/tasks` continua respondendo todas as tarefas (os testes de AGENDA-16 passam sem mudança)
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full
