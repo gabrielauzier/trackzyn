@@ -143,7 +143,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
         : final.mode === 'bottom'
           ? { ended_at: at(final.end) }
           : { started_at: at(final.start), ended_at: at(final.end) }
-    update.mutate({ id: final.sessionId, changes })
+    // The hook keeps the released block drawn at its new time; it goes once the save has settled.
+    update.mutate({ id: final.sessionId, changes }, { onSettled: () => drag.setDraft(null) })
   }
   const drag = useGridDrag({
     pxPerMinute,

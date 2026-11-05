@@ -122,11 +122,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] Um clique parado às 10:07 de ontem dá um rascunho de 600 a 660; às 23:30 de ontem, de 1410 a 1440; hoje, 30 min antes de agora, termina no quarto de hora de agora
-- [ ] Arrastar de 10:00 a 10:40 dá 600 a 645, como antes
-- [ ] Mover o rascunho de 600–660 com o ponteiro 120 min abaixo dá 720–780, com `sessionId: null`, em outro dia quando a coluna muda, e nunca termina depois do limite
-- [ ] Soltar um bloco salvo 120 min abaixo chama `onCommit` e o rascunho continua com o novo horário; soltar no mesmo lugar não chama `onCommit` e limpa
-- [ ] Gate check passes: Quick
+- [x] Um clique parado às 10:07 de ontem dá um rascunho de 600 a 660; às 23:30 de ontem, de 1410 a 1440; hoje, 30 min antes de agora, termina no quarto de hora de agora
+- [x] Arrastar de 10:00 a 10:40 dá 600 a 645, como antes
+- [x] Mover o rascunho de 600–660 com o ponteiro 120 min abaixo dá 720–780, com `sessionId: null`, em outro dia quando a coluna muda, e nunca termina depois do limite
+- [x] Soltar um bloco salvo 120 min abaixo chama `onCommit` e o rascunho continua com o novo horário; soltar no mesmo lugar não chama `onCommit` e limpa
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

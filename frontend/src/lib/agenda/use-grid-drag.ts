@@ -45,8 +45,16 @@ interface Gesture {
   columnTop: number
   /** The minute under the pointer when the gesture began. */
   grab: number
+  /** Where the pointer went down, to tell a click from a drag. */
+  startX: number
+  startY: number
   moved: boolean
 }
+
+/** A click: the pointer travelled less than this, in px, before it was released. */
+const CLICK_TOLERANCE = 3
+/** What a click on empty time creates, in minutes (ADJ-10). */
+const CLICK_MINUTES = 60
 
 const columnTopOf = (event: ReactPointerEvent) => {
   const element = event.currentTarget as HTMLElement
@@ -54,9 +62,9 @@ const columnTopOf = (event: ReactPointerEvent) => {
 }
 
 /**
- * Pointer gestures on the agenda grid: drag over empty time to create (AGENDA-14), pull the top or the
- * bottom edge (AGENDA-18, AGENDA-29) and move a whole block (AGENDA-30). Everything snaps to 15 min,
- * never ends after now and lasts from 1 min to 24 h.
+ * Pointer gestures on the agenda grid: drag over empty time to create (AGENDA-14), or click it for an hour
+ * (ADJ-10), pull the top or the bottom edge (AGENDA-18, AGENDA-29) and move a whole block, saved or new
+ * (AGENDA-30, ADJ-12). Everything snaps to 15 min, never ends after now and lasts from 1 min to 24 h.
  */
 export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCommit }: GridDragOptions) {
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -115,7 +123,15 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
       if (event.button !== 0) return
       event.stopPropagation()
       const columnTop = columnTopOf(event)
-      const current: Gesture = { mode, target, columnTop, grab: (event.clientY - columnTop) / options.current.pxPerMinute, moved: false }
+      const current: Gesture = {
+        mode,
+        target,
+        columnTop,
+        grab: (event.clientY - columnTop) / options.current.pxPerMinute,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+      }
       if (mode === 'create') {
         const first = place(current, event.clientX, event.clientY)
         if (first === null) return
@@ -134,21 +150,31 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
     const move = (event: PointerEvent) => {
       const current = gesture.current
       if (!current) return
+      if (Math.abs(event.clientX - current.startX) >= CLICK_TOLERANCE || Math.abs(event.clientY - current.startY) >= CLICK_TOLERANCE) {
+        current.moved = true
+      }
       const next = place(current, event.clientX, event.clientY)
       if (next === null) return
-      current.moved = true
       show(next)
     }
     const up = () => {
       const current = gesture.current
       gesture.current = null
       setDragging(false)
-      const final = latest.current
+      let final = latest.current
       if (!current || !final) return
+      if (current.mode === 'create' && !current.moved) {
+        // A click creates an hour, cut at now on today and at midnight (ADJ-10).
+        const { limit: limitOf, snapMinutes: step } = options.current
+        const cap = Math.floor(Math.min(limitOf(final.day), DAY_MINUTES) / step) * step
+        final = { ...final, end: Math.max(final.end, Math.min(cap, final.start + CLICK_MINUTES)) }
+        show(final)
+      }
       const changed = final.day !== current.target.day || final.start !== current.target.start || final.end !== current.target.end
       if (current.mode === 'create' || changed) options.current.onCommit(final)
-      // An adjusted session hands over to the saved one; the draft of a new session stays for the panel.
-      if (final.sessionId !== null) show(null)
+      // A saved session released at a new time stays drawn there until the page saves or drops it (ADJ-01, ADJ-02);
+      // released in place, nothing is pending. The draft of a new session stays for the panel.
+      if (final.sessionId !== null && !changed) show(null)
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
@@ -163,7 +189,10 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
   return {
     draft,
     dragging,
-    /** Sets the draft from the panel fields (AGENDA-17), or clears it with null (AGENDA-26). */
+    /**
+     * Sets the draft from the panel fields (AGENDA-17), or clears it with null (AGENDA-26). A saved session released at
+     * a new time keeps its draft until this clears it (ADJ-01).
+     */
     setDraft: show,
     startCreate: (event: ReactPointerEvent, day: string) =>
       begin(event, 'create', { day, start: 0, end: 0, sessionId: null }),

@@ -131,4 +131,89 @@ describe('useGridDrag', () => {
     drag(screen.getByTestId('block'), at(14, 30), at(14, 30))
     expect(onCommit).not.toHaveBeenCalled()
   })
+  describe('#29', () => {
+    const click = (element: HTMLElement, y: number) => {
+      fireEvent.pointerDown(element, { clientX: 0, clientY: y, button: 0 })
+      fireEvent.pointerUp(window, { clientX: 0, clientY: y })
+    }
+
+    it('ADJ-10 creates one hour from the quarter hour clicked, at 10:07 of a past day', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} />)
+      click(screen.getByTestId('column'), at(10, 7))
+      expect(onCommit).toHaveBeenCalledWith({ mode: 'create', day: DAY, start: at(10, 0), end: at(11, 0), sessionId: null })
+      expect(screen.getByTestId('draft')).toHaveTextContent(`${at(10, 0)}-${at(11, 0)}`)
+    })
+
+    it('ADJ-10 cuts the hour at midnight', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} />)
+      click(screen.getByTestId('column'), at(23, 30))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(23, 30), end: 24 * 60 }))
+    })
+
+    it('ADJ-10 cuts the hour at the quarter hour of now on today', () => {
+      const onCommit = vi.fn()
+      // Now is 14:07: a click at 13:40 runs to 14:00.
+      render(<Column limit={at(14, 7)} onCommit={onCommit} />)
+      click(screen.getByTestId('column'), at(13, 40))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(13, 30), end: at(14, 0) }))
+    })
+
+    it('ADJ-10 creates one hour for a click whose pointer shakes less than 3 px', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} />)
+      fireEvent.pointerDown(screen.getByTestId('column'), { clientX: 0, clientY: at(10, 7), button: 0 })
+      fireEvent.pointerMove(window, { clientX: 1, clientY: at(10, 7) + 2 })
+      fireEvent.pointerUp(window, { clientX: 1, clientY: at(10, 7) + 2 })
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(10, 0), end: at(11, 0) }))
+    })
+
+    it('ADJ-11 still draws a drag of 10:00 to 10:40 in steps of 15 min', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} />)
+      drag(screen.getByTestId('column'), at(10, 0), at(10, 40))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(10, 0), end: at(10, 45) }))
+    })
+
+    const newDraft: DragTarget = { day: DAY, start: at(10, 0), end: at(11, 0), sessionId: null }
+
+    it('ADJ-12 moves the new session two hours down, keeping one hour', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} block={newDraft} />)
+      drag(screen.getByTestId('block'), at(10, 10), at(12, 10))
+      expect(onCommit).toHaveBeenCalledWith({ mode: 'move', day: DAY, start: at(12, 0), end: at(13, 0), sessionId: null })
+      expect(screen.getByTestId('draft')).toHaveTextContent(`${at(12, 0)}-${at(13, 0)}`)
+    })
+
+    it('ADJ-12 moves the new session to the day under the pointer', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} block={newDraft} dayAt={() => '2026-11-02'} />)
+      drag(screen.getByTestId('block'), at(10, 10), at(9, 10), 300)
+      expect(onCommit).toHaveBeenCalledWith({ mode: 'move', day: '2026-11-02', start: at(9, 0), end: at(10, 0), sessionId: null })
+    })
+
+    it('ADJ-12 never moves the new session past the limit of the day', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={at(14, 7)} onCommit={onCommit} block={newDraft} />)
+      drag(screen.getByTestId('block'), at(10, 10), at(18, 0))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(13, 0), end: at(14, 0) }))
+    })
+
+    it('ADJ-01 ADJ-02 keeps a saved session released at a new time drawn there, for the page to save or drop', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} block={oneHour} />)
+      drag(screen.getByTestId('block'), at(14, 10), at(16, 10))
+      expect(onCommit).toHaveBeenCalledWith({ mode: 'move', day: DAY, start: at(16, 0), end: at(17, 0), sessionId: 's1' })
+      expect(screen.getByTestId('draft')).toHaveTextContent(`${at(16, 0)}-${at(17, 0)}`)
+    })
+
+    it('leaves nothing pending when a saved session is released in place', () => {
+      const onCommit = vi.fn()
+      render(<Column limit={24 * 60} onCommit={onCommit} block={oneHour} />)
+      drag(screen.getByTestId('block'), at(14, 10), at(14, 10))
+      expect(onCommit).not.toHaveBeenCalled()
+      expect(screen.queryByTestId('draft')).toBeNull()
+    })
+  })
 })
