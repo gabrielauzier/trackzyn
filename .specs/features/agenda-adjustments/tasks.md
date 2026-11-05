@@ -69,6 +69,12 @@ T5 → T6
 T9 → T10
 ```
 
+### Phase 3: Fixes do Verifier (rodada 2)
+
+```
+T11
+```
+
 ---
 
 ## Task Breakdown
@@ -297,6 +303,27 @@ T9 → T10
 **Gate**: build
 
 **Commit**: `test(frontend): prove the pending edge cases of the agenda drag`
+
+---
+
+### T11: Testes do arraste de outro bloco com `Editar` aberto e do painel durante o gesto
+
+**What**: Testes de página para arrastar outro bloco com o `Editar` de uma sessão aberto, o que abre a confirmação dele, e para o painel de confirmação, que não aparece antes de soltar.
+**Where**: `frontend/src/pages/agenda.test.tsx`
+**Depends on**: None
+**Reuses**: os testes de T6
+**Requirement**: ADJ-01, ADJ-08
+
+**Done when**:
+
+- [x] Com `Editar` aberto em `Plan the week`, arrastar `Write the report` das 14:00 para as 16:00 mostra `New time — not saved yet` e não `Edit session` (mata N2)
+- [x] Puxar a borda de um bloco selecionado não mostra o painel antes do `pointerUp`, e mostra depois (mata N6)
+- [x] Gate check passes: Build
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `test(frontend): cover dragging another block and the panel mid-drag`
 
 ---
 
