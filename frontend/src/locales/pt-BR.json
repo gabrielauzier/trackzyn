@@ -750,6 +750,19 @@
     "sessionCount_one": "{{count}} sessão",
     "sessionCount_other": "{{count}} sessões",
     "pickSession": "Clique para escolher uma sessão",
+    "picker": {
+      "search": "Buscar tarefa",
+      "clear": "Limpar busca",
+      "recent": "As 10 atualizadas por último",
+      "results_one": "{{count}} tarefa para “{{query}}”, em todas as listas",
+      "results_other": "{{count}} tarefas para “{{query}}”, em todas as listas",
+      "empty": "Nenhuma tarefa encontrada",
+      "emptyHint": "Nada com “{{query}}” em nenhuma lista.",
+      "create": "Criar nova tarefa",
+      "createNamed": "Criar “{{title}}”",
+      "done": "Concluída",
+      "tasks": "Tarefas"
+    },
     "panel": {
       "newTitle": "Nova sessão",
       "task": "Tarefa",

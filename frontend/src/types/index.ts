@@ -343,6 +343,19 @@ export interface AgendaTask {
   column: 'backlog' | 'this_week' | 'today' | 'done'
 }
 
+/** A task the picker of a new session offers, with when it was last updated (PICK-03). */
+export interface RecentAgendaTask extends AgendaTask {
+  updated_at: string
+}
+
+/** A task the agenda creates for a session: concluded, from the agenda (PICK-15). */
+export interface AgendaTaskInput {
+  list_id: string
+  title: string
+  estimate_minutes?: number | null
+  notes?: string
+}
+
 /** What an edit may change; absent fields keep their value. */
 export interface AgendaSessionChanges {
   started_at?: string

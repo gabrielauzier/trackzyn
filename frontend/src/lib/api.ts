@@ -7,6 +7,8 @@ import type {
   AgendaSession,
   AgendaSessionChanges,
   AgendaTask,
+  AgendaTaskInput,
+  RecentAgendaTask,
   AgendaSessionInput,
   AccessTokenScope,
   CreatedAccessToken,
@@ -477,6 +479,16 @@ export const sessions = {
   /** The tasks a session can go to: every column of the active lists, Done of any date included. */
   tasks: async (): Promise<{ tasks: AgendaTask[] }> => {
     const { data } = await api.get('/sessions/tasks')
+    return data
+  },
+  /** The 10 tasks updated last, or up to 50 whose title contains `q` (PICK-03, PICK-04). */
+  searchTasks: async (q: string): Promise<{ tasks: RecentAgendaTask[] }> => {
+    const { data } = await api.get('/sessions/tasks/search', { params: q.trim() ? { q } : {} })
+    return data
+  },
+  /** Creates the task of a session, concluded, from the agenda (PICK-15). */
+  createTask: async (payload: AgendaTaskInput): Promise<Task> => {
+    const { data } = await api.post('/sessions/tasks', payload)
     return data
   },
 }

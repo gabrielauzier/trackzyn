@@ -750,6 +750,19 @@
     "sessionCount_one": "{{count}} session",
     "sessionCount_other": "{{count}} sessions",
     "pickSession": "Click to pick a session",
+    "picker": {
+      "search": "Search task",
+      "clear": "Clear search",
+      "recent": "The 10 updated last",
+      "results_one": "{{count}} task for “{{query}}”, in every list",
+      "results_other": "{{count}} tasks for “{{query}}”, in every list",
+      "empty": "No task found",
+      "emptyHint": "Nothing with “{{query}}” in any list.",
+      "create": "Create new task",
+      "createNamed": "Create “{{title}}”",
+      "done": "Done",
+      "tasks": "Tasks"
+    },
     "panel": {
       "newTitle": "New session",
       "task": "Task",

@@ -223,12 +223,12 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Abrir mostra a pesquisa com o foco, `As 10 atualizadas por último` e as tarefas agrupadas por lista, com `Concluída` nas concluídas
-- [ ] Digitar "revis" só consulta depois de 300 ms sem tecla, uma vez, e mostra `4 tarefas para “revis”, em todas as listas` com o trecho destacado
-- [ ] O limpar volta às 10 recentes
-- [ ] Sem resultado, mostra `Nenhuma tarefa encontrada` e `Criar “<texto>”`, que chama `onCreate` com o texto
-- [ ] Escolher uma tarefa chama `onChange` e fecha o popover
-- [ ] Gate check passes: Quick
+- [x] Abrir mostra a pesquisa com o foco, `As 10 atualizadas por último` e as tarefas agrupadas por lista, com `Concluída` nas concluídas
+- [x] Digitar "revis" só consulta depois de 300 ms sem tecla, uma vez, e mostra `4 tarefas para “revis”, em todas as listas` com o trecho destacado
+- [x] O limpar volta às 10 recentes
+- [x] Sem resultado, mostra `Nenhuma tarefa encontrada` e `Criar “<texto>”`, que chama `onCreate` com o texto
+- [x] Escolher uma tarefa chama `onChange` e fecha o popover
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick
