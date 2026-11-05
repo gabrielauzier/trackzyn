@@ -29,9 +29,9 @@ describe('the Drizzle schema on PGlite', () => {
 
   it('matches the PostgreSQL column catalog', async () => {
     // pg-columns.json is information_schema.columns of a PostgreSQL 16 that ran the same migrations.
-    // Last read on 2026-11-04 from a PostgreSQL 16.15, through 0008_workspace_merge_gap, in a scratch
-    // database that got the drizzle/*.sql files in journal order: the only change from the reading
-    // through 0007 was workspaces.merge_gap_minutes, a nullable smallint after min_session_minutes.
+    // Last read on 2026-11-05 from a PostgreSQL 16.15, through 0009_task_updated_and_origin, in a scratch
+    // database that got the drizzle/*.sql files in journal order: the only change from the reading through
+    // 0008 was tasks.updated_at (timestamptz, not null) and tasks.created_from (varchar 16, nullable).
     const expected = JSON.parse(readFileSync(join(import.meta.dirname, '../fixtures/pg-columns.json'), 'utf8')) as Record<
       string,
       Array<{ column: string; type: string; nullable: boolean; maxLength: number | null }>

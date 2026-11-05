@@ -181,6 +181,9 @@ export const personalAccessTokens = pgTable(
 export const TASK_COLUMNS = ['backlog', 'this_week', 'today', 'done'] as const
 export type TaskColumn = (typeof TASK_COLUMNS)[number]
 
+/** Where a task came from when no token made it (PICK-17). */
+export type TaskOrigin = 'agenda'
+
 export const tasks = pgTable(
   'tasks',
   {
@@ -199,6 +202,10 @@ export const tasks = pgTable(
     completedByUserId: uuid('completed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
     /** The token that created the task; purging the token keeps the task. */
     createdViaTokenId: uuid('created_via_token_id').references(() => personalAccessTokens.id, { onDelete: 'set null' }),
+    /** The last change to the task, its subtasks included (PICK-01); the agenda lists the tasks updated last. */
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Where the task came from when no token made it: `agenda` reads as `via Agenda` (PICK-17). */
+    createdFrom: varchar('created_from', { length: 16 }).$type<TaskOrigin>(),
   },
   (t) => [
     index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
@@ -208,6 +215,7 @@ export const tasks = pgTable(
     check('ck_tasks_column', sql`${t.column} IN ('backlog', 'this_week', 'today', 'done')`),
     check('ck_tasks_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
     check('ck_tasks_done_completed_at', sql`(${t.column} = 'done') = (${t.completedAt} IS NOT NULL)`),
+    check('ck_tasks_created_from', sql`${t.createdFrom} IN ('agenda')`),
   ],
 )
 

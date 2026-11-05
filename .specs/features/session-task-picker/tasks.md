@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: decisões abaixo; o desenho visual aprovado é o canvas `Agenda · escolher ou criar tarefa`
-**Status**: Draft
+**Status**: In Progress
 **Pré-requisito**: a Agenda (#19), na branch `feat/agenda`.
 
 ### Decisões técnicas
@@ -83,10 +83,10 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Uma tarefa de antes da migration lê `updated_at` igual à sua criação, e uma concluída depois de criada, igual à conclusão
-- [ ] `created_from` lê nulo; o banco recusa `'outro'` e aceita `'agenda'`
-- [ ] `pg-columns.json` lido de um PostgreSQL 16 numa base temporária, apagada em seguida
-- [ ] Gate check passes: Full (backend)
+- [x] Uma tarefa de antes da migration lê `updated_at` igual à sua criação, e uma concluída depois de criada, igual à conclusão
+- [x] `created_from` lê nulo; o banco recusa `'outro'` e aceita `'agenda'`
+- [x] `pg-columns.json` lido de um PostgreSQL 16 numa base temporária, apagada em seguida
+- [x] Gate check passes: Full (backend)
 
 **Tests**: integration
 **Gate**: full

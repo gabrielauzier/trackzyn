@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type Subtask, type Task, type TaskColumn, focusSessions, lists, personalAccessTokens, subtasks, tasks } from '../db/schema.ts'
+import { type Subtask, type Task, type TaskColumn, type TaskOrigin, focusSessions, lists, personalAccessTokens, subtasks, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { endOpenSessions } from './focus-settle.ts'
 import { getList } from './lists.ts'
@@ -56,6 +56,8 @@ export async function createTask(
     /** Titles, in the order the subtasks must keep. */
     subtasks?: string[]
     createdViaTokenId?: string
+    /** Where the task came from when no token made it (PICK-17). */
+    createdFrom?: TaskOrigin
     /** Answers 409 for an archived list. An automation cannot see that the list left the screen (API-09). */
     rejectArchived?: boolean
   },
@@ -84,6 +86,8 @@ export async function createTask(
       createdAt: now,
       completedByUserId: input.column === 'done' ? input.userId : null,
       createdViaTokenId: input.createdViaTokenId ?? null,
+      updatedAt: now,
+      createdFrom: input.createdFrom ?? null,
     }
     await tx.insert(tasks).values(task)
     const created: Subtask[] = (input.subtasks ?? []).map((title, position) => ({ id: randomUUID(), taskId: task.id, title, done: false, position }))
@@ -188,6 +192,8 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       createdAt: now,
       completedByUserId: null,
       createdViaTokenId: null,
+      updatedAt: now,
+      createdFrom: null,
     }
     await tx.insert(tasks).values(copy)
     const copies: Subtask[] = source.subtasks.map((subtask, position) => ({
