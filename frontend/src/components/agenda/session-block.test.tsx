@@ -70,6 +70,21 @@ describe('SessionBlock', () => {
     expect(await screen.findByRole('tooltip', {}, { timeout: 50 })).toBeInTheDocument()
   })
 
+  it('shows the duration of a session beside its title in the tooltip', async () => {
+    renderWithProviders(<SessionBlock piece={laid({})} pxPerMinute={1} timezone={SP} />)
+    await userEvent.hover(screen.getByRole('button'))
+    const tooltip = await screen.findByRole('tooltip')
+    const duration = tooltip.querySelector('[data-slot="session-duration"]')!
+    expect(duration).toHaveTextContent('25min')
+    expect(duration.previousElementSibling).toHaveTextContent('Write the report')
+  })
+
+  it('shows the time up to now beside the title of an open session', async () => {
+    renderWithProviders(<SessionBlock piece={laid({ ended_at: null }, { running: true, seconds: 3900 })} pxPerMinute={1} timezone={SP} />)
+    await userEvent.hover(screen.getByRole('button'))
+    expect((await screen.findByRole('tooltip')).querySelector('[data-slot="session-duration"]')).toHaveTextContent('1hr 5min')
+  })
+
   it('names a break Break and an open session now in its tooltip', async () => {
     renderWithProviders(
       <SessionBlock piece={laid({ kind: 'break', task_id: null, task_title: null, ended_at: null }, { running: true })} pxPerMinute={1} timezone={SP} />,
@@ -151,6 +166,13 @@ describe('SessionBlock of a joined block (#23)', () => {
     } finally {
       await i18n.changeLanguage('en')
     }
+  })
+
+  it('shows the sum of its sessions beside the count in the tooltip, without the gaps', async () => {
+    renderWithProviders(<SessionBlock piece={joined()} pxPerMinute={1} timezone={SP} />)
+    await userEvent.hover(screen.getByRole('button'))
+    // 30 + 18 + 26 minutes; the span from 10:20 to 11:40 would be 1hr 20min.
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Produto · 3 sessions · 1hr 14min')
   })
 
   it('MERGE-26 lists each session in start order with its own title and time in the tooltip, and how to pick one', async () => {

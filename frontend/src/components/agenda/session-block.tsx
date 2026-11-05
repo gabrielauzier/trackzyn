@@ -1,6 +1,7 @@
 import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { formatDuration } from '@/components/board/format-duration'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { clockTime } from '@/lib/agenda/format'
 import type { LaidOutPiece } from '@/lib/agenda/layout'
@@ -35,7 +36,7 @@ interface SessionBlockProps {
  * tooltip lists each session (MERGE-25, MERGE-26, MERGE-32).
  */
 export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, onSelect, onPointerDown, movable = false, children }: SessionBlockProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { session } = piece
   const isBreak = session.kind === 'break'
   const members = piece.members
@@ -45,6 +46,11 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
   const title = titleOf(session)
   const range = rangeOf(session.started_at, session.ended_at)
   const count = members ? t('agenda.sessionCount', { count: members.length }) : ''
+  // The whole length of a closed session; an open one runs to now, as its piece does.
+  const secondsOf = (member: AgendaSession) =>
+    member.ended_at === null ? piece.seconds : Math.max(0, Math.floor((Date.parse(member.ended_at) - Date.parse(member.started_at)) / 1000))
+  // A joined block lasts the sum of its sessions, not the gaps between them (MERGE-20).
+  const duration = formatDuration(members ? members.reduce((sum, member) => sum + secondsOf(member), 0) : secondsOf(session), i18n.language)
   // A joined block spans from its first start to the latest end of its sessions.
   const lastEnd = members && new Date(Math.max(...members.map((member) => Date.parse(member.ended_at!)))).toISOString()
   const label = lastEnd ? `${session.list_name}, ${count}, ${rangeOf(session.started_at, lastEnd)}` : `${title}, ${range}`
@@ -108,7 +114,7 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
         </TooltipTrigger>
         {members ? (
           <TooltipContent side="right" className="flex flex-col gap-1">
-            <span className="font-medium break-words whitespace-normal">{`${session.list_name} · ${count}`}</span>
+            <span className="font-medium break-words whitespace-normal">{`${session.list_name} · ${count} · ${duration}`}</span>
             <ul className="flex flex-col gap-0.5">
               {members.map((member) => (
                 <li key={member.id} className="flex gap-2">
@@ -121,7 +127,12 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
           </TooltipContent>
         ) : (
           <TooltipContent side="right" className="flex flex-col gap-0.5">
-            <span className="font-medium break-words whitespace-normal">{title}</span>
+            <span className="flex items-baseline gap-2">
+              <span className="font-medium break-words whitespace-normal">{title}</span>
+              <span data-slot="session-duration" className="shrink-0 tabular-nums opacity-80">
+                {duration}
+              </span>
+            </span>
             <span className="tabular-nums opacity-80">{range}</span>
           </TooltipContent>
         )}
