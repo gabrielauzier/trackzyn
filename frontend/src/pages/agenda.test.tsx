@@ -10,7 +10,7 @@ import AgendaPage from './agenda'
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
-  sessions: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), tasks: vi.fn() },
+  sessions: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), tasks: vi.fn(), searchTasks: vi.fn(), createTask: vi.fn() },
 }))
 
 vi.mock('sonner', async (importOriginal) => ({
@@ -73,6 +73,9 @@ beforeEach(() => {
   vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday] })
   vi.mocked(sessions.tasks).mockResolvedValue({
     tasks: [{ id: 't1', title: 'Write the report', list_id: WORK, list_name: 'Work', list_color: 3, column: 'today' }],
+  })
+  vi.mocked(sessions.searchTasks).mockResolvedValue({
+    tasks: [{ id: 't1', title: 'Write the report', list_id: WORK, list_name: 'Work', list_color: 3, column: 'today', updated_at: '2026-11-04T12:00:00.000Z' }],
   })
 })
 

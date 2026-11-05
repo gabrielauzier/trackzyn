@@ -20,6 +20,9 @@ interface SessionTaskPickerProps {
   onChange: (task: RecentAgendaTask) => void
   /** Opens the new task modal with this title: the search text, or empty (PICK-12). */
   onCreate: (title: string) => void
+  /** The popover's state, when the panel drives it (it closes it for the modal and opens it again on Cancel). */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 /** `title` with the first match of `query` wrapped in `<mark>`, ignoring case (PICK-08). */
@@ -39,9 +42,14 @@ function Highlighted({ title, query }: { title: string; query: string }) {
  * The task field of a new session (PICK-06 to PICK-11): a popover with a search that asks 300 ms after the last key,
  * the 10 tasks updated last or the matches grouped by list, and `Criar nova tarefa` after them.
  */
-export function SessionTaskPicker({ value, lists, onChange, onCreate }: SessionTaskPickerProps) {
+export function SessionTaskPicker({ value, lists, onChange, onCreate, open: openProp, onOpenChange: onOpenChangeProp }: SessionTaskPickerProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [openState, setOpenState] = useState(false)
+  const open = openProp ?? openState
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setOpenState(next)
+    onOpenChangeProp?.(next)
+  }
   const [text, setText] = useState('')
   const input = useRef<HTMLInputElement>(null)
   const query = text.trim()
@@ -66,6 +74,7 @@ export function SessionTaskPicker({ value, lists, onChange, onCreate }: SessionT
   const pick = (task: RecentAgendaTask) => {
     onChange(task)
     setOpen(false)
+    setText('')
   }
   const onOpenChange = (next: boolean) => {
     setOpen(next)
@@ -77,6 +86,8 @@ export function SessionTaskPicker({ value, lists, onChange, onCreate }: SessionT
       <PopoverTrigger asChild>
         <button
           type="button"
+          role="combobox"
+          aria-haspopup="dialog"
           aria-label={t('agenda.panel.task')}
           className="flex h-9 w-full items-center justify-between gap-2 rounded-md border bg-transparent px-3 text-left text-sm shadow-xs data-[state=open]:border-primary"
         >

@@ -10,7 +10,7 @@ import { SessionDetails, SessionPanel, type PanelTimes } from './session-panel'
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
-  sessions: { create: vi.fn(), tasks: vi.fn() },
+  sessions: { create: vi.fn(), tasks: vi.fn(), searchTasks: vi.fn(), createTask: vi.fn() },
 }))
 
 const SP = 'America/Sao_Paulo'
@@ -88,7 +88,14 @@ function Panel({
 
 const dragged: PanelTimes = { day: '2026-11-03', start: at(17, 30), end: at(18, 45) }
 
+/** Edit: the select of today keeps every task (AGENDA-31). */
 async function chooseTask(user: ReturnType<typeof renderWithProviders>['user'], title: string) {
+  await user.click(screen.getByRole('combobox', { name: 'Task' }))
+  await user.click(await screen.findByRole('option', { name: title }))
+}
+
+/** New: the picker of #27, from the field to the option. */
+async function pickTask(user: ReturnType<typeof renderWithProviders>['user'], title: string) {
   await user.click(screen.getByRole('combobox', { name: 'Task' }))
   await user.click(await screen.findByRole('option', { name: title }))
 }
@@ -96,9 +103,9 @@ async function chooseTask(user: ReturnType<typeof renderWithProviders>['user'], 
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(lists.list).mockResolvedValue({ timezone: SP, lists: [WORK, HOME] })
-  vi.mocked(sessions.tasks).mockResolvedValue({
-    tasks: [task('t1', 'Write the report', WORK), task('t2', 'Send the invoice', WORK, 'done'), task('t3', 'Fix the sink', HOME)],
-  })
+  const offered = [task('t1', 'Write the report', WORK), task('t2', 'Send the invoice', WORK, 'done'), task('t3', 'Fix the sink', HOME)]
+  vi.mocked(sessions.tasks).mockResolvedValue({ tasks: offered })
+  vi.mocked(sessions.searchTasks).mockResolvedValue({ tasks: offered.map((item) => ({ ...item, updated_at: '2026-11-03T12:00:00.000Z' })) })
 })
 
 describe('SessionPanel (new)', () => {
@@ -118,7 +125,7 @@ describe('SessionPanel (new)', () => {
     expect(screen.getByText('1hr 30min')).toBeInTheDocument()
   })
 
-  it('offers the tasks of the active lists grouped by list, done ones included (AGENDA-16)', async () => {
+  it('offers the tasks of the active lists grouped by list, done ones included (AGENDA-16, PICK-07)', async () => {
     const { user } = renderWithProviders(<Panel initial={dragged} />)
     await user.click(screen.getByRole('combobox', { name: 'Task' }))
     const work = await screen.findByRole('group', { name: 'Work' })
@@ -129,7 +136,7 @@ describe('SessionPanel (new)', () => {
 
   it('offers a done task that no board shows any more, from the tasks the API offers (AGENDA-16)', async () => {
     // Done 10 days ago: the board keeps only today and the last day before.
-    vi.mocked(sessions.tasks).mockResolvedValue({ tasks: [task('t4', 'Ship the release', WORK, 'done')] })
+    vi.mocked(sessions.searchTasks).mockResolvedValue({ tasks: [{ ...task('t4', 'Ship the release', WORK, 'done'), updated_at: '2026-10-24T12:00:00.000Z' }] })
     const { user } = renderWithProviders(<Panel initial={dragged} />)
     await user.click(screen.getByRole('combobox', { name: 'Task' }))
     expect(await screen.findByRole('group', { name: 'Work' })).toHaveTextContent('Ship the release')
@@ -155,7 +162,7 @@ describe('SessionPanel (new)', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'Overlaps Plan the sprint (18:00 – 18:30). The time in common counts in both.',
     )
-    await chooseTask(user, 'Write the report')
+    await pickTask(user, 'Write the report')
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
   })
 
@@ -167,7 +174,7 @@ describe('SessionPanel (new)', () => {
   it('records the chosen task with the times of the panel (AGENDA-20)', async () => {
     vi.mocked(sessions.create).mockResolvedValue(existing)
     const { user } = renderWithProviders(<Panel initial={dragged} />)
-    await chooseTask(user, 'Write the report')
+    await pickTask(user, 'Write the report')
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(sessions.create).toHaveBeenCalledWith({
       kind: 'task',
@@ -182,7 +189,7 @@ describe('SessionPanel (new)', () => {
       response: { status: 422, data: { detail: 'occurred_at is outside the accepted window', code: 'invalid_time' } },
     })
     const { user } = renderWithProviders(<Panel initial={dragged} />)
-    await chooseTask(user, 'Write the report')
+    await pickTask(user, 'Write the report')
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('The session cannot end in the future.')
   })
@@ -192,7 +199,7 @@ describe('SessionPanel (new)', () => {
       response: { status: 422, data: { detail: 'A session lasts from 1 minute to 24 hours', code: 'invalid_duration' } },
     })
     const { user } = renderWithProviders(<Panel initial={dragged} />)
-    await chooseTask(user, 'Write the report')
+    await pickTask(user, 'Write the report')
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Use 1 minute to 24 hours.')
   })
@@ -306,6 +313,67 @@ describe('SessionDetails (AGENDA-27, AGENDA-32, AGENDA-33)', () => {
     expect(screen.getByRole('heading', { name: 'Plan the sprint' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
+  })
+})
+
+describe('SessionPanel (new): the task picker and the new task modal (#27)', () => {
+  it('PICK-06 picks the task of a new session in the picker, while editing keeps the select', async () => {
+    const { user, unmount } = renderWithProviders(<Panel initial={dragged} />)
+    const field = screen.getByRole('combobox', { name: 'Task' })
+    expect(field).toHaveAttribute('aria-haspopup', 'dialog')
+    await user.click(field)
+    expect(await screen.findByRole('dialog', { name: 'Tasks' })).toBeInTheDocument()
+    unmount()
+
+    renderWithProviders(<Panel initial={dragged} editing={existing} />)
+    expect(screen.getByRole('combobox', { name: 'Task' })).not.toHaveAttribute('aria-haspopup', 'dialog')
+  })
+
+  it('PICK-12 PICK-16 creates the task from the search and picks it, the modal and the popover closed', async () => {
+    vi.mocked(sessions.searchTasks).mockResolvedValue({ tasks: [] })
+    const created = { id: 't9', list_id: 'home', title: 'Reunião com o jurídico', column: 'done', created_via: 'Agenda' }
+    vi.mocked(sessions.createTask).mockResolvedValue(created as never)
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const { user } = renderWithProviders(<Panel initial={dragged} onSave={onSave} />)
+    await user.click(screen.getByRole('combobox', { name: 'Task' }))
+    await user.type(await screen.findByRole('searchbox', { name: 'Search task' }), 'Reunião com o jurídico')
+    await user.click(await screen.findByRole('button', { name: 'Create “Reunião com o jurídico”' }, { timeout: 2000 }))
+
+    const modal = await screen.findByRole('dialog', { name: 'New task' })
+    expect(within(modal).getByLabelText('Title')).toHaveValue('Reunião com o jurídico')
+    expect(within(modal).getByRole('combobox', { name: 'List' })).toHaveTextContent('Home')
+    await user.click(within(modal).getByRole('button', { name: 'Add' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByRole('combobox', { name: 'Task' })).toHaveTextContent('Reunião com o jurídico')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ kind: 'task', task_id: 't9' }), expect.anything())
+  })
+
+  it('PICK-19 goes back to the picker, its search kept, when the modal is cancelled', async () => {
+    vi.mocked(sessions.searchTasks).mockResolvedValue({ tasks: [] })
+    const onCancel = vi.fn()
+    const { user } = renderWithProviders(<Panel initial={dragged} onCancel={onCancel} />)
+    await user.click(screen.getByRole('combobox', { name: 'Task' }))
+    await user.type(await screen.findByRole('searchbox', { name: 'Search task' }), 'zzz')
+    await user.click(await screen.findByRole('button', { name: 'Create “zzz”' }, { timeout: 2000 }))
+    await user.click(within(await screen.findByRole('dialog', { name: 'New task' })).getByRole('button', { name: 'Cancel' }))
+
+    const picker = await screen.findByRole('dialog', { name: 'Tasks' })
+    expect(within(picker).getByRole('searchbox')).toHaveValue('zzz')
+    expect(sessions.createTask).not.toHaveBeenCalled()
+    expect(onCancel).not.toHaveBeenCalled()
+  })
+
+  it('PICK-19 closes only the modal on Esc, not the panel under it', async () => {
+    const onCancel = vi.fn()
+    const { user } = renderWithProviders(<Panel initial={dragged} onCancel={onCancel} />)
+    await user.click(screen.getByRole('combobox', { name: 'Task' }))
+    await user.click(await screen.findByRole('button', { name: 'Create new task' }))
+    await screen.findByRole('dialog', { name: 'New task' })
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New task' })).toBeNull())
+    expect(onCancel).not.toHaveBeenCalled()
   })
 })
 

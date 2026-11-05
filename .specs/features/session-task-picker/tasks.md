@@ -281,11 +281,11 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] `Nova sessão` mostra o seletor; `Editar sessão` mostra o select de hoje
-- [ ] Criar pela pesquisa "reunião com o jurídico" abre o modal com esse título e a lista do filtro, e depois de `Adicionar` o campo `Tarefa` mostra a tarefa nova, com o modal e o popover fechados
-- [ ] Cancelar o modal deixa o popover aberto
-- [ ] Sem nenhuma lista ativa, `Criar nova tarefa` fica desabilitado
-- [ ] Gate check passes: Build
+- [x] `Nova sessão` mostra o seletor; `Editar sessão` mostra o select de hoje
+- [x] Criar pela pesquisa "reunião com o jurídico" abre o modal com esse título e a lista do filtro, e depois de `Adicionar` o campo `Tarefa` mostra a tarefa nova, com o modal e o popover fechados
+- [x] Cancelar o modal deixa o popover aberto
+- [x] Sem nenhuma lista ativa, `Criar nova tarefa` fica desabilitado
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

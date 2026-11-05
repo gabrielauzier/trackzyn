@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { NewSessionTaskDialog } from '@/components/agenda/new-session-task-dialog'
+import { SessionTaskPicker } from '@/components/agenda/session-task-picker'
 
 import { formatDuration } from '@/components/board/format-duration'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
@@ -23,7 +25,7 @@ import { clockTime, minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES, dayOf, zonedInstant } from '@/lib/agenda/layout'
 import { sessionErrorMessage, type SessionPreview } from '@/lib/agenda/use-agenda'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, AgendaSessionInput } from '@/types'
+import type { AgendaSession, AgendaSessionInput, AgendaTask } from '@/types'
 
 /** The day and the start and end of the session, in minutes since that day's local midnight. */
 export interface PanelTimes {
@@ -86,6 +88,10 @@ export function SessionPanel({
   const [kind, setKind] = useState<Kind>(editing?.kind ?? 'task')
   const [taskId, setTaskId] = useState<string | null>(editing?.task_id ?? null)
   const [breakListId, setBreakListId] = useState<string | null>(editing?.kind === 'break' ? editing.list_id : null)
+  // A new session picks its task in the picker, and can create it there (PICK-06, PICK-12); editing keeps the select.
+  const [picked, setPicked] = useState<AgendaTask | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [newTaskTitle, setNewTaskTitle] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -109,11 +115,12 @@ export function SessionPanel({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel()
+      // Esc closes the picker or the new task modal first, not the panel under them (PICK-19).
+      if (event.key === 'Escape' && !pickerOpen && newTaskTitle === null) onCancel()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onCancel])
+  }, [onCancel, pickerOpen, newTaskTitle])
 
   const startAt = zonedInstant(times.day, times.start, timezone)
   const endAt = zonedInstant(times.day, times.end, timezone)
@@ -134,7 +141,12 @@ export function SessionPanel({
     const when = { started_at: startAt.toISOString(), ended_at: endAt.toISOString() }
     let input: AgendaSessionInput
     let preview: SessionPreview
-    if (kind === 'task') {
+    if (kind === 'task' && !editing) {
+      // A new session takes the task the picker gave, a task just created included (PICK-16).
+      if (!picked) return
+      input = { kind: 'task', task_id: picked.id, ...when }
+      preview = { task_title: picked.title, list_id: picked.list_id, list_name: picked.list_name, list_color: picked.list_color }
+    } else if (kind === 'task') {
       const group = groups.find((item) => item.tasks.some((task) => task.id === taskId))
       const task = group?.tasks.find((item) => item.id === taskId)
       if (!group || !task) return
@@ -188,6 +200,7 @@ export function SessionPanel({
         {kind === 'task' ? (
           <div className="flex flex-col gap-1.5">
             <Label id="session-task-label">{t('agenda.panel.task')}</Label>
+            {editing ? (
             <Select value={taskId ?? ''} onValueChange={(value) => setTaskId(value)}>
               <SelectTrigger aria-labelledby="session-task-label" className="w-full">
                 <SelectValue placeholder={t('agenda.panel.chooseTask')} />
@@ -207,6 +220,43 @@ export function SessionPanel({
                   ))}
               </SelectContent>
             </Select>
+            ) : (
+              <SessionTaskPicker
+                value={picked}
+                lists={activeLists}
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
+                onChange={(task) => {
+                  setPicked(task)
+                  setTaskId(task.id)
+                  setError(null)
+                }}
+                onCreate={(title) => {
+                  setPickerOpen(false)
+                  setNewTaskTitle(title)
+                }}
+              />
+            )}
+            <NewSessionTaskDialog
+              open={newTaskTitle !== null}
+              onOpenChange={(open) => {
+                if (open) return
+                // Cancelled: back to the picker, its search kept (PICK-19).
+                setNewTaskTitle(null)
+                setPickerOpen(true)
+              }}
+              lists={activeLists}
+              defaultListId={defaultListId}
+              defaultTitle={newTaskTitle ?? ''}
+              onCreated={(task) => {
+                // The new task is the one of the session (PICK-16).
+                const list = activeLists.find((item) => item.id === task.list_id)
+                setPicked({ id: task.id, title: task.title, list_id: task.list_id, list_name: list?.name ?? '', list_color: list?.color ?? 1, column: 'done' })
+                setTaskId(task.id)
+                setNewTaskTitle(null)
+                setError(null)
+              }}
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">

@@ -37,7 +37,7 @@ function picker(props: Partial<Parameters<typeof SessionTaskPicker>[0]> = {}) {
   return { ...result, user, ...handlers }
 }
 const openPicker = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.click(screen.getByRole('button', { name: 'Task' }))
+  await user.click(screen.getByRole('combobox', { name: 'Task' }))
   return screen.findByRole('dialog', { name: 'Tasks' })
 }
 
@@ -144,7 +144,7 @@ describe('SessionTaskPicker', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ id: 'f1', title: 'Revisar PR da fila' }))
     expect(screen.queryByRole('dialog')).toBeNull()
     rerender(<SessionTaskPicker value={RECENT[1]!} lists={LISTS} onChange={onChange} onCreate={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Task' })).toHaveTextContent('Revisar PR da fila')
+    expect(screen.getByRole('combobox', { name: 'Task' })).toHaveTextContent('Revisar PR da fila')
   })
 
   it('disables creating without an active list', async () => {
@@ -156,7 +156,7 @@ describe('SessionTaskPicker', () => {
   it('reads Buscar tarefa, As 10 atualizadas por último and Criar nova tarefa in Portuguese', async () => {
     await i18n.changeLanguage('pt-BR')
     const { user } = picker()
-    await user.click(screen.getByRole('button', { name: 'Tarefa' }))
+    await user.click(screen.getByRole('combobox', { name: 'Tarefa' }))
     const panel = await screen.findByRole('dialog', { name: 'Tarefas' })
     expect(within(panel).getByRole('searchbox', { name: 'Buscar tarefa' })).toBeInTheDocument()
     expect(within(panel).getByText('As 10 atualizadas por último')).toBeInTheDocument()
