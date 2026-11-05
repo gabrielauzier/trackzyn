@@ -750,6 +750,13 @@
     "sessionCount_one": "{{count}} session",
     "sessionCount_other": "{{count}} sessions",
     "pickSession": "Click to pick a session",
+    "newTask": {
+      "title": "New task",
+      "hint": "To record this session.",
+      "list": "List",
+      "addNotes": "Add notes",
+      "info": "The task goes to Done, with the agenda tag, and is picked for the session."
+    },
     "picker": {
       "search": "Search task",
       "clear": "Clear search",

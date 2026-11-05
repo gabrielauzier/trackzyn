@@ -252,12 +252,12 @@ T6 → T7 → T8
 
 **Done when**:
 
-- [ ] Abre com a lista e o título recebidos, o interruptor desligado e o editor escondido; ligar mostra o editor
-- [ ] Título vazio, com 256 caracteres e estimativa 0 mostram as mensagens do quadro e não enviam nada
-- [ ] `Adicionar` envia lista, título, estimativa e, só com o interruptor ligado, as anotações; desligar depois de digitar não envia anotações
-- [ ] Com a criação feita, chama `onCreated` com a tarefa; com erro da API, fica aberto com o que foi digitado e mostra o erro
-- [ ] `Cancelar`, Esc e o fechar fecham sem enviar
-- [ ] Gate check passes: Quick
+- [x] Abre com a lista e o título recebidos, o interruptor desligado e o editor escondido; ligar mostra o editor
+- [x] Título vazio, com 256 caracteres e estimativa 0 mostram as mensagens do quadro e não enviam nada
+- [x] `Adicionar` envia lista, título, estimativa e, só com o interruptor ligado, as anotações; desligar depois de digitar não envia anotações
+- [x] Com a criação feita, chama `onCreated` com a tarefa; com erro da API, fica aberto com o que foi digitado e mostra o erro
+- [x] `Cancelar`, Esc e o fechar fecham sem enviar
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

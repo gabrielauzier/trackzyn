@@ -750,6 +750,13 @@
     "sessionCount_one": "{{count}} sessão",
     "sessionCount_other": "{{count}} sessões",
     "pickSession": "Clique para escolher uma sessão",
+    "newTask": {
+      "title": "Nova tarefa",
+      "hint": "Para registrar esta sessão.",
+      "list": "Lista",
+      "addNotes": "Adicionar anotações",
+      "info": "A tarefa entra em Concluídas, com a etiqueta da Agenda, e fica escolhida na sessão."
+    },
     "picker": {
       "search": "Buscar tarefa",
       "clear": "Limpar busca",
