@@ -4,6 +4,7 @@ import { SlidersHorizontal, ZoomIn } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Switch } from '@/components/ui/switch'
 import { ALL_DAYS, WORK_DAYS, type WeekDay, toggleDay } from '@/lib/agenda/week-days'
 import { ZOOMS, type Zoom } from '@/lib/agenda/zoom'
 import { cn } from '@/lib/utils'
@@ -14,8 +15,11 @@ interface AgendaViewMenuProps {
   /** Whether the menu offers the week days: only in the week view (DAYS-07, DAYS-08). */
   showDays: boolean
   zoom: Zoom
+  /** Whether the agenda hides the breaks (ADJ-21). */
+  hideBreaks?: boolean
   onDaysChange: (days: WeekDay[]) => void
   onZoomChange: (zoom: Zoom) => void
+  onHideBreaksChange?: (hide: boolean) => void
 }
 
 /** A Monday, to name the week days in the reader's language. */
@@ -28,9 +32,10 @@ function dayName(day: WeekDay, locale: string): string {
 
 /**
  * The view options of the agenda (DAYS-01 to DAYS-18): a button in the corner of the grid that opens a menu with the
- * week days to show (week view only) and the zoom. Every change applies at once, and the menu stays open.
+ * week days to show (week view only), `Ocultar intervalos` (ADJ-21) and the zoom. Every change applies at once, and the
+ * menu stays open.
  */
-export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChange }: AgendaViewMenuProps) {
+export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDaysChange, onZoomChange, onHideBreaksChange }: AgendaViewMenuProps) {
   const { t, i18n } = useTranslation()
   const id = useId()
   const trigger = useRef<HTMLButtonElement>(null)
@@ -63,7 +68,8 @@ export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChang
           className="relative inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground data-[state=open]:border-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary"
         >
           <SlidersHorizontal className="size-4" aria-hidden />
-          {filtered && (
+          {/* A hidden day or hidden breaks: the view differs from the default (DAYS-14, ADJ-24). */}
+          {(filtered || hideBreaks) && (
             <span data-filter-dot aria-hidden className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-card bg-primary" />
           )}
         </button>
@@ -72,7 +78,7 @@ export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChang
         side="bottom"
         align="start"
         aria-label={t('agenda.viewMenu.label')}
-        className="flex w-72 flex-col gap-3 p-3"
+        className="flex w-88 flex-col gap-3 p-3"
         // A non-modal popover gives the focus back on Esc only; every close, a click outside too, returns it (DAYS-04).
         onCloseAutoFocus={(event) => {
           event.preventDefault()
@@ -81,7 +87,7 @@ export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChang
       >
         {showDays && (
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between px-2">
+            <div className="flex items-center justify-between gap-4 px-2">
               <span id={`${id}-days`} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t('agenda.viewMenu.days')}
               </span>
@@ -115,6 +121,23 @@ export function AgendaViewMenu({ days, showDays, zoom, onDaysChange, onZoomChang
           </div>
         )}
         {showDays && <div className="-mx-3 h-px bg-border" />}
+        <div data-hide-breaks className="flex items-center justify-between gap-4 px-2">
+          <div className="flex flex-col gap-0.5">
+            <label id={`${id}-breaks`} htmlFor={`${id}-breaks-switch`} className="text-sm font-medium">
+              {t('agenda.viewMenu.hideBreaks')}
+            </label>
+            <span id={`${id}-breaks-hint`} className="text-xs text-muted-foreground">
+              {t('agenda.viewMenu.hideBreaksHint')}
+            </span>
+          </div>
+          <Switch
+            id={`${id}-breaks-switch`}
+            aria-labelledby={`${id}-breaks`}
+            checked={hideBreaks}
+            onCheckedChange={(hide) => onHideBreaksChange?.(hide)}
+          />
+        </div>
+        <div className="-mx-3 h-px bg-border" />
         <div className="flex items-center justify-between px-2">
           <span id={`${id}-zoom`} className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             <ZoomIn className="size-3.5" aria-hidden />

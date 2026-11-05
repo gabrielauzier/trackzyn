@@ -808,7 +808,9 @@
       "labelFiltered": "View options, {{shown}} of 7 days",
       "days": "Week days",
       "allDays": "All",
-      "workDays": "Mon – Fri"
+      "workDays": "Mon – Fri",
+      "hideBreaks": "Hide breaks",
+      "hideBreaksHint": "Hides the pauses from the agenda"
     },
     "list": "List",
     "allLists": "All lists",

@@ -6,9 +6,9 @@ import { i18n, renderWithProviders } from '@/test/utils'
 import { AgendaViewMenu } from './view-menu'
 
 function menu(props: Partial<Parameters<typeof AgendaViewMenu>[0]> = {}) {
-  const handlers = { onDaysChange: vi.fn(), onZoomChange: vi.fn() }
+  const handlers = { onDaysChange: vi.fn(), onZoomChange: vi.fn(), onHideBreaksChange: vi.fn() }
   const result = renderWithProviders(
-    <AgendaViewMenu days={[0, 1, 2, 3, 4, 5, 6] as WeekDay[]} showDays zoom={3} {...handlers} {...props} />,
+    <AgendaViewMenu days={[0, 1, 2, 3, 4, 5, 6] as WeekDay[]} showDays zoom={3} hideBreaks={false} {...handlers} {...props} />,
   )
   return { ...result, ...handlers }
 }
@@ -129,6 +129,57 @@ describe('AgendaViewMenu', () => {
     expect(within(panel).getByRole('button', { name: 'Seg – Sex' })).toBeInTheDocument()
     expect(within(panel).getByRole('group', { name: 'Lupa' })).toBeInTheDocument()
     expect(within(panel).getByRole('checkbox', { name: 'Segunda-feira' })).toBeInTheDocument()
+    await i18n.changeLanguage('en')
+  })
+  it('ADJ-20 is 352 px wide and keeps 16 px between Week days and its shortcuts', async () => {
+    const { user } = menu()
+    const panel = await open(user)
+    expect(panel).toHaveClass('w-88')
+    const title = within(panel).getByText('Week days')
+    expect(title.parentElement).toHaveClass('gap-4', 'justify-between')
+  })
+
+  it('ADJ-21 shows Hide breaks, off, with its hint, between the week days and the zoom, in both views', async () => {
+    for (const showDays of [true, false]) {
+      const { user, unmount } = menu({ showDays })
+      const panel = await open(user)
+      const toggle = within(panel).getByRole('switch', { name: 'Hide breaks' })
+      expect(toggle).toHaveAttribute('aria-checked', 'false')
+      expect(within(panel).getByText('Hides the pauses from the agenda')).toBeInTheDocument()
+      const row = panel.querySelector('[data-hide-breaks]')!
+      const zoom = within(panel).getByRole('group', { name: 'Zoom' })
+      expect(row.compareDocumentPosition(zoom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      if (showDays) {
+        const daysGroup = within(panel).getByRole('group', { name: 'Week days' })
+        expect(daysGroup.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      }
+      unmount()
+    }
+  })
+
+  it('ADJ-21 hands over the switch turned on, with the menu still open', async () => {
+    const { user, onHideBreaksChange } = menu()
+    const panel = await open(user)
+    await user.click(within(panel).getByRole('switch', { name: 'Hide breaks' }))
+    expect(onHideBreaksChange).toHaveBeenCalledWith(true)
+    expect(screen.getByRole('dialog', { name: 'View options' })).toBeInTheDocument()
+  })
+
+  it('ADJ-24 shows the dot while the breaks are hidden, with the seven days and in the day view', () => {
+    const week = menu({ hideBreaks: true })
+    expect(week.container.querySelector('[data-filter-dot]')).not.toBeNull()
+    week.unmount()
+    const day = menu({ hideBreaks: true, showDays: false })
+    expect(day.container.querySelector('[data-filter-dot]')).not.toBeNull()
+  })
+
+  it('reads Ocultar intervalos and its hint in Portuguese', async () => {
+    await i18n.changeLanguage('pt-BR')
+    const { user } = menu()
+    await user.click(screen.getByRole('button', { name: /^Opções de exibição/ }))
+    const panel = await screen.findByRole('dialog', { name: 'Opções de exibição' })
+    expect(within(panel).getByRole('switch', { name: 'Ocultar intervalos' })).toBeInTheDocument()
+    expect(within(panel).getByText('Esconde as pausas da agenda')).toBeInTheDocument()
     await i18n.changeLanguage('en')
   })
 })

@@ -808,7 +808,9 @@
       "labelFiltered": "Opções de exibição, {{shown}} de 7 dias",
       "days": "Dias da semana",
       "allDays": "Todos",
-      "workDays": "Seg – Sex"
+      "workDays": "Seg – Sex",
+      "hideBreaks": "Ocultar intervalos",
+      "hideBreaksHint": "Esconde as pausas da agenda"
     },
     "list": "Lista",
     "allLists": "Todas as listas",
