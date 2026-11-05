@@ -268,8 +268,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               ))}
             </div>
           )}
-          {/* The day view has its own + button. */}
-          {canWrite && view === 'week' && (
+          {/* From 768 px in both views; below, the day view has its round + button (ADJ-19). */}
+          {canWrite && !narrow && (
             <Button type="button" size="sm" onClick={() => openNew()}>
               <Plus size={14} />
               {t('agenda.newSession')}
@@ -314,7 +314,9 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 onPickDay={goTo}
                 // Another week opens on its Monday (AGENDA-38).
                 onWeek={(direction) => goTo(addDays(monday, 7 * direction))}
-                onNew={canWrite ? () => openNew(day) : undefined}
+                onNew={canWrite && narrow ? () => openNew(day) : undefined}
+                // The touch scrolls the timeline below 768 px: the gestures are for the mouse (ADJ-19).
+                drag={canWrite && !narrow ? drag : undefined}
                 selectedId={selected?.id ?? null}
                 onSelect={select}
                 pxPerMinute={pxPerMinute}

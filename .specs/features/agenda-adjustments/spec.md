@@ -143,33 +143,33 @@ A issue #29 junta sete ajustes da Agenda:
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ADJ-01 | P1: Confirmar | - | Pending |
-| ADJ-02 | P1: Confirmar | - | Pending |
-| ADJ-03 | P1: Confirmar | - | Pending |
-| ADJ-04 | P1: Confirmar | - | Pending |
-| ADJ-05 | P1: Confirmar | - | Pending |
-| ADJ-06 | P1: Confirmar | - | Pending |
-| ADJ-07 | P1: Confirmar | - | Pending |
-| ADJ-08 | P1: Confirmar | - | Pending |
-| ADJ-09 | P1: Confirmar | - | Pending |
-| ADJ-10 | P1: Nova sessão | - | Pending |
-| ADJ-11 | P1: Nova sessão | - | Pending |
-| ADJ-12 | P1: Nova sessão | - | Pending |
-| ADJ-13 | P1: Nova sessão | - | Pending |
-| ADJ-14 | P1: Nova sessão | - | Pending |
-| ADJ-15 | P2: Visão Dia | - | Pending |
-| ADJ-16 | P2: Visão Dia | - | Pending |
-| ADJ-17 | P2: Visão Dia | - | Pending |
-| ADJ-18 | P2: Visão Dia | - | Pending |
-| ADJ-19 | P2: Visão Dia | - | Pending |
-| ADJ-20 | P2: Menu | - | Pending |
-| ADJ-21 | P2: Menu | - | Pending |
-| ADJ-22 | P2: Menu | - | Pending |
-| ADJ-23 | P2: Menu | - | Pending |
-| ADJ-24 | P2: Menu | - | Pending |
-| ADJ-25 | P2: Menu | - | Pending |
+| ADJ-01 | P1: Confirmar | T3, T5, T6 | Implemented |
+| ADJ-02 | P1: Confirmar | T3, T6 | Implemented |
+| ADJ-03 | P1: Confirmar | T6 | Implemented |
+| ADJ-04 | P1: Confirmar | T5, T6 | Implemented |
+| ADJ-05 | P1: Confirmar | T5, T6 | Implemented |
+| ADJ-06 | P1: Confirmar | T6 | Implemented |
+| ADJ-07 | P1: Confirmar | T5, T6 | Implemented |
+| ADJ-08 | P1: Confirmar | T6 | Implemented |
+| ADJ-09 | P1: Confirmar | T6 | Implemented |
+| ADJ-10 | P1: Nova sessão | T3 | Implemented |
+| ADJ-11 | P1: Nova sessão | T3 | Implemented |
+| ADJ-12 | P1: Nova sessão | T3, T4 | Implemented |
+| ADJ-13 | P1: Nova sessão | T4 | Implemented |
+| ADJ-14 | P1: Nova sessão | T4 | Implemented |
+| ADJ-15 | P2: Visão Dia | T7 | Implemented |
+| ADJ-16 | P2: Visão Dia | T7 | Implemented |
+| ADJ-17 | P2: Visão Dia | T7 | Implemented |
+| ADJ-18 | P2: Visão Dia | T7 | Implemented |
+| ADJ-19 | P2: Visão Dia | T8 | Implemented |
+| ADJ-20 | P2: Menu | T1 | Implemented |
+| ADJ-21 | P2: Menu | T1 | Implemented |
+| ADJ-22 | P2: Menu | T2 | Implemented |
+| ADJ-23 | P2: Menu | T2 | Implemented |
+| ADJ-24 | P2: Menu | T1, T2 | Implemented |
+| ADJ-25 | P2: Menu | T1, T2 | Implemented |
 
-**Coverage:** 25 total, 0 mapped to tasks.
+**Coverage:** 25 total, 25 mapped to tasks, 25 implemented (Verifier pending)
 
 ---
 

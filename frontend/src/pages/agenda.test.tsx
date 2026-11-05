@@ -1063,6 +1063,54 @@ describe('AgendaPage', () => {
       expect(await screen.findByRole('button', { name: 'Write the report, 09:00 – 10:00' })).toBeInTheDocument()
     })
 
+    it('ADJ-19 takes the gestures in the day view at 1280 px, with New session in the toolbar and no + button', async () => {
+      setWidth(1280)
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await user.click(await screen.findByRole('button', { name: 'Day' }))
+      await dayHeader('2026-11-04')
+      const toolbarNew = screen.getAllByRole('button', { name: 'New session' })
+      expect(toolbarNew).toHaveLength(1)
+      expect(toolbarNew[0]).not.toHaveClass('rounded-full')
+
+      // A click at 09:05 creates 09:00 – 10:00 (ADJ-10).
+      const column = container.querySelector<HTMLElement>('[data-agenda-column="2026-11-04"]')!
+      fireEvent.pointerDown(column, { clientY: (9 * 60 + 5) * PX_PER_MINUTE, button: 0 })
+      fireEvent.pointerUp(window, { clientY: (9 * 60 + 5) * PX_PER_MINUTE })
+      expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      expect(column.querySelector('[data-draft]')).toHaveTextContent('09:00 – 10:00')
+      await user.keyboard('{Escape}')
+    })
+
+    it('ADJ-19 opens the confirmation for a block dragged in the day view at 1280 px', async () => {
+      setWidth(1280)
+      const wednesday: AgendaSession = { ...monday, id: 's9', started_at: '2026-11-04T12:00:00.000Z', ended_at: '2026-11-04T13:00:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [wednesday] })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await user.click(await screen.findByRole('button', { name: 'Day' }))
+      const block = await screen.findByRole('button', { name: 'Write the report, 09:00 – 10:00' })
+      fireEvent.pointerDown(block, { clientY: (9 * 60 + 10) * PX_PER_MINUTE, button: 0 })
+      fireEvent.pointerMove(window, { clientY: (11 * 60 + 10) * PX_PER_MINUTE })
+      fireEvent.pointerUp(window, { clientY: (11 * 60 + 10) * PX_PER_MINUTE })
+      expect(await screen.findByText('New time — not saved yet')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Write the report, 11:00 – 12:00' })).toBeInTheDocument()
+      expect(sessions.update).not.toHaveBeenCalled()
+    })
+
+    it('ADJ-19 keeps the + button and takes no drag in the day view at 390 px, without New session in the toolbar', async () => {
+      setWidth(390)
+      const { container } = renderWithProviders(<AgendaPage />)
+      await dayHeader('2026-11-04')
+      const news = screen.getAllByRole('button', { name: 'New session' })
+      expect(news).toHaveLength(1)
+      expect(news[0]).toHaveClass('rounded-full')
+      const column = container.querySelector<HTMLElement>('[data-agenda-column="2026-11-04"]')!
+      fireEvent.pointerDown(column, { clientY: 9 * 60 * PX_PER_MINUTE, button: 0 })
+      fireEvent.pointerMove(window, { clientY: 10 * 60 * PX_PER_MINUTE })
+      fireEvent.pointerUp(window, { clientY: 10 * 60 * PX_PER_MINUTE })
+      expect(container.querySelector('[data-draft]')).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'New session' })).toBeNull()
+    })
+
     it('shows the week grid at 1024 px', async () => {
       setWidth(1024)
       const { container } = renderWithProviders(<AgendaPage />)

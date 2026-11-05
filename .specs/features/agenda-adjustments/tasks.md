@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: decisões abaixo (feature média, só no frontend, sem contrato novo; o desenho visual aprovado é o canvas `Agenda — lote de ajustes`, https://claude.ai/artifact/2SNF5jGMCfZaND1Uio8Udg)
-**Status**: In progress
+**Status**: Done
 **Pré-requisito**: a Agenda (#19), o menu de exibição (#26) e o seletor de tarefa (#27), na branch `feat/agenda`.
 
 ### Decisões técnicas
@@ -240,9 +240,9 @@ T5 → T6
 
 **Done when**:
 
-- [ ] A 1280 px, na visão Dia, arrastar na grade cria um rascunho e arrastar um bloco salvo abre o painel de confirmação; a barra mostra `Nova sessão` e o `+` não aparece
-- [ ] A 390 px, a visão Dia mostra o `+`, não mostra `Nova sessão` na barra, e pressionar a grade não cria rascunho
-- [ ] Gate check passes: Build
+- [x] A 1280 px, na visão Dia, arrastar na grade cria um rascunho e arrastar um bloco salvo abre o painel de confirmação; a barra mostra `Nova sessão` e o `+` não aparece
+- [x] A 390 px, a visão Dia mostra o `+`, não mostra `Nova sessão` na barra, e pressionar a grade não cria rascunho
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build
