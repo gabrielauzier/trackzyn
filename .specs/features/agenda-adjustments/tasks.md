@@ -100,10 +100,10 @@ T5 → T6
 
 **Done when**:
 
-- [ ] Ligar o switch tira na hora todos os blocos de intervalo, aberto ou fechado, nas duas visões; desligar devolve
-- [ ] Os totais do dia não mudam, e o aviso de sobreposição não cita um intervalo escondido
-- [ ] Com `agenda.hideBreaks` gravado como `true`, a Agenda abre com os intervalos escondidos
-- [ ] Gate check passes: Full
+- [x] Ligar o switch tira na hora todos os blocos de intervalo, aberto ou fechado, nas duas visões; desligar devolve
+- [x] Os totais do dia não mudam, e o aviso de sobreposição não cita um intervalo escondido
+- [x] Com `agenda.hideBreaks` gravado como `true`, a Agenda abre com os intervalos escondidos
+- [x] Gate check passes: Full
 
 **Tests**: unit
 **Gate**: full

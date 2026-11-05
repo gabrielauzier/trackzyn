@@ -17,6 +17,7 @@ import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { lists, sessions as sessionsApi } from '@/lib/api'
 import { isHiddenSession } from '@/lib/agenda/hide'
+import { readHideBreaks, saveHideBreaks } from '@/lib/agenda/hide-breaks'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
@@ -68,7 +69,16 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const { canWrite, current } = useWorkspace()
   // The workspace minimum hides short sessions from the grid and the panel, not from the totals (HIDE-11, HIDE-14).
   const minSessionMinutes = current?.min_session_minutes ?? null
-  const hidden = useCallback((session: AgendaSession) => isHiddenSession(session, minSessionMinutes), [minSessionMinutes])
+  // `Ocultar intervalos`, remembered on this device, hides the breaks the same way (ADJ-22, ADJ-23).
+  const [hideBreaks, setHideBreaks] = useState(readHideBreaks)
+  const pickHideBreaks = (next: boolean) => {
+    setHideBreaks(next)
+    saveHideBreaks(next)
+  }
+  const hidden = useCallback(
+    (session: AgendaSession) => (hideBreaks && session.kind === 'break') || isHiddenSession(session, minSessionMinutes),
+    [hideBreaks, minSessionMinutes],
+  )
   // Near sessions of one list and kind are drawn as one block (MERGE-11, MERGE-24).
   const joinGap = current?.merge_gap_minutes ?? null
   const now = useNow()
@@ -143,7 +153,15 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   })
   /** The view options in the corner of the grid: the week days in the week view only, and the zoom (DAYS-01, DAYS-02). */
   const viewMenu = (
-    <AgendaViewMenu days={shownDays} showDays={view === 'week'} zoom={zoom} onDaysChange={pickDays} onZoomChange={pickZoom} />
+    <AgendaViewMenu
+      days={shownDays}
+      showDays={view === 'week'}
+      zoom={zoom}
+      hideBreaks={hideBreaks}
+      onDaysChange={pickDays}
+      onZoomChange={pickZoom}
+      onHideBreaksChange={pickHideBreaks}
+    />
   )
   const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null
 

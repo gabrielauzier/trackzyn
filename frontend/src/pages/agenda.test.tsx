@@ -212,6 +212,70 @@ describe('AgendaPage', () => {
     })
   })
 
+  describe('hiding the breaks (#29)', () => {
+    // Monday 11:00 to 11:15 (closed) and Wednesday 14:00 to now (open), both breaks of Work.
+    const pause: AgendaSession = { ...monday, id: 'b1', kind: 'break', task_id: null, task_title: null, started_at: '2026-11-02T14:00:00.000Z', ended_at: '2026-11-02T14:15:00.000Z' }
+    const openPause: AgendaSession = { ...pause, id: 'b2', started_at: '2026-11-04T17:00:00.000Z', ended_at: null }
+    const turnOn = async (user: ReturnType<typeof renderWithProviders>['user']) => {
+      await user.click(await screen.findByRole('button', { name: /^View options/ }))
+      await user.click(within(await screen.findByRole('dialog')).getByRole('switch', { name: 'Hide breaks' }))
+    }
+
+    it('ADJ-22 ADJ-23 takes every break off at once, open or closed, keeping the day totals, and brings them back', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, pause, openPause] })
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Break, 11:00 – 11:15' })
+      expect(screen.getByRole('button', { name: 'Break, 14:00 – now' })).toBeInTheDocument()
+      const mondayTotal = container.querySelector('[data-day-header="2026-11-02"]')!.textContent
+
+      await turnOn(user)
+      expect(screen.queryByRole('button', { name: 'Break, 11:00 – 11:15' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Break, 14:00 – now' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
+      expect(container.querySelector('[data-day-header="2026-11-02"]')!.textContent).toBe(mondayTotal)
+      expect(container.querySelector('[data-filter-dot]')).not.toBeNull()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+      await user.click(within(screen.getByRole('dialog')).getByRole('switch', { name: 'Hide breaks' }))
+      expect(screen.getByRole('button', { name: 'Break, 11:00 – 11:15' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Break, 14:00 – now' })).toBeInTheDocument()
+    })
+
+    it('ADJ-22 hides the breaks in the day view too', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, openPause] })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await user.click(await screen.findByRole('button', { name: 'Day' }))
+      await screen.findByRole('button', { name: 'Break, 14:00 – now' })
+      await turnOn(user)
+      expect(screen.queryByRole('button', { name: 'Break, 14:00 – now' })).toBeNull()
+    })
+
+    it('ADJ-23 leaves a hidden break out of the overlap warning of New session', async () => {
+      // The open break from 14:00 overlaps the New session at 14:00 – 14:05.
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, openPause] })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Break, 14:00 – now' })
+      await user.click(screen.getByRole('button', { name: 'New session' }))
+      expect(await screen.findByRole('status')).toHaveTextContent('Overlaps Break (14:00 – now).')
+      await user.keyboard('{Escape}')
+
+      await turnOn(user)
+      await user.keyboard('{Escape}')
+      await user.click(screen.getByRole('button', { name: 'New session' }))
+      expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      expect(screen.queryByRole('status')).toBeNull()
+    })
+
+    it('ADJ-25 opens with the breaks hidden when this device chose so last', async () => {
+      localStorage.setItem('agenda.hideBreaks', 'true')
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, pause] })
+      const { container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      expect(screen.queryByRole('button', { name: 'Break, 11:00 – 11:15' })).toBeNull()
+      expect(container.querySelector('[data-filter-dot]')).not.toBeNull()
+    })
+  })
+
   it('reads the week in Portuguese, across months too (AGENDA-08)', async () => {
     await i18n.changeLanguage('pt-BR')
     const { user } = renderWithProviders(<AgendaPage />)
