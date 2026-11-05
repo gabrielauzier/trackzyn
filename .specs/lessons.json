@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 42,
+  "next_id": 49,
   "lessons": [
     {
       "id": "L-001",
@@ -742,6 +742,132 @@
       ],
       "created": "2026-11-05T02:02:02Z",
       "last_seen": "2026-11-05T02:02:02Z"
+    },
+    {
+      "id": "L-042",
+      "key": "surviving_mutant::when a check excludes the item itself test it with the item s old range overlapping the new one or the exclusion is never exercised",
+      "text": "When a check excludes the item itself, test it with the item's old range overlapping the new one, or the exclusion is never exercised.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-components",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M27 session-move-confirm.tsx:65 / session-move-confirm.test.tsx:91 (ADJ-07) (frontend-components)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-043",
+      "key": "surviving_mutant::test that the page control writes a remembered preference not only that the page reads a seeded value",
+      "text": "Test that the page control writes a remembered preference, not only that the page reads a seeded value.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M14 agenda.tsx:77 / agenda.test.tsx:275 (ADJ-25) (frontend-pages)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-044",
+      "key": "ac_gap::give every spec edge case its own test with the edge condition set up not a nearby happy path",
+      "text": "Give every spec edge case its own test with the edge condition set up, not a nearby happy path",
+      "signal": "ac_gap",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-045",
+      "key": "surviving_mutant::assert a state scoped to one gesture mode is absent during the other modes not only present during its own",
+      "text": "Assert a state scoped to one gesture mode is absent during the other modes, not only present during its own.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/drag-and-drop",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M24 week-grid.tsx:102 (ADJ-14) (frontend/drag-and-drop)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-046",
+      "key": "surviving_mutant::test discard paths through keyboard activation too since pointer handlers may already clear the state the page should clear",
+      "text": "Test discard paths through keyboard activation too, since pointer handlers may already clear the state the page should clear.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M9 agenda.tsx:196 (ADJ-06) (frontend-pages)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-047",
+      "key": "surviving_mutant::for a when released criterion assert the outcome is absent mid gesture after pointermove before pointerup not only present after release",
+      "text": "For a WHEN-released criterion, assert the outcome is absent mid-gesture (after pointermove, before pointerup), not only present after release.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-gestures",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N6 frontend/src/pages/agenda.tsx:169 (ADJ-01) (frontend-gestures)"
+      ],
+      "created": "2026-11-05T05:07:21Z",
+      "last_seen": "2026-11-05T05:07:21Z"
+    },
+    {
+      "id": "L-048",
+      "key": "surviving_mutant::when a criterion narrows a rule to its own item add a test acting on a different item in the same state to prove the narrowing",
+      "text": "When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)"
+      ],
+      "created": "2026-11-05T05:07:21Z",
+      "last_seen": "2026-11-05T05:07:21Z"
     }
   ]
 }

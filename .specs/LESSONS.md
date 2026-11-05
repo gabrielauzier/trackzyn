@@ -260,6 +260,48 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: mutant 40 frontend/src/components/agenda/session-panel.tsx:119 (frontend)
 - last seen: 2026-11-05T02:02:02Z
 
+### L-042 - When a check excludes the item itself, test it with the item's old range overlapping the new one, or the exclusion is never exercised.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-components` · harmful: 0
+- features: agenda-adjustments
+- evidence: M27 session-move-confirm.tsx:65 / session-move-confirm.test.tsx:91 (ADJ-07) (frontend-components)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-043 - Test that the page control writes a remembered preference, not only that the page reads a seeded value.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: M14 agenda.tsx:77 / agenda.test.tsx:275 (ADJ-25) (frontend-pages)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-044 - Give every spec edge case its own test with the edge condition set up, not a nearby happy path
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-045 - Assert a state scoped to one gesture mode is absent during the other modes, not only present during its own.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/drag-and-drop` · harmful: 0
+- features: agenda-adjustments
+- evidence: M24 week-grid.tsx:102 (ADJ-14) (frontend/drag-and-drop)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-046 - Test discard paths through keyboard activation too, since pointer handlers may already clear the state the page should clear.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: M9 agenda.tsx:196 (ADJ-06) (frontend-pages)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-047 - For a WHEN-released criterion, assert the outcome is absent mid-gesture (after pointermove, before pointerup), not only present after release.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-gestures` · harmful: 0
+- features: agenda-adjustments
+- evidence: N6 frontend/src/pages/agenda.tsx:169 (ADJ-01) (frontend-gestures)
+- last seen: 2026-11-05T05:07:21Z
+
+### L-048 - When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)
+- last seen: 2026-11-05T05:07:21Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
