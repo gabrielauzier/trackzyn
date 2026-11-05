@@ -939,6 +939,30 @@ describe('AgendaPage', () => {
       expect(sessions.update).not.toHaveBeenCalled()
     })
 
+    it('keeps drawing a block whose pending time is shorter than the workspace minimum until it is saved (HIDE-17)', async () => {
+      workspace.minSessionMinutes = 30
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await user.click(await block('14:00 – 15:00'))
+      fireEvent.pointerDown(container.querySelector('[data-handle="bottom"]')!, { clientY: px(15), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(14, 15) })
+      fireEvent.pointerUp(window, { clientY: px(14, 15) })
+      await confirmPanel()
+      expect(screen.getByRole('button', { name: 'Write the report, 14:00 – 14:15' })).toBeInTheDocument()
+    })
+
+    it('ADJ-06 drops the pending time when another block is opened from the keyboard', async () => {
+      const other: AgendaSession = { ...tuesday, id: 's3', task_title: 'Plan the week', started_at: '2026-11-03T12:00:00.000Z', ended_at: '2026-11-03T13:00:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [tuesday, other] })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await moveTo1600()
+      await confirmPanel()
+      screen.getByRole('button', { name: 'Plan the week, 09:00 – 10:00' }).focus()
+      await user.keyboard('{Enter}')
+      expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Write the report, 16:00 – 17:00' })).toBeNull()
+      expect(screen.getByRole('heading', { name: 'Plan the week' })).toBeInTheDocument()
+    })
+
     it('ADJ-07 warns in the panel about an overlap at the new time', async () => {
       const call: AgendaSession = { ...tuesday, id: 's4', task_title: 'Call', started_at: '2026-11-03T19:30:00.000Z', ended_at: '2026-11-03T19:45:00.000Z' }
       vi.mocked(sessions.list).mockResolvedValue({ sessions: [tuesday, call] })

@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: decisões abaixo (feature média, só no frontend, sem contrato novo; o desenho visual aprovado é o canvas `Agenda — lote de ajustes`, https://claude.ai/artifact/2SNF5jGMCfZaND1Uio8Udg)
-**Status**: In progress
+**Status**: Done
 **Pré-requisito**: a Agenda (#19), o menu de exibição (#26) e o seletor de tarefa (#27), na branch `feat/agenda`.
 
 ### Decisões técnicas
@@ -288,10 +288,10 @@ T9 → T10
 
 **Done when**:
 
-- [ ] Com mínimo de 30 min, puxar o fim de 14:00–15:00 para 14:15 deixa o bloco desenhado com o painel de confirmação (mata M22)
-- [ ] Puxar uma borda não põe `data-grabbing` na grade (mata M24)
-- [ ] Com um horário pendente, Enter em outro bloco devolve o bloco ao horário salvo (mata M9)
-- [ ] Gate check passes: Build
+- [x] Com mínimo de 30 min, puxar o fim de 14:00–15:00 para 14:15 deixa o bloco desenhado com o painel de confirmação (mata M22)
+- [x] Puxar uma borda não põe `data-grabbing` na grade (mata M24)
+- [x] Com um horário pendente, Enter em outro bloco devolve o bloco ao horário salvo (mata M9)
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

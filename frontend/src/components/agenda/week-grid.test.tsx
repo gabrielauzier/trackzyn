@@ -417,6 +417,16 @@ describe('WeekGrid', () => {
       expect(draft.textContent).toBe('09:00 – 10:00')
     })
 
+    it('ADJ-14 keeps the closed hand off while an edge is pulled', () => {
+      const { container } = renderWithProviders(<Grid sessions={[ended()]} selectedId="a" />)
+      const root = container.firstElementChild as HTMLElement
+      fireEvent.pointerDown(container.querySelector('[data-handle="bottom"]')!, { clientY: y(15), button: 0 })
+      fireEvent.pointerMove(window, { clientY: y(15, 30) })
+      expect(root).not.toHaveAttribute('data-grabbing')
+      expect(root).not.toHaveClass('cursor-grabbing')
+      fireEvent.pointerUp(window, { clientY: y(15, 30) })
+    })
+
     it('ADJ-14 shows the closed hand on the grid while a block moves, and not after', () => {
       const { container } = renderWithProviders(<Grid sessions={[ended()]} />)
       const root = container.firstElementChild as HTMLElement
