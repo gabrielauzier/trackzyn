@@ -315,9 +315,9 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] Com "revis" pesquisado e resultados na tela, `Create new task` chama `onCreate('revis')`
-- [ ] Sem pesquisa, continua chamando `onCreate('')`
-- [ ] Gate check passes: Quick
+- [x] Com "revis" pesquisado e resultados na tela, `Create new task` chama `onCreate('revis')`
+- [x] Sem pesquisa, continua chamando `onCreate('')`
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

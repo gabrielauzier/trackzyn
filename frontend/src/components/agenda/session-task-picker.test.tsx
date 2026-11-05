@@ -137,6 +137,18 @@ describe('SessionTaskPicker', () => {
     expect(onCreate).toHaveBeenCalledWith('')
   })
 
+  it('PICK-12 hands the search text to onCreate from Create new task while the search has results', async () => {
+    const { user, onCreate } = picker()
+    const panel = await openPicker(user)
+    await user.type(within(panel).getByRole('searchbox'), ' revis ')
+    await act(async () => {
+      vi.advanceTimersByTime(300)
+    })
+    await within(panel).findByText('2 tasks for “revis”, in every list')
+    await user.click(within(panel).getByRole('button', { name: 'Create new task' }))
+    expect(onCreate).toHaveBeenCalledWith('revis')
+  })
+
   it('PICK-11 hands the picked task over, closes, and shows it in the field', async () => {
     const { user, onChange, rerender } = picker()
     const panel = await openPicker(user)

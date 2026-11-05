@@ -180,7 +180,8 @@ export function SessionTaskPicker({ value, lists, onChange, onCreate, open: open
               'flex min-h-9 w-full items-center gap-2 rounded-md px-2.5 text-left text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50',
               empty && 'bg-primary/10 text-primary hover:bg-primary/15',
             )}
-            onClick={() => onCreate(empty ? settled : '')}
+            // The modal starts on the search text whenever there is one, with results or not (PICK-12).
+            onClick={() => onCreate(query)}
           >
             <Plus className="size-4 shrink-0" aria-hidden />
             {empty ? t('agenda.picker.createNamed', { title: settled }) : t('agenda.picker.create')}
