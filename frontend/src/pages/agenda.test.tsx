@@ -481,6 +481,24 @@ describe('AgendaPage', () => {
       expect(screen.queryByRole('complementary')).toBeNull()
     })
 
+    it('ADJ-09 joins the chosen session again once its end pulled to 11:30 is saved from the panel', async () => {
+      const saved = { ...second, ended_at: '2026-11-02T14:30:00.000Z' }
+      vi.mocked(sessions.update).mockImplementation(async () => {
+        vi.mocked(sessions.list).mockResolvedValue({ sessions: [first, saved] })
+        return saved
+      })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await pickSecond(user)
+      const alone = await screen.findByRole('button', { name: 'Review the notes, 11:05 – 11:16' })
+      fireEvent.pointerDown(alone.querySelector('[data-handle="bottom"]')!, { clientY: (11 * 60 + 16) * PX_PER_MINUTE, button: 0 })
+      fireEvent.pointerMove(window, { clientY: (11 * 60 + 30) * PX_PER_MINUTE })
+      fireEvent.pointerUp(window, { clientY: (11 * 60 + 30) * PX_PER_MINUTE })
+      await user.click(await screen.findByRole('button', { name: 'Save time' }))
+      expect(sessions.update).toHaveBeenCalledWith('b', { ended_at: '2026-11-02T14:30:00.000Z' })
+      expect(await screen.findByRole('button', { name: 'Work, 2 sessions, 10:20 – 11:30' })).toBeInTheDocument()
+      expect(screen.queryByRole('complementary')).toBeNull()
+    })
+
     it('MERGE-31 closes the panel once the chosen session is deleted, leaving its neighbour alone', async () => {
       vi.mocked(sessions.remove).mockImplementation(async () => {
         vi.mocked(sessions.list).mockResolvedValue({ sessions: [first] })
@@ -711,21 +729,31 @@ describe('AgendaPage', () => {
     })
   })
 
-  describe('adjusting a block (AGENDA-29, AGENDA-35)', () => {
+  describe('adjusting a block (AGENDA-29, AGENDA-30), confirmed in the panel (#29)', () => {
     // Tuesday 14:00 to 15:00 in São Paulo.
     const tuesday: AgendaSession = { ...monday, id: 's2', started_at: '2026-11-03T17:00:00.000Z', ended_at: '2026-11-03T18:00:00.000Z' }
     const block = (range: string) => screen.findByRole('button', { name: `Write the report, ${range}` })
+    const px = (hours: number, minutes = 0) => (hours * 60 + minutes) * PX_PER_MINUTE
+    const confirmPanel = () => screen.findByText('New time — not saved yet')
 
     async function pullEndTo1530(user: ReturnType<typeof renderWithProviders>['user'], container: HTMLElement) {
       await user.click(await block('14:00 – 15:00'))
-      fireEvent.pointerDown(container.querySelector('[data-handle="bottom"]')!, { clientY: 15 * 60 * PX_PER_MINUTE, button: 0 })
-      fireEvent.pointerMove(window, { clientY: (15 * 60 + 30) * PX_PER_MINUTE })
-      fireEvent.pointerUp(window, { clientY: (15 * 60 + 30) * PX_PER_MINUTE })
+      fireEvent.pointerDown(container.querySelector('[data-handle="bottom"]')!, { clientY: px(15), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(15, 30) })
+      fireEvent.pointerUp(window, { clientY: px(15, 30) })
+    }
+
+    /** Drags the block of 14:00 – 15:00 two hours down, to 16:00 – 17:00. */
+    async function moveTo1600() {
+      const moved = await block('14:00 – 15:00')
+      fireEvent.pointerDown(moved, { clientY: px(14, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(16, 10) })
+      fireEvent.pointerUp(window, { clientY: px(16, 10) })
     }
 
     beforeEach(() => vi.mocked(sessions.list).mockResolvedValue({ sessions: [tuesday] }))
 
-    it('saves the end pulled from 15:00 to 15:30', async () => {
+    it('ADJ-01 ADJ-03 saves the end pulled from 15:00 to 15:30 only on Save time', async () => {
       const saved = { ...tuesday, ended_at: '2026-11-03T18:30:00.000Z' }
       vi.mocked(sessions.update).mockImplementation(async () => {
         vi.mocked(sessions.list).mockResolvedValue({ sessions: [saved] })
@@ -733,8 +761,15 @@ describe('AgendaPage', () => {
       })
       const { user, container } = renderWithProviders(<AgendaPage />)
       await pullEndTo1530(user, container)
-      await waitFor(() => expect(sessions.update).toHaveBeenCalledWith('s2', { ended_at: '2026-11-03T18:30:00.000Z' }))
+      await confirmPanel()
+      expect(sessions.update).not.toHaveBeenCalled()
+      await user.click(screen.getByRole('button', { name: 'Save time' }))
+      expect(sessions.update).toHaveBeenCalledTimes(1)
+      expect(sessions.update).toHaveBeenCalledWith('s2', { ended_at: '2026-11-03T18:30:00.000Z' })
       expect(await block('14:00 – 15:30')).toBeInTheDocument()
+      // Once saved, the panel shows the session's details.
+      expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument()
+      expect(screen.queryByText('New time — not saved yet')).toBeNull()
     })
 
     describe('across days', () => {
@@ -750,33 +785,171 @@ describe('AgendaPage', () => {
       })
       afterEach(() => vi.restoreAllMocks())
 
-      it('saves a block moved from Tuesday to Monday with the same hour (AGENDA-30)', async () => {
+      it('saves a block moved from Tuesday to Monday with the same hour once confirmed (AGENDA-30, ADJ-03)', async () => {
         vi.mocked(sessions.update).mockResolvedValue({ ...tuesday, started_at: '2026-11-02T17:00:00.000Z', ended_at: '2026-11-02T18:00:00.000Z' })
-        renderWithProviders(<AgendaPage />)
+        const { user } = renderWithProviders(<AgendaPage />)
         const moved = await block('14:00 – 15:00')
-        fireEvent.pointerDown(moved, { clientX: 150, clientY: (14 * 60 + 10) * PX_PER_MINUTE, button: 0 })
-        fireEvent.pointerMove(window, { clientX: 50, clientY: (14 * 60 + 10) * PX_PER_MINUTE })
-        fireEvent.pointerUp(window, { clientX: 50, clientY: (14 * 60 + 10) * PX_PER_MINUTE })
-        await waitFor(() =>
-          expect(sessions.update).toHaveBeenCalledWith('s2', {
-            started_at: '2026-11-02T17:00:00.000Z',
-            ended_at: '2026-11-02T18:00:00.000Z',
-          }),
-        )
+        fireEvent.pointerDown(moved, { clientX: 150, clientY: px(14, 10), button: 0 })
+        fireEvent.pointerMove(window, { clientX: 50, clientY: px(14, 10) })
+        fireEvent.pointerUp(window, { clientX: 50, clientY: px(14, 10) })
+        await confirmPanel()
+        expect(sessions.update).not.toHaveBeenCalled()
+        await user.click(screen.getByRole('button', { name: 'Save time' }))
+        expect(sessions.update).toHaveBeenCalledWith('s2', { started_at: '2026-11-02T17:00:00.000Z', ended_at: '2026-11-02T18:00:00.000Z' })
       })
     })
 
-    it('puts the block back at 14:00 – 15:00 when the save fails', async () => {
+    it('ADJ-01 opens the panel with the saved time struck through and the new one, sending nothing, the block at the new time', async () => {
+      const { container } = renderWithProviders(<AgendaPage />)
+      await moveTo1600()
+      await confirmPanel()
+      expect(container.querySelector('del')).toHaveTextContent('Tue, Nov 3 · 14:00 – 15:00')
+      expect(screen.getByText('Tue, Nov 3 · 16:00 – 17:00 · 1hr')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Save time' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Write the report, 16:00 – 17:00' })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Write the report, 14:00 – 15:00' })).toBeNull()
+      expect(sessions.update).not.toHaveBeenCalled()
+    })
+
+    it('ADJ-02 never draws the block back at its saved time while the save is on its way, nor after', async () => {
+      let answer: () => void = () => {}
+      const saved = { ...tuesday, started_at: '2026-11-03T19:00:00.000Z', ended_at: '2026-11-03T20:00:00.000Z' }
+      vi.mocked(sessions.update).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            answer = () => {
+              vi.mocked(sessions.list).mockResolvedValue({ sessions: [saved] })
+              resolve(saved)
+            }
+          }),
+      )
+      // Every render of the block's old time is a flash of the wrong place.
+      const { user } = renderWithProviders(<AgendaPage />)
+      await moveTo1600()
+      await confirmPanel()
+      const seenAtOld: boolean[] = []
+      const observer = new MutationObserver(() =>
+        seenAtOld.push(screen.queryByRole('button', { name: 'Write the report, 14:00 – 15:00' }) !== null),
+      )
+      observer.observe(document.body, { subtree: true, childList: true, attributes: true })
+      await user.click(screen.getByRole('button', { name: 'Save time' }))
+      expect(screen.getByRole('button', { name: 'Write the report, 16:00 – 17:00' })).toBeInTheDocument()
+      const loads = vi.mocked(sessions.list).mock.calls.length
+      answer()
+      expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument()
+      // The agenda reads again once the save is answered.
+      await waitFor(() => expect(vi.mocked(sessions.list).mock.calls.length).toBeGreaterThan(loads))
+      observer.disconnect()
+      expect(screen.getByRole('button', { name: 'Write the report, 16:00 – 17:00' })).toBeInTheDocument()
+      expect(seenAtOld).not.toContain(true)
+    })
+
+    it('ADJ-04 shows a refusal in the panel, without a toast, keeping the block at the new time', async () => {
       vi.mocked(sessions.update).mockRejectedValue({ response: { status: 404, data: { detail: 'Session not found' } } })
       const { user, container } = renderWithProviders(<AgendaPage />)
       await pullEndTo1530(user, container)
-      await waitFor(() => expect(sessions.update).toHaveBeenCalledTimes(1))
+      await user.click(await screen.findByRole('button', { name: 'Save time' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('Session not found')
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: 'Write the report, 14:00 – 15:30' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Save time' })).toBeEnabled()
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    })
+
+    it('ADJ-05 puts the block back on Cancel and on Esc, sending nothing, and shows the details', async () => {
+      const { user } = renderWithProviders(<AgendaPage />)
+      await moveTo1600()
+      await confirmPanel()
+      await user.click(screen.getByRole('button', { name: 'Cancel' }))
       expect(await block('14:00 – 15:00')).toBeInTheDocument()
-      // A grid adjustment has no panel: its refusal is a toast (AGENDA-35).
-      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Session not found'))
-      expect(screen.queryByRole('button', { name: 'Write the report, 14:00 – 15:30' })).toBeNull()
+      expect(screen.getByRole('heading', { name: 'Write the report' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+
+      await moveTo1600()
+      await confirmPanel()
+      await user.keyboard('{Escape}')
+      expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      expect(screen.queryByText('New time — not saved yet')).toBeNull()
+      expect(sessions.update).not.toHaveBeenCalled()
+    })
+
+    it('ADJ-06 keeps the pending time through the click that follows the release of its own block', async () => {
+      const { user } = renderWithProviders(<AgendaPage />)
+      const moved = await block('14:00 – 15:00')
+      fireEvent.pointerDown(moved, { clientY: px(14, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(16, 10) })
+      fireEvent.pointerUp(window, { clientY: px(16, 10) })
+      fireEvent.click(screen.getByRole('button', { name: 'Write the report, 16:00 – 17:00' }))
+      await confirmPanel()
+      expect(screen.getByRole('button', { name: 'Write the report, 16:00 – 17:00' })).toBeInTheDocument()
+      // A later, real click on the block does not drop it either.
+      await user.click(screen.getByRole('button', { name: 'Write the report, 16:00 – 17:00' }))
+      expect(screen.getByText('New time — not saved yet')).toBeInTheDocument()
+    })
+
+    it('ADJ-06 drops the pending time on a click on another block', async () => {
+      const other: AgendaSession = { ...tuesday, id: 's3', task_title: 'Plan the week', started_at: '2026-11-03T12:00:00.000Z', ended_at: '2026-11-03T13:00:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [tuesday, other] })
+      const { user } = renderWithProviders(<AgendaPage />)
+      await moveTo1600()
+      await confirmPanel()
+      await user.click(screen.getByRole('button', { name: 'Plan the week, 09:00 – 10:00' }))
+      expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Plan the week' })).toBeInTheDocument()
+      expect(sessions.update).not.toHaveBeenCalled()
+    })
+
+    it('ADJ-06 drops the pending time on a drag over empty time and on another week', async () => {
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await moveTo1600()
+      await confirmPanel()
+      const column = container.querySelector('[data-agenda-column="2026-11-02"]')!
+      fireEvent.pointerDown(column, { clientY: px(9), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(10) })
+      fireEvent.pointerUp(window, { clientY: px(10) })
+      expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      await user.keyboard('{Escape}')
+
+      await moveTo1600()
+      await confirmPanel()
+      await user.click(screen.getByRole('button', { name: 'Next week' }))
+      await user.click(screen.getByRole('button', { name: 'Previous week' }))
+      expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      expect(screen.queryByText('New time — not saved yet')).toBeNull()
+      expect(sessions.update).not.toHaveBeenCalled()
+    })
+
+    it('ADJ-07 warns in the panel about an overlap at the new time', async () => {
+      const call: AgendaSession = { ...tuesday, id: 's4', task_title: 'Call', started_at: '2026-11-03T19:30:00.000Z', ended_at: '2026-11-03T19:45:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [tuesday, call] })
+      renderWithProviders(<AgendaPage />)
+      await moveTo1600()
+      await confirmPanel()
+      expect(screen.getByRole('status')).toHaveTextContent('Overlaps Call (16:30 – 16:45).')
+    })
+
+    it('ADJ-08 changes the open Edit form when its block is released at a new time, and the fields move the block', async () => {
+      const { user } = renderWithProviders(<AgendaPage />)
+      await user.click(await block('14:00 – 15:00'))
+      await user.click(screen.getByRole('button', { name: 'Edit' }))
+      await screen.findByRole('heading', { name: 'Edit session' })
+      await moveTo1600()
+      expect(screen.getByRole('heading', { name: 'Edit session' })).toBeInTheDocument()
+      expect(screen.queryByText('New time — not saved yet')).toBeNull()
+      expect(screen.getByLabelText('Start')).toHaveValue('16:00')
+      expect(screen.getByLabelText('End')).toHaveValue('17:00')
+      expect(sessions.update).not.toHaveBeenCalled()
+
+      fireEvent.change(screen.getByLabelText('Start'), { target: { value: '15:30' } })
+      expect(await block('15:30 – 17:00')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Cancel' }))
+      expect(await block('14:00 – 15:00')).toBeInTheDocument()
+      expect(sessions.update).not.toHaveBeenCalled()
     })
   })
+
   describe('narrow screens and the calendar (AGENDA-36, AGENDA-40, AGENDA-41)', () => {
     const realMatchMedia = window.matchMedia
     const realWidth = window.innerWidth

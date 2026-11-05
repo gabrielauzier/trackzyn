@@ -49,12 +49,24 @@ interface Gesture {
   startX: number
   startY: number
   moved: boolean
+  /** The draft before the gesture: a pending new time stays when the block is released in place. */
+  before: Draft | null
 }
 
 /** A click: the pointer travelled less than this, in px, before it was released. */
 const CLICK_TOLERANCE = 3
 /** What a click on empty time creates, in minutes (ADJ-10). */
 const CLICK_MINUTES = 60
+
+/** Drops the next click, if it comes before the browser is idle again. */
+function swallowNextClick() {
+  const swallow = (event: MouseEvent) => {
+    event.stopPropagation()
+    event.preventDefault()
+  }
+  window.addEventListener('click', swallow, { capture: true, once: true })
+  window.setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0)
+}
 
 const columnTopOf = (event: ReactPointerEvent) => {
   const element = event.currentTarget as HTMLElement
@@ -131,6 +143,7 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
         startX: event.clientX,
         startY: event.clientY,
         moved: false,
+        before: latest.current,
       }
       if (mode === 'create') {
         const first = place(current, event.clientX, event.clientY)
@@ -161,6 +174,8 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
       const current = gesture.current
       gesture.current = null
       setDragging(false)
+      // The click the browser fires after a drag is not a click on the block (ADJ-06).
+      if (current?.moved) swallowNextClick()
       let final = latest.current
       if (!current || !final) return
       if (current.mode === 'create' && !current.moved) {
@@ -174,7 +189,7 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
       if (current.mode === 'create' || changed) options.current.onCommit(final)
       // A saved session released at a new time stays drawn there until the page saves or drops it (ADJ-01, ADJ-02);
       // released in place, nothing is pending. The draft of a new session stays for the panel.
-      if (final.sessionId !== null && !changed) show(null)
+      if (final.sessionId !== null && !changed) show(current.before?.sessionId === final.sessionId ? current.before : null)
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)

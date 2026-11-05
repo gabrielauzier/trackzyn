@@ -208,6 +208,17 @@ describe('useGridDrag', () => {
       expect(screen.getByTestId('draft')).toHaveTextContent(`${at(16, 0)}-${at(17, 0)}`)
     })
 
+    it('ADJ-06 keeps a pending new time when its block is pressed and released in place', () => {
+      const onCommit = vi.fn()
+      const { rerender } = render(<Column limit={24 * 60} onCommit={onCommit} block={oneHour} />)
+      drag(screen.getByTestId('block'), at(14, 10), at(16, 10))
+      // The page draws the block at its pending time; a click on it starts and ends there.
+      rerender(<Column limit={24 * 60} onCommit={onCommit} block={{ ...oneHour, start: at(16, 0), end: at(17, 0) }} />)
+      drag(screen.getByTestId('block'), at(16, 10), at(16, 10))
+      expect(onCommit).toHaveBeenCalledTimes(1)
+      expect(screen.getByTestId('draft')).toHaveTextContent(`${at(16, 0)}-${at(17, 0)}`)
+    })
+
     it('leaves nothing pending when a saved session is released in place', () => {
       const onCommit = vi.fn()
       render(<Column limit={24 * 60} onCommit={onCommit} block={oneHour} />)

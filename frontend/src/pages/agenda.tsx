@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/page-header'
 import { DatePickerChip } from '@/components/agenda/date-picker-chip'
 import { DayTimeline } from '@/components/agenda/day-timeline'
 import { SessionGroupList } from '@/components/agenda/session-group-list'
+import { SessionMoveConfirm } from '@/components/agenda/session-move-confirm'
 import { SessionDetails, SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
 import { AgendaViewMenu } from '@/components/agenda/view-menu'
 import { WeekGrid } from '@/components/agenda/week-grid'
@@ -133,18 +134,16 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     setGroupIds(null)
   }
 
-  /** A released handle or block saves its new times (AGENDA-29, AGENDA-30); a new draft waits for the panel. */
+  /**
+   * A saved block released at a new time waits for the panel (ADJ-01): its draft stays on the grid, the session is
+   * chosen, and an open `Editar` form takes the new times instead (ADJ-08). A new session's draft waits for its panel.
+   */
   const commit = (final: Draft) => {
     if (final.sessionId === null) return
-    const at = (minute: number) => zonedInstant(final.day, minute, timezone).toISOString()
-    const changes: AgendaSessionChanges =
-      final.mode === 'top'
-        ? { started_at: at(final.start) }
-        : final.mode === 'bottom'
-          ? { ended_at: at(final.end) }
-          : { started_at: at(final.start), ended_at: at(final.end) }
-    // The hook keeps the released block drawn at its new time; it goes once the save has settled.
-    update.mutate({ id: final.sessionId, changes }, { onSettled: () => drag.setDraft(null) })
+    const times = { day: final.day, start: final.start, end: final.end }
+    setEditTimes(editTimes !== null && selectedId === final.sessionId ? times : null)
+    if (groupIds && !groupIds.includes(final.sessionId)) setGroupIds(null)
+    setSelectedId(final.sessionId)
   }
   const drag = useGridDrag({
     pxPerMinute,
@@ -165,6 +164,9 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     />
   )
   const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null
+  /** The new time of the chosen session, not saved yet (ADJ-01). */
+  const pending =
+    drag.draft !== null && !drag.dragging && selected !== null && drag.draft.sessionId === selected.id ? drag.draft : null
 
   /** Another week closes the panel without recording (AGENDA-47). */
   const goTo = (next: string) => {
@@ -189,6 +191,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   }
 
   const select = (session: AgendaSession) => {
+    // A click on the block whose new time is pending keeps it; another block drops it (ADJ-06).
+    if (pending && session.id === pending.sessionId) return
     drag.setDraft(null)
     setEditTimes(null)
     setGroupIds(null)
@@ -339,25 +343,58 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               key={selected.id}
               editing={selected}
               times={editTimes}
-              onTimesChange={setEditTimes}
+              // The block follows the fields until the form is saved or cancelled (ADJ-08).
+              onTimesChange={(times) => {
+                setEditTimes(times)
+                drag.setDraft({ mode: 'move', ...times, sessionId: selected.id })
+              }}
               timezone={timezone}
               now={now}
               sessions={overlapping}
               defaultListId={selected.list_id}
-              onCancel={() => setEditTimes(null)}
+              onCancel={() => {
+                setEditTimes(null)
+                drag.setDraft(null)
+              }}
               onSave={async (input) => {
                 const { started_at, ended_at } = input
                 const changes: AgendaSessionChanges =
                   input.kind === 'task' ? { started_at, ended_at, task_id: input.task_id } : { started_at, ended_at, list_id: input.list_id }
                 // The panel shows a refusal itself (AGENDA-31).
                 await update.mutateAsync({ id: selected.id, changes, quiet: true })
+                drag.setDraft(null)
                 // A session chosen from a joined block goes back into it once saved (MERGE-31).
                 if (groupIds) closeSelected()
                 else setEditTimes(null)
               }}
             />
           )}
-          {!draft && selected && !editTimes && (
+          {!draft && selected && pending && !editTimes && canWrite && (
+            <SessionMoveConfirm
+              key={selected.id}
+              session={selected}
+              times={{ day: pending.day, start: pending.start, end: pending.end }}
+              timezone={timezone}
+              now={now}
+              sessions={overlapping}
+              onCancel={() => drag.setDraft(null)}
+              onSave={async () => {
+                const at = (minute: number) => zonedInstant(pending.day, minute, timezone).toISOString()
+                const changes: AgendaSessionChanges =
+                  pending.mode === 'top'
+                    ? { started_at: at(pending.start) }
+                    : pending.mode === 'bottom'
+                      ? { ended_at: at(pending.end) }
+                      : { started_at: at(pending.start), ended_at: at(pending.end) }
+                // The panel shows a refusal itself (ADJ-04); the block stays at the new time until the cache has it (ADJ-02).
+                await update.mutateAsync({ id: selected.id, changes, quiet: true })
+                drag.setDraft(null)
+                // A session chosen from a joined block goes back into it once saved (ADJ-09).
+                if (groupIds) closeSelected()
+              }}
+            />
+          )}
+          {!draft && selected && !editTimes && !pending && (
             <SessionDetails
               key={selected.id}
               session={selected}

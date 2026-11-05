@@ -191,14 +191,14 @@ T5 → T6
 
 **Done when**:
 
-- [ ] Arrastar um bloco salvo das 11:00 para as 13:00 não faz requisição e abre o painel com os dois horários; o bloco está às 13:00
-- [ ] `Salvar horário` faz um `PATCH` com os novos horários; enquanto ele não responde e depois, o bloco está às 13:00 (nunca às 11:00); no fim, os detalhes da sessão
-- [ ] Uma recusa deixa o painel com a mensagem e o bloco às 13:00
-- [ ] `Cancelar` e Esc devolvem o bloco às 11:00, sem requisição, e mostram os detalhes
-- [ ] Clicar em outro bloco, começar um rascunho na grade vazia ou ir a outra semana descarta o pendente; o clique que vem depois de soltar o próprio bloco não descarta
-- [ ] Com `Editar` aberto, soltar o bloco às 13:00 muda os campos sem requisição; mudar o campo de início move o bloco; `Cancelar` devolve
-- [ ] Uma sessão escolhida de um bloco unido, salva num horário novo, volta ao bloco
-- [ ] Gate check passes: Full
+- [x] Arrastar um bloco salvo das 11:00 para as 13:00 não faz requisição e abre o painel com os dois horários; o bloco está às 13:00
+- [x] `Salvar horário` faz um `PATCH` com os novos horários; enquanto ele não responde e depois, o bloco está às 13:00 (nunca às 11:00); no fim, os detalhes da sessão
+- [x] Uma recusa deixa o painel com a mensagem e o bloco às 13:00
+- [x] `Cancelar` e Esc devolvem o bloco às 11:00, sem requisição, e mostram os detalhes
+- [x] Clicar em outro bloco, começar um rascunho na grade vazia ou ir a outra semana descarta o pendente; o clique que vem depois de soltar o próprio bloco não descarta
+- [x] Com `Editar` aberto, soltar o bloco às 13:00 muda os campos sem requisição; mudar o campo de início move o bloco; `Cancelar` devolve
+- [x] Uma sessão escolhida de um bloco unido, salva num horário novo, volta ao bloco
+- [x] Gate check passes: Full
 
 **Tests**: unit
 **Gate**: full
