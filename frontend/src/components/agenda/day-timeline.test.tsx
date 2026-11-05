@@ -32,6 +32,9 @@ function timeline(day: string, props: Partial<Parameters<typeof DayTimeline>[0]>
   return { ...result, ...handlers }
 }
 
+/** The header cell of the day, with its weekday, date and total (ADJ-16). */
+const head = (container: HTMLElement) => container.querySelector<HTMLElement>('[data-day-header]')!
+
 const pills = (name = 'Days of the week') => within(screen.getByRole('group', { name })).getAllByRole('button')
 
 describe('DayTimeline', () => {
@@ -63,16 +66,22 @@ describe('DayTimeline', () => {
     expect(onPickDay).toHaveBeenCalledWith('2026-11-06')
   })
 
-  it('heads the day with its weekday, date and total (AGENDA-37)', () => {
-    timeline('2026-11-03')
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tuesday, November 3, 2026 · 1hr')
+  it('ADJ-15 ADJ-16 ADJ-18 heads the day in the grid header with its weekday, whole date and total, and no title line', () => {
+    const { container } = timeline('2026-11-03', { corner: <button type="button">View options</button> })
+    const cells = [...container.querySelectorAll<HTMLElement>('[data-day-header]')]
+    expect(cells.map((cell) => cell.dataset.dayHeader)).toEqual(['2026-11-03'])
+    expect(cells[0]!.textContent).toBe('TueNovember 3, 20261hr')
+    expect(container.querySelector('[data-long-date]')).toHaveTextContent('November 3, 2026')
+    expect(screen.queryByRole('heading', { level: 2 })).toBeNull()
+    expect(container.querySelector('[data-agenda-header]')).toContainElement(screen.getByRole('button', { name: 'View options' }))
   })
 
   it('heads the day in Portuguese (AGENDA-37)', async () => {
     await i18n.changeLanguage('pt-BR')
     try {
-      timeline('2026-11-03')
-      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('terça-feira, 3 de novembro de 2026 · 1h')
+      const { container } = timeline('2026-11-04', { sessions: [{ ...tuesday, started_at: '2026-11-04T13:00:00.000Z', ended_at: '2026-11-04T15:34:00.000Z' }] })
+      // `QUA.` / `4 de Novembro de 2026` / `2h 34min`, the month with a capital letter (ADJ-16).
+      expect(head(container).textContent).toBe('qua.4 de Novembro de 20262h 34min')
       expect(pills('Dias da semana')[6]).toHaveTextContent(/^dom/)
     } finally {
       await i18n.changeLanguage('en')
@@ -88,9 +97,9 @@ describe('DayTimeline', () => {
   })
 
   it('tells a past day without sessions to tap + (AGENDA-42)', () => {
-    timeline('2026-11-02')
+    const { container } = timeline('2026-11-02')
     expect(screen.getByText('No sessions on this day. Tap + to record one.')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Monday, November 2, 2026')
+    expect(head(container).textContent).toBe('MonNovember 2, 2026')
   })
 
   it('tells a future day that it has not come yet (AGENDA-42)', () => {
@@ -125,7 +134,7 @@ describe('DayTimeline with hidden sessions (#22)', () => {
     const { container } = timeline('2026-11-03', { sessions: [tuesday, short], hidden })
     expect(container.querySelector('[data-session-id="b"]')).toBeNull()
     expect(container.querySelector('[data-session-id="a"]')).not.toBeNull()
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tuesday, November 3, 2026 · 1hr 2min')
+    expect(head(container)).toHaveTextContent('November 3, 20261hr 2min')
   })
 
   it('HIDE-15 gives the whole width to a block that overlaps only a hidden one', () => {
@@ -136,7 +145,7 @@ describe('DayTimeline with hidden sessions (#22)', () => {
   it('shows the total and no block, without the empty-day message, on a day whose sessions are all hidden', () => {
     const { container } = timeline('2026-11-03', { sessions: [short], hidden })
     expect(container.querySelectorAll('[data-session-id]')).toHaveLength(0)
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tuesday, November 3, 2026 · 2min')
+    expect(head(container)).toHaveTextContent('November 3, 20262min')
     expect(screen.queryByText('No sessions on this day. Tap + to record one.')).toBeNull()
   })
 })
@@ -164,7 +173,7 @@ describe('DayTimeline with joined sessions (#23)', () => {
     expect([joined.style.left, joined.style.width]).toEqual(['0%', '50%'])
     expect(screen.getByRole('button', { name: 'Answer tickets, 10:30 – 11:00' }).style.width).toBe('50%')
     // 41 + 11 + 30 minutes, without the 4 minutes between the Produto sessions.
-    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Tuesday, November 3, 2026 · 1hr 22min')
+    expect(head(container)).toHaveTextContent('November 3, 20261hr 22min')
   })
 
   it('MERGE-21 gives a joined block alone the whole width', () => {
@@ -201,18 +210,23 @@ describe('DayTimeline with joined sessions (#23)', () => {
 })
 
 describe('DayTimeline corner (#26)', () => {
-  it('DAYS-02 draws the corner control at the top of the hour column, sticky while the timeline scrolls, and not hidden from assistive tech', () => {
+  it('DAYS-02 ADJ-15 draws the corner control in the first cell of the header, not floating over the timeline', () => {
     const { container } = timeline('2026-11-03', { corner: <button type="button">View options</button> })
-    const scroller = container.querySelector<HTMLElement>('[data-agenda-scroll]')!
-    const corner = within(scroller).getByRole('button', { name: 'View options' })
-    const sticky = corner.closest('[data-agenda-corner]')!
-    expect(sticky).toHaveClass('sticky', 'top-0')
-    expect(corner.closest('[aria-hidden="true"]')).toBeNull()
-    expect(scroller.firstElementChild).toBe(sticky)
-  })
-
-  it('draws no corner without one', () => {
-    const { container } = timeline('2026-11-03')
+    const corner = screen.getByRole('button', { name: 'View options' })
+    expect(container.querySelector('[data-agenda-header]')).toContainElement(corner)
+    expect(container.querySelector('[data-agenda-scroll]')).not.toContainElement(corner)
     expect(container.querySelector('[data-agenda-corner]')).toBeNull()
+    expect(corner.closest('[aria-hidden="true"]')).toBeNull()
+  })
+})
+
+describe('DayTimeline grid (#29)', () => {
+  it('ADJ-15 draws the blocks, the now line and the hatched future of today in the single column', () => {
+    const today: AgendaSession = { ...tuesday, id: 'w', started_at: '2026-11-04T13:00:00.000Z', ended_at: '2026-11-04T14:00:00.000Z' }
+    const { container } = timeline('2026-11-04', { sessions: [today] })
+    const column = container.querySelector('[data-agenda-column="2026-11-04"]')!
+    expect(within(column as HTMLElement).getByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
+    expect(column.querySelector('[data-now-line]')).not.toBeNull()
+    expect(column.querySelector('[data-future]')).not.toBeNull()
   })
 })

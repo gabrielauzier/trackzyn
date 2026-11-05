@@ -217,11 +217,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] Na visão Dia, o cabeçalho tem o botão de exibição na primeira célula e a célula do dia com `qua.`, `4 de Novembro de 2026` e o total
-- [ ] Na semana, as células continuam com o dia da semana, o número e o total
-- [ ] A faixa dos 7 dias, as setas e as mensagens de dia vazio e futuro continuam; o título `Quarta-feira, 4 de novembro de 2026` não aparece
-- [ ] Os blocos, a linha de agora, o futuro hachurado, os blocos unidos e os escondidos continuam como antes na visão Dia
-- [ ] Gate check passes: Quick
+- [x] Na visão Dia, o cabeçalho tem o botão de exibição na primeira célula e a célula do dia com `qua.`, `4 de Novembro de 2026` e o total
+- [x] Na semana, as células continuam com o dia da semana, o número e o total
+- [x] A faixa dos 7 dias, as setas e as mensagens de dia vazio e futuro continuam; o título `Quarta-feira, 4 de novembro de 2026` não aparece
+- [x] Os blocos, a linha de agora, o futuro hachurado, os blocos unidos e os escondidos continuam como antes na visão Dia
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

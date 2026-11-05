@@ -45,6 +45,8 @@ interface WeekGridProps {
   onSelectGroup?: (members: AgendaSession[]) => void
   /** The ids of the sessions of the chosen joined block; the block shows selected. */
   selectedGroup?: string[] | null
+  /** Heads each day with its whole date, `4 de Novembro de 2026`, in place of the day number: the day view (ADJ-16). */
+  longDate?: boolean
 }
 
 /** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
@@ -52,6 +54,14 @@ function targetOf(piece: Piece, timezone: string): DragTarget {
   const midnight = zonedInstant(piece.day, 0, timezone).getTime()
   const minutes = (instant: string) => Math.round((Date.parse(instant) - midnight) / 60_000)
   return { day: piece.day, start: minutes(piece.session.started_at), end: minutes(piece.session.ended_at!), sessionId: piece.session.id }
+}
+
+/** `4 de Novembro de 2026`: the day, the month name with a capital letter and the year (ADJ-16). */
+function longDateLabel(day: string, locale: string): string {
+  const parts = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).formatToParts(
+    new Date(`${day}T00:00:00Z`),
+  )
+  return parts.map((part) => (part.type === 'month' ? part.value.charAt(0).toLocaleUpperCase(locale) + part.value.slice(1) : part.value)).join('')
 }
 
 function weekdayLabel(day: string, locale: string): string {
@@ -78,6 +88,7 @@ export function WeekGrid({
   onSelectGroup,
   selectedGroup = null,
   corner,
+  longDate = false,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -127,9 +138,13 @@ export function WeekGrid({
               className={cn('flex flex-1 flex-col items-center gap-0.5 border-l py-2', day === today && 'text-primary')}
             >
               <span className="text-xs uppercase text-muted-foreground">{weekdayLabel(day, locale)}</span>
-              <span className="text-lg font-semibold leading-none">
-                {Number(day.slice(8))}
-              </span>
+              {longDate ? (
+                <span data-long-date className="text-base font-semibold leading-tight">
+                  {longDateLabel(day, locale)}
+                </span>
+              ) : (
+                <span className="text-lg font-semibold leading-none">{Number(day.slice(8))}</span>
+              )}
               <span className="h-4 text-xs tabular-nums text-muted-foreground">
                 {total > 0 ? formatDuration(total, locale) : ''}
               </span>

@@ -2,19 +2,11 @@ import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
-import { formatDuration } from '@/components/board/format-duration'
-import { SessionBlock } from '@/components/agenda/session-block'
-import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
+import { WeekGrid, type GridDrag } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
-import { minuteClock } from '@/lib/agenda/format'
-import { joinPieces } from '@/lib/agenda/join'
-import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf, mondayOf, weekDays } from '@/lib/agenda/layout'
-import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
+import { dayOf, dayPieces, mondayOf, weekDays } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
 import type { AgendaSession } from '@/types'
-
-const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
-const HATCH = 'repeating-linear-gradient(135deg, var(--muted) 0 6px, transparent 6px 12px)'
 
 interface DayTimelineProps {
   /** The day shown, YYYY-MM-DD in the workspace timezone. */
@@ -26,13 +18,15 @@ interface DayTimelineProps {
   onPickDay: (day: string) => void
   /** Moves to the week before (-1) or after (1). */
   onWeek: (direction: -1 | 1) => void
-  /** Opens `Nova sessão` on the day; absent for a user who cannot write (AGENDA-44). */
+  /** Opens `Nova sessão` on the day with the round `+` button; absent for a viewer and on wide screens (ADJ-19). */
   onNew?: () => void
+  /** The gestures of the grid, as in the week; absent for a viewer and on narrow screens (ADJ-19). */
+  drag?: GridDrag
   selectedId?: string | null
   onSelect?: (session: AgendaSession) => void
   /** Pixels per minute, from the zoom; the default zoom's scale when absent. */
   pxPerMinute?: number
-  /** Whether a session stays off the timeline (HIDE-11); it still counts in the total and the empty message (HIDE-14). */
+  /** Whether a session stays off the grid (HIDE-11); it still counts in the total and the empty message (HIDE-14). */
   hidden?: (session: AgendaSession) => boolean
   /** Sessions of one list and kind this many minutes apart or less are drawn as one block (MERGE-11); null keeps them apart. */
   joinGap?: number | null
@@ -42,16 +36,16 @@ interface DayTimelineProps {
   onSelectGroup?: (members: AgendaSession[]) => void
   /** The ids of the sessions of the chosen joined block; the block shows selected. */
   selectedGroup?: string[] | null
-  /** A control drawn at the top of the hour column, above the timeline (DAYS-02). */
+  /** A control drawn in the first cell of the header, above the hour column (ADJ-15). */
   corner?: ReactNode
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
 
 /**
- * The agenda of one day, for narrow screens (AGENDA-36 to AGENDA-38, AGENDA-42, AGENDA-43): the pills of
- * the seven days from Monday, a dot on the days with sessions, the week arrows, the day and its total, a
- * single-column timeline, the messages of an empty or a future day, and the `+` button.
+ * The agenda of one day (AGENDA-36 to AGENDA-38, AGENDA-42, AGENDA-43): the pills of the seven days from Monday, a dot
+ * on the days with sessions, the week arrows, the messages of an empty or a future day, and the week grid with the day
+ * alone, headed by its whole date (ADJ-15 to ADJ-18). The round `+` button shows when `onNew` is given.
  */
 export function DayTimeline({
   day,
@@ -61,9 +55,10 @@ export function DayTimeline({
   onPickDay,
   onWeek,
   onNew,
+  drag,
   selectedId = null,
   onSelect,
-  pxPerMinute = PX_PER_MINUTE,
+  pxPerMinute,
   hidden,
   joinGap = null,
   apartId = null,
@@ -73,17 +68,11 @@ export function DayTimeline({
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute)
   const days = useMemo(() => weekDays(mondayOf(day)), [day])
   const pieces = useMemo(() => dayPieces(sessions, days, timezone, now), [sessions, days, timezone, now])
   const today = dayOf(now, timezone)
   const ofDay = pieces.get(day) ?? []
-  const laid = assignLanes(joinPieces(hidden ? ofDay.filter((piece) => !hidden(piece.session)) : ofDay, joinGap, apartId))
-  const total = dayTotal(ofDay)
-  const limit = dayLimit(day, now, timezone)
-
-
-  const title = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(utc(day))
+  const single = useMemo(() => [day], [day])
 
   return (
     <div className="relative flex flex-col gap-3">
@@ -120,78 +109,29 @@ export function DayTimeline({
         </Button>
       </div>
 
-      <h2 className="text-base font-semibold first-letter:uppercase" aria-live="polite">
-        {total > 0 ? `${title} · ${formatDuration(total, locale)}` : title}
-      </h2>
-
       {ofDay.length === 0 && (
         <p className="rounded-lg border border-dashed px-3 py-2 text-center text-sm text-muted-foreground">
           {day > today ? t('agenda.futureDay') : t('agenda.emptyDay')}
         </p>
       )}
 
-      <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-18rem)] min-h-80 overflow-y-auto rounded-xl border bg-card">
-        {/* Over the top of the hour column, kept in view while the timeline scrolls (DAYS-02). */}
-        {corner && (
-          <div data-agenda-corner className="sticky top-0 z-20 h-0">
-            <div className="flex w-12 justify-center pt-1.5">{corner}</div>
-          </div>
-        )}
-        <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
-          <div className="relative w-12 shrink-0" aria-hidden>
-            {HOURS.map((hour) => (
-              <span
-                key={hour}
-                className="absolute right-2 -translate-y-1/2 text-[10px] tabular-nums text-muted-foreground"
-                style={{ top: hour * 60 * pxPerMinute }}
-              >
-                {hour === 0 ? '' : minuteClock(hour * 60)}
-              </span>
-            ))}
-          </div>
-          <div data-agenda-column={day} className="relative flex-1 border-l">
-            {HOURS.map((hour) => (
-              <div
-                key={hour}
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 border-t border-border/60"
-                style={{ top: hour * 60 * pxPerMinute }}
-              />
-            ))}
-            {limit < DAY_MINUTES && (
-              <div
-                aria-hidden
-                data-future
-                className="pointer-events-none absolute inset-x-0 bottom-0"
-                style={{ top: limit * pxPerMinute, backgroundImage: HATCH }}
-              />
-            )}
-            <div className="absolute inset-0 mx-0.5">
-              {laid.map((piece) => {
-                const members = piece.members
-                return (
-                  <SessionBlock
-                    key={members ? `group:${piece.session.id}` : piece.session.id}
-                    piece={piece}
-                    pxPerMinute={pxPerMinute}
-                    timezone={timezone}
-                    selected={members ? members.some((member) => selectedGroup?.includes(member.id)) : piece.session.id === selectedId}
-                    onSelect={members ? onSelectGroup && (() => onSelectGroup(members)) : onSelect && (() => onSelect(piece.session))}
-                  />
-                )
-              })}
-            </div>
-            {day === today && (
-              <div
-                aria-hidden
-                data-now-line
-                className="pointer-events-none absolute inset-x-0 z-30 h-0.5 bg-primary"
-                style={{ top: minuteOf(now, timezone) * pxPerMinute }}
-              />
-            )}
-          </div>
-        </div>
-      </div>
+      <WeekGrid
+        days={single}
+        longDate
+        corner={corner}
+        sessions={sessions}
+        timezone={timezone}
+        now={now}
+        drag={drag}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        pxPerMinute={pxPerMinute}
+        hidden={hidden}
+        joinGap={joinGap}
+        apartId={apartId}
+        onSelectGroup={onSelectGroup}
+        selectedGroup={selectedGroup}
+      />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}
       {onNew && day <= today && (

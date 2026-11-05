@@ -85,6 +85,12 @@ afterEach(async () => {
 })
 
 const weekHeading = () => screen.findByRole('heading', { level: 2 })
+/** The header cell of the day view, with its weekday, date and total (ADJ-16). */
+const dayHeader = async (day?: string) => {
+  const selector = day ? `[data-day-header="${day}"]` : '[data-day-header]'
+  await waitFor(() => expect(document.querySelector(selector)).not.toBeNull())
+  return document.querySelector<HTMLElement>(selector)!
+}
 
 describe('AgendaPage', () => {
   it('opens on the current week and moves to the next one (AGENDA-08)', async () => {
@@ -986,7 +992,8 @@ describe('AgendaPage', () => {
       setWidth(390)
       const { container } = renderWithProviders(<AgendaPage />)
       expect(await screen.findByRole('group', { name: 'Days of the week' })).toBeInTheDocument()
-      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026')
+      expect(await dayHeader('2026-11-04')).toHaveTextContent('November 4, 2026')
+      expect(screen.queryByRole('heading', { level: 2 })).toBeNull()
       expect(container.querySelectorAll('[data-agenda-column]')).toHaveLength(1)
       expect(screen.queryByRole('group', { name: 'View' })).toBeNull()
     })
@@ -1002,7 +1009,7 @@ describe('AgendaPage', () => {
 
       expect(await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Write the report, 10:30 – 10:32' })).toBeNull()
-      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026 · 1hr 2min')
+      expect(await dayHeader('2026-11-04')).toHaveTextContent('November 4, 20261hr 2min')
     })
 
     it('MERGE-23 joins the two Work sessions into one block in the day view at 390 px, and picks one from it', async () => {
@@ -1023,7 +1030,7 @@ describe('AgendaPage', () => {
       const block = await screen.findByRole('button', { name: 'Work, 2 sessions, 10:20 – 11:16' })
       expect(screen.queryByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeNull()
       // The day total is the sum of the sessions, not the gap (MERGE-20).
-      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026 · 52min')
+      expect(await dayHeader('2026-11-04')).toHaveTextContent('November 4, 202652min')
 
       await user.click(block)
       const panel = screen.getByRole('complementary', { name: 'Work · 2 sessions' })
@@ -1037,7 +1044,8 @@ describe('AgendaPage', () => {
       localStorage.setItem('agenda.days', '[0,1,2,3,4]')
       const { user, container } = renderWithProviders(<AgendaPage />)
       const button = await screen.findByRole('button', { name: 'View options' })
-      expect(container.querySelector('[data-agenda-corner]')).toContainElement(button)
+      // In the first cell of the header, as in the week (ADJ-15).
+      expect(container.querySelector('[data-agenda-header]')).toContainElement(button)
       await user.click(button)
       const panel = await screen.findByRole('dialog', { name: 'View options' })
       expect(within(panel).getByRole('group', { name: 'Zoom' })).toBeInTheDocument()
@@ -1051,7 +1059,7 @@ describe('AgendaPage', () => {
       const wednesday: AgendaSession = { ...monday, id: 's9', started_at: '2026-11-04T12:00:00.000Z', ended_at: '2026-11-04T13:00:00.000Z' }
       vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, wednesday] })
       renderWithProviders(<AgendaPage />)
-      expect(await screen.findByRole('heading', { level: 2 })).toHaveTextContent('Wednesday, November 4, 2026')
+      expect(await dayHeader('2026-11-04')).toHaveTextContent('November 4, 2026')
       expect(await screen.findByRole('button', { name: 'Write the report, 09:00 – 10:00' })).toBeInTheDocument()
     })
 
@@ -1076,7 +1084,7 @@ describe('AgendaPage', () => {
       setWidth(390)
       const { user, container } = renderWithProviders(<AgendaPage />)
       await pickInCalendar(user, '12')
-      expect(await weekHeading()).toHaveTextContent('Thursday, November 12, 2026')
+      expect(await dayHeader('2026-11-12')).toHaveTextContent('November 12, 2026')
       expect(container.querySelector('[data-day-pill="2026-11-12"]')).toHaveAttribute('aria-pressed', 'true')
       expect(screen.queryByRole('dialog')).toBeNull()
       await waitFor(() => expect(sessions.list).toHaveBeenCalledWith({ from: '2026-11-09', to: '2026-11-15' }))
@@ -1086,7 +1094,7 @@ describe('AgendaPage', () => {
       setWidth(390)
       const { user } = renderWithProviders(<AgendaPage />)
       await user.click(await screen.findByRole('button', { name: 'Next week' }))
-      expect(await weekHeading()).toHaveTextContent('Monday, November 9, 2026')
+      expect(await dayHeader('2026-11-09')).toHaveTextContent('November 9, 2026')
     })
 
     it('shows the day of a tapped pill and opens New session on it from + (AGENDA-37, AGENDA-43)', async () => {
@@ -1094,7 +1102,7 @@ describe('AgendaPage', () => {
       const { user, container } = renderWithProviders(<AgendaPage />)
       await screen.findByRole('group', { name: 'Days of the week' })
       await user.click(container.querySelector<HTMLElement>('[data-day-pill="2026-11-02"]')!)
-      expect(await weekHeading()).toHaveTextContent('Monday, November 2, 2026 · 1hr')
+      expect(await dayHeader('2026-11-02')).toHaveTextContent('November 2, 20261hr')
       expect(screen.getByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'New session' }))
       expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()

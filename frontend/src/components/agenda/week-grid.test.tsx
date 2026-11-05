@@ -90,6 +90,12 @@ describe('WeekGrid', () => {
     expect(header(container, '2026-11-02')).toHaveTextContent('6hr 15min')
   })
 
+  it('ADJ-17 heads the week days with their weekday and day number, never the whole date', () => {
+    const { container } = renderWithProviders(<Grid sessions={[]} />)
+    expect(container.querySelector('[data-long-date]')).toBeNull()
+    expect(header(container, '2026-11-04').textContent).toBe('Wed4')
+  })
+
   it('leaves the days without sessions without a total (AGENDA-11)', () => {
     const { container } = renderWithProviders(<Grid sessions={[]} />)
     for (const day of WEEK) expect(header(container, day).textContent).toMatch(/^[A-Za-z]{3}\d{1,2}$/)
