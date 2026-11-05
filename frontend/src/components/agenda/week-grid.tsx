@@ -87,6 +87,8 @@ export function WeekGrid({
   const draft = drag?.draft ?? null
   const newDraft = draft !== null && draft.sessionId === null ? draft : null
   const adjusting = draft !== null && draft.sessionId !== null ? draft : null
+  // While a block moves, the closed hand shows wherever the pointer goes (ADJ-14).
+  const grabbing = Boolean(drag?.dragging) && draft?.mode === 'move'
   // The session being adjusted follows the pointer until it is released.
   const shown = useMemo(
     () =>
@@ -109,7 +111,10 @@ export function WeekGrid({
 
 
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card">
+    <div
+      data-grabbing={grabbing || undefined}
+      className={cn('flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card', grabbing && 'cursor-grabbing [&_*]:cursor-grabbing')}
+    >
       {/* Both reserve the scrollbar's width, so the day headers line up with the columns under them. */}
       <div data-agenda-header className="flex overflow-y-hidden border-b [scrollbar-gutter:stable]">
         <div className="flex w-14 shrink-0 items-center justify-center">{corner}</div>
@@ -190,6 +195,7 @@ export function WeekGrid({
                         pxPerMinute={pxPerMinute}
                         timezone={timezone}
                         selected={selected}
+                        movable={target !== null}
                         onSelect={members ? onSelectGroup && (() => onSelectGroup(members)) : onSelect && (() => onSelect(piece.session))}
                         onPointerDown={(event) => (target ? drag!.startMove(event, target) : event.stopPropagation())}
                       >
@@ -218,8 +224,10 @@ export function WeekGrid({
                   {newDraft && newDraft.day === day && (
                     <div
                       data-draft
-                      className="absolute inset-x-0 z-20 rounded-md border-2 border-dashed border-primary bg-primary/15 px-1.5 text-xs font-medium tabular-nums"
+                      className="absolute inset-x-0 z-20 cursor-grab rounded-md border-2 border-dashed border-primary bg-primary/15 px-1.5 text-xs font-medium tabular-nums"
                       style={{ top: newDraft.start * pxPerMinute, height: (newDraft.end - newDraft.start) * pxPerMinute }}
+                      // The middle moves the new session; the edges below pull it (ADJ-12, ADJ-13).
+                      onPointerDown={(event) => drag?.startMove(event, { day: newDraft.day, start: newDraft.start, end: newDraft.end, sessionId: null })}
                     >
                       {t('agenda.range', { start: minuteClock(newDraft.start), end: minuteClock(newDraft.end) })}
                       {(['top', 'bottom'] as const).map((edge) => (

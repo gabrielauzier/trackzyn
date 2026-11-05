@@ -21,6 +21,8 @@ interface SessionBlockProps {
   selected?: boolean
   onSelect?: () => void
   onPointerDown?: (event: PointerEvent<HTMLDivElement>) => void
+  /** Whether the block moves when dragged: its body shows the open hand (ADJ-14). */
+  movable?: boolean
   /** The edge handles of a selected block. */
   children?: ReactNode
 }
@@ -32,7 +34,7 @@ interface SessionBlockProps {
  * A joined block (`piece.members`) carries only the count of its sessions in its top right corner, and its
  * tooltip lists each session (MERGE-25, MERGE-26, MERGE-32).
  */
-export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, onSelect, onPointerDown, children }: SessionBlockProps) {
+export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, onSelect, onPointerDown, movable = false, children }: SessionBlockProps) {
   const { t } = useTranslation()
   const { session } = piece
   const isBreak = session.kind === 'break'
@@ -84,6 +86,7 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
               'focus-visible:[--session-tint:var(--session-tint-hover)] focus-visible:outline-(--block-color)',
               isBreak ? 'border border-dashed border-muted-foreground bg-muted' : 'border border-l-4',
               piece.running && 'border-2 border-primary',
+              movable && 'cursor-grab',
               selected && 'z-10 [--session-tint:var(--session-tint-hover)] ring-2 ring-ring ring-offset-1 ring-offset-background',
             )}
             style={style}

@@ -145,11 +145,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] Pressionar o meio do rascunho e arrastar 60 min move o rascunho sem criar um segundo
-- [ ] O bloco salvo que se move e o rascunho têm `cursor-grab`; a sessão aberta e o bloco unido não têm; as bordas têm `cursor-ns-resize`
-- [ ] Durante um `move`, a grade tem `data-grabbing`; depois de soltar, não
-- [ ] O rascunho não mostra texto além do horário
-- [ ] Gate check passes: Quick
+- [x] Pressionar o meio do rascunho e arrastar 60 min move o rascunho sem criar um segundo
+- [x] O bloco salvo que se move e o rascunho têm `cursor-grab`; a sessão aberta e o bloco unido não têm; as bordas têm `cursor-ns-resize`
+- [x] Durante um `move`, a grade tem `data-grabbing`; depois de soltar, não
+- [x] O rascunho não mostra texto além do horário
+- [x] Gate check passes: Quick
 
 **Tests**: unit
 **Gate**: quick

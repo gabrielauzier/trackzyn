@@ -362,4 +362,64 @@ describe('WeekGrid', () => {
     expect(container.querySelector('[data-draft]')).toBeNull()
     expect(screen.getByRole('button', { name: 'Task a, 13:00 – now' })).toBeInTheDocument()
   })
+  describe('moving the new session and the hand pointer (#29)', () => {
+    const clickAt = (element: HTMLElement, minuteY: number) => {
+      fireEvent.pointerDown(element, { clientY: minuteY, button: 0 })
+      fireEvent.pointerUp(window, { clientY: minuteY })
+    }
+
+    it('ADJ-12 ADJ-13 moves the draft by its middle, without starting a second one', () => {
+      const onCommit = vi.fn()
+      const { container } = renderWithProviders(<Grid sessions={[]} onCommit={onCommit} />)
+      clickAt(column(container, '2026-11-03'), y(10, 5))
+      const draft = container.querySelector<HTMLElement>('[data-draft]')!
+      expect(draft).toHaveTextContent('10:00 – 11:00')
+
+      fireEvent.pointerDown(draft, { clientY: y(10, 30), button: 0 })
+      fireEvent.pointerMove(window, { clientY: y(11, 30) })
+      fireEvent.pointerUp(window, { clientY: y(11, 30) })
+      expect(container.querySelectorAll('[data-draft]')).toHaveLength(1)
+      expect(container.querySelector('[data-draft]')).toHaveTextContent('11:00 – 12:00')
+      expect(onCommit).toHaveBeenLastCalledWith({ mode: 'move', day: '2026-11-03', start: 11 * 60, end: 12 * 60, sessionId: null })
+    })
+
+    it('ADJ-14 gives the open hand to the draft and a block that moves, not to the running nor a joined block, and resize to the edges', () => {
+      const { container } = renderWithProviders(
+        <Grid
+          sessions={[
+            ended(),
+            session('r', '2026-11-04T16:00:00.000Z', null),
+            // Monday 09:00 – 09:30 and 09:35 – 10:00, joined 5 minutes apart.
+            session('j1', '2026-11-02T12:00:00.000Z', '2026-11-02T12:30:00.000Z'),
+            session('j2', '2026-11-02T12:35:00.000Z', '2026-11-02T13:00:00.000Z'),
+          ]}
+          selectedId="a"
+          joinGap={10}
+        />,
+      )
+      const block = screen.getByRole('button', { name: 'Task a, 14:00 – 15:00' })
+      expect(block).toHaveClass('cursor-grab')
+      expect(screen.getByRole('button', { name: 'Task r, 13:00 – now' })).not.toHaveClass('cursor-grab')
+      expect(container.querySelector('[data-joined]')).not.toHaveClass('cursor-grab')
+      for (const handle of block.querySelectorAll('[data-handle]')) expect(handle).toHaveClass('cursor-ns-resize')
+
+      clickAt(column(container, '2026-11-03'), y(9, 5))
+      const draft = container.querySelector<HTMLElement>('[data-draft]')!
+      expect(draft).toHaveClass('cursor-grab')
+      for (const handle of draft.querySelectorAll('[data-handle]')) expect(handle).toHaveClass('cursor-ns-resize')
+      // The draft carries its times and nothing else.
+      expect(draft.textContent).toBe('09:00 – 10:00')
+    })
+
+    it('ADJ-14 shows the closed hand on the grid while a block moves, and not after', () => {
+      const { container } = renderWithProviders(<Grid sessions={[ended()]} />)
+      const root = container.firstElementChild as HTMLElement
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Task a, 14:00 – 15:00' }), { clientY: y(14, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientY: y(15, 10) })
+      expect(root).toHaveAttribute('data-grabbing')
+      expect(root).toHaveClass('cursor-grabbing')
+      fireEvent.pointerUp(window, { clientY: y(15, 10) })
+      expect(root).not.toHaveAttribute('data-grabbing')
+    })
+  })
 })
