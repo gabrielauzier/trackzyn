@@ -45,6 +45,8 @@ interface WeekGridProps {
   onSelectGroup?: (members: AgendaSession[]) => void
   /** The ids of the sessions of the chosen joined block; the block shows selected. */
   selectedGroup?: string[] | null
+  /** The session hovered in the list of a joined block: it shows selected, without handles. */
+  previewId?: string | null
   /** Heads each day with its whole date, `4 de Novembro de 2026`, in place of the day number: the day view (ADJ-16). */
   longDate?: boolean
 }
@@ -89,6 +91,7 @@ export function WeekGrid({
   selectedGroup = null,
   corner,
   longDate = false,
+  previewId = null,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -200,9 +203,10 @@ export function WeekGrid({
                     const members = piece.members
                     // The running session ends now: it has no handles and does not move (AGENDA-33); nor does a joined block (MERGE-30).
                     const target = drag && !members && piece.session.ended_at !== null ? targetOf(piece, timezone) : null
+                    const chosen = !members && piece.session.id === selectedId
                     const selected = members
                       ? members.some((member) => selectedGroup?.includes(member.id))
-                      : piece.session.id === selectedId
+                      : chosen || piece.session.id === previewId
                     return (
                       <SessionBlock
                         key={members ? `group:${piece.session.id}` : piece.session.id}
@@ -215,7 +219,7 @@ export function WeekGrid({
                         onPointerDown={(event) => (target ? drag!.startMove(event, target) : event.stopPropagation())}
                       >
                         {target &&
-                          selected &&
+                          chosen &&
                           (['top', 'bottom'] as const)
                             // Each handle sits on the day that holds its edge.
                             .filter((edge) => (edge === 'top' ? target.start >= 0 : target.end <= DAY_MINUTES))

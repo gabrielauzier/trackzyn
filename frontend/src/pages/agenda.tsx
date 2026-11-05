@@ -220,7 +220,14 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   }
 
   // While a session is chosen the selection is that session; the block is selected only while its list shows.
-  const joining = { joinGap, apartId: selected?.id ?? previewing, onSelectGroup: selectGroup, selectedGroup: selected ? null : groupIds }
+  // The session hovered in the list of a joined block takes the selection off the rest of the block.
+  const joining = {
+    joinGap,
+    apartId: selected?.id ?? previewing,
+    onSelectGroup: selectGroup,
+    selectedGroup: selected || previewing ? null : groupIds,
+    previewId: previewing,
+  }
 
   return (
     <div className="flex flex-col gap-4">

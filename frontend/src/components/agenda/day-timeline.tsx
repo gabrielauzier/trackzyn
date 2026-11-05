@@ -36,6 +36,8 @@ interface DayTimelineProps {
   onSelectGroup?: (members: AgendaSession[]) => void
   /** The ids of the sessions of the chosen joined block; the block shows selected. */
   selectedGroup?: string[] | null
+  /** The session hovered in the list of a joined block: it shows selected, without handles. */
+  previewId?: string | null
   /** A control drawn in the first cell of the header, above the hour column (ADJ-15). */
   corner?: ReactNode
 }
@@ -64,6 +66,7 @@ export function DayTimeline({
   apartId = null,
   onSelectGroup,
   selectedGroup = null,
+  previewId = null,
   corner,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
@@ -131,6 +134,7 @@ export function DayTimeline({
         apartId={apartId}
         onSelectGroup={onSelectGroup}
         selectedGroup={selectedGroup}
+        previewId={previewId}
       />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}

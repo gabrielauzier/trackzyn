@@ -483,14 +483,31 @@ describe('AgendaPage', () => {
       const alone = screen.getByRole('button', { name: 'Review the notes, 11:05 – 11:16' })
       expect(screen.getByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
       expect(container.querySelector('[data-joined]')).toBeNull()
+      // The hovered session shows selected, not the rest of the block.
+      expect(alone).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toHaveAttribute('aria-pressed', 'false')
       // Only the grid changes: no handles, the list stays and nothing opens.
       expect(alone.querySelector('[data-handle]')).toBeNull()
       expect(screen.getByRole('complementary', { name: 'Work · 2 sessions' })).toBeInTheDocument()
       expect(screen.queryByRole('heading', { name: 'Review the notes' })).toBeNull()
 
       await user.unhover(item)
-      expect(await joined()).toBeInTheDocument()
+      expect(await joined()).toHaveAttribute('aria-pressed', 'true')
       expect(screen.queryByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toBeNull()
+    })
+
+    it('moves the selection to the hovered session, off the rest of a block of three', async () => {
+      // A third Work session at 11:03 to 11:04: hovering the 11:05 one leaves 10:20 – 11:01 and 11:03 – 11:04 joined.
+      const third: AgendaSession = { ...monday, id: 'c', task_title: 'Send the notes', started_at: '2026-11-02T14:03:00.000Z', ended_at: '2026-11-02T14:04:00.000Z' }
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [first, second, third] })
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await user.click(await screen.findByRole('button', { name: 'Work, 3 sessions, 10:20 – 11:16' }))
+      const panel = screen.getByRole('complementary', { name: 'Work · 3 sessions' })
+      await user.hover(within(panel).getByRole('button', { name: /Review the notes/ }))
+      expect(screen.getByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toHaveAttribute('aria-pressed', 'true')
+      const rest = container.querySelector<HTMLElement>('[data-joined]')!
+      expect(rest).toHaveAccessibleName('Work, 2 sessions, 10:20 – 11:04')
+      expect(rest).toHaveAttribute('aria-pressed', 'false')
     })
 
     it('draws nothing out of the block when the list opens again after a session was hovered and picked', async () => {
