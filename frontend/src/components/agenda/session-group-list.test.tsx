@@ -45,9 +45,18 @@ const members: AgendaSession[] = [
   }),
 ]
 
-const list = (handlers: { onPick?: (session: AgendaSession) => void; onClose?: () => void } = {}, sessions = members) =>
+const list = (
+  handlers: { onPick?: (session: AgendaSession) => void; onPreview?: (session: AgendaSession | null) => void; onClose?: () => void } = {},
+  sessions = members,
+) =>
   renderWithProviders(
-    <SessionGroupList sessions={sessions} timezone={SP} onPick={handlers.onPick ?? vi.fn()} onClose={handlers.onClose ?? vi.fn()} />,
+    <SessionGroupList
+      sessions={sessions}
+      timezone={SP}
+      onPick={handlers.onPick ?? vi.fn()}
+      onPreview={handlers.onPreview}
+      onClose={handlers.onClose ?? vi.fn()}
+    />,
   )
 
 describe('SessionGroupList (MERGE-27)', () => {
@@ -80,6 +89,22 @@ describe('SessionGroupList (MERGE-27)', () => {
     await user.click(buttons[1]!)
     expect(onPick).toHaveBeenCalledTimes(1)
     expect(onPick).toHaveBeenCalledWith(members[1])
+  })
+
+  it('hands a session hovered or focused to onPreview, and null when it leaves, without picking it', async () => {
+    const onPreview = vi.fn()
+    const onPick = vi.fn()
+    const { user } = list({ onPreview, onPick })
+    const buttons = within(screen.getByRole('list')).getAllByRole('button')
+    await user.hover(buttons[1]!)
+    expect(onPreview).toHaveBeenLastCalledWith(members[1])
+    await user.unhover(buttons[1]!)
+    expect(onPreview).toHaveBeenLastCalledWith(null)
+    buttons[2]!.focus()
+    expect(onPreview).toHaveBeenLastCalledWith(members[2])
+    buttons[2]!.blur()
+    expect(onPreview).toHaveBeenLastCalledWith(null)
+    expect(onPick).not.toHaveBeenCalled()
   })
 
   it('MERGE-31 closes on Close and on Esc', async () => {

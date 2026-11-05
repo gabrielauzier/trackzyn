@@ -127,9 +127,13 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   /** The sessions of the joined block clicked last (MERGE-27); a session chosen from it keeps it for the way back. */
   const [groupIds, setGroupIds] = useState<string[] | null>(null)
   const group = groupIds ? sessions.filter((session) => groupIds.includes(session.id) && !hidden(session)) : []
+  /** The session hovered in the list of a joined block, drawn out of it while the list shows. */
+  const [previewId, setPreviewId] = useState<string | null>(null)
+  const previewing = !selected && group.some((session) => session.id === previewId) ? previewId : null
 
   const closeSelected = () => {
     setSelectedId(null)
+    setPreviewId(null)
     setEditTimes(null)
     setGroupIds(null)
   }
@@ -202,6 +206,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   /** A click on a joined block lists its sessions (MERGE-27). */
   const selectGroup = (members: AgendaSession[]) => {
     drag.setDraft(null)
+    setPreviewId(null)
     setEditTimes(null)
     setSelectedId(null)
     setGroupIds(members.map((member) => member.id))
@@ -210,11 +215,12 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   /** A session chosen from the list opens alone, out of the block, with its handles (MERGE-28, MERGE-29). */
   const pickFromGroup = (session: AgendaSession) => {
     setEditTimes(null)
+    setPreviewId(null)
     setSelectedId(session.id)
   }
 
   // While a session is chosen the selection is that session; the block is selected only while its list shows.
-  const joining = { joinGap, apartId: selected?.id ?? null, onSelectGroup: selectGroup, selectedGroup: selected ? null : groupIds }
+  const joining = { joinGap, apartId: selected?.id ?? previewing, onSelectGroup: selectGroup, selectedGroup: selected ? null : groupIds }
 
   return (
     <div className="flex flex-col gap-4">
@@ -418,7 +424,13 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
           )}
           {/* While a delete is on its way the chosen session is gone from the list: no flash of the block's list. */}
           {!draft && !selected && group.length > 0 && !remove.isPending && (
-            <SessionGroupList sessions={group} timezone={timezone} onPick={pickFromGroup} onClose={closeSelected} />
+            <SessionGroupList
+              sessions={group}
+              timezone={timezone}
+              onPick={pickFromGroup}
+              onPreview={(session) => setPreviewId(session?.id ?? null)}
+              onClose={closeSelected}
+            />
           )}
         </div>
       )}

@@ -474,6 +474,33 @@ describe('AgendaPage', () => {
       expect(screen.queryByRole('heading', { name: 'Review the notes' })).toBeNull()
     })
 
+    it('draws the session hovered in the list out of its block, without opening it, and joins it again on leave', async () => {
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await user.click(await joined())
+      const panel = screen.getByRole('complementary', { name: 'Work · 2 sessions' })
+      const item = within(panel).getByRole('button', { name: /Review the notes/ })
+      await user.hover(item)
+      const alone = screen.getByRole('button', { name: 'Review the notes, 11:05 – 11:16' })
+      expect(screen.getByRole('button', { name: 'Write the report, 10:20 – 11:01' })).toBeInTheDocument()
+      expect(container.querySelector('[data-joined]')).toBeNull()
+      // Only the grid changes: no handles, the list stays and nothing opens.
+      expect(alone.querySelector('[data-handle]')).toBeNull()
+      expect(screen.getByRole('complementary', { name: 'Work · 2 sessions' })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: 'Review the notes' })).toBeNull()
+
+      await user.unhover(item)
+      expect(await joined()).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Review the notes, 11:05 – 11:16' })).toBeNull()
+    })
+
+    it('draws nothing out of the block when the list opens again after a session was hovered and picked', async () => {
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await pickSecond(user)
+      await user.click(screen.getByRole('button', { name: '‹ Work · 2 sessions' }))
+      expect(screen.getByRole('complementary', { name: 'Work · 2 sessions' })).toBeInTheDocument()
+      expect(container.querySelector('[data-joined]')).not.toBeNull()
+    })
+
     it('MERGE-31 joins the chosen session again with its neighbour once the details close', async () => {
       const { user } = renderWithProviders(<AgendaPage />)
       await pickSecond(user)

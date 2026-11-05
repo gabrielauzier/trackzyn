@@ -13,15 +13,17 @@ interface SessionGroupListProps {
   timezone: string
   /** A session was chosen: its details open (MERGE-28). */
   onPick: (session: AgendaSession) => void
+  /** A session hovered or focused in the list, to draw it out of its block on the grid; null when it leaves. */
+  onPreview?: (session: AgendaSession | null) => void
   onClose: () => void
 }
 
 /**
  * The panel of a joined block (MERGE-27): `<lista> · N sessões`, the day and the span of the block, how to pick a
  * session, and one button per session with its title (or `Intervalo`), where it was recorded, `HH:MM – HH:MM` and
- * its duration.
+ * its duration. Hovering or focusing a session draws it out of its block on the grid.
  */
-export function SessionGroupList({ sessions, timezone, onPick, onClose }: SessionGroupListProps) {
+export function SessionGroupList({ sessions, timezone, onPick, onPreview, onClose }: SessionGroupListProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const ordered = [...sessions].sort((a, b) => Date.parse(a.started_at) - Date.parse(b.started_at))
@@ -63,6 +65,11 @@ export function SessionGroupList({ sessions, timezone, onPick, onClose }: Sessio
                 type="button"
                 className="flex w-full flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
                 onClick={() => onPick(session)}
+                // Only the grid changes: the session is drawn alone, without opening it.
+                onMouseEnter={() => onPreview?.(session)}
+                onMouseLeave={() => onPreview?.(null)}
+                onFocus={() => onPreview?.(session)}
+                onBlur={() => onPreview?.(null)}
               >
                 <span className="text-sm font-medium">{session.kind === 'break' ? t('agenda.break') : (session.task_title ?? '')}</span>
                 <span className="text-xs text-muted-foreground">{t(`agenda.panel.origin.${session.origin}`)}</span>
