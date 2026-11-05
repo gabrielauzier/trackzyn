@@ -92,6 +92,12 @@ describe('SessionMoveConfirm', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
+  it('ADJ-07 does not warn about the session itself when the new time covers its saved time', () => {
+    // Moved half an hour later: 11:30 – 12:30 shares 11:30 – 12:00 with the saved 11:00 – 12:00.
+    confirm({ times: { day: '2026-11-04', start: 11 * 60 + 30, end: 12 * 60 + 30 }, sessions: [saved] })
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
   it('reads Novo horário — ainda não salvo and Salvar horário in Portuguese', async () => {
     await i18n.changeLanguage('pt-BR')
     confirm()

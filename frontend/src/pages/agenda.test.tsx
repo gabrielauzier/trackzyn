@@ -272,6 +272,18 @@ describe('AgendaPage', () => {
       expect(screen.queryByRole('status')).toBeNull()
     })
 
+    it('ADJ-25 keeps the breaks hidden after the agenda is opened again', async () => {
+      vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, pause] })
+      const first = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Break, 11:00 – 11:15' })
+      await turnOn(first.user)
+      first.unmount()
+
+      renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      expect(screen.queryByRole('button', { name: 'Break, 11:00 – 11:15' })).toBeNull()
+    })
+
     it('ADJ-25 opens with the breaks hidden when this device chose so last', async () => {
       localStorage.setItem('agenda.hideBreaks', 'true')
       vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, pause] })

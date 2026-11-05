@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: decisões abaixo (feature média, só no frontend, sem contrato novo; o desenho visual aprovado é o canvas `Agenda — lote de ajustes`, https://claude.ai/artifact/2SNF5jGMCfZaND1Uio8Udg)
-**Status**: Done
+**Status**: In progress
 **Pré-requisito**: a Agenda (#19), o menu de exibição (#26) e o seletor de tarefa (#27), na branch `feat/agenda`.
 
 ### Decisões técnicas
@@ -61,6 +61,12 @@ T1 → T2
 T3 → T4 → T7 → T8
 T3 → T6 → T8
 T5 → T6
+```
+
+### Phase 2: Fixes do Verifier (rodada 1)
+
+```
+T9 → T10
 ```
 
 ---
@@ -248,6 +254,49 @@ T5 → T6
 **Gate**: build
 
 **Commit**: `feat(frontend): take the drag gestures in the day view`
+
+---
+
+### T9: Testes que faltam para ADJ-07 e ADJ-25
+
+**What**: Um teste do aviso de sobreposição com o novo horário cobrindo o horário salvo da própria sessão, e um teste de página que liga `Ocultar intervalos`, reabre a Agenda e vê os intervalos ainda escondidos.
+**Where**: `frontend/src/components/agenda/session-move-confirm.test.tsx`, `frontend/src/pages/agenda.test.tsx`
+**Depends on**: None
+**Reuses**: os testes de T2 e T5
+**Requirement**: ADJ-07, ADJ-25
+
+**Done when**:
+
+- [x] Movida de 11:00–12:00 para 11:30–12:30, com só a própria sessão na lista, o painel não mostra aviso (mata M27)
+- [x] Ligar o switch, desmontar e montar a página de novo deixa os intervalos escondidos (mata M14)
+- [x] Gate check passes: Quick
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(frontend): cover the move panel overlap and saving hide breaks`
+
+---
+
+### T10: Testes do pendente escondido, da borda e do teclado
+
+**What**: Testes de página para o pendente mais curto que o mínimo do workspace, para a mão fechada que não aparece ao puxar uma borda, e para outro bloco aberto pelo teclado, que descarta o pendente.
+**Where**: `frontend/src/pages/agenda.test.tsx`, `frontend/src/components/agenda/week-grid.test.tsx`
+**Depends on**: T9
+**Reuses**: os testes de T4 e T6
+**Requirement**: ADJ-06, ADJ-14, edge case Sessão escondida
+
+**Done when**:
+
+- [ ] Com mínimo de 30 min, puxar o fim de 14:00–15:00 para 14:15 deixa o bloco desenhado com o painel de confirmação (mata M22)
+- [ ] Puxar uma borda não põe `data-grabbing` na grade (mata M24)
+- [ ] Com um horário pendente, Enter em outro bloco devolve o bloco ao horário salvo (mata M9)
+- [ ] Gate check passes: Build
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `test(frontend): prove the pending edge cases of the agenda drag`
 
 ---
 
