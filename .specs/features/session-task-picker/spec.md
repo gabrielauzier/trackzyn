@@ -81,7 +81,7 @@ O painel `Nova sessão` da Agenda escolhe a tarefa num select com todas as taref
 14. IF the title is empty or longer than 255 characters, or the estimate is outside 1 to 1440, THEN the modal SHALL show the message of the board form (`Use no máximo 255 caracteres`, `Use de 1 a 1440 minutos`, or the required title) and create nothing.  <!-- unwanted-behavior -->
 15. WHEN `Adicionar` is clicked with valid fields THEN the system SHALL create the task in the chosen list, in `Concluídas`, concluded now by the user, with origin `agenda`, the estimate, and the notes only while `Adicionar anotações` is on.  <!-- event-driven -->
 16. WHEN the task is created THEN the modal and the popover SHALL close and the `Tarefa` field of the panel SHALL show the new task.  <!-- event-driven -->
-17. The board card and the focus SHALL show a task with origin `agenda` as `via Agenda`.  <!-- ubiquitous -->
+17. The board card and the `Editar tarefa` modal SHALL show a task with origin `agenda` as `via Agenda`, where they show `via <token>` today.  <!-- ubiquitous -->
 18. IF the creation fails THEN the modal SHALL stay open with what was typed and show the error of the API.  <!-- unwanted-behavior -->
 19. WHEN `Cancelar`, Esc or the close button is used THEN the modal SHALL close without creating anything and the popover SHALL stay open.  <!-- event-driven -->
 20. IF a member who cannot write calls the creation THEN the system SHALL answer 403 and create nothing.  <!-- unwanted-behavior -->
@@ -102,28 +102,28 @@ O painel `Nova sessão` da Agenda escolhe a tarefa num select com todas as taref
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PICK-01 | P1: Achar | Design | Pending |
-| PICK-02 | P1: Achar | Design | Pending |
-| PICK-03 | P1: Achar | Design | Pending |
-| PICK-04 | P1: Achar | Design | Pending |
-| PICK-05 | P1: Achar | Design | Pending |
-| PICK-06 | P1: Achar | Design | Pending |
-| PICK-07 | P1: Achar | Design | Pending |
-| PICK-08 | P1: Achar | Design | Pending |
-| PICK-09 | P1: Achar | Design | Pending |
-| PICK-10 | P1: Achar | Design | Pending |
-| PICK-11 | P1: Achar | Design | Pending |
-| PICK-12 | P1: Criar | Design | Pending |
-| PICK-13 | P1: Criar | Design | Pending |
-| PICK-14 | P1: Criar | Design | Pending |
-| PICK-15 | P1: Criar | Design | Pending |
-| PICK-16 | P1: Criar | Design | Pending |
-| PICK-17 | P1: Criar | Design | Pending |
-| PICK-18 | P1: Criar | Design | Pending |
-| PICK-19 | P1: Criar | Design | Pending |
-| PICK-20 | P1: Criar | Design | Pending |
+| PICK-01 | P1: Achar | T1, T2 | In Tasks |
+| PICK-02 | P1: Achar | T1 | In Tasks |
+| PICK-03 | P1: Achar | T4 | In Tasks |
+| PICK-04 | P1: Achar | T4 | In Tasks |
+| PICK-05 | P1: Achar | T4 | In Tasks |
+| PICK-06 | P1: Achar | T6, T8 | In Tasks |
+| PICK-07 | P1: Achar | T6 | In Tasks |
+| PICK-08 | P1: Achar | T6 | In Tasks |
+| PICK-09 | P1: Achar | T6 | In Tasks |
+| PICK-10 | P1: Achar | T6 | In Tasks |
+| PICK-11 | P1: Achar | T6 | In Tasks |
+| PICK-12 | P1: Criar | T7, T8 | In Tasks |
+| PICK-13 | P1: Criar | T7 | In Tasks |
+| PICK-14 | P1: Criar | T7 | In Tasks |
+| PICK-15 | P1: Criar | T5, T7 | In Tasks |
+| PICK-16 | P1: Criar | T8 | In Tasks |
+| PICK-17 | P1: Criar | T3 | In Tasks |
+| PICK-18 | P1: Criar | T7 | In Tasks |
+| PICK-19 | P1: Criar | T7, T8 | In Tasks |
+| PICK-20 | P1: Criar | T5 | In Tasks |
 
-**Coverage:** 20 total, 0 mapped to tasks, 20 unmapped ⚠️
+**Coverage:** 20 total, 20 mapped to tasks, 0 unmapped
 
 ---
 
