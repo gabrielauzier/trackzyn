@@ -77,7 +77,12 @@ export default function HomePage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  const lists = data?.lists ?? []
+  // The order a drop produced, drawn in the very render of the drop. The query cache tells its
+  // subscribers a tick later, and in that tick the dropped card, its drag transform gone, slid
+  // back toward its old slot before jumping to the new one. Tied to the response it reordered,
+  // so the next response (the cache update, a refetch) replaces it without an effect.
+  const [dropped, setDropped] = useState<{ base: ListsResponse; lists: ListCardData[] } | null>(null)
+  const lists = (dropped && dropped.base === data ? dropped.lists : data?.lists) ?? []
   const name = user?.preferences?.display_name || user?.email?.split('@')[0] || ''
   const timeZone = data?.timezone ?? current?.timezone ?? undefined
   const period = greetingFor(hourIn(timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone))
@@ -100,6 +105,7 @@ export default function HomePage() {
     const to = ids.indexOf(String(over.id))
     if (from < 0 || to < 0) return
     const order = arrayMove(ids, from, to)
+    if (data) setDropped({ base: data, lists: arrayMove(lists, from, to) })
     queryClient.setQueryData<ListsResponse>(LISTS_KEY, (previous) =>
       previous ? { ...previous, lists: arrayMove(previous.lists, from, to) } : previous,
     )

@@ -149,6 +149,31 @@ describe('HomePage', () => {
     await waitFor(() => expect(lists.move).toHaveBeenCalledWith(A, C))
   })
 
+  it('a dropped card takes its new place in the same render as the drop', async () => {
+    respond([card(A, 'Alpha', 0), card(B, 'Beta', 1), card(C, 'Gamma', 2)])
+    const order = [A, B, C]
+    const original = HTMLElement.prototype.getBoundingClientRect
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const index = order.indexOf(this.dataset.listId ?? '')
+      return index < 0 ? original.call(this) : DOMRect.fromRect({ x: index * 300, y: 0, width: 280, height: 200 })
+    })
+    const { user } = renderWithProviders(<HomePage />)
+
+    await screen.findByRole('link', { name: 'Alpha' })
+    const alpha = wrapperOf(A)
+    alpha.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowRight}')
+
+    // Dropped with no await after it: the query cache tells its subscribers a tick later, and
+    // in that tick the card, with its drag transform gone, slid back to its old slot (#31 follow-up).
+    fireEvent.keyDown(alpha, { key: ' ', code: 'Space' })
+    const rendered = [...document.querySelectorAll<HTMLElement>('[data-list-id]')].map((node) => node.dataset.listId)
+    expect(rendered).toEqual([B, A, C])
+
+    await waitFor(() => expect(lists.move).toHaveBeenCalledWith(A, C))
+  })
+
   it('lets a viewer neither create nor drag', async () => {
     state.canWrite = false
     respond([card(A, 'Alpha', 0)])
