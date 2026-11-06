@@ -61,6 +61,8 @@ interface TaskRow extends Record<string, unknown> {
   column: TaskColumn
   position: number
   completed_date: string | null
+  /** When the task was completed, as epoch milliseconds; null while pending. */
+  completed_ms: number | null
   subtasks_done: number
   subtasks_total: number
   created_via: string | null
@@ -107,6 +109,7 @@ export async function buildBoard(
         )
         SELECT t.id, t.title, t.estimate_minutes, t."column", t.position,
                CASE WHEN t."column" = 'done' THEN (${completedDate})::text END AS completed_date,
+               (extract(epoch FROM t.completed_at) * 1000)::float8 AS completed_ms,
                count(s.id) FILTER (WHERE s.done)::int AS subtasks_done,
                count(s.id)::int AS subtasks_total,
                coalesce(p.name, CASE WHEN t.created_from = 'agenda' THEN 'Agenda' END) AS created_via
@@ -140,7 +143,10 @@ export async function buildBoard(
   const thisWeek = inColumn('this_week')
   const todayTasks = inColumn('today')
 
-  const doneRows = found.filter((row) => row.column === 'done')
+  // Each day of Done lists the latest completion first.
+  const doneRows = found
+    .filter((row) => row.column === 'done')
+    .sort((a, b) => Number(b.completed_ms ?? 0) - Number(a.completed_ms ?? 0))
   const dates = [...new Set(doneRows.map((row) => row.completed_date as string))].sort().reverse()
   const days = dates.map((date) => ({ date, tasks: doneRows.filter((row) => row.completed_date === date).map(view) }))
 
