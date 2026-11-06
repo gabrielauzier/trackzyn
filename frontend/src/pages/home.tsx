@@ -185,7 +185,8 @@ function SortableListCard({
       className={cn(canWrite && (isDragging ? 'cursor-grabbing' : 'cursor-grab'), isDragging && 'relative z-10 opacity-80')}
       {...dragProps}
     >
-      <ListCard list={list} canWrite={canWrite} onRename={onRename} className="h-full" />
+      {/* Dragged, the accent border stays on after the press, the keyboard drag included. */}
+      <ListCard list={list} canWrite={canWrite} onRename={onRename} className={cn('h-full', isDragging && 'border-primary')} />
     </div>
   )
 }

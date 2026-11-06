@@ -58,14 +58,15 @@ export function ListCard({ list, canWrite, onRename, className }: ListCardProps)
   const rows = list.preview.slice(0, PREVIEW_ROWS)
 
   return (
-    <Card className={cn('gap-3 p-4', className)}>
+    // The accent border while pressed says which card a click or a drag took.
+    <Card className={cn('gap-3 p-4 transition-colors active:border-primary', className)}>
       <div className="flex items-center gap-3">
         <ListBadge name={list.name} color={list.color} />
         {/* `data-no-drag`: pressing here opens the board, never starts a drag of the card. */}
         <Link
           to={`/lists/${list.id}`}
           data-no-drag
-          className="min-w-0 flex-1 cursor-pointer truncate font-semibold hover:underline"
+          className="min-w-0 flex-1 cursor-pointer truncate font-semibold transition-colors hover:text-primary hover:underline"
         >
           {list.name}
         </Link>

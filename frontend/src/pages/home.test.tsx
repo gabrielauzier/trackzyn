@@ -204,6 +204,22 @@ describe('HomePage', () => {
     fireEvent.pointerUp(document, { isPrimary: true, button: 0, clientX: 50, clientY: 10 })
   })
 
+  it('a dragged list card shows an accent border until it is dropped', async () => {
+    respond([card(A, 'Alpha', 0)])
+    renderWithProviders(<HomePage />)
+
+    await screen.findByRole('link', { name: 'Alpha' })
+    const wrapper = wrapperOf(A)
+    const cardNode = () => wrapper.querySelector<HTMLElement>('[data-slot="card"]')!
+    expect(cardNode().className).not.toMatch(/(^|\s)border-primary(\s|$)/)
+
+    pressAndDrag(wrapper)
+    expect(cardNode()).toHaveClass('border-primary')
+
+    fireEvent.pointerUp(document, { isPrimary: true, button: 0, clientX: 50, clientY: 10 })
+    await waitFor(() => expect(cardNode().className).not.toMatch(/(^|\s)border-primary(\s|$)/))
+  })
+
   it('dragging from the list title does not move the card', async () => {
     respond([card(A, 'Alpha', 0), card(B, 'Beta', 1)])
     renderWithProviders(<HomePage />)

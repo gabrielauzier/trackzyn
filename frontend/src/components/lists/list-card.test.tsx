@@ -129,6 +129,24 @@ describe('ListCard', () => {
     expect(title.className).toContain('min-w-0')
   })
 
+  it('shows the title link in the accent color on hover', () => {
+    renderWithProviders(<ListCard list={card} canWrite onRename={vi.fn()} />)
+
+    const link = screen.getByRole('link', { name: card.name })
+    expect(link).toHaveClass('hover:text-primary')
+    // The color changes smoothly, like the other hovered controls.
+    expect(link.className).toMatch(/(^|\s)transition-colors(\s|$)/)
+  })
+
+  it('shows an accent border while the card is pressed', () => {
+    renderWithProviders(<ListCard list={card} canWrite onRename={vi.fn()} />)
+
+    const cardNode = screen.getByRole('link', { name: card.name }).closest<HTMLElement>('[data-slot="card"]')!
+    expect(cardNode).toHaveClass('active:border-primary')
+    // At rest, the usual border.
+    expect(cardNode.className).not.toMatch(/(^|\s)border-primary(\s|$)/)
+  })
+
   it('hides the menu from a viewer', () => {
     renderWithProviders(<ListCard list={card} canWrite={false} onRename={vi.fn()} />)
 
