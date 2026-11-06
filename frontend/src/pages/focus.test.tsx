@@ -932,7 +932,9 @@ describe('FocusPage subtasks of the task in focus (#16)', () => {
     await user.click(field)
     await user.keyboard('{Enter}')
     expect(within(card()).getByText('Enter a title')).toBeInTheDocument()
-    await user.type(field, 'x'.repeat(256))
+    // The long titles are pasted: typed one key at a time they took past the 5 s limit on CI, and
+    // the keys still pending then landed in the next test.
+    await user.paste('x'.repeat(256))
     await user.keyboard('{Enter}')
     expect(within(card()).getByText('Use at most 255 characters')).toBeInTheDocument()
     expect(subtasks.create).not.toHaveBeenCalled()
@@ -945,7 +947,9 @@ describe('FocusPage subtasks of the task in focus (#16)', () => {
     expect(within(card()).getByText('1/5')).toBeInTheDocument()
 
     // 255 characters are fine.
-    await user.type(field, `${'y'.repeat(255)}{Enter}`)
+    await user.click(field)
+    await user.paste('y'.repeat(255))
+    await user.keyboard('{Enter}')
     expect(subtasks.create).toHaveBeenLastCalledWith(taskA.id, 'y'.repeat(255))
   })
 

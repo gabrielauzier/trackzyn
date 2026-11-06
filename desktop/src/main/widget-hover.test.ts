@@ -7,8 +7,14 @@ class FakeWidget extends EventEmitter {
   destroyed = false
   sent: Array<[string, ...unknown[]]> = []
   bounds: Bounds = { x: 1000, y: 16, width: 300, height: 64 }
+  contentsDestroyed = false
   webContents = Object.assign(new EventEmitter(), {
-    send: (channel: string, ...args: unknown[]) => void this.sent.push([channel, ...args]),
+    send: (channel: string, ...args: unknown[]) => {
+      // Electron throws when a destroyed page is sent to.
+      if (this.contentsDestroyed) throw new Error('Object has been destroyed')
+      this.sent.push([channel, ...args])
+    },
+    isDestroyed: () => this.contentsDestroyed,
   })
   getBounds() {
     return { ...this.bounds }
@@ -77,6 +83,22 @@ describe('trackWidgetHover (#34)', () => {
       ['widget:hover', { hovering: true }],
       ['widget:hover', { hovering: true }],
     ])
+  })
+
+  it('stops, without throwing, when the page is destroyed before the window (as on closing)', () => {
+    const win = new FakeWidget()
+    const read = vi.spyOn(win, 'getBounds')
+    trackWidgetHover(win, { screen })
+    tick()
+    const reads = read.mock.calls.length
+
+    win.contentsDestroyed = true
+    cursor = { x: 1100, y: 40 }
+    expect(() => tick()).not.toThrow()
+    tick()
+    // Nothing more is read or sent once the page is gone.
+    expect(read.mock.calls.length).toBe(reads)
+    expect(win.sent.filter(([, payload]) => (payload as { hovering: boolean }).hovering)).toEqual([])
   })
 
   it('stops reading the cursor once the widget closes, or when stopped', () => {

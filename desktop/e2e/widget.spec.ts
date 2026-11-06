@@ -181,6 +181,9 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
 test('the widget shows its controls when the cursor is over it', async () => {
   test.setTimeout(180_000)
   const { app, page } = await launchApp()
+  // The test ends on Pause and closes the app: if the main window has not heard of the pause yet, it
+  // asks whether to pause before closing (SYNC-08), and an unanswered system dialog holds the close.
+  await stubDialogs(app, {})
   await startLocalMode(page)
   const data = await createLocalData(page, 'widget-hover@example.com')
   const headers = { 'X-Workspace-Id': data.workspaceId }

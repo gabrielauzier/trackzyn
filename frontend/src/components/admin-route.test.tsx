@@ -142,5 +142,7 @@ describe('the app routes', () => {
     // The showcase is a large lazy chunk: give it time to load.
     expect(await screen.findByRole('heading', { level: 1, name: 'Components' }, { timeout: 5000 })).toBeInTheDocument()
     expect(window.location.pathname).toBe('/components')
-  })
+    // Two app renders and the lazy showcase chunk: the 5 s the chunk alone may take is the default
+    // limit of the whole test, which a slow CI runner went past.
+  }, 20_000)
 })

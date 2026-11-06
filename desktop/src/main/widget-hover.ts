@@ -9,6 +9,7 @@ interface HoverWindowLike {
   isDestroyed(): boolean
   webContents: {
     send(channel: string, ...args: unknown[]): void
+    isDestroyed(): boolean
     on(event: 'did-finish-load', listener: () => void): unknown
   }
   on(event: 'closed', listener: () => void): unknown
@@ -39,7 +40,8 @@ export function trackWidgetHover(win: HoverWindowLike, deps: Deps): () => void {
   let timer: unknown = null
 
   const read = () => {
-    if (win.isDestroyed()) return stop()
+    // On closing, the page can go before the window, and sending to it throws in the main process.
+    if (win.isDestroyed() || win.webContents.isDestroyed()) return stop()
     const hovering = contains(win.getBounds(), deps.screen.getCursorScreenPoint())
     if (hovering === last) return
     last = hovering
