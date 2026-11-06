@@ -39,6 +39,12 @@ Pesos (soma de `wc -c` / 4 dos arquivos de cada slice): S1 ~22k, S2 ~5k, S3 ~9k,
 
 Os lotes rodam um depois do outro (compartilham `locales/*.json` e `types/index.ts`).
 
+Lote A (S1 + S2):
+
+- **Where the boundary fell** - C1 a C20 fechados, provas verdes em `1bacd9a` (commits `7142820` backend, `2b49ba0`, `45f7220`, `c010305`, `1bacd9a` frontend); suíte do frontend, `typecheck` e `lint` do frontend e do backend verdes. Lote B começa em S3 (C21).
+- **What was settled mid-build** - nada com o usuário. Escolhas abaixo da barra de `Landing`: a linha de botões usa `top-14 lg:top-0` (abaixo de `lg` a barra do app, `h-14`, é `sticky` em cima dela) e fundo opaco `bg-background` com `bg-card/50` por dentro, igual à coluna; o `:` aparece depois das duas casas da hora (`02:`), e apagar o `:` apaga o dígito antes dele; valor incompleto (`01:3`) só avisa (`Use o formato HH:MM`) ao apertar Enter e, ao sair, volta ao anterior; a estimativa é editável em Concluídas também (Unresolved 2, padrão); o card salva por `onEstimateChange` e `list-board.tsx` faz o `PATCH` com atualização otimista dos totais (mesmas somas do servidor) e, se falhar, volta só a estimativa daquela tarefa. A chave `board.complete` saiu dos locales (sem uso). O formulário de nova tarefa (`add-task-form.tsx`) continua em minutos - não está nos critérios. Testes antigos reescritos para o critério novo: `task-card` (checkbox -> sem checkbox / ícone `Completed`), `list-board` (concluir pela checkbox -> pela seta; viewer sem checkbox), `task-dialog` (`Estimate (min)`/`1441` -> `Estimate` em HH:MM/`24:01`).
+- **What was abandoned** - nada.
+
 ## Checks
 
 ### S1 - Quadro: coluna Hoje, Concluídas, concluir movendo e título · 8 files · 87 KB · ~22k
