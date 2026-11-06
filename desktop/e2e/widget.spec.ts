@@ -13,7 +13,7 @@ const linux = process.platform === 'linux'
 /** Ctrl+Shift+F, or Cmd+Shift+F on macOS, typed into one window as the keyboard would. */
 async function pressShortcut(app: ElectronApplication, target: 'main' | 'widget'): Promise<void> {
   await app.evaluate(({ BrowserWindow }, which) => {
-    const win = BrowserWindow.getAllWindows().find((item) => item.webContents.getURL().endsWith('/widget') === (which === 'widget'))!
+    const win = BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((item) => item.webContents.getURL().endsWith('/widget') === (which === 'widget'))!
     const modifiers: Array<'shift' | 'meta' | 'control'> = ['shift', process.platform === 'darwin' ? 'meta' : 'control']
     win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'F', modifiers })
     win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'F', modifiers })
@@ -26,18 +26,19 @@ async function widgetPage(app: ElectronApplication): Promise<Page> {
   return app.windows().find((page) => page.url().endsWith('/widget'))!
 }
 
+/** A widget window closing can still be listed while it is destroyed; every helper skips those, or `getURL` throws. */
 async function widgetCount(app: ElectronApplication): Promise<number> {
-  return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((win) => win.webContents.getURL().endsWith('/widget')).length)
+  return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).filter((win) => win.webContents.getURL().endsWith('/widget')).length)
 }
 
 async function mainMinimized(app: ElectronApplication): Promise<boolean> {
-  return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find((win) => !win.webContents.getURL().endsWith('/widget'))!.isMinimized())
+  return app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((win) => !win.webContents.getURL().endsWith('/widget'))!.isMinimized())
 }
 
 /** Restores the main window the way the taskbar or the Dock does (WIDGET-19). */
 async function restoreMainBySystem(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ BrowserWindow }, emitOnly) => {
-    const main = BrowserWindow.getAllWindows().find((win) => !win.webContents.getURL().endsWith('/widget'))!
+    const main = BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((win) => !win.webContents.getURL().endsWith('/widget'))!
     if (emitOnly) main.emit('restore')
     else main.restore()
   }, linux)
@@ -62,7 +63,7 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
     localStorage.setItem('token', token)
     localStorage.setItem('workspace_id', workspaceId)
   }, data)
-  await app.evaluate(({ BrowserWindow }, url) => BrowserWindow.getAllWindows()[0]!.loadURL(url), `app://trackzyn/lists/${list.body.id}`)
+  await app.evaluate(({ BrowserWindow }, url) => BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed())[0]!.loadURL(url), `app://trackzyn/lists/${list.body.id}`)
 
   await test.step('Focus now starts the task and opens the widget over the minimized main window (WIDGET-01, WIDGET-06, WIDGET-09)', async () => {
     await page.getByRole('button', { name: 'Focus now' }).click()
@@ -72,8 +73,8 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
     if (!linux) await expect.poll(() => mainMinimized(app)).toBe(true)
 
     const shape = await app.evaluate(({ BrowserWindow, screen }) => {
-      const win = BrowserWindow.getAllWindows().find((item) => item.webContents.getURL().endsWith('/widget'))!
-      const main = BrowserWindow.getAllWindows().find((item) => item !== win)!
+      const win = BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((item) => item.webContents.getURL().endsWith('/widget'))!
+      const main = BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((item) => item !== win)!
       const area = screen.getDisplayMatching(main.getBounds()).workArea
       return { bounds: win.getBounds(), onTop: win.isAlwaysOnTop(), resizable: win.isResizable(), area }
     })
@@ -124,7 +125,7 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
     await pressShortcut(app, 'main')
     await widgetPage(app)
     await app.evaluate(({ BrowserWindow }) => {
-      BrowserWindow.getAllWindows().find((win) => win.webContents.getURL().endsWith('/widget'))!.setPosition(120, 140)
+      BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((win) => win.webContents.getURL().endsWith('/widget'))!.setPosition(120, 140)
     })
     await expect.poll(() => readConfig(configPath).widgetBounds, { timeout: 5000 }).toMatchObject({ x: 120, y: 140 })
   })
@@ -140,7 +141,7 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
     await pressShortcut(app, 'main')
     await widgetPage(app)
     const bounds = await app.evaluate(({ BrowserWindow }) =>
-      BrowserWindow.getAllWindows().find((win) => win.webContents.getURL().endsWith('/widget'))!.getBounds(),
+      BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((win) => win.webContents.getURL().endsWith('/widget'))!.getBounds(),
     )
     expect({ x: bounds.x, y: bounds.y }).toEqual({ x: 120, y: 140 })
   })
