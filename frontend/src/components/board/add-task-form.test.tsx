@@ -58,7 +58,7 @@ describe('AddTaskForm', () => {
     expect(tasks.create).not.toHaveBeenCalled()
   })
 
-  it('shows the estimate as an HH:MM field with no label, on its own row above the buttons', async () => {
+  it('shows the estimate as an HH:MM field with no label, with Cancel and Add as icons on its row', async () => {
     await open()
 
     expect(screen.queryByText('Estimate (min)')).not.toBeInTheDocument()
@@ -66,12 +66,32 @@ describe('AddTaskForm', () => {
     expect(field).toHaveAttribute('placeholder', 'HH:MM')
     // The card's inline field, not a form-sized Input.
     expect(field).toHaveAttribute('data-slot', 'duration-input')
-    // Its row holds no button; Cancel and Add come after it.
-    const row = field.closest('[data-slot="estimate-row"]')!
+    // One row: the field, then Cancel and Add, both icon-only (option B, 2026-11-06), so the
+    // form fits a narrow column without cutting a button.
+    const row = field.closest<HTMLElement>('[data-slot="estimate-row"]')!
     expect(row).not.toBeNull()
-    expect(within(row as HTMLElement).queryAllByRole('button')).toHaveLength(0)
-    const cancel = screen.getByRole('button', { name: 'Cancel' })
-    expect(row.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const cancel = within(row).getByRole('button', { name: 'Cancel' })
+    const add = within(row).getByRole('button', { name: 'Add' })
+    expect(within(row).getAllByRole('button')).toEqual([cancel, add])
+    for (const button of [cancel, add]) {
+      expect(button.textContent?.trim()).toBe('')
+      expect(button.querySelector('svg')).not.toBeNull()
+    }
+    expect(add).toHaveAttribute('type', 'submit')
+    expect(field.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // No other buttons in the form.
+    expect(screen.getAllByRole('button')).toEqual([cancel, add])
+  })
+
+  it('closes from the Cancel icon without creating anything', async () => {
+    const { user } = await open()
+
+    await user.type(screen.getByLabelText('Title'), 'Write the report')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByLabelText('Title')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
+    expect(tasks.create).not.toHaveBeenCalled()
   })
 
   it('puts the colon after the hours as the digits are typed', async () => {

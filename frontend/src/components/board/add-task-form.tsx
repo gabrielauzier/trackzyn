@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
+import { Check, Plus, X } from 'lucide-react'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { DURATION_ERROR_KEY, durationMinutes, parseDuration } from '@/components/board/estimate'
@@ -86,10 +86,11 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
           control={form.control}
           name="estimate"
           render={({ field }) => (
-            // The card's inline HH:MM field on a row of its own, with no label: the placeholder says
-            // the format and, while it is empty, a tooltip says what it is.
+            // The card's inline HH:MM field, with no label: the placeholder says the format and, while
+            // it is empty, a tooltip says what it is. Cancel and Add sit at the end of its row as icons,
+            // so the form fits a narrow column without cutting a button.
             <FormItem className="gap-1">
-              <div data-slot="estimate-row" className="flex">
+              <div data-slot="estimate-row" className="flex items-center gap-1.5">
                 <TooltipProvider>
                   <Tooltip open={field.value === '' ? undefined : false}>
                     <TooltipTrigger asChild>
@@ -97,12 +98,33 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
                         <DurationInput aria-label={t('board.estimate')} {...field} />
                       </FormControl>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="flex flex-col">
+                    {/* Below the field: its right side holds the two buttons. */}
+                    <TooltipContent side="bottom" align="start" className="flex flex-col">
                       <span className="font-semibold">{t('board.estimate')}</span>
                       <span>{t('board.estimateEmptyHint')}</span>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+                <span className="flex-1" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={t('common.cancel')}
+                  title={t('common.cancel')}
+                  onClick={onClose}
+                >
+                  <X size={16} />
+                </Button>
+                <Button
+                  type="submit"
+                  size="icon-sm"
+                  aria-label={t('board.add')}
+                  title={t('board.add')}
+                  disabled={create.isPending}
+                >
+                  <Check size={16} />
+                </Button>
               </div>
               <FormMessage />
             </FormItem>
@@ -113,14 +135,6 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
             {serverError}
           </p>
         )}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit" size="sm" disabled={create.isPending}>
-            {t('board.add')}
-          </Button>
-        </div>
       </form>
     </Form>
   )
