@@ -11,6 +11,16 @@ function Field({ initial = '' }: { initial?: string }) {
 }
 
 describe('DurationInput', () => {
+  it('is as wide as HH:MM, with no room left on the right', () => {
+    renderWithProviders(<Field />)
+    const input = screen.getByRole('textbox', { name: 'Duration' })
+
+    // jsdom has no layout: the width is five monospace characters plus the padding (px-1) and the border.
+    expect(input.className).toMatch(/(^|\s)w-\[calc\(5ch\+0\.5rem\+2px\)\](\s|$)/)
+    expect(input).toHaveClass('font-mono', 'px-1', 'border')
+    expect(input.className).not.toMatch(/(^|\s)w-14(\s|$)/)
+  })
+
   it('accepts digits only and keeps the colon', async () => {
     const { user } = renderWithProviders(<Field />)
     const input = screen.getByRole('textbox', { name: 'Duration' })

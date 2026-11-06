@@ -75,7 +75,8 @@ export function DurationInput({ value, onChange, variant = 'inline', className, 
       {...shared}
       data-slot="duration-input"
       className={cn(
-        'h-5 w-14 rounded border border-input bg-card px-1 font-mono text-xs tabular-nums outline-none',
+        // As wide as `HH:MM` and no more: five monospace characters, the padding and the border.
+        'h-5 w-[calc(5ch+0.5rem+2px)] rounded border border-input bg-card px-1 font-mono text-xs tabular-nums outline-none',
         'focus-visible:border-ring aria-invalid:border-destructive',
         className,
       )}
