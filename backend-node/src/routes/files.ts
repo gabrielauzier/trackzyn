@@ -37,8 +37,9 @@ function toFileRead(record: StoredFileRecord) {
 export function fileRoutes(ctx: AppContext) {
   return async (app: FastifyInstance): Promise<void> => {
     const typed = app.withTypeProvider<ZodTypeProvider>()
-    const { requireUser } = authGuards(ctx)
-    const reading = [requireUser, workspaceContext(ctx)]
+    const { requireUser, requireSuperuser } = authGuards(ctx)
+    // Files are an instance administrator's tool (#32): 403 to anyone else, by session or by token.
+    const reading = [requireUser, requireSuperuser, workspaceContext(ctx)]
     const writing = [...reading, requireWrite]
 
     typed.get(

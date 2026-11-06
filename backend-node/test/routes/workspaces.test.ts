@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
+import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { users } from '../../src/db/schema.ts'
 import { type TestApp, bearer, createTestApp, freshIp, register, uniqueEmail } from '../support/test-app.ts'
 
 let t: TestApp
@@ -289,6 +291,10 @@ describe('members', () => {
 })
 
 describe('files', () => {
+  // `/api/files` is for superusers only (#32); these tests promote the users they call it with.
+  const promote = (...people: User[]) =>
+    Promise.all(people.map((person) => t.ctx.db.update(users).set({ isSuperuser: true }).where(eq(users.id, person.id))))
+
   const upload = (token: string, workspaceId: string, name = 'notes.pdf', content = '%PDF-1.4') => {
     const boundary = `----t${freshIp()}`
     const body =
@@ -306,6 +312,7 @@ describe('files', () => {
     const owner = await register(t)
     const { id, members } = await shared(owner, ['viewer'])
     const [viewer] = members as [User]
+    await promote(owner, viewer)
     const headers = { 'x-workspace-id': id }
 
     const refused = await upload(viewer.token, id)
@@ -337,6 +344,7 @@ describe('files', () => {
 
   it('validates the extension, the size and the multipart body', async () => {
     const owner = await register(t)
+    await promote(owner)
     const { id } = await shared(owner)
     const badType = await upload(owner.token, id, 'run.exe')
     expect(badType.statusCode).toBe(400)
