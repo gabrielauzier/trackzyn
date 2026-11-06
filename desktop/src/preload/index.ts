@@ -4,6 +4,15 @@ import { APP_VERSION_ARG, IPC, WINDOW_ROLE_ARG, type TrackzynApi } from '../shar
 const versionArg = process.argv.find((arg) => arg.startsWith(APP_VERSION_ARG))
 const isWidget = process.argv.includes(`${WINDOW_ROLE_ARG}widget`)
 
+// The last cursor state the main process sent the widget (#34), kept from the start: the controls that
+// listen mount once the focus state was read, after the first report, and are told it at once.
+let hovering: boolean | null = null
+const hoverListeners = new Set<(state: { hovering: boolean }) => void>()
+ipcRenderer.on(IPC.widgetHover, (_event: unknown, state: { hovering?: unknown }) => {
+  hovering = state?.hovering === true
+  for (const listener of hoverListeners) listener({ hovering })
+})
+
 const api: TrackzynApi = {
   isDesktop: true,
   platform: process.platform,
@@ -65,6 +74,14 @@ const api: TrackzynApi = {
     ipcRenderer.on(IPC.widgetState, listener)
     return () => {
       ipcRenderer.removeListener(IPC.widgetState, listener)
+    }
+  },
+  onWidgetHover: (callback) => {
+    const listener = (state: { hovering: boolean }) => callback(state)
+    hoverListeners.add(listener)
+    if (hovering !== null) listener({ hovering })
+    return () => {
+      hoverListeners.delete(listener)
     }
   },
 }

@@ -44,6 +44,19 @@ async function restoreMainBySystem(app: ElectronApplication): Promise<void> {
   }, linux)
 }
 
+/**
+ * Puts the system cursor over the widget window or away from it, as the main process reads it (#34):
+ * the widget page gets no mouse events over its drag region, so a page hover would show nothing.
+ */
+async function placeCursor(app: ElectronApplication, where: 'widget' | 'away'): Promise<void> {
+  await app.evaluate(({ BrowserWindow, screen }, over) => {
+    const win = BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((item) => item.webContents.getURL().endsWith('/widget'))
+    const bounds = win?.getBounds()
+    const point = over && bounds ? { x: bounds.x + Math.floor(bounds.width / 2), y: bounds.y + Math.floor(bounds.height / 2) } : { x: -10_000, y: -10_000 }
+    screen.getCursorScreenPoint = () => point
+  }, where === 'widget')
+}
+
 test('the focus widget opens, acts, expands, closes on restore and toggles with the shortcut', async () => {
   test.setTimeout(240_000)
   const { app, page, configPath } = await launchApp()
@@ -91,7 +104,7 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
     // a full second ran, however the timer rounds. Without a window manager to wait for (Linux), or with a
     // quick minimize (Windows), the pause would otherwise land under a second after the start.
     await expect(widget.getByRole('timer')).toHaveText(/^00:29:([0-4]\d|5[0-8])$/, { timeout: 5000 })
-    await widget.getByRole('group', { name: 'Focus widget' }).hover()
+    await placeCursor(app, 'widget')
     await widget.getByRole('button', { name: 'Pause' }).click()
     const clicked = Date.now()
     await expect(page.getByRole('button', { name: 'Resume' })).toHaveCount(1, { timeout: 1000 })
@@ -103,7 +116,7 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
 
   await test.step('Expand closes the widget and brings the main window back on the focus screen (WIDGET-18)', async () => {
     const widget = await widgetPage(app)
-    await widget.getByRole('group', { name: 'Focus widget' }).hover()
+    await placeCursor(app, 'widget')
     await widget.getByRole('button', { name: 'Expand' }).click()
     await expect.poll(() => widgetCount(app)).toBe(0)
     expect(await mainMinimized(app)).toBe(false)
@@ -148,7 +161,7 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
 
   await test.step('quitting with the widget open and the task counting asks first (Edge Case, SYNC-08)', async () => {
     const widget = await widgetPage(app)
-    await widget.getByRole('group', { name: 'Focus widget' }).hover()
+    await placeCursor(app, 'widget')
     await widget.getByRole('button', { name: 'Resume' }).click()
     await expect(widget.getByRole('button', { name: 'Pause' })).toBeVisible()
     await stubDialogs(app, { confirm: false })
@@ -162,5 +175,70 @@ test('the focus widget opens, acts, expands, closes on restore and toggles with 
     // Cancel keeps the app open, with the main window back in front of the question.
     if (!linux) await expect.poll(() => mainMinimized(app)).toBe(false)
     expect(app.windows().length).toBeGreaterThan(0)
+  })
+})
+
+test('the widget shows its controls when the cursor is over it', async () => {
+  test.setTimeout(180_000)
+  const { app, page } = await launchApp()
+  await startLocalMode(page)
+  const data = await createLocalData(page, 'widget-hover@example.com')
+  const headers = { 'X-Workspace-Id': data.workspaceId }
+  const list = await api<{ id: string }>(page, '/api/lists', { method: 'POST', token: data.token, headers, json: { name: 'Week', color: 3 } })
+  expect(list.status).toBe(201)
+  for (const title of ['Write the quarterly report', 'Review the budget']) {
+    const task = await api(page, '/api/tasks', { method: 'POST', token: data.token, headers, json: { list_id: list.body.id, title, estimate_minutes: 30, column: 'today' } })
+    expect(task.status).toBe(201)
+  }
+  await page.evaluate(({ token, workspaceId }) => {
+    localStorage.setItem('token', token)
+    localStorage.setItem('workspace_id', workspaceId)
+  }, data)
+  await app.evaluate(({ BrowserWindow }, url) => BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed())[0]!.loadURL(url), `app://trackzyn/lists/${list.body.id}`)
+  await placeCursor(app, 'away')
+  await page.getByRole('button', { name: 'Focus now' }).click()
+  const widget = await widgetPage(app)
+  const group = widget.getByRole('group', { name: 'Focus widget' })
+  await expect(widget.getByText('Write the quarterly report')).toBeVisible()
+  const size = async () =>
+    app.evaluate(({ BrowserWindow }) => {
+      const { width, height } = BrowserWindow.getAllWindows().filter((open) => !open.isDestroyed() && !open.webContents.isDestroyed()).find((item) => item.webContents.getURL().endsWith('/widget'))!.getBounds()
+      return { width, height }
+    })
+
+  await test.step('at rest, the title and the timer only', async () => {
+    await expect(widget.getByRole('timer')).toBeVisible()
+    await expect(widget.getByRole('button')).toHaveCount(0)
+  })
+
+  await test.step('the cursor over the widget shows the controls, in the same 300×64', async () => {
+    await placeCursor(app, 'widget')
+    await expect(widget.getByRole('button', { name: 'Pause' })).toBeVisible()
+    await expect(widget.getByRole('button', { name: 'Skip' })).toBeVisible()
+    await expect(widget.getByRole('button', { name: 'Expand' })).toBeVisible()
+    expect(await size()).toEqual({ width: 300, height: 64 })
+  })
+
+  await test.step('the cursor leaving hides them, and coming back any time later shows them again', async () => {
+    for (let round = 0; round < 2; round += 1) {
+      await placeCursor(app, 'away')
+      await expect(widget.getByRole('button')).toHaveCount(0)
+      await placeCursor(app, 'widget')
+      await expect(widget.getByRole('button', { name: 'Pause' })).toBeVisible()
+    }
+  })
+
+  await test.step('the whole window drags, the row of controls takes the clicks', async () => {
+    const regions = await group.evaluate((element) => {
+      const region = (node: Element) => getComputedStyle(node).getPropertyValue('-webkit-app-region') || (getComputedStyle(node) as unknown as { appRegion?: string }).appRegion
+      const row = element.querySelector('[data-widget-controls]')!
+      return { widget: region(element), row: region(row), timer: region(element.querySelector('[role="timer"]')!) }
+    })
+    expect(regions.widget).toBe('drag')
+    expect(regions.row).toBe('no-drag')
+    // Inside the drag region, the title and the timer are not taken out of it.
+    expect(regions.timer).not.toBe('no-drag')
+    await widget.getByRole('button', { name: 'Pause' }).click()
+    await expect(widget.getByRole('button', { name: 'Resume' })).toBeVisible()
   })
 })

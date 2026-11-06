@@ -44,7 +44,7 @@ beforeEach(() => {
 })
 
 describe('preload bridge (SYNC-08)', () => {
-  it('exposes exactly twenty-two members, the focus and widget ones included', async () => {
+  it('exposes exactly twenty-three members, the focus and widget ones included', async () => {
     const api = await loadApi()
     expect(Object.keys(api).sort()).toEqual([
       'appVersion',
@@ -59,6 +59,7 @@ describe('preload bridge (SYNC-08)', () => {
       'onFocusChanged',
       'onPauseRequest',
       'onUpdateAvailable',
+      'onWidgetHover',
       'onWidgetState',
       'openExternal',
       'openLogs',
@@ -70,7 +71,7 @@ describe('preload bridge (SYNC-08)', () => {
       'startSso',
       'windowRole',
     ])
-    expect(Object.keys(api)).toHaveLength(22)
+    expect(Object.keys(api)).toHaveLength(23)
   })
 
   it('reportFocusState sends the state on focus:state', async () => {
@@ -175,5 +176,28 @@ describe('preload bridge for the focus widget (WIDGET-22, WIDGET-24)', () => {
     unsubscribe()
     bridge.emit('widget:state', { open: true })
     expect(callback).toHaveBeenCalledTimes(2)
+  })
+
+  it('onWidgetHover passes the hover state from widget:hover until unsubscribed', async () => {
+    const api = await loadApi()
+    const callback = vi.fn()
+    const unsubscribe = api.onWidgetHover(callback)
+    bridge.emit('widget:hover', { hovering: true })
+    bridge.emit('widget:hover', { hovering: false })
+    expect(callback.mock.calls).toEqual([[{ hovering: true }], [{ hovering: false }]])
+    unsubscribe()
+    bridge.emit('widget:hover', { hovering: true })
+    expect(callback).toHaveBeenCalledTimes(2)
+  })
+
+  it('onWidgetHover tells a late subscriber the last hover state at once', async () => {
+    const api = await loadApi()
+    bridge.emit('widget:hover', { hovering: true })
+    const callback = vi.fn()
+    const unsubscribe = api.onWidgetHover(callback)
+    expect(callback.mock.calls).toEqual([[{ hovering: true }]])
+    bridge.emit('widget:hover', { hovering: false })
+    expect(callback.mock.calls).toEqual([[{ hovering: true }], [{ hovering: false }]])
+    unsubscribe()
   })
 })
