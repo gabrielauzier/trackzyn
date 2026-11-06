@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -29,9 +29,26 @@ import { greetingFor, hourIn } from '@/components/lists/greeting'
 import { ListCard } from '@/components/lists/list-card'
 import { ListDialog } from '@/components/lists/list-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import type { ListCard as ListCardData, ListsResponse } from '@/types'
 
 const LISTS_KEY = ['lists', { archived: false }] as const
+
+/**
+ * The pointer drags the card from its body only: pressing the title (a link) or the `⋮` menu,
+ * both marked `data-no-drag`, does what that control does and never starts a drag.
+ */
+class CardBodyPointerSensor extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: ({ nativeEvent }: ReactPointerEvent) =>
+        nativeEvent.isPrimary &&
+        nativeEvent.button === 0 &&
+        !(nativeEvent.target instanceof Element && nativeEvent.target.closest('[data-no-drag]')),
+    },
+  ]
+}
 
 export default function HomePage() {
   const { t } = useTranslation()
@@ -56,7 +73,7 @@ export default function HomePage() {
 
   const sensors = useSensors(
     // A few pixels of travel before a drag starts, so a click still opens the list or its menu.
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(CardBodyPointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
@@ -158,7 +175,8 @@ function SortableListCard({
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         transition,
       }}
-      className={isDragging ? 'relative z-10 opacity-80' : undefined}
+      // Only a writer is told the card can be picked up (#31).
+      className={cn(canWrite && (isDragging ? 'cursor-grabbing' : 'cursor-grab'), isDragging && 'relative z-10 opacity-80')}
       {...dragProps}
     >
       <ListCard list={list} canWrite={canWrite} onRename={onRename} className="h-full" />

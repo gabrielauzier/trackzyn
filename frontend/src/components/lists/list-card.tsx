@@ -9,6 +9,7 @@ import { extractApiError } from '@/lib/api-errors'
 import { cn } from '@/lib/utils'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { ListBadge } from '@/components/lists/list-badge'
+import { TaskRow } from '@/components/task-row'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -20,7 +21,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { ListCard as ListCardData } from '@/types'
 
-const PREVIEW_ROWS = 4
+/** The card shows the first 3 of the preview; the API sends 4, which the MCP `list_lists` also reads. */
+const PREVIEW_ROWS = 3
 
 interface ListCardProps {
   list: ListCardData
@@ -53,19 +55,30 @@ export function ListCard({ list, canWrite, onRename, className }: ListCardProps)
     onError,
   })
 
-  const rows = Array.from({ length: PREVIEW_ROWS }, (_, i) => list.preview[i] ?? null)
+  const rows = list.preview.slice(0, PREVIEW_ROWS)
 
   return (
     <Card className={cn('gap-3 p-4', className)}>
       <div className="flex items-center gap-3">
         <ListBadge name={list.name} color={list.color} />
-        <Link to={`/lists/${list.id}`} className="min-w-0 flex-1 truncate font-semibold hover:underline">
+        {/* `data-no-drag`: pressing here opens the board, never starts a drag of the card. */}
+        <Link
+          to={`/lists/${list.id}`}
+          data-no-drag
+          className="min-w-0 flex-1 cursor-pointer truncate font-semibold hover:underline"
+        >
           {list.name}
         </Link>
         {canWrite && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={t('common.actions')}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('common.actions')}
+                data-no-drag
+                className="cursor-default"
+              >
                 <MoreVertical size={16} />
               </Button>
             </DropdownMenuTrigger>
@@ -91,11 +104,10 @@ export function ListCard({ list, canWrite, onRename, className }: ListCardProps)
         )}
       </div>
 
-      <ul className="flex flex-col divide-y divide-border/60 text-sm">
-        {rows.map((row, i) => (
-          <li key={row?.id ?? `empty-${i}`} className="h-8 truncate leading-8">
-            {row?.title ?? ''}
-          </li>
+      {/* Three rows tall whatever the count: what is missing stays empty space, no row drawn. */}
+      <ul data-preview className="grid h-32 grid-rows-3 gap-1.5">
+        {rows.map((task) => (
+          <TaskRow key={task.id} task={task} />
         ))}
       </ul>
 

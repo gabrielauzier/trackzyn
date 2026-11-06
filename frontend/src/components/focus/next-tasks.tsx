@@ -4,22 +4,9 @@ import { useDroppable } from '@dnd-kit/core'
 import { useSortable } from '@dnd-kit/sortable'
 import { GripVertical } from 'lucide-react'
 
-import { formatDuration } from '@/components/board/format-duration'
+import { TaskRowMeta, taskRowClass } from '@/components/task-row'
 import { cn } from '@/lib/utils'
 import { FOCUS_DROP_ID, type NextTask } from '@/lib/focus/next-order'
-
-/** `<total> subtarefas · <estimativa>`, only the estimate without subtasks (#16); nothing without either. */
-function NextTaskMeta({ task }: { task: NextTask }) {
-  const { t, i18n } = useTranslation()
-  const parts: string[] = []
-  const total = task.subtasks?.total ?? 0
-  if (total > 0) parts.push(t('focus.queue.subtaskCount', { count: total }))
-  if (task.estimate_minutes !== null) parts.push(formatDuration(task.estimate_minutes * 60, i18n.language))
-  if (parts.length === 0) return null
-  return <span className="shrink-0 text-xs text-muted-foreground">{parts.join(' · ')}</span>
-}
-
-const row = 'flex items-center gap-2 rounded-lg border bg-card py-2 pr-3 text-sm'
 
 interface NextTaskItemProps {
   task: NextTask
@@ -42,7 +29,7 @@ export function NextTaskItem({ task, canWrite }: NextTaskItemProps) {
       data-placeholder={isDragging || undefined}
       style={{ transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined, transition }}
       className={cn(
-        row,
+        taskRowClass,
         canWrite ? 'pl-1' : 'pl-3',
         // Where the dragged task falls: a dashed space in its place (canvas #15, `Arrastando com o mouse`).
         isDragging && 'border-2 border-dashed border-primary/50 bg-primary/5 [&>*]:invisible',
@@ -61,7 +48,7 @@ export function NextTaskItem({ task, canWrite }: NextTaskItemProps) {
         </button>
       )}
       <span className="min-w-0 flex-1 truncate">{task.title}</span>
-      <NextTaskMeta task={task} />
+      <TaskRowMeta task={task} />
     </li>
   )
 }
@@ -69,12 +56,12 @@ export function NextTaskItem({ task, canWrite }: NextTaskItemProps) {
 /** The task being dragged, lifted with a shadow, following the pointer (canvas #15). */
 export function NextTaskOverlay({ task }: { task: NextTask }) {
   return (
-    <div data-overlay={task.id} className={cn(row, 'border-primary pl-1 shadow-lg')}>
+    <div data-overlay={task.id} className={cn(taskRowClass, 'border-primary pl-1 shadow-lg')}>
       <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <GripVertical size={16} aria-hidden />
       </span>
       <span className="min-w-0 flex-1 truncate font-medium">{task.title}</span>
-      <NextTaskMeta task={task} />
+      <TaskRowMeta task={task} />
     </div>
   )
 }
