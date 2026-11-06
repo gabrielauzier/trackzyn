@@ -117,6 +117,18 @@ describe('ListCard', () => {
     }
   })
 
+  it('holds the rows to the card width so a long title truncates', () => {
+    const long = { ...card.preview[0], title: 'A'.repeat(200) }
+    renderWithProviders(<ListCard list={{ ...card, preview: [long] }} canWrite onRename={vi.fn()} />)
+
+    // An undeclared grid column is `auto` and grows to the longest title; one column of
+    // `minmax(0, 1fr)` stays as wide as the card.
+    expect(screen.getByRole('list').className).toMatch(/(^|\s)grid-cols-1(\s|$)/)
+    const title = screen.getByTitle(long.title)
+    expect(title.className).toContain('truncate')
+    expect(title.className).toContain('min-w-0')
+  })
+
   it('hides the menu from a viewer', () => {
     renderWithProviders(<ListCard list={card} canWrite={false} onRename={vi.fn()} />)
 

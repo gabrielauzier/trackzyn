@@ -104,8 +104,10 @@ export function ListCard({ list, canWrite, onRename, className }: ListCardProps)
         )}
       </div>
 
-      {/* Three rows tall whatever the count: what is missing stays empty space, no row drawn. */}
-      <ul data-preview className="grid h-32 grid-rows-3 gap-1.5">
+      {/* Three rows tall whatever the count: what is missing stays empty space, no row drawn.
+          `grid-cols-1` keeps the column as wide as the card: undeclared, it is `auto` and a long
+          title widens it past the card instead of truncating. */}
+      <ul data-preview className="grid h-32 grid-cols-1 grid-rows-3 gap-1.5">
         {rows.map((task) => (
           <TaskRow key={task.id} task={task} />
         ))}
