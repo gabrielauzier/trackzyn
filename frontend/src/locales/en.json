@@ -673,7 +673,15 @@
       "summary": "Subtasks · {{done}}/{{total}}",
       "allDone": "All done here.",
       "completeTask": "Complete task",
-      "showAll": "Show all ({{total}})"
+      "showAll": "Show all ({{total}})",
+      "show": "Show subtasks",
+      "hide": "Hide subtasks"
+    },
+    "notes": {
+      "title": "Notes",
+      "hint": "Saves when you leave",
+      "editor": "Task notes",
+      "showMore": "Show notes"
     }
   },
   "reports": {

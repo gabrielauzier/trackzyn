@@ -21,7 +21,7 @@ interface SubtaskListProps {
   onSettled?: () => void
   /** With more subtasks than this, only this many pending ones show, and `Mostrar todas` shows them all. */
   limit?: number
-  /** Without subtasks, only `Adicionar subtarefa`, which opens the `Nova subtarefa` field. */
+  /** Without subtasks, or with all of them done, only `Adicionar subtarefa`, which opens the `Nova subtarefa` field. */
   addCollapsed?: boolean
   /** Only the checkboxes: no renaming, moving, deleting or adding (the desktop widget). */
   toggleOnly?: boolean
@@ -171,7 +171,7 @@ export function SubtaskList({
   const collapsed = limit !== undefined && items.length > limit && !expanded
   const shown = collapsed ? new Set(items.filter((item) => !item.done).slice(0, limit).map((item) => item.id)) : null
   const editable = canWrite && !toggleOnly
-  const opener = addCollapsed && items.length === 0 && !adding
+  const opener = addCollapsed && (items.length === 0 || done === items.length) && !adding
 
   const onAdd = (event: FormEvent) => {
     event.preventDefault()

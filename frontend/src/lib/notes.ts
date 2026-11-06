@@ -1,3 +1,6 @@
+/** The longest note the API stores, in characters of the stored text. */
+export const NOTES_MAX = 10_000
+
 const escapeHtml = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 /**

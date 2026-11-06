@@ -673,7 +673,15 @@
       "summary": "Subtarefas · {{done}}/{{total}}",
       "allDone": "Tudo feito por aqui.",
       "completeTask": "Concluir tarefa",
-      "showAll": "Mostrar todas ({{total}})"
+      "showAll": "Mostrar todas ({{total}})",
+      "show": "Mostrar subtarefas",
+      "hide": "Esconder subtarefas"
+    },
+    "notes": {
+      "title": "Anotação",
+      "hint": "Salva ao sair",
+      "editor": "Anotação da tarefa",
+      "showMore": "Mostrar anotação"
     }
   },
   "reports": {
