@@ -55,6 +55,40 @@ export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocu
         </div>
       )}
 
+      {column === 'today' && (
+        // Sticks to the top of the scrolling page while the tasks of Today pass under it; the page bar of
+        // the narrow layout (h-14, below lg) sits above it. Opaque, as the column's own background.
+        <div
+          data-slot="focus-buttons"
+          className="sticky top-14 z-10 -mx-4 bg-background shadow-[0_6px_6px_-6px_rgb(0_0_0/0.25)] lg:top-0"
+        >
+          <div className="flex items-center gap-2 bg-card/50 px-4 py-2">
+            <Button className="flex-1" variant="outline" disabled={!canWrite || empty} onClick={onFocusNow}>
+              <Rocket size={16} /> {t('board.focusNow')}
+            </Button>
+            {isDesktop() && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-9"
+                      aria-label={t('board.openFocus')}
+                      disabled={!canWrite || empty}
+                      onClick={onOpenFocus}
+                    >
+                      <Eye size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('board.openFocus')}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">{view.tasks.map((task, index) => renderTask(task, index))}</div>
 
       {canWrite && <AddTaskForm listId={listId} column={column} />}
@@ -66,32 +100,6 @@ export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocu
         </div>
       )}
 
-      {column === 'today' && (
-        <div className="mt-auto flex items-center gap-2">
-          <Button className="flex-1" variant="outline" disabled={!canWrite || empty} onClick={onFocusNow}>
-            <Rocket size={16} /> {t('board.focusNow')}
-          </Button>
-          {isDesktop() && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="size-9"
-                    aria-label={t('board.openFocus')}
-                    disabled={!canWrite || empty}
-                    onClick={onOpenFocus}
-                  >
-                    <Eye size={16} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t('board.openFocus')}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-      )}
     </section>
   )
 }
