@@ -60,7 +60,7 @@ export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocu
         // the narrow layout (h-14, below lg) sits above it. Opaque, as the column's own background.
         <div
           data-slot="focus-buttons"
-          className="sticky top-14 z-10 -mx-4 bg-background shadow-[0_6px_6px_-6px_rgb(0_0_0/0.25)] lg:top-0"
+          className="sticky top-14 z-10 -mx-4 bg-background lg:top-0"
         >
           <div className="flex items-center gap-2 bg-card/50 px-4 py-2">
             <Button className="flex-1" variant="outline" disabled={!canWrite || empty} onClick={onFocusNow}>

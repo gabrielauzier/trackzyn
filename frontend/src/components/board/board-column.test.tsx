@@ -257,9 +257,13 @@ describe('BoardColumn focus buttons at the top of Today', () => {
     expect(row).toHaveClass('sticky', 'z-10')
     // At the top of the scrolling area (below the app bar where the narrow layout has one).
     expect(row.className).toMatch(/(^|\s)top-\S+/)
-    // The column's own background, opaque, with a shadow underneath.
+    // The column's own background, opaque, and no line under it: nothing between the row and the
+    // first card (2026-11-06, the user asked for the shadow to go).
     expect(row.className).toMatch(/(^|\s)bg-/)
-    expect(row.className).toMatch(/(^|\s)shadow-/)
+    expect(row.className).not.toMatch(/(^|\s)(shadow|border)(-|\s|$)/)
+    // Nor on the container that holds the buttons (the buttons keep their own outline).
+    const inner = row.firstElementChild as HTMLElement
+    expect(inner.className).not.toMatch(/(^|\s)(shadow|border)(-|\s|$)/)
     // The tasks scroll under it: they come after it, outside it.
     expect(row).not.toContainElement(screen.getByText('DEV-1725'))
   })

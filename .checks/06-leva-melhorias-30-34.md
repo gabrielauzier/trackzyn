@@ -64,7 +64,7 @@ Lote C (S5 + S6):
 **C1** - A linha `Focar agora` + olho fica abaixo da barra de progresso de Hoje e antes da primeira tarefa, e não há mais linha no rodapé
 Proof: `cd frontend && npx vitest run src/components/board/board-column.test.tsx -t "Today shows the focus buttons between the progress bar and the first task"`
 
-**C2** - A linha de botões é `sticky` no topo da área rolável, com o fundo da coluna e sombra
+**C2** - A linha de botões é `sticky` no topo da área rolável, com o fundo da coluna e sem linha nem sombra abaixo dela (a sombra saiu a pedido do usuário em 2026-11-06)
 Proof: `cd frontend && npx vitest run src/components/board/board-column.test.tsx -t "the focus buttons row sticks to the top while the column scrolls"`
 
 **C3** - Os botões continuam desabilitados sem pendentes ou para viewer, e o olho só no desktop
