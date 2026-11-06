@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from './app-layout'
 import FocusPage from '@/pages/focus'
-import { renderWithProviders, t } from '@/test/utils'
+import { i18n, renderWithProviders, t } from '@/test/utils'
 import { installPrintStyles } from '@/test/print-styles'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
@@ -226,6 +226,79 @@ describe('app layout sidebar', () => {
     const nav = screen.getByRole('navigation')
     expect(within(nav).queryByRole('link', { name: 'Create new list' })).not.toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'All my lists' })).toBeInTheDocument()
+  })
+})
+
+describe('app layout admin links', () => {
+  afterEach(() => {
+    state.user = { ...state.user, is_superuser: false }
+    localStorage.clear()
+  })
+
+  it('a superuser sees Files and Components with the admin badge', () => {
+    state.user = { ...state.user, is_superuser: true }
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const nav = screen.getByRole('navigation')
+    const files = within(nav).getByRole('link', { name: 'Files (admin)' })
+    const components = within(nav).getByRole('link', { name: 'Components (admin)' })
+    expect(files).toHaveAttribute('href', '/files')
+    expect(components).toHaveAttribute('href', '/components')
+    for (const link of [files, components]) {
+      const badge = link.querySelector('[data-admin-badge]')
+      expect(badge).toHaveTextContent('admin')
+      expect(badge).toHaveClass('rounded-full', 'bg-primary/10', 'text-primary')
+      // The badge sits to the right of the name.
+      expect(badge?.previousElementSibling?.textContent).toBe(link === files ? 'Files' : 'Components')
+    }
+    // Files closes the Workspace group; Components is under Developers.
+    expect(within(nav).getByText('Developers')).toBeInTheDocument()
+    const order = within(nav).getAllByRole('link').map((link) => link.getAttribute('aria-label'))
+    expect(order.indexOf('Files (admin)')).toBe(order.indexOf('Reports') + 1)
+    expect(order.at(-1)).toBe('Components (admin)')
+  })
+
+  it('the collapsed sidebar marks admin links with a dot', async () => {
+    state.user = { ...state.user, is_superuser: true }
+    const { user } = renderWithProviders(<AppLayout />, { route: '/' })
+
+    const nav = screen.getByRole('navigation')
+    expect(nav.querySelector('[data-admin-dot]')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+
+    for (const name of ['Files (admin)', 'Components (admin)']) {
+      const link = within(nav).getByRole('link', { name })
+      expect(link).toHaveAttribute('title', name)
+      const dot = link.querySelector('[data-admin-dot]')
+      expect(dot).toBeInTheDocument()
+      expect(dot).toHaveClass('bg-primary', 'rounded-full', 'absolute')
+      expect(link).toHaveClass('relative')
+      // Collapsed, the badge goes with the name; only the dot is drawn.
+      expect(link.querySelector('[data-admin-badge]')).toHaveClass('lg:hidden')
+    }
+    // Other links have no dot.
+    expect(within(nav).getByRole('link', { name: 'Reports' }).querySelector('[data-admin-dot]')).not.toBeInTheDocument()
+  })
+
+  it('in Portuguese, names the admin links Arquivos (admin) and Componentes (admin)', async () => {
+    state.user = { ...state.user, is_superuser: true }
+    await i18n.changeLanguage('pt-BR')
+    try {
+      renderWithProviders(<AppLayout />, { route: '/' })
+      const nav = screen.getByRole('navigation')
+      expect(within(nav).getByRole('link', { name: 'Arquivos (admin)' })).toBeInTheDocument()
+      expect(within(nav).getByRole('link', { name: 'Componentes (admin)' })).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('a user who is not a superuser sees neither link nor the Developers header', () => {
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const nav = screen.getByRole('navigation')
+    expect(within(nav).queryByRole('link', { name: /Files|Components/ })).not.toBeInTheDocument()
+    expect(within(nav).queryByText('Developers')).not.toBeInTheDocument()
   })
 })
 

@@ -8,8 +8,24 @@ const separators = (items: NavItem[]) =>
   items.flatMap((item) => (item.type === 'separator' ? [item.labelKey] : []))
 
 describe('visibleNavItems', () => {
-  it('keeps every unflagged link', () => {
-    expect(linkKeys(visibleNavItems(navItems, () => false))).toEqual(linkKeys(navItems))
+  it('keeps every unflagged link for a superuser who can write', () => {
+    expect(linkKeys(visibleNavItems(navItems, () => false, true, true))).toEqual(linkKeys(navItems))
+  })
+
+  it('admin links and their empty header are hidden from non-admins', () => {
+    const asMember = visibleNavItems(navItems, () => false, true, false)
+    expect(linkKeys(asMember)).not.toContain('files')
+    expect(linkKeys(asMember)).not.toContain('components')
+    expect(separators(asMember)).not.toContain('nav.groupDevelopers')
+    // The rest of the workspace section stays.
+    expect(linkKeys(asMember)).toEqual(['newList', 'allLists', 'archivedLists', 'agenda', 'reports'])
+    expect(separators(asMember)).toEqual(['nav.groupWorkspace'])
+    // Not a superuser is the default.
+    expect(visibleNavItems(navItems, () => false)).toEqual(asMember)
+
+    const asAdmin = visibleNavItems(navItems, () => false, true, true)
+    expect(linkKeys(asAdmin)).toEqual(expect.arrayContaining(['files', 'components']))
+    expect(separators(asAdmin)).toEqual(['nav.groupWorkspace', 'nav.groupDevelopers'])
   })
 
   it('hides a flagged link while its feature is off', () => {

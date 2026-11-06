@@ -18,7 +18,7 @@ import {
 
 import { useAuth } from '@/contexts/auth-context'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
-import { navItems } from '@/lib/nav-items'
+import { adminPaths, navItems } from '@/lib/nav-items'
 import { ShellLogo } from '@/components/shell-logo'
 import { cn, normalizeText } from '@/lib/utils'
 
@@ -33,13 +33,16 @@ type StaticItem = {
   path?: string
   onSelect?: (nav: (to: string) => void) => void
   keywords?: string[]
+  /** Leads to a superuser-only screen: hidden from everyone else (#32). */
+  admin?: boolean
 }
 
-/** Sidebar links (minus feature-flagged ones that are off) plus the
- *  settings surfaces that live in the account menu. */
+/** Sidebar links (minus feature-flagged ones that are off, and the admin ones
+ *  for a user who is not a superuser) plus the settings surfaces that live in
+ *  the account menu. */
 function buildNavItems(isEnabled: (flag: string) => boolean, isAdmin: boolean): StaticItem[] {
   const fromSidebar: StaticItem[] = navItems.flatMap((item) =>
-    item.type === 'link' && (item.feature === undefined || isEnabled(item.feature))
+    item.type === 'link' && (item.feature === undefined || isEnabled(item.feature)) && (isAdmin || !item.admin)
       ? [{ id: `nav-${item.key}`, labelKey: `nav.${item.key}`, icon: item.icon, path: item.path }]
       : [],
   )
@@ -59,8 +62,12 @@ const QUICK_ACTIONS: StaticItem[] = [
     icon: Upload,
     onSelect: (nav) => nav('/files'),
     keywords: ['upload', 'file', 'arquivo', 'enviar'],
+    admin: true,
   },
 ]
+
+/** A recent that leads to a superuser-only screen is hidden from everyone else (#32). */
+const leadsToAdmin = (path: string) => adminPaths.some((admin) => path === admin || path.startsWith(`${admin}/`))
 
 // ---------------------------------------------------------------------------
 // Recent items (localStorage)
@@ -140,7 +147,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const { isEnabled } = useFeatureFlags()
   const [query, setQuery] = useState('')
   const [debounced, setDebounced] = useState('')
-  const recents = useSyncExternalStore(subscribeRecents, getRecentSnapshot, getRecentSnapshot)
+  const isAdmin = !!user?.is_superuser
+  const storedRecents = useSyncExternalStore(subscribeRecents, getRecentSnapshot, getRecentSnapshot)
+  const recents = useMemo(
+    () => (isAdmin ? storedRecents : storedRecents.filter((recent) => !leadsToAdmin(recent.path))),
+    [storedRecents, isAdmin],
+  )
+  const quickActions = useMemo(
+    () => (isAdmin ? QUICK_ACTIONS : QUICK_ACTIONS.filter((action) => !action.admin)),
+    [isAdmin],
+  )
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Focus the input whenever the palette opens. The cmdk Command is re-keyed
@@ -175,19 +191,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   // in-app destinations and actions. Add a backend search group here when
   // the app has entities worth finding.
   const filteredNavItems = useMemo(() => {
-    const available = buildNavItems(isEnabled, !!user?.is_superuser)
+    const available = buildNavItems(isEnabled, isAdmin)
     if (debounced.trim().length === 0) return available
     return available.filter((n) =>
       matchesQuery(debounced, [t(n.labelKey), n.path, ...(n.keywords ?? [])])
     )
-  }, [debounced, t, isEnabled, user?.is_superuser])
+  }, [debounced, t, isEnabled, isAdmin])
 
   const filteredQuickActions = useMemo(() => {
-    if (debounced.trim().length === 0) return QUICK_ACTIONS
-    return QUICK_ACTIONS.filter((a) =>
+    if (debounced.trim().length === 0) return quickActions
+    return quickActions.filter((a) =>
       matchesQuery(debounced, [t(a.labelKey), ...(a.keywords ?? [])])
     )
-  }, [debounced, t])
+  }, [debounced, t, quickActions])
 
   const runAndClose = useCallback(
     (item: { id: string; label: string; path: string; iconName: string; sublabel?: string | null }) => {

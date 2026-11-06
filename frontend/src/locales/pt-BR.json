@@ -325,6 +325,8 @@
     "uploading": "Enviando"
   },
   "nav": {
+    "adminBadge": "admin",
+    "adminLink": "{{name}} (admin)",
     "collapseSidebar": "Recolher barra lateral",
     "components": "Componentes",
     "expandSidebar": "Expandir barra lateral",

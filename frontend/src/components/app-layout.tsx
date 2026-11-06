@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useSidebarState } from '@/contexts/sidebar-state-context'
 import { admin as adminApi } from '@/lib/api'
@@ -69,6 +70,8 @@ export function AppLayout() {
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
   const { isLoading: workspaceLoading, canWrite } = useWorkspace()
+  const { user } = useAuth()
+  const isSuperuser = !!user?.is_superuser
   const { isEnabled, updateCheckRepo } = useFeatureFlags()
   const localAuthEnabled = useLocalAuthEnabled()
 
@@ -86,8 +89,8 @@ export function AppLayout() {
   }, [resolvedTheme])
 
   const finalNavItems: NavItem[] = useMemo(
-    () => visibleNavItems(navItems, isEnabled, canWrite),
-    [isEnabled, canWrite],
+    () => visibleNavItems(navItems, isEnabled, canWrite, isSuperuser),
+    [isEnabled, canWrite, isSuperuser],
   )
   // macOS desktop hides the native title bar, so the header becomes the drag area.
   const dragHeader = isDesktop() && getDesktopApi().platform === 'darwin'
@@ -254,16 +257,20 @@ export function AppLayout() {
                     ? location.pathname === '/'
                     : location.pathname.startsWith(item.path)
                 const Icon = item.icon
+                // An admin link says so in its name and tip, which is all the collapsed sidebar shows (#32).
+                const label = item.admin
+                  ? t('nav.adminLink', { name: t(`nav.${item.key}`) })
+                  : t(`nav.${item.key}`)
                 return (
                   <Link
                     key={item.key}
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
-                    title={t(`nav.${item.key}`)}
-                    aria-label={t(`nav.${item.key}`)}
+                    title={label}
+                    aria-label={label}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
-                      'flex items-center gap-3 text-[13px] font-medium transition-all rounded-lg px-3 py-2',
+                      'relative flex items-center gap-3 text-[13px] font-medium transition-all rounded-lg px-3 py-2',
                       isActive
                         ? 'bg-primary/[0.08] text-primary border-l-[3px] border-primary pl-[9px]'
                         : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
@@ -278,7 +285,28 @@ export function AppLayout() {
                         collapsed && 'lg:h-5 lg:w-5',
                       )}
                     />
-                    <span className={cn(collapsed && 'lg:hidden')}>{t(`nav.${item.key}`)}</span>
+                    <span className={cn(item.admin && 'flex-1', collapsed && 'lg:hidden')}>{t(`nav.${item.key}`)}</span>
+                    {item.admin && (
+                      <>
+                        <span
+                          data-admin-badge
+                          aria-hidden
+                          className={cn(
+                            'rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-semibold leading-4 text-primary',
+                            collapsed && 'lg:hidden',
+                          )}
+                        >
+                          {t('nav.adminBadge')}
+                        </span>
+                        {collapsed && (
+                          <span
+                            data-admin-dot
+                            aria-hidden
+                            className="absolute right-1.5 top-1.5 hidden size-1.5 rounded-full bg-primary lg:block"
+                          />
+                        )}
+                      </>
+                    )}
                   </Link>
                 )
               })}

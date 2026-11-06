@@ -325,6 +325,8 @@
     "uploading": "Uploading"
   },
   "nav": {
+    "adminBadge": "admin",
+    "adminLink": "{{name}} (admin)",
     "collapseSidebar": "Collapse sidebar",
     "components": "Components",
     "expandSidebar": "Expand sidebar",

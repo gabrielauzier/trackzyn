@@ -84,8 +84,9 @@ function App() {
                         <Route path="/focus/:listId" element={<FocusPage />} />
                         <Route path="/agenda" element={<AgendaPage />} />
                         <Route path="/reports" element={<ReportsPage />} />
-                        <Route path="/files" element={<FilesPage />} />
-                        <Route path="/components" element={<ComponentsShowcasePage />} />
+                        {/* Files and Components are for the instance's superuser only (#32). */}
+                        <Route path="/files" element={<AdminRoute><FilesPage /></AdminRoute>} />
+                        <Route path="/components" element={<AdminRoute><ComponentsShowcasePage /></AdminRoute>} />
                         <Route path="/workspace/settings" element={<WorkspaceSettingsPage />} />
                         <Route path="/admin" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
                       </Route>
