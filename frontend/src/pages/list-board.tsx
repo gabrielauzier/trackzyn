@@ -92,7 +92,7 @@ function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: st
   return { ...board, columns }
 }
 
-/** The board with `taskId` last among today's completions, as the server lists them once the task is done. */
+/** The board with `taskId` first among today's completions, as the server lists them (latest first) once it is done. */
 function placeInDone(board: Board, taskId: string): Board {
   const moved = findCard(board, columnsOf(board).get(taskId) ?? 'backlog', taskId)?.task
   if (!moved) return board
@@ -103,7 +103,7 @@ function placeInDone(board: Board, taskId: string): Board {
   const todayDate = new Date().toLocaleDateString('en-CA')
   const [first, ...rest] = days
   const withToday =
-    first?.date === todayDate ? [{ ...first, tasks: [...first.tasks, moved] }, ...rest] : [{ date: todayDate, tasks: [moved] }, ...days]
+    first?.date === todayDate ? [{ ...first, tasks: [moved, ...first.tasks] }, ...rest] : [{ date: todayDate, tasks: [moved] }, ...days]
   return {
     ...board,
     columns: {
@@ -111,6 +111,31 @@ function placeInDone(board: Board, taskId: string): Board {
       this_week: { ...this_week, tasks: without(this_week.tasks) },
       today: { ...today, tasks: without(today.tasks) },
       done: { ...done, days: withToday },
+    },
+  }
+}
+
+const estimateOf = (tasks: TaskCardView[]) => tasks.reduce((total, task) => total + (task.estimate_minutes ?? 0), 0)
+
+/** The board with the estimate of `taskId` set to `minutes`, and the column and list totals that count it. */
+function withEstimate(board: Board, taskId: string, minutes: number | null): Board {
+  const set = (tasks: TaskCardView[]) =>
+    tasks.map((task) => (task.id === taskId ? { ...task, estimate_minutes: minutes } : task))
+  const backlog = set(board.columns.backlog.tasks)
+  const thisWeek = set(board.columns.this_week.tasks)
+  const today = set(board.columns.today.tasks)
+  // The same sums the server makes: This week counts Today's estimate too.
+  return {
+    ...board,
+    pending: { ...board.pending, estimate_minutes: estimateOf(backlog) + estimateOf(thisWeek) + estimateOf(today) },
+    columns: {
+      backlog: { ...board.columns.backlog, tasks: backlog, estimate_minutes: estimateOf(backlog) },
+      this_week: { ...board.columns.this_week, tasks: thisWeek, estimate_minutes: estimateOf(thisWeek) + estimateOf(today) },
+      today: { ...board.columns.today, tasks: today, estimate_minutes: estimateOf(today) },
+      done: {
+        ...board.columns.done,
+        days: board.columns.done.days.map((day) => ({ ...day, tasks: set(day.tasks) })),
+      },
     },
   }
 }
@@ -167,8 +192,22 @@ export default function ListBoardPage() {
     onSettled: () => void refresh(),
   })
 
+  // The card shows the new estimate at once; a failed save puts the previous one back (#30).
+  const estimateMutation = useMutation({
+    mutationFn: ({ id, minutes }: { id: string; minutes: number | null; previous: number | null }) =>
+      tasksApi.update(id, { estimate_minutes: minutes }),
+    onMutate: ({ id, minutes }) => {
+      queryClient.setQueryData<Board>(boardKey, (current) => current && withEstimate(current, id, minutes))
+    },
+    onError: (e, { id, previous }) => {
+      queryClient.setQueryData<Board>(boardKey, (current) => current && withEstimate(current, id, previous))
+      onActionError(e)
+    },
+    onSettled: () => void refresh(),
+  })
+
   const sensors = useSensors(
-    // A few pixels of travel before a drag starts, so a click still opens the task or ticks it.
+    // A few pixels of travel before a drag starts, so a click still opens the task or edits its estimate.
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
@@ -302,7 +341,9 @@ export default function ListBoardPage() {
         number={index + 1}
         canWrite={canWrite}
         onOpen={(card) => setOpenTaskId(card.id)}
-        onComplete={(card) => complete(card.id)}
+        onEstimateChange={(card, minutes) =>
+          estimateMutation.mutate({ id: card.id, minutes, previous: card.estimate_minutes })
+        }
         subtasks={<SubtaskList taskId={task.id} canWrite={canWrite} showSummary={false} />}
         notes={(close) => <QuickNote taskId={task.id} canWrite={canWrite} onClose={close} />}
         actions={{
@@ -416,7 +457,7 @@ export default function ListBoardPage() {
         <DragOverlay>
           {draggedCard && (
             <div data-task-id={draggedCard.task.id}>
-              <TaskCard task={draggedCard.task} column={draggedCard.column} number={draggedCard.number} canWrite={canWrite} onOpen={noop} onComplete={noop} />
+              <TaskCard task={draggedCard.task} column={draggedCard.column} number={draggedCard.number} canWrite={canWrite} onOpen={noop} />
             </div>
           )}
         </DragOverlay>
