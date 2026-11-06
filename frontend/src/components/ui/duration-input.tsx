@@ -69,7 +69,10 @@ export function DurationInput({ value, onChange, variant = 'inline', className, 
     onChange: handleChange,
   }
 
-  if (variant === 'field') return <Input {...shared} className={cn('font-mono tabular-nums', className)} />
+  if (variant === 'field') {
+    // As wide as `HH:MM` too: five characters of its own type size, the Input's padding (px-3) and border.
+    return <Input {...shared} className={cn('w-[calc(5ch+1.5rem+2px)] font-mono tabular-nums', className)} />
+  }
   return (
     <input
       {...shared}

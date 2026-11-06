@@ -143,7 +143,7 @@ function NewTaskForm({
             <FormItem>
               <FormLabel>{t('board.estimate')}</FormLabel>
               <FormControl>
-                <DurationInput variant="field" className="w-36" {...field} />
+                <DurationInput variant="field" {...field} />
               </FormControl>
               <FormDescription>{t('board.estimateHint')}</FormDescription>
               <FormMessage />

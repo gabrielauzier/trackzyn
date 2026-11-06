@@ -21,6 +21,16 @@ describe('DurationInput', () => {
     expect(input.className).not.toMatch(/(^|\s)w-14(\s|$)/)
   })
 
+  it('as a form field, is as wide as HH:MM instead of the whole row', () => {
+    renderWithProviders(<DurationInput variant="field" aria-label="Duration" value="" onChange={() => {}} />)
+    const input = screen.getByRole('textbox', { name: 'Duration' })
+
+    // Five characters of its own size, plus the Input's px-3 and its border; the Input's w-full is replaced.
+    expect(input.className).toMatch(/(^|\s)w-\[calc\(5ch\+1\.5rem\+2px\)\](\s|$)/)
+    expect(input.className).not.toMatch(/(^|\s)w-full(\s|$)/)
+    expect(input).toHaveClass('font-mono', 'px-3', 'border')
+  })
+
   it('accepts digits only and keeps the colon', async () => {
     const { user } = renderWithProviders(<Field />)
     const input = screen.getByRole('textbox', { name: 'Duration' })
