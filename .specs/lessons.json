@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 26,
+  "next_id": 49,
   "lessons": [
     {
       "id": "L-001",
@@ -454,6 +454,420 @@
       ],
       "created": "2026-11-03T01:53:15Z",
       "last_seen": "2026-11-03T01:53:15Z"
+    },
+    {
+      "id": "L-026",
+      "key": "surviving_mutant::test every lookup of an owned record against the same user s record in another workspace not only another user s",
+      "text": "Test every lookup of an owned record against the same user's record in another workspace, not only another user's.",
+      "signal": "surviving_mutant",
+      "scope": "backend/scoping",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M6 backend-node/src/services/sessions.ts:190 (backend/scoping)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-027",
+      "key": "surviving_mutant::inject the hit testing callback a drag depends on in tests since jsdom lays nothing out and an untested callback means the cross target move is unproven",
+      "text": "Inject the hit-testing callback a drag depends on in tests, since jsdom lays nothing out and an untested callback means the cross-target move is unproven.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/drag-and-drop",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F4 frontend/src/lib/agenda/use-grid-drag.ts:105 (frontend/drag-and-drop)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-028",
+      "key": "surviving_mutant::prove an optimistic rollback with the refetch failing or pending since a successful refetch restores the cache by itself",
+      "text": "Prove an optimistic rollback with the refetch failing or pending, since a successful refetch restores the cache by itself.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/optimistic",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F6 frontend/src/lib/agenda/use-agenda.ts:100 (frontend/optimistic)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-029",
+      "key": "surviving_mutant::test interval grouping with a chain where one item overlaps the next and that one only touches a third",
+      "text": "Test interval grouping with a chain where one item overlaps the next and that one only touches a third.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/layout",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F1 frontend/src/lib/agenda/layout.ts:122 (frontend/layout)"
+      ],
+      "created": "2026-11-04T06:16:42Z",
+      "last_seen": "2026-11-04T06:16:42Z"
+    },
+    {
+      "id": "L-030",
+      "key": "spec_deviation::check that the endpoint a picker reuses returns the whole set the spec names before building on it board views are windowed",
+      "text": "Check that the endpoint a picker reuses returns the whole set the spec names before building on it; board views are windowed.",
+      "signal": "spec_deviation",
+      "scope": "frontend/data-sources",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "SPEC_DEVIATION frontend/src/components/agenda/session-panel.tsx:67 (AGENDA-16) (frontend/data-sources)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-031",
+      "key": "ac_gap::a check the spec runs over all the user s records must not read the list filtered query the view shows",
+      "text": "A check the spec runs over all the user's records must not read the list-filtered query the view shows.",
+      "signal": "ac_gap",
+      "scope": "frontend/filters",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AGENDA-19 frontend/src/pages/agenda.tsx:241 (frontend/filters)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-032",
+      "key": "spec_precision_gap::state the result at the exact boundary when a default time is derived by rounding such as now within the first minutes of an hour",
+      "text": "State the result at the exact boundary when a default time is derived by rounding, such as now within the first minutes of an hour.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AGENDA-15 frontend/src/lib/agenda/layout.ts:150 (specs)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-033",
+      "key": "spec_precision_gap::say per view which entry points stay available on days the action cannot apply to such as future days",
+      "text": "Say per view which entry points stay available on days the action cannot apply to, such as future days.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "agenda"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AGENDA-43 frontend/src/components/agenda/day-timeline.tsx:160 (specs)"
+      ],
+      "created": "2026-11-04T06:16:43Z",
+      "last_seen": "2026-11-04T06:16:43Z"
+    },
+    {
+      "id": "L-034",
+      "key": "surviving_mutant::when a page renders different components per viewport test each feature behaviour at the page level in every viewport not only on the component with the prop passed by hand",
+      "text": "When a page renders different components per viewport, test each feature behaviour at the page level in every viewport, not only on the component with the prop passed by hand",
+      "signal": "surviving_mutant",
+      "scope": "frontend/pages",
+      "status": "candidate",
+      "features": [
+        "hide-short-sessions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "F10 frontend/src/pages/agenda.tsx:274 (frontend/pages)"
+      ],
+      "created": "2026-11-04T16:09:11Z",
+      "last_seen": "2026-11-04T16:09:11Z"
+    },
+    {
+      "id": "L-035",
+      "key": "spec_precision_gap::name every role allowed to change a workspace setting in the acceptance criterion itself not only in the assumptions table",
+      "text": "Name every role allowed to change a workspace setting in the acceptance criterion itself, not only in the assumptions table",
+      "signal": "spec_precision_gap",
+      "scope": "workspace-settings",
+      "status": "candidate",
+      "features": [
+        "merge-near-sessions"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MERGE-05 (validation.md, backend-node/test/routes/workspaces.test.ts:192) (workspace-settings)"
+      ],
+      "created": "2026-11-04T18:04:33Z",
+      "last_seen": "2026-11-04T18:04:33Z"
+    },
+    {
+      "id": "L-036",
+      "key": "ac_gap::assert where focus lands after every close path the spec names not only after esc",
+      "text": "Assert where focus lands after every close path the spec names, not only after Esc",
+      "signal": "ac_gap",
+      "scope": "frontend-components",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DAYS-04 view-menu.test.tsx:38-39 (frontend-components)"
+      ],
+      "created": "2026-11-04T20:16:50Z",
+      "last_seen": "2026-11-04T20:16:50Z"
+    },
+    {
+      "id": "L-037",
+      "key": "surviving_mutant::when a spec says hidden items still count make the test depend on an item that is actually hidden",
+      "text": "When a spec says hidden items still count, make the test depend on an item that is actually hidden",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M26 M28 pages/agenda.test.tsx:195-203 (frontend-pages)"
+      ],
+      "created": "2026-11-04T20:16:50Z",
+      "last_seen": "2026-11-04T20:16:50Z"
+    },
+    {
+      "id": "L-038",
+      "key": "surviving_mutant::give every spec edge case its own test with the edge condition set up not a nearby happy path",
+      "text": "Give every spec edge case its own test with the edge condition set up, not a nearby happy path",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M29 edge case 2, pages/agenda.test.tsx:790 (frontend-pages)"
+      ],
+      "created": "2026-11-04T20:16:51Z",
+      "last_seen": "2026-11-04T20:16:51Z"
+    },
+    {
+      "id": "L-039",
+      "key": "spec_precision_gap::state in the criterion which views a state driven indicator applies to when the feature behaves differently per view",
+      "text": "State in the criterion which views a state-driven indicator applies to when the feature behaves differently per view",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "agenda-view-menu"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DAYS-14 view-menu.tsx:36 (spec)"
+      ],
+      "created": "2026-11-04T20:16:51Z",
+      "last_seen": "2026-11-04T20:16:51Z"
+    },
+    {
+      "id": "L-040",
+      "key": "ac_gap::when a spec says a value comes from the search text whenever there is one test the entry point with a search that has results not only the empty result path",
+      "text": "When a spec says a value comes from the search text whenever there is one, test the entry point with a search that has results, not only the empty-result path.",
+      "signal": "ac_gap",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "session-task-picker"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PICK-12 frontend/src/components/agenda/session-task-picker.tsx:183 (frontend)"
+      ],
+      "created": "2026-11-05T02:02:02Z",
+      "last_seen": "2026-11-05T02:02:02Z"
+    },
+    {
+      "id": "L-041",
+      "key": "surviving_mutant::test esc for every layered overlay state popover open modal open and assert the underlying panel stays open in each",
+      "text": "Test Esc for every layered overlay state (popover open, modal open) and assert the underlying panel stays open in each.",
+      "signal": "surviving_mutant",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "session-task-picker"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant 40 frontend/src/components/agenda/session-panel.tsx:119 (frontend)"
+      ],
+      "created": "2026-11-05T02:02:02Z",
+      "last_seen": "2026-11-05T02:02:02Z"
+    },
+    {
+      "id": "L-042",
+      "key": "surviving_mutant::when a check excludes the item itself test it with the item s old range overlapping the new one or the exclusion is never exercised",
+      "text": "When a check excludes the item itself, test it with the item's old range overlapping the new one, or the exclusion is never exercised.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-components",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M27 session-move-confirm.tsx:65 / session-move-confirm.test.tsx:91 (ADJ-07) (frontend-components)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-043",
+      "key": "surviving_mutant::test that the page control writes a remembered preference not only that the page reads a seeded value",
+      "text": "Test that the page control writes a remembered preference, not only that the page reads a seeded value.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M14 agenda.tsx:77 / agenda.test.tsx:275 (ADJ-25) (frontend-pages)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-044",
+      "key": "ac_gap::give every spec edge case its own test with the edge condition set up not a nearby happy path",
+      "text": "Give every spec edge case its own test with the edge condition set up, not a nearby happy path",
+      "signal": "ac_gap",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-045",
+      "key": "surviving_mutant::assert a state scoped to one gesture mode is absent during the other modes not only present during its own",
+      "text": "Assert a state scoped to one gesture mode is absent during the other modes, not only present during its own.",
+      "signal": "surviving_mutant",
+      "scope": "frontend/drag-and-drop",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M24 week-grid.tsx:102 (ADJ-14) (frontend/drag-and-drop)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-046",
+      "key": "surviving_mutant::test discard paths through keyboard activation too since pointer handlers may already clear the state the page should clear",
+      "text": "Test discard paths through keyboard activation too, since pointer handlers may already clear the state the page should clear.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M9 agenda.tsx:196 (ADJ-06) (frontend-pages)"
+      ],
+      "created": "2026-11-05T04:56:16Z",
+      "last_seen": "2026-11-05T04:56:16Z"
+    },
+    {
+      "id": "L-047",
+      "key": "surviving_mutant::for a when released criterion assert the outcome is absent mid gesture after pointermove before pointerup not only present after release",
+      "text": "For a WHEN-released criterion, assert the outcome is absent mid-gesture (after pointermove, before pointerup), not only present after release.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-gestures",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N6 frontend/src/pages/agenda.tsx:169 (ADJ-01) (frontend-gestures)"
+      ],
+      "created": "2026-11-05T05:07:21Z",
+      "last_seen": "2026-11-05T05:07:21Z"
+    },
+    {
+      "id": "L-048",
+      "key": "surviving_mutant::when a criterion narrows a rule to its own item add a test acting on a different item in the same state to prove the narrowing",
+      "text": "When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agenda-adjustments"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)"
+      ],
+      "created": "2026-11-05T05:07:21Z",
+      "last_seen": "2026-11-05T05:07:21Z"
     }
   ]
 }

@@ -42,7 +42,7 @@ interface TransitionContext extends FocusActor {
 /** A transition changes the sessions and answers the list whose focus state the response shows. */
 type Transition = (tx: Database, context: TransitionContext) => Promise<string>
 
-const FUTURE_TOLERANCE_MS = 5_000
+export const FUTURE_TOLERANCE_MS = 5_000
 const MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 export const invalidTransition = () =>
@@ -51,7 +51,7 @@ export const invalidTransition = () =>
 const focusElsewhere = (session: FocusSession) =>
   new HttpError(409, 'Focus is running on another device', {}, { code: 'focus_elsewhere', session: toSessionView(session) })
 
-const invalidTime = () => new HttpError(422, 'occurred_at is outside the accepted window', {}, { code: 'invalid_time' })
+export const invalidTime = () => new HttpError(422, 'occurred_at is outside the accepted window', {}, { code: 'invalid_time' })
 
 /** The latest instant a session of the user started or ended: an action may not happen before it. */
 async function lastChange(tx: Database, userId: string): Promise<Date | null> {

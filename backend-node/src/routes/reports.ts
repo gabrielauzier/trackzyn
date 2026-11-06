@@ -12,20 +12,23 @@ import { UUID_PATTERN } from '../services/users.ts'
 export const MAX_REPORT_DAYS = 366
 const DAY_MS = 24 * 60 * 60 * 1000
 
-const period = z
-  .object({
-    from: z.iso.date(),
-    to: z.iso.date(),
-    list_id: z.string().regex(UUID_PATTERN, 'Input should be a valid UUID').optional(),
-  })
-  .superRefine((query, issues) => {
-    const days = (Date.parse(query.to) - Date.parse(query.from)) / DAY_MS + 1
-    if (days < 1) issues.addIssue({ code: 'custom', path: ['to'], message: 'The period must not end before it starts' })
-    else if (days > MAX_REPORT_DAYS)
-      issues.addIssue({ code: 'custom', path: ['to'], message: `The period can have at most ${MAX_REPORT_DAYS} days` })
-  })
+/** `from` and `to` as dates, both included, of at most `maxDays` days, and an optional `list_id`. */
+export const periodQuery = (maxDays: number) =>
+  z
+    .object({
+      from: z.iso.date(),
+      to: z.iso.date(),
+      list_id: z.string().regex(UUID_PATTERN, 'Input should be a valid UUID').optional(),
+    })
+    .superRefine((query, issues) => {
+      const days = (Date.parse(query.to) - Date.parse(query.from)) / DAY_MS + 1
+      if (days < 1) issues.addIssue({ code: 'custom', path: ['to'], message: 'The period must not end before it starts' })
+      else if (days > maxDays) issues.addIssue({ code: 'custom', path: ['to'], message: `The period can have at most ${maxDays} days` })
+    })
 
-const toFilter = (query: z.infer<typeof period>): ReportFilter => ({
+const period = periodQuery(MAX_REPORT_DAYS)
+
+export const toFilter = (query: z.infer<typeof period>): ReportFilter => ({
   from: query.from,
   to: query.to,
   listId: query.list_id?.toLowerCase() ?? null,

@@ -335,7 +335,8 @@
     "newList": "Create new list",
     "allLists": "All my lists",
     "archivedLists": "Archived lists",
-    "reports": "Reports"
+    "reports": "Reports",
+    "agenda": "Agenda"
   },
   "privacy": {
     "hide": "Hide values",
@@ -463,6 +464,15 @@
     "timezone": "Timezone",
     "timezoneDefault": "Application default ({{zone}})",
     "timezoneHint": "The calendar this workspace runs on. Dates and \"today\" roll over at midnight in this timezone.",
+    "hideShortSessions": "Hide short sessions",
+    "minSessionLabel": "Under",
+    "minSessionUnit": "minutes",
+    "minSessionInvalid": "Between 1 and 60 minutes.",
+    "joinNearSessions": "Join near sessions",
+    "mergeGapLabel": "Up to",
+    "mergeGapUnit": "minutes",
+    "hideShortSessionsHint": "Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.",
+    "hideShortSessionsInfo": "About hiding short sessions",
     "you": "you",
     "youManageThis": "You manage this workspace"
   },
@@ -728,5 +738,91 @@
       "period": "Period: {{period}}",
       "list": "List: {{name}}"
     }
+  },
+  "agenda": {
+    "errors": {
+      "future": "The session cannot end in the future.",
+      "duration": "Use 1 minute to 24 hours."
+    },
+    "break": "Break",
+    "now": "now",
+    "range": "{{start}} – {{end}}",
+    "sessionCount_one": "{{count}} session",
+    "sessionCount_other": "{{count}} sessions",
+    "pickSession": "Click to pick a session",
+    "newTask": {
+      "title": "New task",
+      "hint": "To record this session.",
+      "list": "List",
+      "addNotes": "Add notes",
+      "info": "The task goes to Done, with the agenda tag, and is picked for the session."
+    },
+    "picker": {
+      "search": "Search task",
+      "clear": "Clear search",
+      "recent": "The 10 updated last",
+      "results_one": "{{count}} task for “{{query}}”, in every list",
+      "results_other": "{{count}} tasks for “{{query}}”, in every list",
+      "empty": "No task found",
+      "emptyHint": "Nothing with “{{query}}” in any list.",
+      "create": "Create new task",
+      "createNamed": "Create “{{title}}”",
+      "done": "Done",
+      "tasks": "Tasks"
+    },
+    "panel": {
+      "newTitle": "New session",
+      "task": "Task",
+      "break": "Break",
+      "chooseTask": "Choose a task",
+      "breakList": "List of the break",
+      "chooseList": "Choose a list",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "duration": "Duration",
+      "overlap": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts in both.",
+      "editTitle": "Edit session",
+      "edit": "Edit",
+      "origin": {
+        "focus": "recorded by the focus",
+        "manual": "recorded on the agenda"
+      },
+      "running": "The running session has no handles: its end is now. To adjust it, pause it in the focus.",
+      "openFocus": "Open the focus",
+      "pickHint": "Pick a session to see its details, edit or delete it.",
+      "deleteTitle": "Delete this session?",
+      "deleteDescription": "{{title}} · {{when}} will be deleted, and its time leaves the task."
+    },
+    "today": "Today",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "newSession": "New session",
+    "day": "Day",
+    "week": "Week",
+    "view": "View",
+    "zoom": "Zoom",
+    "zoomLevel": "{{level}}x",
+    "moveConfirm": {
+      "pending": "New time — not saved yet",
+      "save": "Save time"
+    },
+    "viewMenu": {
+      "label": "View options",
+      "labelFiltered": "View options, {{shown}} of 7 days",
+      "days": "Week days",
+      "allDays": "All",
+      "workDays": "Mon – Fri",
+      "hideBreaks": "Hide breaks",
+      "hideBreaksHint": "Hides the pauses from the agenda"
+    },
+    "list": "List",
+    "allLists": "All lists",
+    "loadError": "Could not load the agenda.",
+    "retry": "Try again",
+    "goToToday": "Go to today",
+    "days": "Days of the week",
+    "emptyDay": "No sessions on this day. Tap + to record one.",
+    "futureDay": "This day has not come yet. Sessions show up here when you focus."
   }
 }

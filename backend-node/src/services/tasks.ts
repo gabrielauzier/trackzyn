@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type Subtask, type Task, type TaskColumn, focusSessions, lists, personalAccessTokens, subtasks, tasks } from '../db/schema.ts'
+import { type Subtask, type Task, type TaskColumn, type TaskOrigin, focusSessions, lists, personalAccessTokens, subtasks, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { endOpenSessions } from './focus-settle.ts'
 import { getList } from './lists.ts'
@@ -23,6 +23,11 @@ export async function findTask(db: Database, taskId: string, workspaceId: string
   return row.task
 }
 
+/** What `via …` shows: the name of the token that made the task, else `Agenda` for a task from the agenda (PICK-17). */
+export function createdVia(tokenName: string | null, createdFrom: TaskOrigin | null): string | null {
+  return tokenName ?? (createdFrom === 'agenda' ? 'Agenda' : null)
+}
+
 export async function getTask(db: Database, taskId: string, workspaceId: string): Promise<TaskWithSubtasks> {
   const [row] = await db
     .select({ task: tasks, createdVia: personalAccessTokens.name })
@@ -33,7 +38,7 @@ export async function getTask(db: Database, taskId: string, workspaceId: string)
     .limit(1)
   if (!row) throw notFound()
   const found = await db.select().from(subtasks).where(eq(subtasks.taskId, row.task.id)).orderBy(asc(subtasks.position))
-  return { ...row.task, subtasks: found, createdVia: row.createdVia }
+  return { ...row.task, subtasks: found, createdVia: createdVia(row.createdVia, row.task.createdFrom) }
 }
 
 /** Serialises every change to the order of a list's tasks (two moves at once: the last one wins). */
@@ -56,6 +61,8 @@ export async function createTask(
     /** Titles, in the order the subtasks must keep. */
     subtasks?: string[]
     createdViaTokenId?: string
+    /** Where the task came from when no token made it (PICK-17). */
+    createdFrom?: TaskOrigin
     /** Answers 409 for an archived list. An automation cannot see that the list left the screen (API-09). */
     rejectArchived?: boolean
   },
@@ -84,6 +91,8 @@ export async function createTask(
       createdAt: now,
       completedByUserId: input.column === 'done' ? input.userId : null,
       createdViaTokenId: input.createdViaTokenId ?? null,
+      updatedAt: now,
+      createdFrom: input.createdFrom ?? null,
     }
     await tx.insert(tasks).values(task)
     const created: Subtask[] = (input.subtasks ?? []).map((title, position) => ({ id: randomUUID(), taskId: task.id, title, done: false, position }))
@@ -97,10 +106,12 @@ export async function updateTask(
   taskId: string,
   workspaceId: string,
   changes: { title?: string; estimateMinutes?: number | null; notes?: string },
+  now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const task = await findTask(db, taskId, workspaceId)
   const given = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined))
-  if (Object.keys(given).length > 0) await db.update(tasks).set(given).where(eq(tasks.id, task.id))
+  // A change of a field is an update of the task (PICK-01).
+  if (Object.keys(given).length > 0) await db.update(tasks).set({ ...given, updatedAt: now }).where(eq(tasks.id, task.id))
   return getTask(db, task.id, workspaceId)
 }
 
@@ -146,7 +157,9 @@ export async function moveTask(
     const stays = current.column === 'done'
     const completedAt = target.column !== 'done' ? null : stays ? current.completedAt : now
     const completedByUserId = target.column !== 'done' ? null : stays ? current.completedByUserId : target.byUserId
-    await tx.update(tasks).set({ column: target.column, completedAt, completedByUserId }).where(eq(tasks.id, current.id))
+    // Entering another column is an update of the task; reordering inside the same one is not (PICK-01).
+    const updated = current.column !== target.column ? { updatedAt: now } : {}
+    await tx.update(tasks).set({ column: target.column, completedAt, completedByUserId, ...updated }).where(eq(tasks.id, current.id))
     if (target.column !== 'today') await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
     for (const [position, id] of entered.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
     if (current.column !== target.column) {
@@ -188,6 +201,8 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       createdAt: now,
       completedByUserId: null,
       createdViaTokenId: null,
+      updatedAt: now,
+      createdFrom: null,
     }
     await tx.insert(tasks).values(copy)
     const copies: Subtask[] = source.subtasks.map((subtask, position) => ({
@@ -204,7 +219,8 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
 
 /**
  * Moves the task to another list of the workspace, to the end of the same column, and renumbers the column
- * it left. Its open focus session ends (FOCUS-15), as for any task that leaves Today.
+ * it left. Its open focus session ends (FOCUS-15), as for any task that leaves Today, and all its sessions move
+ * to the new list, so its time counts there (#21).
  */
 export async function moveTaskToList(
   db: Database,
@@ -225,8 +241,10 @@ export async function moveTaskToList(
       .select({ next: sql<number>`coalesce(max(${tasks.position}) + 1, 0)::int` })
       .from(tasks)
       .where(and(eq(tasks.listId, target.id), eq(tasks.column, current.column)))
-    await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0 }).where(eq(tasks.id, current.id))
+    await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0, updatedAt: now }).where(eq(tasks.id, current.id))
     await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
+    // The task takes its recorded time with it: reports and the agenda group by the session's list (#21).
+    await tx.update(focusSessions).set({ listId: target.id }).where(eq(focusSessions.taskId, current.id))
     const left = await tx
       .select({ id: tasks.id })
       .from(tasks)

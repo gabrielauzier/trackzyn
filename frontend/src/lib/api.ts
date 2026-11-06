@@ -4,6 +4,12 @@ import { writesBlocked } from '@/lib/write-lock'
 import type { NumberFormat, DateFormat } from '@/lib/format'
 import type {
   AccessToken,
+  AgendaSession,
+  AgendaSessionChanges,
+  AgendaTask,
+  AgendaTaskInput,
+  RecentAgendaTask,
+  AgendaSessionInput,
   AccessTokenScope,
   CreatedAccessToken,
   User,
@@ -112,6 +118,10 @@ export const workspaces = {
     id: string,
     payload: Partial<Pick<Workspace, 'name' | 'icon' | 'color' | 'locale'>> & {
       timezone?: string | null
+      /** 1 to 60; null shows every session (#22). */
+      min_session_minutes?: number | null
+      /** 1 to 60; null keeps near sessions apart in the agenda (#23). */
+      merge_gap_minutes?: number | null
     },
   ): Promise<Workspace> => {
     const { data } = await api.patch(`/workspaces/${id}`, payload)
@@ -445,6 +455,40 @@ export const reports = {
   },
   sessions: async (query: ReportQuery): Promise<SessionsReport> => {
     const { data } = await api.get('/reports/sessions', { params: query })
+    return data
+  },
+}
+
+// Sessions: the logged-in user's own agenda (`from`/`to` are YYYY-MM-DD, at most 42 days)
+export const sessions = {
+  list: async (query: ReportQuery): Promise<{ sessions: AgendaSession[] }> => {
+    const { data } = await api.get('/sessions', { params: query })
+    return data
+  },
+  create: async (payload: AgendaSessionInput): Promise<AgendaSession> => {
+    const { data } = await api.post('/sessions', payload)
+    return data
+  },
+  update: async (id: string, payload: AgendaSessionChanges): Promise<AgendaSession> => {
+    const { data } = await api.patch(`/sessions/${id}`, payload)
+    return data
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.delete(`/sessions/${id}`)
+  },
+  /** The tasks a session can go to: every column of the active lists, Done of any date included. */
+  tasks: async (): Promise<{ tasks: AgendaTask[] }> => {
+    const { data } = await api.get('/sessions/tasks')
+    return data
+  },
+  /** The 10 tasks updated last, or up to 50 whose title contains `q` (PICK-03, PICK-04). */
+  searchTasks: async (q: string): Promise<{ tasks: RecentAgendaTask[] }> => {
+    const { data } = await api.get('/sessions/tasks/search', { params: q.trim() ? { q } : {} })
+    return data
+  },
+  /** Creates the task of a session, concluded, from the agenda (PICK-15). */
+  createTask: async (payload: AgendaTaskInput): Promise<Task> => {
+    const { data } = await api.post('/sessions/tasks', payload)
     return data
   },
 }

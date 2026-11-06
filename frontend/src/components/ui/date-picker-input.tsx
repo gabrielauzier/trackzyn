@@ -15,6 +15,8 @@ interface DatePickerInputProps {
   className?: string
   disabled?: boolean
   align?: 'start' | 'center' | 'end'
+  /** The trigger's id, so a `<label htmlFor>` names it. */
+  id?: string
 }
 
 function DatePickerInput({
@@ -24,6 +26,7 @@ function DatePickerInput({
   className,
   disabled,
   align = 'start',
+  id,
 }: DatePickerInputProps) {
   const { i18n } = useTranslation()
   const [open, setOpen] = useState(false)
@@ -39,6 +42,7 @@ function DatePickerInput({
     <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
         <button
+          id={id}
           type="button"
           disabled={disabled}
           className={cn(

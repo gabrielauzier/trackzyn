@@ -201,3 +201,89 @@ describe('sessionsReport', () => {
     expect(error).toMatchObject({ statusCode: 404 })
   })
 })
+
+describe('sessionsReport with a minimum session length (#22)', () => {
+  const ids = (report: Awaited<ReturnType<typeof sessionsReport>>) => report.days.map((day) => [day.date, day.sessions.map((s) => s.id)])
+
+  it('HIDE-19 leaves out a closed session of 4 min 59 s and keeps one of exactly 5 min and one of 6 min', async () => {
+    const task = await seed.addTask()
+    const short = await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T09:00:00'), endedAt: SP('2026-10-21T09:04:59') })
+    const exact = await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T10:00:00'), endedAt: SP('2026-10-21T10:05:00') })
+    const longer = await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T11:00:00'), endedAt: SP('2026-10-21T11:06:00') })
+
+    const report = await sessionsReport(db, seed.userId, { ...workspace, minSessionMinutes: 5 }, WEEK, NOW)
+
+    expect(ids(report)).toEqual([['2026-10-21', [longer, exact]]])
+    expect(report.days[0]!.sessions.map((s) => s.seconds)).toEqual([6 * M, 5 * M])
+    expect(ids(report).flat(2)).not.toContain(short)
+  })
+
+  it('HIDE-19 hides a short break as it does a short task session', async () => {
+    await seed.addSession({ kind: 'break', startedAt: SP('2026-10-21T09:00:00'), endedAt: SP('2026-10-21T09:02:00'), plannedSeconds: 300 })
+    const report = await sessionsReport(db, seed.userId, { ...workspace, minSessionMinutes: 5 }, WEEK, NOW)
+    expect(report.days).toEqual([])
+  })
+
+  it('HIDE-20 keeps both pieces of a 3 h session crossing midnight whose second piece is 2 min', async () => {
+    const task = await seed.addTask()
+    const late = await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T21:02:00'), endedAt: SP('2026-10-22T00:02:00') })
+
+    const report = await sessionsReport(db, seed.userId, { ...workspace, minSessionMinutes: 5 }, WEEK, NOW)
+
+    expect(ids(report)).toEqual([
+      ['2026-10-22', [late]],
+      ['2026-10-21', [late]],
+    ])
+    expect(report.days.map((day) => day.sessions[0]!.seconds)).toEqual([2 * M, 178 * M])
+  })
+
+  it('HIDE-20 hides both pieces of a 4 min session crossing midnight', async () => {
+    const task = await seed.addTask()
+    await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T23:58:00'), endedAt: SP('2026-10-22T00:02:00') })
+    const report = await sessionsReport(db, seed.userId, { ...workspace, minSessionMinutes: 5 }, WEEK, NOW)
+    expect(report.days).toEqual([])
+  })
+
+  it('HIDE-21 keeps the open session of 1 min, with its null end', async () => {
+    const task = await seed.addTask()
+    const open = await seed.addSession({ kind: 'task', taskId: task, startedAt: new Date(NOW.getTime() - M * 1000), endedAt: null })
+
+    const report = await sessionsReport(db, seed.userId, { ...workspace, minSessionMinutes: 5 }, WEEK, NOW)
+
+    expect(report.days).toEqual([
+      { date: '2026-10-25', sessions: [expect.objectContaining({ id: open, ended_at: null, seconds: M })] },
+    ])
+  })
+
+  it('HIDE-22 leaves out a day whose sessions are all hidden, and keeps the other day', async () => {
+    const task = await seed.addTask()
+    await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-20T09:00:00'), endedAt: SP('2026-10-20T09:01:00') })
+    await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-20T10:00:00'), endedAt: SP('2026-10-20T10:00:30') })
+    const kept = await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T09:00:00'), endedAt: SP('2026-10-21T10:00:00') })
+
+    const report = await sessionsReport(db, seed.userId, { ...workspace, minSessionMinutes: 5 }, WEEK, NOW)
+
+    expect(ids(report)).toEqual([['2026-10-21', [kept]]])
+  })
+
+  it('HIDE-23 the overview counts the hidden sessions the same with the minimum on and off', async () => {
+    const task = await seed.addTask()
+    await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T09:00:00'), endedAt: SP('2026-10-21T09:02:00') })
+    await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T10:00:00'), endedAt: SP('2026-10-21T11:00:00') })
+    await seed.addSession({ kind: 'break', startedAt: SP('2026-10-21T11:00:00'), endedAt: SP('2026-10-21T11:03:00'), plannedSeconds: 300 })
+
+    const off = await overview(db, seed.userId, workspace, WEEK, NOW)
+    const on = await overview(db, seed.userId, { ...workspace, minSessionMinutes: 5 } as typeof workspace, WEEK, NOW)
+
+    expect(on).toEqual(off)
+    expect(on.daily.find((day) => day.date === '2026-10-21')).toEqual({ date: '2026-10-21', task_seconds: 62 * M, break_seconds: 3 * M })
+  })
+
+  it('HIDE-24 with the minimum null every session is listed, the 30 s one included', async () => {
+    const task = await seed.addTask()
+    const tiny = await seed.addSession({ kind: 'task', taskId: task, startedAt: SP('2026-10-21T09:00:00'), endedAt: SP('2026-10-21T09:00:30') })
+    const report = await sessionsReport(db, seed.userId, { ...workspace, minSessionMinutes: null }, WEEK, NOW)
+    expect(ids(report)).toEqual([['2026-10-21', [tiny]]])
+    expect(report.days[0]!.sessions[0]!.seconds).toBe(30)
+  })
+})

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { TOKEN_SCOPES, type TokenScope } from '../../src/db/schema.ts'
 import { invite, ownerViewerStranger } from '../support/roles.ts'
-import { MCP_ROUTES, TOKEN_ROUTES, routeKey } from '../support/token-routes.ts'
+import { CLOSED_AGENDA_ROUTES, MCP_ROUTES, TOKEN_ROUTES, routeKey } from '../support/token-routes.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
 import { mintToken } from '../support/tokens.ts'
 
@@ -89,6 +89,8 @@ describe('the routes open to tokens', () => {
     // The walk must really have seen the app: the admin routes and a generated HEAD among them.
     expect(outside.length).toBeGreaterThan(100)
     expect(outside.map(routeKey)).toEqual(expect.arrayContaining(['GET /api/admin/users', 'POST /api/tokens', 'HEAD /api/lists']))
+    // AD-007: the agenda routes declare no scope and are walked here, closed to tokens.
+    expect(outside.map(routeKey)).toEqual(expect.arrayContaining(CLOSED_AGENDA_ROUTES.map(routeKey)))
 
     const token = await mintToken(t, owner.token, workspaceId)
     for (const route of outside) {

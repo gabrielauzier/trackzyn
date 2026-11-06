@@ -72,18 +72,29 @@ export const userPasskeys = pgTable(
   ],
 )
 
-export const workspaces = pgTable('workspaces', {
-  id: uuid('id').primaryKey(),
-  name: varchar('name', { length: 100 }).notNull(),
-  createdByUserId: uuid('created_by_user_id').references(() => users.id, { onDelete: 'set null' }),
-  isArchived: boolean('is_archived').notNull().default(false),
-  managedByUserId: uuid('managed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
-  locale: varchar('locale', { length: 10 }),
-  timezone: varchar('timezone', { length: 64 }),
-  icon: varchar('icon', { length: 50 }),
-  color: varchar('color', { length: 7 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-})
+export const workspaces = pgTable(
+  'workspaces',
+  {
+    id: uuid('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(),
+    createdByUserId: uuid('created_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    isArchived: boolean('is_archived').notNull().default(false),
+    managedByUserId: uuid('managed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+    locale: varchar('locale', { length: 10 }),
+    timezone: varchar('timezone', { length: 64 }),
+    icon: varchar('icon', { length: 50 }),
+    color: varchar('color', { length: 7 }),
+    /** Sessions shorter than this many minutes (1 to 60) are hidden in the agenda and the Sessions report; null shows all (#22). */
+    minSessionMinutes: smallint('min_session_minutes'),
+    /** Sessions of one list and kind this many minutes apart or less (1 to 60) are drawn as one block in the agenda; null keeps them apart (#23). */
+    mergeGapMinutes: smallint('merge_gap_minutes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    check('ck_workspaces_min_session_minutes', sql`${t.minSessionMinutes} BETWEEN 1 AND 60`),
+    check('ck_workspaces_merge_gap_minutes', sql`${t.mergeGapMinutes} BETWEEN 1 AND 60`),
+  ],
+)
 
 export const files = pgTable(
   'files',
@@ -170,6 +181,9 @@ export const personalAccessTokens = pgTable(
 export const TASK_COLUMNS = ['backlog', 'this_week', 'today', 'done'] as const
 export type TaskColumn = (typeof TASK_COLUMNS)[number]
 
+/** Where a task came from when no token made it (PICK-17). */
+export type TaskOrigin = 'agenda'
+
 export const tasks = pgTable(
   'tasks',
   {
@@ -188,6 +202,10 @@ export const tasks = pgTable(
     completedByUserId: uuid('completed_by_user_id').references(() => users.id, { onDelete: 'set null' }),
     /** The token that created the task; purging the token keeps the task. */
     createdViaTokenId: uuid('created_via_token_id').references(() => personalAccessTokens.id, { onDelete: 'set null' }),
+    /** The last change to the task, its subtasks included (PICK-01); the agenda lists the tasks updated last. */
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Where the task came from when no token made it: `agenda` reads as `via Agenda` (PICK-17). */
+    createdFrom: varchar('created_from', { length: 16 }).$type<TaskOrigin>(),
   },
   (t) => [
     index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
@@ -197,6 +215,7 @@ export const tasks = pgTable(
     check('ck_tasks_column', sql`${t.column} IN ('backlog', 'this_week', 'today', 'done')`),
     check('ck_tasks_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
     check('ck_tasks_done_completed_at', sql`(${t.column} = 'done') = (${t.completedAt} IS NOT NULL)`),
+    check('ck_tasks_created_from', sql`${t.createdFrom} IN ('agenda')`),
   ],
 )
 
@@ -229,8 +248,13 @@ export const FOCUS_END_REASONS = [
   'task_left',
   'leave',
   'crash_cut',
+  'manual',
 ] as const
 export type FocusEndReason = (typeof FOCUS_END_REASONS)[number]
+
+/** How a session came in: the focus timer, or recorded on the agenda (AD-008). */
+export const FOCUS_SESSION_ORIGINS = ['focus', 'manual'] as const
+export type FocusSessionOrigin = (typeof FOCUS_SESSION_ORIGINS)[number]
 
 /** One stretch of focus on a task, or one break. A user has at most one open session (SYNC-01). */
 export const focusSessions = pgTable(
@@ -258,6 +282,7 @@ export const focusSessions = pgTable(
     plannedSeconds: integer('planned_seconds'),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
     endReason: varchar('end_reason', { length: 16 }).$type<FocusEndReason>(),
+    origin: varchar('origin', { length: 8 }).$type<FocusSessionOrigin>().notNull().default('focus'),
   },
   (t) => [
     uniqueIndex('ix_focus_sessions_open_user').on(t.userId).where(sql`${t.endedAt} IS NULL`),

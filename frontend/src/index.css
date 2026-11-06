@@ -51,6 +51,11 @@
   --sidebar-border: #E8ECF1;
   --sidebar-ring: #6366F1;
   --sidebar-muted: #64748B;
+  /* Agenda blocks over the card: list-colour share of the fill at rest and on hover, and of the edge (mixed with
+     the foreground so every list colour keeps 3:1 against the card, WCAG 1.4.11). */
+  --session-tint: 20%;
+  --session-tint-hover: 32%;
+  --session-edge: 75%;
 }
 
 .dark {
@@ -91,6 +96,9 @@
   --chart-6: #008300;
   --chart-7: #9085e9;
   --chart-8: #e66767;
+  --session-tint: 32%;
+  --session-tint-hover: 50%;
+  --session-edge: 100%;
 }
 
 @theme inline {

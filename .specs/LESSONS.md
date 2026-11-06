@@ -164,6 +164,144 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: O3, O4 (validation.md iteração 2) (routes)
 - last seen: 2026-11-03T01:53:15Z
 
+### L-026 - Test every lookup of an owned record against the same user's record in another workspace, not only another user's.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend/scoping` · harmful: 0
+- features: agenda
+- evidence: M6 backend-node/src/services/sessions.ts:190 (backend/scoping)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-027 - Inject the hit-testing callback a drag depends on in tests, since jsdom lays nothing out and an untested callback means the cross-target move is unproven.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/drag-and-drop` · harmful: 0
+- features: agenda
+- evidence: F4 frontend/src/lib/agenda/use-grid-drag.ts:105 (frontend/drag-and-drop)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-028 - Prove an optimistic rollback with the refetch failing or pending, since a successful refetch restores the cache by itself.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/optimistic` · harmful: 0
+- features: agenda
+- evidence: F6 frontend/src/lib/agenda/use-agenda.ts:100 (frontend/optimistic)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-029 - Test interval grouping with a chain where one item overlaps the next and that one only touches a third.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/layout` · harmful: 0
+- features: agenda
+- evidence: F1 frontend/src/lib/agenda/layout.ts:122 (frontend/layout)
+- last seen: 2026-11-04T06:16:42Z
+
+### L-030 - Check that the endpoint a picker reuses returns the whole set the spec names before building on it; board views are windowed.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `frontend/data-sources` · harmful: 0
+- features: agenda
+- evidence: SPEC_DEVIATION frontend/src/components/agenda/session-panel.tsx:67 (AGENDA-16) (frontend/data-sources)
+- last seen: 2026-11-04T06:16:43Z
+
+### L-031 - A check the spec runs over all the user's records must not read the list-filtered query the view shows.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend/filters` · harmful: 0
+- features: agenda
+- evidence: AGENDA-19 frontend/src/pages/agenda.tsx:241 (frontend/filters)
+- last seen: 2026-11-04T06:16:43Z
+
+### L-032 - State the result at the exact boundary when a default time is derived by rounding, such as now within the first minutes of an hour.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: agenda
+- evidence: AGENDA-15 frontend/src/lib/agenda/layout.ts:150 (specs)
+- last seen: 2026-11-04T06:16:43Z
+
+### L-033 - Say per view which entry points stay available on days the action cannot apply to, such as future days.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: agenda
+- evidence: AGENDA-43 frontend/src/components/agenda/day-timeline.tsx:160 (specs)
+- last seen: 2026-11-04T06:16:43Z
+
+### L-034 - When a page renders different components per viewport, test each feature behaviour at the page level in every viewport, not only on the component with the prop passed by hand
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/pages` · harmful: 0
+- features: hide-short-sessions
+- evidence: F10 frontend/src/pages/agenda.tsx:274 (frontend/pages)
+- last seen: 2026-11-04T16:09:11Z
+
+### L-035 - Name every role allowed to change a workspace setting in the acceptance criterion itself, not only in the assumptions table
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `workspace-settings` · harmful: 0
+- features: merge-near-sessions
+- evidence: MERGE-05 (validation.md, backend-node/test/routes/workspaces.test.ts:192) (workspace-settings)
+- last seen: 2026-11-04T18:04:33Z
+
+### L-036 - Assert where focus lands after every close path the spec names, not only after Esc
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-components` · harmful: 0
+- features: agenda-view-menu
+- evidence: DAYS-04 view-menu.test.tsx:38-39 (frontend-components)
+- last seen: 2026-11-04T20:16:50Z
+
+### L-037 - When a spec says hidden items still count, make the test depend on an item that is actually hidden
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-view-menu
+- evidence: M26 M28 pages/agenda.test.tsx:195-203 (frontend-pages)
+- last seen: 2026-11-04T20:16:50Z
+
+### L-038 - Give every spec edge case its own test with the edge condition set up, not a nearby happy path
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-view-menu
+- evidence: M29 edge case 2, pages/agenda.test.tsx:790 (frontend-pages)
+- last seen: 2026-11-04T20:16:51Z
+
+### L-039 - State in the criterion which views a state-driven indicator applies to when the feature behaves differently per view
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: agenda-view-menu
+- evidence: DAYS-14 view-menu.tsx:36 (spec)
+- last seen: 2026-11-04T20:16:51Z
+
+### L-040 - When a spec says a value comes from the search text whenever there is one, test the entry point with a search that has results, not only the empty-result path.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: session-task-picker
+- evidence: PICK-12 frontend/src/components/agenda/session-task-picker.tsx:183 (frontend)
+- last seen: 2026-11-05T02:02:02Z
+
+### L-041 - Test Esc for every layered overlay state (popover open, modal open) and assert the underlying panel stays open in each.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: session-task-picker
+- evidence: mutant 40 frontend/src/components/agenda/session-panel.tsx:119 (frontend)
+- last seen: 2026-11-05T02:02:02Z
+
+### L-042 - When a check excludes the item itself, test it with the item's old range overlapping the new one, or the exclusion is never exercised.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-components` · harmful: 0
+- features: agenda-adjustments
+- evidence: M27 session-move-confirm.tsx:65 / session-move-confirm.test.tsx:91 (ADJ-07) (frontend-components)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-043 - Test that the page control writes a remembered preference, not only that the page reads a seeded value.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: M14 agenda.tsx:77 / agenda.test.tsx:275 (ADJ-25) (frontend-pages)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-044 - Give every spec edge case its own test with the edge condition set up, not a nearby happy path
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-045 - Assert a state scoped to one gesture mode is absent during the other modes, not only present during its own.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/drag-and-drop` · harmful: 0
+- features: agenda-adjustments
+- evidence: M24 week-grid.tsx:102 (ADJ-14) (frontend/drag-and-drop)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-046 - Test discard paths through keyboard activation too, since pointer handlers may already clear the state the page should clear.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: M9 agenda.tsx:196 (ADJ-06) (frontend-pages)
+- last seen: 2026-11-05T04:56:16Z
+
+### L-047 - For a WHEN-released criterion, assert the outcome is absent mid-gesture (after pointermove, before pointerup), not only present after release.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-gestures` · harmful: 0
+- features: agenda-adjustments
+- evidence: N6 frontend/src/pages/agenda.tsx:169 (ADJ-01) (frontend-gestures)
+- last seen: 2026-11-05T05:07:21Z
+
+### L-048 - When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments
+- evidence: N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)
+- last seen: 2026-11-05T05:07:21Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

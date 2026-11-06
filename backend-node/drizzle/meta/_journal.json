@@ -36,6 +36,41 @@
       "when": 1793658091873,
       "tag": "0004_access_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793768876010,
+      "tag": "0005_session_origin",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793801710123,
+      "tag": "0006_session_list_follows_task",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793806561397,
+      "tag": "0007_workspace_min_session",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793813276565,
+      "tag": "0008_workspace_merge_gap",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793841849076,
+      "tag": "0009_task_updated_and_origin",
+      "breakpoints": true
     }
   ]
 }

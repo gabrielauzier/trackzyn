@@ -113,4 +113,18 @@ describe('created_via', () => {
     const [row] = await t.ctx.db.select({ via: tasks.createdViaTokenId }).from(tasks).where(eq(tasks.id, copy.json().id))
     expect(row?.via).toBeNull()
   })
+
+  it('PICK-17 a task from the agenda answers Agenda, on reading and on the board', async () => {
+    const { listId, asOwner, viewer, workspaceId } = await setup()
+    const created = await asOwner('POST', '/api/tasks', { list_id: listId, title: 'Logged', column: 'today' })
+    const id = created.json().id as string
+    await t.ctx.db.update(tasks).set({ createdFrom: 'agenda' }).where(eq(tasks.id, id))
+
+    expect((await asOwner('GET', `/api/tasks/${id}`)).json().created_via).toBe('Agenda')
+    const board = (await call('GET', `/api/lists/${listId}/board`, viewer.token, workspaceId)).json()
+    const cards = Object.values(board.columns as Record<string, { tasks: Array<{ id: string; created_via: string | null }> }>).flatMap(
+      (column) => column.tasks,
+    )
+    expect(cards.find((card) => card.id === id)?.created_via).toBe('Agenda')
+  })
 })

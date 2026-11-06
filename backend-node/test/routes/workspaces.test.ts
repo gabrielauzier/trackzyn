@@ -59,6 +59,140 @@ describe('workspace resolution', () => {
   })
 })
 
+describe('minimum session length (#22)', () => {
+  const minOf = async (id: string, token: string) =>
+    (await call('GET', '/api/workspaces/current', token, undefined, { 'x-workspace-id': id })).json().min_session_minutes
+
+  it('HIDE-02 reads null by default for the owner, an editor and a viewer, in the list and in current', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+    for (const user of [owner, ...members]) {
+      const current = await call('GET', '/api/workspaces/current', user.token, undefined, { 'x-workspace-id': id })
+      expect(current.json()).toHaveProperty('min_session_minutes', null)
+      const listed = (await call('GET', '/api/workspaces', user.token)).json() as Array<{ id: string; min_session_minutes: unknown }>
+      expect(listed.find((workspace) => workspace.id === id)).toHaveProperty('min_session_minutes', null)
+    }
+  })
+
+  it('HIDE-03 lets the owner set 5, keeps it on a PATCH without the field, and turns it off with null', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['viewer'])
+
+    const set = await call('PATCH', `/api/workspaces/${id}`, owner.token, { min_session_minutes: 5 })
+    expect(set.statusCode).toBe(200)
+    expect(set.json().min_session_minutes).toBe(5)
+    expect(await minOf(id, members[0]!.token)).toBe(5)
+
+    const renamed = await call('PATCH', `/api/workspaces/${id}`, owner.token, { name: 'Renamed' })
+    expect(renamed.json()).toMatchObject({ name: 'Renamed', min_session_minutes: 5 })
+
+    for (const edge of [1, 60]) {
+      expect((await call('PATCH', `/api/workspaces/${id}`, owner.token, { min_session_minutes: edge })).json().min_session_minutes).toBe(edge)
+    }
+
+    const off = await call('PATCH', `/api/workspaces/${id}`, owner.token, { min_session_minutes: null })
+    expect(off.statusCode).toBe(200)
+    expect(off.json().min_session_minutes).toBeNull()
+    expect(await minOf(id, owner.token)).toBeNull()
+  })
+
+  it('HIDE-04 answers 422 to 0, 61, 1.5 and "5", and keeps the stored value', async () => {
+    const owner = await register(t)
+    const { id } = await shared(owner)
+    await call('PATCH', `/api/workspaces/${id}`, owner.token, { min_session_minutes: 10 })
+
+    for (const bad of [0, 61, 1.5, '5']) {
+      const refused = await call('PATCH', `/api/workspaces/${id}`, owner.token, { min_session_minutes: bad })
+      expect(refused.statusCode).toBe(422)
+    }
+    expect(await minOf(id, owner.token)).toBe(10)
+  })
+
+  it('HIDE-05 answers 403 to an editor and a viewer, keeps the value, and lets a manager set it', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+    await call('PATCH', `/api/workspaces/${id}`, owner.token, { min_session_minutes: 10 })
+
+    for (const member of members) {
+      const refused = await call('PATCH', `/api/workspaces/${id}`, member.token, { min_session_minutes: 3 })
+      expect(refused.statusCode).toBe(403)
+    }
+    expect(await minOf(id, owner.token)).toBe(10)
+
+    const manager = await register(t)
+    const managed = (await call('POST', '/api/workspaces', manager.token, { name: 'Managed' })).json().id as string
+    const set = await call('PATCH', `/api/workspaces/${managed}`, manager.token, { min_session_minutes: 3 })
+    expect(set.json()).toMatchObject({ role: 'manager', min_session_minutes: 3 })
+  })
+})
+
+describe('join gap (#23)', () => {
+  const gapOf = async (id: string, token: string) =>
+    (await call('GET', '/api/workspaces/current', token, undefined, { 'x-workspace-id': id })).json().merge_gap_minutes
+
+  it('MERGE-02 reads null by default for the owner, an editor and a viewer, in the list and in current', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+    for (const user of [owner, ...members]) {
+      const current = await call('GET', '/api/workspaces/current', user.token, undefined, { 'x-workspace-id': id })
+      expect(current.json()).toHaveProperty('merge_gap_minutes', null)
+      const listed = (await call('GET', '/api/workspaces', user.token)).json() as Array<{ id: string; merge_gap_minutes: unknown }>
+      expect(listed.find((workspace) => workspace.id === id)).toHaveProperty('merge_gap_minutes', null)
+    }
+  })
+
+  it('MERGE-03 lets the owner set 5, keeps it on a PATCH without the field, and turns it off with null', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['viewer'])
+
+    const set = await call('PATCH', `/api/workspaces/${id}`, owner.token, { merge_gap_minutes: 5 })
+    expect(set.statusCode).toBe(200)
+    expect(set.json().merge_gap_minutes).toBe(5)
+    expect(await gapOf(id, members[0]!.token)).toBe(5)
+
+    const renamed = await call('PATCH', `/api/workspaces/${id}`, owner.token, { name: 'Renamed' })
+    expect(renamed.json()).toMatchObject({ name: 'Renamed', merge_gap_minutes: 5 })
+
+    for (const edge of [1, 60]) {
+      expect((await call('PATCH', `/api/workspaces/${id}`, owner.token, { merge_gap_minutes: edge })).json().merge_gap_minutes).toBe(edge)
+    }
+
+    const off = await call('PATCH', `/api/workspaces/${id}`, owner.token, { merge_gap_minutes: null })
+    expect(off.statusCode).toBe(200)
+    expect(off.json().merge_gap_minutes).toBeNull()
+    expect(await gapOf(id, owner.token)).toBeNull()
+  })
+
+  it('MERGE-04 answers 422 to 0, 61, 1.5 and "5", and keeps the stored value', async () => {
+    const owner = await register(t)
+    const { id } = await shared(owner)
+    await call('PATCH', `/api/workspaces/${id}`, owner.token, { merge_gap_minutes: 10 })
+
+    for (const bad of [0, 61, 1.5, '5']) {
+      const refused = await call('PATCH', `/api/workspaces/${id}`, owner.token, { merge_gap_minutes: bad })
+      expect(refused.statusCode).toBe(422)
+    }
+    expect(await gapOf(id, owner.token)).toBe(10)
+  })
+
+  it('MERGE-05 answers 403 to an editor and a viewer, keeps the value, and lets a manager set it', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+    await call('PATCH', `/api/workspaces/${id}`, owner.token, { merge_gap_minutes: 10 })
+
+    for (const member of members) {
+      const refused = await call('PATCH', `/api/workspaces/${id}`, member.token, { merge_gap_minutes: 3 })
+      expect(refused.statusCode).toBe(403)
+    }
+    expect(await gapOf(id, owner.token)).toBe(10)
+
+    const manager = await register(t)
+    const managed = (await call('POST', '/api/workspaces', manager.token, { name: 'Managed' })).json().id as string
+    const set = await call('PATCH', `/api/workspaces/${managed}`, manager.token, { merge_gap_minutes: 3 })
+    expect(set.json()).toMatchObject({ role: 'manager', merge_gap_minutes: 3 })
+  })
+})
+
 describe('members', () => {
   it('lists, changes roles and removes members with the sole-owner protections', async () => {
     const owner = await register(t)

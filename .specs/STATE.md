@@ -58,13 +58,21 @@
 - **Date**: 2026-11-02
 - **Status**: active
 
+### AD-008
+- **Decision**: As sessões registradas pela Agenda ficam na mesma tabela `focus_sessions`, com a coluna `origin` (`focus` ou `manual`, padrão `focus`), `device_id = 'agenda'` e `end_reason = 'manual'`. Tempo gasto, relatórios, liquidação e cascatas leem a tabela sem distinguir a origem.
+- **Reason**: Toda consulta de tempo já lê `focus_sessions` (`spentMilliseconds`, `clippedSessions`, a aba Sessões); uma tabela separada exigiria `UNION` em cada uma. Abordagem A do design da Agenda, aprovada pelo usuário em 2026-11-04.
+- **Trade-off**: Uma sessão manual que termina mais tarde que a última mudança move o corte de `lastChange` (AD-002), e ações offline anteriores passam a ser recusadas.
+- **Scope**: `agenda`, `foco-e-sons`, `relatorios`; schema `focus_sessions`; backend `services/sessions.ts`.
+- **Date**: 2026-11-04
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `.specs/features/tokens-de-acesso`
-- **Phase / Task**: Execute concluído; Verifier PASS na iteração 3
-- **Completed**: as 5 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso)
+- **Feature**: `.specs/features/agenda-adjustments` (#29)
+- **Phase / Task**: Execute concluído (T1–T11); Verifier PASS na rodada 3 (`cd5cde3`)
+- **Completed**: as 11 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions, merge-near-sessions, agenda-view-menu, session-task-picker, agenda-adjustments)
 - **In-progress** (file:line): none
-- **Next step**: revisar o PR para a `v2`; o Postgres 16 e o `RedisStore` ainda não rodaram, porque `ci.yml` só dispara na `main`; testar um cliente MCP real. Das features anteriores, seguem pendentes: fechar as issues #1 e #2, rodar o e2e do desktop no Linux (xvfb) e conferir a impressão dos relatórios à mão no Chrome, Safari e Electron
+- **Next step**: testar no navegador (arrastar e confirmar, a sessão nova de 1h que se move, a visão Dia, `Ocultar intervalos`) e conferir que nenhum clique solto abre outro painel depois de um arraste (M4, `swallowNextClick`); enviar os commits para o PR #24
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feat/personal-access-tokens
+- **Branch**: feat/agenda
