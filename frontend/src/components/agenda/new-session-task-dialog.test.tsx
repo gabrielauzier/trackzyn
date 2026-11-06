@@ -42,7 +42,12 @@ describe('NewSessionTaskDialog', () => {
     const modal = await screen.findByRole('dialog', { name: 'New task' })
     expect(within(modal).getByRole('combobox', { name: 'List' })).toHaveTextContent('ADSet')
     expect(within(modal).getByLabelText('Title')).toHaveValue('Reunião com o jurídico')
-    expect(within(modal).getByLabelText('Estimate (min)')).toHaveValue('')
+    // The board's HH:MM field, labelled like the task dialog, with its hint.
+    const estimate = within(modal).getByRole('textbox', { name: 'Estimate' })
+    expect(estimate).toHaveValue('')
+    expect(estimate).toHaveAttribute('placeholder', 'HH:MM')
+    expect(within(modal).queryByText('Estimate (min)')).toBeNull()
+    expect(within(modal).getByText('HH:MM · leave empty for no estimate')).toBeInTheDocument()
     expect(within(modal).getByRole('switch', { name: 'Add notes' })).toHaveAttribute('aria-checked', 'false')
     expect(within(modal).queryByLabelText('Notes')).toBeNull()
     expect(within(modal).getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
@@ -63,22 +68,36 @@ describe('NewSessionTaskDialog', () => {
     expect(screen.queryByLabelText('Notes')).toBeNull()
   })
 
-  it('PICK-14 shows the board messages for an empty title, 256 characters and an estimate of 0, and sends nothing', async () => {
+  it('PICK-14 shows the board messages for an empty title, 256 characters and an estimate of 00:00, and sends nothing', async () => {
     const { user } = dialog({ defaultTitle: '' })
     await user.click(await screen.findByRole('button', { name: 'Add' }))
     expect(await screen.findByText('Enter a title')).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Title'), 'a'.repeat(256))
-    await user.type(screen.getByLabelText('Estimate (min)'), '0')
+    await user.type(screen.getByRole('textbox', { name: 'Estimate' }), '0000')
     await user.click(screen.getByRole('button', { name: 'Add' }))
     expect(await screen.findByText('Use at most 255 characters')).toBeInTheDocument()
-    expect(screen.getByText('Use 1 to 1440 minutes')).toBeInTheDocument()
+    expect(screen.getByText('Use 00:01 to 24:00')).toBeInTheDocument()
+    expect(sessions.createTask).not.toHaveBeenCalled()
+  })
+
+  it('PICK-14 shows the board messages for minutes above 59 and a half-typed estimate, and sends nothing', async () => {
+    const { user } = dialog()
+    const estimate = await screen.findByRole('textbox', { name: 'Estimate' })
+    await user.type(estimate, '0175')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(await screen.findByText('Minutes from 00 to 59')).toBeInTheDocument()
+
+    await user.clear(estimate)
+    await user.type(estimate, '013')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    expect(await screen.findByText('Use HH:MM')).toBeInTheDocument()
     expect(sessions.createTask).not.toHaveBeenCalled()
   })
 
   it('PICK-15 sends the list, the title, the estimate and the notes while the switch is on, then hands the task over', async () => {
     const { user, onCreated } = dialog()
-    await user.type(await screen.findByLabelText('Estimate (min)'), '45')
+    await user.type(await screen.findByRole('textbox', { name: 'Estimate' }), '0045')
     await user.click(screen.getByRole('switch', { name: 'Add notes' }))
     placeCaretAtEnd(screen.getByLabelText('Notes'))
     await user.paste('Pauta')

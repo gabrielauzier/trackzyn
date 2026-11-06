@@ -1,20 +1,12 @@
-/** An empty estimate is allowed; otherwise a whole number of minutes from 1 to 1440. */
-export function isValidEstimate(value: string): boolean {
-  const text = value.trim()
-  if (text === '') return true
-  if (!/^\d+$/.test(text)) return false
-  const minutes = Number(text)
-  return minutes >= 1 && minutes <= 1440
-}
-
-/** The estimate field's text as the API takes it: minutes, or null when empty. */
-export function toEstimate(value: string): number | null {
-  const text = value.trim()
-  return text === '' ? null : Number(text)
-}
-
 /** Why an `HH:MM` estimate is refused: not a whole HH:MM, minutes above 59, or outside 00:01 to 24:00. */
 export type DurationError = 'format' | 'minutes' | 'limit'
+
+/** The locale key of each refusal: the same messages on the card, the task dialog and the forms. */
+export const DURATION_ERROR_KEY: Record<DurationError, string> = {
+  format: 'board.estimateFormat',
+  minutes: 'board.estimateMinutesRange',
+  limit: 'board.estimateLimit',
+}
 
 const MAX_MINUTES = 24 * 60
 
@@ -37,4 +29,10 @@ export function toDuration(minutes: number | null): string {
   if (minutes === null) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`
+}
+
+/** A validated `HH:MM` estimate as the API takes it: minutes, or null when empty. */
+export function durationMinutes(value: string): number | null {
+  const parsed = parseDuration(value)
+  return 'minutes' in parsed ? parsed.minutes : null
 }

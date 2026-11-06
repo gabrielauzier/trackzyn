@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, FileText, ListChecks, Pencil, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { parseDuration, toDuration, type DurationError } from '@/components/board/estimate'
+import { DURATION_ERROR_KEY, parseDuration, toDuration } from '@/components/board/estimate'
 import { formatDuration } from '@/components/board/format-duration'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -167,11 +167,6 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
   )
 }
 
-const ERROR_KEY: Record<DurationError, string> = {
-  format: 'board.estimateFormat',
-  minutes: 'board.estimateMinutesRange',
-  limit: 'board.estimateLimit',
-}
 
 /** A press on the estimate is not the start of a drag of the card. */
 const keepFromDrag = (event: PointerEvent) => event.stopPropagation()
@@ -245,7 +240,7 @@ function EstimateEditor({ task, onSave }: { task: TaskCardView; onSave: (minutes
       />
       {shown && (
         <span id={`estimate-error-${task.id}`} role="alert" className="mt-0.5 text-[11px] text-destructive">
-          {t(ERROR_KEY[shown])}
+          {t(DURATION_ERROR_KEY[shown])}
         </span>
       )}
     </span>

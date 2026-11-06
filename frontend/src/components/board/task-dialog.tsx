@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
-import { parseDuration, toDuration, type DurationError } from '@/components/board/estimate'
+import { DURATION_ERROR_KEY, parseDuration, toDuration } from '@/components/board/estimate'
 import { NoteEditor } from '@/components/board/note-editor'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { useTask } from '@/components/board/use-task'
@@ -22,11 +22,6 @@ import type { Task } from '@/types'
 
 const NOTES_MAX = 10_000
 
-const ESTIMATE_ERROR: Record<DurationError, string> = {
-  format: 'board.estimateFormat',
-  minutes: 'board.estimateMinutesRange',
-  limit: 'board.estimateLimit',
-}
 
 interface TaskDialogProps {
   /** The task to show; null keeps the dialog closed. */
@@ -77,7 +72,7 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
     // HH:MM, from 00:01 to 24:00 with minutes up to 59; empty for no estimate.
     estimate: z.string().superRefine((value, ctx) => {
       const parsed = parseDuration(value)
-      if ('error' in parsed) ctx.addIssue({ code: 'custom', message: t(ESTIMATE_ERROR[parsed.error]) })
+      if ('error' in parsed) ctx.addIssue({ code: 'custom', message: t(DURATION_ERROR_KEY[parsed.error]) })
     }),
     notes: z
       .string()

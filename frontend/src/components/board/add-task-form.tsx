@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
-import { parseDuration, type DurationError } from '@/components/board/estimate'
+import { DURATION_ERROR_KEY, durationMinutes, parseDuration } from '@/components/board/estimate'
 import { Button } from '@/components/ui/button'
 import { DurationInput } from '@/components/ui/duration-input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -15,11 +15,6 @@ import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { TaskColumn } from '@/types'
 
-const ESTIMATE_ERROR: Record<DurationError, string> = {
-  format: 'board.estimateFormat',
-  minutes: 'board.estimateMinutesRange',
-  limit: 'board.estimateLimit',
-}
 
 interface AddTaskFormProps {
   listId: string
@@ -53,7 +48,7 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
     // HH:MM, from 00:01 to 24:00 with minutes up to 59; empty for no estimate.
     estimate: z.string().superRefine((value, ctx) => {
       const parsed = parseDuration(value)
-      if ('error' in parsed) ctx.addIssue({ code: 'custom', message: t(ESTIMATE_ERROR[parsed.error]) })
+      if ('error' in parsed) ctx.addIssue({ code: 'custom', message: t(DURATION_ERROR_KEY[parsed.error]) })
     }),
   })
   type Values = z.infer<typeof schema>
@@ -61,7 +56,7 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
 
   const create = useMutation({
     mutationFn: (values: Values) =>
-      tasksApi.create({ list_id: listId, title: values.title, estimate_minutes: toMinutes(values.estimate), column }),
+      tasksApi.create({ list_id: listId, title: values.title, estimate_minutes: durationMinutes(values.estimate), column }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['lists'] })
       onClose()
@@ -131,8 +126,3 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
   )
 }
 
-/** The validated HH:MM text as the API takes it: minutes, or null when empty. */
-function toMinutes(value: string): number | null {
-  const parsed = parseDuration(value)
-  return 'minutes' in parsed ? parsed.minutes : null
-}
