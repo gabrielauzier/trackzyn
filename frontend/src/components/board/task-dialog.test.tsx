@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 
 import { TaskDialog } from '@/components/board/task-dialog'
 import { tasks } from '@/lib/api'
-import { placeCaretAtEnd, renderWithProviders } from '@/test/utils'
+import { i18n, placeCaretAtEnd, renderWithProviders } from '@/test/utils'
 import type { Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
@@ -61,7 +61,7 @@ describe('TaskDialog', () => {
     await renderDialog()
 
     expect(screen.getByRole('dialog', { name: 'Edit task' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Estimate (min)')).toHaveValue('90')
+    expect(screen.getByLabelText('Estimate')).toHaveValue('01:30')
     expect(screen.getByLabelText('Notes')).toHaveTextContent('First pass')
     expect(await screen.findByRole('checkbox', { name: 'Outline' })).toBeInTheDocument()
   })
@@ -94,7 +94,7 @@ describe('TaskDialog', () => {
   it('saves a cleared estimate as null with the new notes', async () => {
     const { user } = await renderDialog()
 
-    await user.clear(screen.getByLabelText('Estimate (min)'))
+    await user.clear(screen.getByLabelText('Estimate'))
     placeCaretAtEnd(screen.getByLabelText('Notes'))
     await user.paste('!')
     await user.click(screen.getByRole('button', { name: 'Save' }))
@@ -104,16 +104,52 @@ describe('TaskDialog', () => {
     )
   })
 
-  it('blocks an estimate of 1441 minutes', async () => {
+  it('blocks an estimate past 24:00', async () => {
     const { user } = await renderDialog()
 
-    const estimate = screen.getByLabelText('Estimate (min)')
+    const estimate = screen.getByLabelText('Estimate')
     await user.clear(estimate)
-    await user.type(estimate, '1441')
+    await user.type(estimate, '2401')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
-    expect(await screen.findByText('Use 1 to 1440 minutes')).toBeInTheDocument()
+    expect(await screen.findByText('Use 00:01 to 24:00')).toBeInTheDocument()
     expect(tasks.update).not.toHaveBeenCalled()
+  })
+
+  it('the estimate field takes HH:MM', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      vi.mocked(tasks.get).mockResolvedValue(task)
+      const onClose = vi.fn()
+      const { user } = renderWithProviders(<TaskDialog taskId={TASK} canWrite onClose={onClose} />)
+      const estimate = await screen.findByLabelText('Estimativa')
+      expect(estimate).toHaveValue('01:30')
+      expect(screen.queryByLabelText('Estimativa (min)')).not.toBeInTheDocument()
+      expect(screen.getByText('HH:MM · deixe vazio para sem estimativa')).toBeInTheDocument()
+
+      // Digits only, with the colon fixed (13).
+      await user.clear(estimate)
+      await user.type(estimate, '0a2b4')
+      expect(estimate).toHaveValue('02:4')
+      await user.type(estimate, '5')
+      expect(estimate).toHaveValue('02:45')
+
+      // Minutes above 59 (16): a warning, and nothing sent.
+      await user.clear(estimate)
+      await user.type(estimate, '0175')
+      await user.click(screen.getByRole('button', { name: 'Salvar' }))
+      expect(await screen.findByText('Minutos de 00 a 59')).toBeInTheDocument()
+      expect(estimate).toHaveAttribute('aria-invalid', 'true')
+      expect(tasks.update).not.toHaveBeenCalled()
+
+      // A valid value is sent in minutes (14).
+      await user.clear(estimate)
+      await user.type(estimate, '0245')
+      await user.click(screen.getByRole('button', { name: 'Salvar' }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { estimate_minutes: 165 }))
+    } finally {
+      await i18n.changeLanguage('en')
+    }
   })
 
   it('shows a 422 from the server and stays open', async () => {

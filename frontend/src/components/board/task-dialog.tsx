@@ -7,19 +7,26 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
-import { isValidEstimate, toEstimate } from '@/components/board/estimate'
+import { parseDuration, toDuration, type DurationError } from '@/components/board/estimate'
 import { NoteEditor } from '@/components/board/note-editor'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { useTask } from '@/components/board/use-task'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { DurationInput } from '@/components/ui/duration-input'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Task } from '@/types'
 
 const NOTES_MAX = 10_000
+
+const ESTIMATE_ERROR: Record<DurationError, string> = {
+  format: 'board.estimateFormat',
+  minutes: 'board.estimateMinutesRange',
+  limit: 'board.estimateLimit',
+}
 
 interface TaskDialogProps {
   /** The task to show; null keeps the dialog closed. */
@@ -67,7 +74,11 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
   const [confirmDelete, setConfirmDelete] = useState(false)
   const schema = z.object({
     title: z.string().trim().min(1, t('board.titleRequired')).max(255, t('board.titleTooLong')),
-    estimate: z.string().refine(isValidEstimate, t('board.estimateRange')),
+    // HH:MM, from 00:01 to 24:00 with minutes up to 59; empty for no estimate.
+    estimate: z.string().superRefine((value, ctx) => {
+      const parsed = parseDuration(value)
+      if ('error' in parsed) ctx.addIssue({ code: 'custom', message: t(ESTIMATE_ERROR[parsed.error]) })
+    }),
     notes: z
       .string()
       .max(NOTES_MAX, t('board.notesTooLong', { max: NOTES_MAX.toLocaleString(i18n.language) })),
@@ -77,7 +88,7 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
     resolver: zodResolver(schema),
     defaultValues: {
       title: task.title,
-      estimate: task.estimate_minutes === null ? '' : String(task.estimate_minutes),
+      estimate: toDuration(task.estimate_minutes),
       notes: task.notes,
     },
   })
@@ -107,7 +118,8 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
     // Only what changed goes to the server.
     const payload: { title?: string; estimate_minutes?: number | null; notes?: string } = {}
     if (values.title !== task.title) payload.title = values.title
-    const estimate = toEstimate(values.estimate)
+    const parsed = parseDuration(values.estimate)
+    const estimate = 'minutes' in parsed ? parsed.minutes : task.estimate_minutes
     if (estimate !== task.estimate_minutes) payload.estimate_minutes = estimate
     if (values.notes !== task.notes) payload.notes = values.notes
     if (Object.keys(payload).length === 0) onDone()
@@ -137,10 +149,11 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
           name="estimate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('board.estimateMinutes')}</FormLabel>
+              <FormLabel>{t('board.estimate')}</FormLabel>
               <FormControl>
-                <Input inputMode="numeric" disabled={!canWrite} {...field} />
+                <DurationInput variant="field" disabled={!canWrite} {...field} />
               </FormControl>
+              <FormDescription>{t('board.estimateHint')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
