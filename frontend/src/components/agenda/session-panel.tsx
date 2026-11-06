@@ -15,13 +15,11 @@ import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { lists as listsApi, sessions as sessionsApi } from '@/lib/api'
+import { lists as listsApi } from '@/lib/api'
 import { clockTime, minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES, dayOf, findOverlap, zonedInstant } from '@/lib/agenda/layout'
 import { sessionErrorMessage, type SessionPreview } from '@/lib/agenda/use-agenda'
@@ -54,16 +52,6 @@ interface SessionPanelProps {
 
 type Kind = 'task' | 'break'
 
-interface TaskOption {
-  id: string
-  title: string
-}
-
-interface TaskGroup {
-  list: { id: string; name: string; color: number }
-  tasks: TaskOption[]
-}
-
 const parseTime = (value: string): number | null => {
   const match = /^(\d{2}):(\d{2})$/.exec(value)
   return match ? Number(match[1]) * 60 + Number(match[2]) : null
@@ -87,10 +75,21 @@ export function SessionPanel({
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const [kind, setKind] = useState<Kind>(editing?.kind ?? 'task')
-  const [taskId, setTaskId] = useState<string | null>(editing?.task_id ?? null)
   const [breakListId, setBreakListId] = useState<string | null>(editing?.kind === 'break' ? editing.list_id : null)
-  // A new session picks its task in the picker, and can create it there (PICK-06, PICK-12); editing keeps the select.
-  const [picked, setPicked] = useState<AgendaTask | null>(null)
+  // The task is picked in the picker, which can create it (PICK-06, PICK-12); an edited session starts on its own task.
+  const [picked, setPicked] = useState<AgendaTask | null>(() =>
+    editing?.kind === 'task' && editing.task_id
+      ? {
+          id: editing.task_id,
+          title: editing.task_title ?? '',
+          list_id: editing.list_id,
+          list_name: editing.list_name,
+          list_color: editing.list_color,
+          // Not shown for the chosen task; the picker reads the column of its own results.
+          column: 'today',
+        }
+      : null,
+  )
   const [pickerOpen, setPickerOpen] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -98,19 +97,6 @@ export function SessionPanel({
 
   const active = useQuery({ queryKey: ['lists', { archived: false }], queryFn: () => listsApi.list({ archived: false }) })
   const activeLists = useMemo(() => active.data?.lists ?? [], [active.data])
-  // Every task of the active lists, in any column, Done of any date included (AGENDA-16).
-  const choices = useQuery({ queryKey: ['lists', 'session-tasks'], queryFn: () => sessionsApi.tasks() })
-  const groups: TaskGroup[] = activeLists.map((list) => ({
-    list,
-    tasks: (choices.data?.tasks ?? []).filter((task) => task.list_id === list.id).map(({ id, title }) => ({ id, title })),
-  }))
-  // The task of an edited session stays among the choices even when it is no longer offered.
-  if (editing?.kind === 'task' && editing.task_id && !groups.some((group) => group.tasks.some((task) => task.id === editing.task_id))) {
-    const own = { id: editing.task_id, title: editing.task_title ?? '' }
-    const group = groups.find((item) => item.list.id === editing.list_id)
-    if (group) group.tasks = [...group.tasks, own]
-    else groups.push({ list: { id: editing.list_id, name: editing.list_name, color: editing.list_color }, tasks: [own] })
-  }
   const fallbackList = activeLists.some((list) => list.id === defaultListId) ? defaultListId : (activeLists[0]?.id ?? null)
   const listOfBreak = breakListId ?? fallbackList
 
@@ -138,17 +124,11 @@ export function SessionPanel({
     const when = { started_at: startAt.toISOString(), ended_at: endAt.toISOString() }
     let input: AgendaSessionInput
     let preview: SessionPreview
-    if (kind === 'task' && !editing) {
-      // A new session takes the task the picker gave, a task just created included (PICK-16).
+    if (kind === 'task') {
+      // The session takes the task the picker gave, a task just created included (PICK-16).
       if (!picked) return
       input = { kind: 'task', task_id: picked.id, ...when }
       preview = { task_title: picked.title, list_id: picked.list_id, list_name: picked.list_name, list_color: picked.list_color }
-    } else if (kind === 'task') {
-      const group = groups.find((item) => item.tasks.some((task) => task.id === taskId))
-      const task = group?.tasks.find((item) => item.id === taskId)
-      if (!group || !task) return
-      input = { kind: 'task', task_id: task.id, ...when }
-      preview = { task_title: task.title, list_id: group.list.id, list_name: group.list.name, list_color: group.list.color }
     } else {
       const list = activeLists.find((item) => item.id === listOfBreak)
       if (!list) return
@@ -166,7 +146,7 @@ export function SessionPanel({
     }
   }
 
-  const ready = kind === 'task' ? taskId !== null : listOfBreak !== null
+  const ready = kind === 'task' ? picked !== null : listOfBreak !== null
 
   return (
     <aside aria-labelledby="session-panel-title" className="flex w-full flex-col gap-4 rounded-xl border bg-card p-4 lg:w-80">
@@ -197,27 +177,6 @@ export function SessionPanel({
         {kind === 'task' ? (
           <div className="flex flex-col gap-1.5">
             <Label id="session-task-label">{t('agenda.panel.task')}</Label>
-            {editing ? (
-            <Select value={taskId ?? ''} onValueChange={(value) => setTaskId(value)}>
-              <SelectTrigger aria-labelledby="session-task-label" className="w-full">
-                <SelectValue placeholder={t('agenda.panel.chooseTask')} />
-              </SelectTrigger>
-              <SelectContent>
-                {groups
-                  .filter((group) => group.tasks.length > 0)
-                  .map((group) => (
-                    <SelectGroup key={group.list.id}>
-                      <SelectLabel>{group.list.name}</SelectLabel>
-                      {group.tasks.map((task) => (
-                        <SelectItem key={task.id} value={task.id}>
-                          {task.title}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-              </SelectContent>
-            </Select>
-            ) : (
               <SessionTaskPicker
                 value={picked}
                 lists={activeLists}
@@ -225,7 +184,6 @@ export function SessionPanel({
                 onOpenChange={setPickerOpen}
                 onChange={(task) => {
                   setPicked(task)
-                  setTaskId(task.id)
                   setError(null)
                 }}
                 onCreate={(title) => {
@@ -233,7 +191,6 @@ export function SessionPanel({
                   setNewTaskTitle(title)
                 }}
               />
-            )}
             <NewSessionTaskDialog
               open={newTaskTitle !== null}
               onOpenChange={(open) => {
@@ -249,7 +206,6 @@ export function SessionPanel({
                 // The new task is the one of the session (PICK-16).
                 const list = activeLists.find((item) => item.id === task.list_id)
                 setPicked({ id: task.id, title: task.title, list_id: task.list_id, list_name: list?.name ?? '', list_color: list?.color ?? 1, column: 'done' })
-                setTaskId(task.id)
                 setNewTaskTitle(null)
                 setError(null)
               }}

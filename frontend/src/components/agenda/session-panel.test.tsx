@@ -321,7 +321,7 @@ describe('SessionDetails (AGENDA-27, AGENDA-32, AGENDA-33)', () => {
 })
 
 describe('SessionPanel (new): the task picker and the new task modal (#27)', () => {
-  it('PICK-06 picks the task of a new session in the picker, while editing keeps the select', async () => {
+  it('PICK-06 picks the task in the picker, for a new session and while editing one', async () => {
     const { user, unmount } = renderWithProviders(<Panel initial={dragged} />)
     const field = screen.getByRole('combobox', { name: 'Task' })
     expect(field).toHaveAttribute('aria-haspopup', 'dialog')
@@ -329,8 +329,30 @@ describe('SessionPanel (new): the task picker and the new task modal (#27)', () 
     expect(await screen.findByRole('dialog', { name: 'Tasks' })).toBeInTheDocument()
     unmount()
 
-    renderWithProviders(<Panel initial={dragged} editing={existing} />)
-    expect(screen.getByRole('combobox', { name: 'Task' })).not.toHaveAttribute('aria-haspopup', 'dialog')
+    const editing = renderWithProviders(<Panel initial={dragged} editing={existing} />)
+    const own = screen.getByRole('combobox', { name: 'Task' })
+    expect(own).toHaveAttribute('aria-haspopup', 'dialog')
+    expect(own).toHaveTextContent('Plan the sprint')
+    await editing.user.click(own)
+    expect(await screen.findByRole('dialog', { name: 'Tasks' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create new task' })).toBeInTheDocument()
+  })
+
+  it('creates the task of an edited session from the picker and saves the session with it', async () => {
+    vi.mocked(sessions.searchTasks).mockResolvedValue({ tasks: [] })
+    const created = { id: 't9', list_id: 'home', title: 'Reunião com o jurídico', column: 'done', created_via: 'Agenda' }
+    vi.mocked(sessions.createTask).mockResolvedValue(created as never)
+    const onSave = vi.fn().mockResolvedValue(undefined)
+    const { user } = renderWithProviders(<Panel initial={dragged} editing={existing} onSave={onSave} />)
+    await user.click(screen.getByRole('combobox', { name: 'Task' }))
+    await user.type(await screen.findByRole('searchbox', { name: 'Search task' }), 'Reunião com o jurídico')
+    await user.click(await screen.findByRole('button', { name: 'Create “Reunião com o jurídico”' }, { timeout: 2000 }))
+    const modal = await screen.findByRole('dialog', { name: 'New task' })
+    await user.click(within(modal).getByRole('button', { name: 'Add' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New task' })).toBeNull())
+    expect(screen.getByRole('combobox', { name: 'Task' })).toHaveTextContent('Reunião com o jurídico')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ kind: 'task', task_id: 't9' }), expect.anything())
   })
 
   it('PICK-12 PICK-16 creates the task from the search and picks it, the modal and the popover closed', async () => {
