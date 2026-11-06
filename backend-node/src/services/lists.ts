@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, inArray, ne, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type List, focusSessions, lists, tasks, workspaces } from '../db/schema.ts'
+import { type List, focusSessions, lists, subtasks, tasks, workspaces } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { endOpenSessions } from './focus-settle.ts'
 
@@ -9,7 +9,15 @@ export interface ListCard {
   list: List
   pendingCount: number
   /** Up to 4 pending tasks: Today, then This week, then Backlog, each in column order. */
-  preview: Array<{ id: string; title: string }>
+  preview: ListPreviewItem[]
+}
+
+/** A pending task in a list card: the shape of the board's task card, without the time spent. */
+export interface ListPreviewItem {
+  id: string
+  title: string
+  estimateMinutes: number | null
+  subtasks: { done: number; total: number }
 }
 
 const PREVIEW_SIZE = 4
@@ -47,7 +55,13 @@ export async function listLists(db: Database, workspaceId: string, options: { ar
     ORDER BY CASE ${tasks.column} WHEN 'today' THEN 0 WHEN 'this_week' THEN 1 ELSE 2 END, ${tasks.position}, ${tasks.createdAt}
   )`
   const ranked = db
-    .select({ id: tasks.id, listId: tasks.listId, title: tasks.title, rank: sql<number>`${rank}`.as('rank') })
+    .select({
+      id: tasks.id,
+      listId: tasks.listId,
+      title: tasks.title,
+      estimateMinutes: tasks.estimateMinutes,
+      rank: sql<number>`${rank}`.as('rank'),
+    })
     .from(tasks)
     .where(and(inArray(tasks.listId, ids), ne(tasks.column, 'done')))
     .as('ranked')
@@ -57,10 +71,38 @@ export async function listLists(db: Database, workspaceId: string, options: { ar
     .where(sql`${ranked.rank} <= ${PREVIEW_SIZE}`)
     .orderBy(asc(ranked.rank))
 
+  const subtaskCounts =
+    previews.length === 0
+      ? []
+      : await db
+          .select({
+            taskId: subtasks.taskId,
+            done: sql<number>`count(*) FILTER (WHERE ${subtasks.done})::int`,
+            total: sql<number>`count(*)::int`,
+          })
+          .from(subtasks)
+          .where(
+            inArray(
+              subtasks.taskId,
+              previews.map((row) => row.id),
+            ),
+          )
+          .groupBy(subtasks.taskId)
+
   return found.map((list) => ({
     list,
     pendingCount: counts.find((row) => row.listId === list.id)?.n ?? 0,
-    preview: previews.filter((row) => row.listId === list.id).map((row) => ({ id: row.id, title: row.title })),
+    preview: previews
+      .filter((row) => row.listId === list.id)
+      .map((row) => {
+        const count = subtaskCounts.find((item) => item.taskId === row.id)
+        return {
+          id: row.id,
+          title: row.title,
+          estimateMinutes: row.estimateMinutes,
+          subtasks: { done: count?.done ?? 0, total: count?.total ?? 0 },
+        }
+      }),
   }))
 }
 
