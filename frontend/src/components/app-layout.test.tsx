@@ -259,6 +259,19 @@ describe('app layout admin links', () => {
     expect(order.at(-1)).toBe('Components (admin)')
   })
 
+  it('the collapsed sidebar keeps a gap between the workspace switcher and the bottom of the window', async () => {
+    const { user } = renderWithProviders(<AppLayout />, { route: '/' })
+    const footer = document.querySelector<HTMLElement>('[data-slot="workspace-footer"]')!
+    // Expanded, the version line under the switcher carries the bottom padding.
+    expect(footer.className).not.toMatch(/(^|\s)lg:pb-/)
+
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+
+    // Collapsed, the version line is hidden, so the switcher's own block takes the same 12 px.
+    expect(screen.getByRole('note').parentElement).toHaveClass('lg:hidden')
+    expect(footer).toHaveClass('lg:pb-3')
+  })
+
   it('the collapsed sidebar marks admin links with a dot', async () => {
     state.user = { ...state.user, is_superuser: true }
     const { user } = renderWithProviders(<AppLayout />, { route: '/' })

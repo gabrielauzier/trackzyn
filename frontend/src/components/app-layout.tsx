@@ -323,7 +323,9 @@ export function AppLayout() {
               as the primary identity, the user email + role as the
               secondary line, with workspace switching and every account
               action in a single menu. */}
-          <div className={cn('px-3 pt-1', collapsed && 'lg:px-2')}>
+          {/* Collapsed, the version line below is hidden, and with it the bottom padding: the
+              switcher takes that padding itself so it never touches the bottom of the window. */}
+          <div data-slot="workspace-footer" className={cn('px-3 pt-1', collapsed && 'lg:px-2 lg:pb-3')}>
             <WorkspaceSwitcher
               onChangePassword={() => setChangePasswordOpen(true)}
               onTwoFactor={() => setTwoFactorOpen(true)}
