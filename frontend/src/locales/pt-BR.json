@@ -532,6 +532,7 @@
     "estimateLimit": "Use de 00:01 a 24:00",
     "estimateFormat": "Use o formato HH:MM",
     "estimateHint": "HH:MM · deixe vazio para sem estimativa",
+    "estimateEmptyHint": "Deixe vazio para sem estimativa",
     "newSubtask": "Nova subtarefa",
     "subtaskTitle": "Título da subtarefa",
     "renameSubtask": "Renomear {{title}}",
