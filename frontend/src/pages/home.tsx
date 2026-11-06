@@ -182,11 +182,18 @@ function SortableListCard({
         transition,
       }}
       // Only a writer is told the card can be picked up (#31).
-      className={cn(canWrite && (isDragging ? 'cursor-grabbing' : 'cursor-grab'), isDragging && 'relative z-10 opacity-80')}
+      // A click focuses the card, and the accent border stays while it keeps the focus; a viewer's
+      // card is focusable by a click too, out of the Tab order.
+      tabIndex={canWrite ? undefined : -1}
+      className={cn(
+        'group/list outline-none',
+        canWrite && (isDragging ? 'cursor-grabbing' : 'cursor-grab'),
+        isDragging && 'relative z-10 opacity-80',
+      )}
       {...dragProps}
     >
       {/* Dragged, the accent border stays on after the press, the keyboard drag included. */}
-      <ListCard list={list} canWrite={canWrite} onRename={onRename} className={cn('h-full', isDragging && 'border-primary')} />
+      <ListCard list={list} canWrite={canWrite} onRename={onRename} className={cn('h-full group-focus/list:border-primary', isDragging && 'border-primary')} />
     </div>
   )
 }

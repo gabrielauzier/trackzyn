@@ -184,7 +184,9 @@ describe('HomePage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     const wrapper = document.querySelector<HTMLElement>(`[data-list-id="${A}"]`)!
     expect(wrapper).not.toHaveAttribute('aria-roledescription')
-    expect(wrapper).not.toHaveAttribute('tabindex')
+    // Out of the Tab order and not a button: -1 only lets a click focus it, for the selected border.
+    expect(wrapper).toHaveAttribute('tabindex', '-1')
+    expect(wrapper).not.toHaveAttribute('role')
     expect(within(wrapper).queryByRole('button', { name: 'Actions' })).not.toBeInTheDocument()
   })
 
@@ -202,6 +204,37 @@ describe('HomePage', () => {
     expect(wrapper).toHaveClass('cursor-grabbing')
     expect(wrapper).toHaveAttribute('aria-pressed', 'true')
     fireEvent.pointerUp(document, { isPrimary: true, button: 0, clientX: 50, clientY: 10 })
+  })
+
+  it('a clicked list card keeps its accent border until something else is clicked', async () => {
+    respond([card(A, 'Alpha', 0), card(B, 'Beta', 1)])
+    const { user } = renderWithProviders(<HomePage />)
+
+    await screen.findByRole('link', { name: 'Alpha' })
+    const alpha = wrapperOf(A)
+    const cardOf = (wrapper: HTMLElement) => wrapper.querySelector<HTMLElement>('[data-slot="card"]')!
+    // The border follows the focus of the card's wrapper, so it stays after the click.
+    expect(alpha).toHaveClass('group/list')
+    expect(cardOf(alpha)).toHaveClass('group-focus/list:border-primary')
+
+    await user.click(within(alpha).getByText('0 pending tasks'))
+    expect(alpha).toHaveFocus()
+
+    await user.click(within(wrapperOf(B)).getByText('0 pending tasks'))
+    expect(alpha).not.toHaveFocus()
+    expect(wrapperOf(B)).toHaveFocus()
+  })
+
+  it('a viewer\'s list card also keeps the border after a click, without joining the Tab order', async () => {
+    state.canWrite = false
+    respond([card(A, 'Alpha', 0)])
+    const { user } = renderWithProviders(<HomePage />)
+
+    await screen.findByRole('link', { name: 'Alpha' })
+    const alpha = wrapperOf(A)
+    expect(alpha).toHaveAttribute('tabindex', '-1')
+    await user.click(within(alpha).getByText('0 pending tasks'))
+    expect(alpha).toHaveFocus()
   })
 
   it('a dragged list card shows an accent border until it is dropped', async () => {
