@@ -7,7 +7,7 @@ export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** Mirrors desktop/src/shared/ipc.ts: exactly these twenty-two members. */
+/** Mirrors desktop/src/shared/ipc.ts: exactly these twenty-three members. */
 export interface TrackzynApi {
   isDesktop: true
   platform: string
@@ -44,6 +44,8 @@ export interface TrackzynApi {
   onFocusChanged(callback: () => void): () => void
   /** Tells whether the focus widget is open. Returns an unsubscribe. */
   onWidgetState(callback: (state: { open: boolean }) => void): () => void
+  /** In the widget: runs `callback` when the cursor enters or leaves the widget window, read by the main process. Returns an unsubscribe. */
+  onWidgetHover(callback: (state: { hovering: boolean }) => void): () => void
 }
 
 declare global {

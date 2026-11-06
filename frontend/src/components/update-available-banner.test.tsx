@@ -37,6 +37,7 @@ function installDesktopApi() {
     notifyFocusChanged: vi.fn(),
     onFocusChanged: vi.fn(() => () => {}),
     onWidgetState: vi.fn(() => () => {}),
+    onWidgetHover: vi.fn(() => () => {}),
   }
   Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
   return { api, emit: (version: string) => listener?.({ version }) }

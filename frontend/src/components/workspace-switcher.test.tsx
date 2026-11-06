@@ -39,6 +39,7 @@ function desktopApi(): TrackzynApi {
     notifyFocusChanged: vi.fn(),
     onFocusChanged: vi.fn(() => () => {}),
     onWidgetState: vi.fn(() => () => {}),
+    onWidgetHover: vi.fn(() => () => {}),
   }
 }
 
