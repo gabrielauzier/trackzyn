@@ -9,6 +9,7 @@ import { SessionTaskPicker } from '@/components/agenda/session-task-picker'
 import { formatDuration } from '@/components/board/format-duration'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { Button } from '@/components/ui/button'
+import { DatePickerInput } from '@/components/ui/date-picker-input'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -275,12 +276,8 @@ export function SessionPanel({
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="session-date">{t('agenda.panel.date')}</Label>
-          <Input
-            id="session-date"
-            type="date"
-            value={times.day}
-            onChange={(event) => event.target.value && change({ day: event.target.value })}
-          />
+          {/* The date picker of the rest of the app, in place of the browser's own. */}
+          <DatePickerInput id="session-date" className="w-full" value={times.day} onChange={(day) => change({ day })} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">

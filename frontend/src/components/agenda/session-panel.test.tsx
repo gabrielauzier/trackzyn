@@ -106,10 +106,20 @@ describe('SessionPanel (new)', () => {
   it('opens with the date and both times of the draft and their duration (AGENDA-14)', () => {
     renderWithProviders(<Panel initial={dragged} />)
     expect(screen.getByRole('heading', { name: 'New session' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Date')).toHaveValue('2026-11-03')
+    expect(screen.getByLabelText('Date')).toHaveTextContent('11/3/2026')
     expect(screen.getByLabelText('Start')).toHaveValue('17:30')
     expect(screen.getByLabelText('End')).toHaveValue('18:45')
     expect(screen.getByText('1hr 15min')).toBeInTheDocument()
+  })
+
+  it('picks the date in the app date picker, not the browser one, and moves the draft to it (AGENDA-17)', async () => {
+    const { user, container } = renderWithProviders(<Panel initial={dragged} />)
+    expect(container.querySelector('input[type="date"]')).toBeNull()
+    await user.click(screen.getByLabelText('Date'))
+    // The first 2 of the month grid is 2 November; a 2 of December may follow it.
+    await user.click(within(await screen.findByRole('dialog')).getAllByRole('button', { name: '2' })[0]!)
+    expect(screen.getByLabelText('Date')).toHaveTextContent('11/2/2026')
+    expect(screen.getByLabelText('Start')).toHaveValue('17:30')
   })
 
   it('changes the duration to 1hr 30min when the end moves from 18:45 to 19:00 (AGENDA-17)', () => {
@@ -389,7 +399,7 @@ describe('SessionPanel (edit, AGENDA-31)', () => {
     renderWithProviders(<Panel initial={own} editing={existing} agenda={[existing]} />)
     expect(screen.getByRole('heading', { name: 'Edit session' })).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Task' })).toHaveTextContent('Plan the sprint'))
-    expect(screen.getByLabelText('Date')).toHaveValue('2026-11-03')
+    expect(screen.getByLabelText('Date')).toHaveTextContent('11/3/2026')
     expect(screen.getByLabelText('Start')).toHaveValue('18:00')
     expect(screen.getByLabelText('End')).toHaveValue('18:30')
     // The session itself is no overlap.
