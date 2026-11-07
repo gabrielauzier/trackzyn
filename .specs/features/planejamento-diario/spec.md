@@ -206,9 +206,9 @@ O que o código já fixa:
 | PLAN-05 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-06 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-07 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-08 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-09 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-10 | P1: Montar o plano de um dia | Tasks | In Tasks |
+| PLAN-08 | P1: Montar o plano de um dia | Tasks | Implementing |
+| PLAN-09 | P1: Montar o plano de um dia | Tasks | Implementing |
+| PLAN-10 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-11 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-12 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-13 | P1: Montar o plano de um dia | Tasks | In Tasks |
@@ -233,10 +233,10 @@ O que o código já fixa:
 | PLAN-32 | P3: Encaixar o que sobrou | Tasks | In Tasks |
 | PLAN-33 | P3: Encaixar o que sobrou | Tasks | In Tasks |
 | PLAN-34 | Edge Cases | Tasks | Implementing |
-| PLAN-35 | Edge Cases | Tasks | In Tasks |
+| PLAN-35 | Edge Cases | Tasks | Implementing |
 | PLAN-36 | Edge Cases | Tasks | In Tasks |
 | PLAN-37 | Edge Cases | Tasks | In Tasks |
-| PLAN-38 | Edge Cases | Tasks | In Tasks |
+| PLAN-38 | Edge Cases | Tasks | Implementing |
 | PLAN-39 | Edge Cases | Tasks | Implementing |
 | PLAN-40 | Edge Cases | Tasks | Implementing |
 | PLAN-41 | Edge Cases | Tasks | In Tasks |

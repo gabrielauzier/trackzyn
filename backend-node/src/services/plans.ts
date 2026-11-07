@@ -1,7 +1,9 @@
-import { eq, sql } from 'drizzle-orm'
+import { randomUUID } from 'node:crypto'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { users } from '../db/schema.ts'
-import { applyDueSchedules, workspaceClock } from './schedule.ts'
+import { dayPlanBlocks, dayPlans, lists, tasks, users } from '../db/schema.ts'
+import { HttpError } from '../http/http-error.ts'
+import { applyDueSchedules, setSchedule, workspaceClock } from './schedule.ts'
 
 /** Who reads or writes a plan: the logged-in user in the current workspace (PLAN-D2). */
 export interface PlanActor {
@@ -182,3 +184,88 @@ export async function listCandidates(db: Database, actor: PlanActor, day: string
   }))
 }
 
+/** A block of the plan as the client sends it (`start` is `HH:MM`). */
+export type BlockInput =
+  | { kind: 'task'; taskId: string; start: string; minutes: number }
+  | { kind: 'break'; name: string; listId: string; start: string; minutes: number }
+
+const planError = (status: number, message: string, code: string) => new HttpError(status, message, {}, { code })
+
+/**
+ * Replaces the actor's plan of `day` with `blocks`, in one transaction (PLAN-08). Refuses a day before today in
+ * the workspace's timezone (422 `plan_day_past`), and a `baseVersion` other than the saved one, 0 while nothing
+ * is saved (409 `plan_changed`, PLAN-35); tasks and break lists must be of the workspace (422, PLAN-43). Each
+ * pending planned task without a day gets the plan's day, without a time, by the rules of saving a schedule
+ * (PLAN-09, D3); no other task changes (PLAN-10, PLAN-38). Answers the saved plan, one version up.
+ */
+export async function savePlan(
+  db: Database,
+  actor: PlanActor,
+  day: string,
+  input: { baseVersion: number; blocks: BlockInput[] },
+  now: Date = new Date(),
+): Promise<PlanRead> {
+  const { today } = await workspaceClock(db, actor.workspaceId, now)
+  if (day < today) throw planError(422, 'The plan of a past day cannot change', 'plan_day_past')
+
+  const taskIds = [...new Set(input.blocks.flatMap((block) => (block.kind === 'task' ? [block.taskId] : [])))]
+  const listIds = [...new Set(input.blocks.flatMap((block) => (block.kind === 'break' ? [block.listId] : [])))]
+
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    // Creates the header if missing, then locks it, so two saves of the same day run one after the other.
+    await tx
+      .insert(dayPlans)
+      .values({ id: randomUUID(), userId: actor.userId, workspaceId: actor.workspaceId, day, version: 0, updatedAt: now })
+      .onConflictDoNothing()
+    const [plan] = await rows<{ id: string; version: number }>(
+      tx,
+      sql`SELECT id, version FROM day_plans WHERE user_id = ${actor.userId} AND workspace_id = ${actor.workspaceId} AND day = ${day}::date FOR UPDATE`,
+    )
+    if (plan!.version !== input.baseVersion) throw planError(409, 'The plan changed elsewhere', 'plan_changed')
+
+    const found =
+      taskIds.length === 0
+        ? []
+        : await tx
+            .select({ id: tasks.id, listId: tasks.listId, column: tasks.column, scheduledOn: tasks.scheduledOn })
+            .from(tasks)
+            .innerJoin(lists, eq(lists.id, tasks.listId))
+            .where(and(inArray(tasks.id, taskIds), eq(lists.workspaceId, actor.workspaceId)))
+    if (found.length !== taskIds.length) throw planError(422, 'Every planned task must be of the workspace', 'plan_task_unknown')
+    const breakLists =
+      listIds.length === 0
+        ? []
+        : await tx
+            .select({ id: lists.id })
+            .from(lists)
+            .where(and(inArray(lists.id, listIds), eq(lists.workspaceId, actor.workspaceId)))
+    if (breakLists.length !== listIds.length) throw planError(422, 'Every break list must be of the workspace', 'plan_list_unknown')
+
+    await tx.delete(dayPlanBlocks).where(eq(dayPlanBlocks.planId, plan!.id))
+    if (input.blocks.length > 0) {
+      await tx.insert(dayPlanBlocks).values(
+        input.blocks.map((block) => ({
+          id: randomUUID(),
+          planId: plan!.id,
+          kind: block.kind,
+          taskId: block.kind === 'task' ? block.taskId : null,
+          name: block.kind === 'break' ? block.name : null,
+          listId: block.kind === 'break' ? block.listId : null,
+          startTime: block.start,
+          minutes: block.minutes,
+        })),
+      )
+    }
+    await tx.update(dayPlans).set({ version: plan!.version + 1, updatedAt: now }).where(eq(dayPlans.id, plan!.id))
+
+    // In order of list, as setSchedule locks each task's list: two saves cannot wait on each other.
+    const unscheduled = found
+      .filter((task) => task.scheduledOn === null && task.column !== 'done')
+      .sort((a, b) => a.listId.localeCompare(b.listId) || a.id.localeCompare(b.id))
+    for (const task of unscheduled) {
+      await setSchedule(tx, task.id, actor.workspaceId, { on: day, time: null }, actor.userId, now)
+    }
+    return getPlan(tx, actor, day, now)
+  })
+}

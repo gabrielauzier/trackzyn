@@ -147,13 +147,13 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Salvar troca o dia inteiro; reenviar o mesmo corpo com a versão nova dá o mesmo plano
-- [ ] Versão diferente responde 409 e não grava nada
-- [ ] Tarefa sem dia recebe o dia do plano, sem hora, com a regra D3 (Backlog → Esta semana ou Hoje)
-- [ ] Tarefa agendada para outro dia mantém o dia; nenhuma tarefa muda `scheduled_time` nem `estimate_minutes`
-- [ ] Tarefa de outro workspace e pausa com lista de outro workspace respondem 422
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
-- [ ] Test count: anteriores + os novos de `services/plans-save.test.ts`
+- [x] Salvar troca o dia inteiro; reenviar o mesmo corpo com a versão nova dá o mesmo plano
+- [x] Versão diferente responde 409 e não grava nada
+- [x] Tarefa sem dia recebe o dia do plano, sem hora, com a regra D3 (Backlog → Esta semana ou Hoje)
+- [x] Tarefa agendada para outro dia mantém o dia; nenhuma tarefa muda `scheduled_time` nem `estimate_minutes`
+- [x] Tarefa de outro workspace e pausa com lista de outro workspace respondem 422
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Test count: anteriores + os novos de `services/plans-save.test.ts`
 
 **Tests**: integration
 **Gate**: full
