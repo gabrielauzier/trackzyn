@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { isHiddenSession } from '@/lib/agenda/hide'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession } from '@/types'
+import type { AgendaSession, ScheduledTask } from '@/types'
 import { DayTimeline } from './day-timeline'
 
 const SP = 'America/Sao_Paulo'
@@ -221,12 +221,35 @@ describe('DayTimeline corner (#26)', () => {
 })
 
 describe('DayTimeline grid (#29)', () => {
-  it('ADJ-15 draws the blocks, the now line and the hatched future of today in the single column', () => {
+  it('ADJ-15 D10 draws the blocks and the now line of today in the single column, with no hatched future', () => {
     const today: AgendaSession = { ...tuesday, id: 'w', started_at: '2026-11-04T13:00:00.000Z', ended_at: '2026-11-04T14:00:00.000Z' }
     const { container } = timeline('2026-11-04', { sessions: [today] })
     const column = container.querySelector('[data-agenda-column="2026-11-04"]')!
     expect(within(column as HTMLElement).getByRole('button', { name: 'Write the report, 10:00 – 11:00' })).toBeInTheDocument()
     expect(column.querySelector('[data-now-line]')).not.toBeNull()
-    expect(column.querySelector('[data-future]')).not.toBeNull()
+    expect(column.querySelector('[data-future]')).toBeNull()
+  })
+})
+
+describe('DayTimeline: the scheduled tasks (US-5)', () => {
+  it('draws the scheduled blocks of the day and opens their task on a click', async () => {
+    const onOpenTask = vi.fn()
+    const timed: ScheduledTask[] = [
+      {
+        id: 'a',
+        title: 'Plan the week',
+        list: { id: 'l1', name: 'Work', color: 3 },
+        column: 'today',
+        position: 0,
+        estimate_minutes: 45,
+        scheduled_on: '2026-11-04',
+        scheduled_time: '16:00',
+        series: null,
+      },
+    ]
+    const { container, user } = timeline('2026-11-04', { timed, onOpenTask })
+    const column = container.querySelector<HTMLElement>('[data-agenda-column="2026-11-04"]')!
+    await user.click(within(column).getByRole('button', { name: 'Plan the week, Scheduled · 16:00 – 16:45' }))
+    expect(onOpenTask).toHaveBeenCalledExactlyOnceWith('a')
   })
 })

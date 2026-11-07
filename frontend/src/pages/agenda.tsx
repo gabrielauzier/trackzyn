@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
+import { TaskDialog } from '@/components/board/task-dialog'
 import { DatePickerChip } from '@/components/agenda/date-picker-chip'
 import { DayTimeline } from '@/components/agenda/day-timeline'
 import { SessionGroupList } from '@/components/agenda/session-group-list'
@@ -21,6 +22,7 @@ import { isHiddenSession } from '@/lib/agenda/hide'
 import { readHideBreaks, saveHideBreaks } from '@/lib/agenda/hide-breaks'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
+import { useScheduled } from '@/lib/agenda/use-scheduled'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { type WeekDay, readShownDays, saveShownDays } from '@/lib/agenda/week-days'
 import { type Zoom, pxPerMinuteAt, readZoom, saveZoom } from '@/lib/agenda/zoom'
@@ -29,7 +31,7 @@ import type { AgendaSession, AgendaSessionChanges, ListCard } from '@/types'
 
 const ALL_LISTS = 'all'
 
-/** The clock of the grid: the open session, the now line and the hatched time move with it. */
+/** The clock of the grid: the open session and the now line move with it. */
 function useNow(): Date {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -110,6 +112,10 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const sunday = addDays(monday, 6)
   const { query, create, update, remove } = useAgenda({ from: monday, to: sunday, listId })
   const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
+  // The scheduled tasks of the whole workspace (D9), and the task a click on one opens (US-5).
+  const { timed, projected } = useScheduled(monday, sunday)
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null)
+  const scheduledProps = { timed, projected, onOpenTask: setOpenTaskId }
   // An overlap is with any other session of the user, whatever the list filter (AGENDA-19).
   const everyList = useQuery({
     queryKey: agendaKey({ from: monday, to: sunday, listId: null }),
@@ -316,6 +322,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 pxPerMinute={pxPerMinute}
                 hidden={hidden}
                 {...joining}
+                {...scheduledProps}
               />
             ) : (
               <DayTimeline
@@ -335,6 +342,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
                 pxPerMinute={pxPerMinute}
                 hidden={hidden}
                 {...joining}
+                {...scheduledProps}
               />
             )}
           </div>
@@ -441,6 +449,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
           )}
         </div>
       )}
+      <TaskDialog taskId={openTaskId} canWrite={canWrite} timeZone={timezone} onClose={() => setOpenTaskId(null)} />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import { isHiddenSession } from '@/lib/agenda/hide'
 import { dayLimit, weekDays } from '@/lib/agenda/layout'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { renderWithProviders } from '@/test/utils'
-import type { AgendaSession } from '@/types'
+import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
 import { PX_PER_MINUTE, WeekGrid } from './week-grid'
 
 const SP = 'America/Sao_Paulo'
@@ -296,11 +296,12 @@ describe('WeekGrid', () => {
     expect(today.querySelector<HTMLElement>('[data-now-line]')!.style.top).toBe(`${y(14, 7)}px`)
   })
 
-  it('hatches the time after now: the rest of today and the later days (AGENDA-23)', () => {
+  it('D10 draws the time after now like the time before: no hatching on the rest of today or the later days', () => {
     const { container } = renderWithProviders(<Grid sessions={[]} />)
     expect(column(container, '2026-11-03').querySelector('[data-future]')).toBeNull()
-    expect(column(container, '2026-11-04').querySelector<HTMLElement>('[data-future]')!.style.top).toBe(`${y(14, 7)}px`)
-    expect(column(container, '2026-11-05').querySelector<HTMLElement>('[data-future]')!.style.top).toBe('0px')
+    expect(column(container, '2026-11-04').querySelector('[data-future]')).toBeNull()
+    expect(column(container, '2026-11-05').querySelector('[data-future]')).toBeNull()
+    expect(column(container, '2026-11-04').querySelector('[data-now-line]')).not.toBeNull()
   })
 
   it('draws a draft while dragging over empty time (AGENDA-14)', () => {
@@ -437,5 +438,84 @@ describe('WeekGrid', () => {
       fireEvent.pointerUp(window, { clientY: y(15, 10) })
       expect(root).not.toHaveAttribute('data-grabbing')
     })
+  })
+})
+
+describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
+  const scheduled = (id: string, day: string, time: string, estimate: number | null = 90): ScheduledTask => ({
+    id,
+    title: `Scheduled ${id}`,
+    list: { id: 'l1', name: 'Work', color: 3 },
+    column: 'this_week',
+    position: 0,
+    estimate_minutes: estimate,
+    scheduled_on: day,
+    scheduled_time: time,
+    series: null,
+  })
+  const projection: ProjectedOccurrence = {
+    series_id: 'series-1',
+    task_id: 'open-1',
+    title: 'Weekly review',
+    list: { id: 'l1', name: 'Work', color: 3 },
+    on: '2026-11-06',
+    time: '09:00',
+    estimate_minutes: 30,
+    rule: { freq: 'weekly', interval: 1, weekdays: [5], month_day: null, until: null, count: null },
+  }
+  const grid = (props: Partial<Parameters<typeof WeekGrid>[0]>) =>
+    renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} {...props} />)
+
+  it('draws a task with a time as a block in its day at its time, for its estimate, in the past and in the future', () => {
+    const { container } = grid({ timed: [scheduled('a', '2026-11-05', '10:00'), scheduled('b', '2026-11-02', '08:00', null)] })
+    const future = within(column(container, '2026-11-05')).getByRole('button', { name: 'Scheduled a, Scheduled · 10:00 – 11:30' })
+    expect([future.style.top, future.style.height]).toEqual([`${y(10)}px`, `${90 * PX_PER_MINUTE}px`])
+    const past = within(column(container, '2026-11-02')).getByRole('button', { name: 'Scheduled b, Scheduled · 08:00 – 09:00 (1h)' })
+    expect(past.style.height).toBe(`${60 * PX_PER_MINUTE}px`)
+  })
+
+  it('puts a scheduled block and a session that overlap side by side', () => {
+    const { container } = grid({
+      sessions: [session('s', '2026-11-03T13:00:00.000Z', '2026-11-03T14:00:00.000Z')],
+      timed: [scheduled('a', '2026-11-03', '10:30')],
+    })
+    const day = within(column(container, '2026-11-03'))
+    const block = day.getByRole('button', { name: /^Scheduled a/ })
+    const work = day.getByRole('button', { name: 'Task s, 10:00 – 11:00' })
+    expect([work.style.left, work.style.width, block.style.left, block.style.width]).toEqual(['0%', '50%', '50%', '50%'])
+  })
+
+  it('draws the projections of a series fainter, on their day', () => {
+    const { container } = grid({ projected: [projection] })
+    const block = within(column(container, '2026-11-06')).getByRole('button', { name: /^Weekly review, Next occurrence/ })
+    expect(block).toHaveAttribute('data-projected', 'true')
+    expect(block).toHaveClass('opacity-50')
+  })
+
+  it('opens the task of a block on a click, and the open occurrence of a projection', async () => {
+    const onOpenTask = vi.fn()
+    const { user } = grid({ timed: [scheduled('a', '2026-11-05', '10:00')], projected: [projection], onOpenTask })
+    await user.click(screen.getByRole('button', { name: /^Scheduled a/ }))
+    await user.click(screen.getByRole('button', { name: /^Weekly review/ }))
+    expect(onOpenTask.mock.calls).toEqual([['a'], ['open-1']])
+  })
+
+  it('says the drag in the tooltip only where the grid has the gestures: not to a viewer', async () => {
+    const { user } = grid({ timed: [scheduled('a', '2026-11-05', '10:00')] })
+    await user.hover(screen.getByRole('button', { name: /^Scheduled a/ }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/Work · This weekClick to open$/)
+  })
+
+  it('starts no draft from a press on a block', () => {
+    function WithDrag() {
+      const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit: vi.fn() })
+      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={[scheduled('a', '2026-11-03', '10:00')]} />
+    }
+    const { container } = renderWithProviders(<WithDrag />)
+    const block = screen.getByRole('button', { name: /^Scheduled a/ })
+    fireEvent.pointerDown(block, { clientY: y(10, 15), button: 0 })
+    fireEvent.pointerMove(window, { clientY: y(11) })
+    fireEvent.pointerUp(window, { clientY: y(11) })
+    expect(container.querySelector('[data-draft]')).toBeNull()
   })
 })

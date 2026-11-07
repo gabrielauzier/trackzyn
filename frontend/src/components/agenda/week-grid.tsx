@@ -2,21 +2,32 @@ import { useMemo, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
+import { ScheduledBlock } from '@/components/agenda/scheduled-block'
 import { SessionBlock } from '@/components/agenda/session-block'
 import { minuteClock } from '@/lib/agenda/format'
 import { joinPieces } from '@/lib/agenda/join'
-import { DAY_MINUTES, assignLanes, dayLimit, dayOf, dayPieces, dayTotal, minuteOf, zonedInstant, type Piece } from '@/lib/agenda/layout'
+import {
+  DAY_MINUTES,
+  assignLanes,
+  dayOf,
+  dayPieces,
+  dayTotal,
+  minuteOf,
+  scheduledPieces,
+  zonedInstant,
+  type Piece,
+  type ScheduledPiece,
+} from '@/lib/agenda/layout'
 import type { DragTarget, useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
 import { cn } from '@/lib/utils'
-import type { AgendaSession } from '@/types'
+import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 /** 144 px per hour: the scale at the default zoom (3x). */
 export const PX_PER_MINUTE = 2.4
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 
-/** Lines across the time after now, where nothing can be recorded (AGENDA-23). */
-const HATCH = 'repeating-linear-gradient(135deg, var(--muted) 0 6px, transparent 6px 12px)'
+const NONE: never[] = []
 
 export type GridDrag = ReturnType<typeof useGridDrag>
 
@@ -49,6 +60,12 @@ interface WeekGridProps {
   previewId?: string | null
   /** Heads each day with its whole date, `4 de Novembro de 2026`, in place of the day number: the day view (ADJ-16). */
   longDate?: boolean
+  /** The pending tasks scheduled with a time, drawn as scheduled blocks (US-5). */
+  timed?: ScheduledTask[]
+  /** The future occurrences of the series, drawn fainter (US-11). */
+  projected?: ProjectedOccurrence[]
+  /** A click on a scheduled block opens its task: the task itself, or the open occurrence of a projection. */
+  onOpenTask?: (taskId: string) => void
 }
 
 /** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
@@ -72,8 +89,8 @@ function weekdayLabel(day: string, locale: string): string {
 
 /**
  * The week as a grid from 00:00 to 24:00 (AGENDA-01): a column per day with its weekday, its number and the
- * time of its task sessions; the sessions as blocks, side by side where they overlap (AGENDA-06); the now
- * line on today (AGENDA-05) and the time after now hatched, where no drag starts (AGENDA-23).
+ * time of its task sessions; the sessions and the scheduled tasks as blocks, side by side where they overlap
+ * (AGENDA-06, US-5); the now line on today (AGENDA-05). The time after now looks like the time before (D10).
  */
 export function WeekGrid({
   days,
@@ -92,6 +109,9 @@ export function WeekGrid({
   corner,
   longDate = false,
   previewId = null,
+  timed = NONE,
+  projected = NONE,
+  onOpenTask,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -120,6 +140,7 @@ export function WeekGrid({
     [sessions, adjusting, timezone],
   )
   const pieces = useMemo(() => dayPieces(shown, days, timezone, now), [shown, days, timezone, now])
+  const scheduled = useMemo(() => scheduledPieces(timed, projected, days), [timed, projected, days])
   // Decided on the saved sessions, so a block dragged shorter than the minimum stays until it is saved.
   const hiddenIds = useMemo(() => new Set(hidden ? sessions.filter(hidden).map((session) => session.id) : []), [sessions, hidden])
 
@@ -169,12 +190,11 @@ export function WeekGrid({
             ))}
           </div>
           {days.map((day) => {
-            const limit = dayLimit(day, now, timezone)
             const visible = (pieces.get(day) ?? []).filter((piece) => !hiddenIds.has(piece.session.id))
             // The session being adjusted follows the pointer on its own, outside any joined block.
             const moving = visible.filter((piece) => piece.session.id === adjusting?.sessionId)
             const resting = visible.filter((piece) => piece.session.id !== adjusting?.sessionId)
-            const laid = assignLanes([...joinPieces(resting, joinGap, apartId), ...moving])
+            const laid = assignLanes<Piece | ScheduledPiece>([...joinPieces(resting, joinGap, apartId), ...moving, ...(scheduled.get(day) ?? [])])
             return (
               <div
                 key={day}
@@ -190,16 +210,22 @@ export function WeekGrid({
                     style={{ top: hour * 60 * pxPerMinute }}
                   />
                 ))}
-                {limit < DAY_MINUTES && (
-                  <div
-                    aria-hidden
-                    data-future
-                    className="pointer-events-none absolute inset-x-0 bottom-0"
-                    style={{ top: limit * pxPerMinute, backgroundImage: HATCH }}
-                  />
-                )}
                 <div className="absolute inset-0 mx-0.5">
-                  {laid.map((piece) => {
+                  {laid.map((laidPiece) => {
+                    if ('scheduled' in laidPiece) {
+                      const entry = laidPiece.scheduled
+                      const id = entry.kind === 'task' ? entry.task.id : `${entry.occurrence.series_id}:${entry.occurrence.on}`
+                      return (
+                        <ScheduledBlock
+                          key={`scheduled:${id}`}
+                          piece={laidPiece}
+                          pxPerMinute={pxPerMinute}
+                          canWrite={drag !== undefined}
+                          onOpen={onOpenTask}
+                        />
+                      )
+                    }
+                    const piece = laidPiece
                     const members = piece.members
                     // The running session ends now: it has no handles and does not move (AGENDA-33); nor does a joined block (MERGE-30).
                     const target = drag && !members && piece.session.ended_at !== null ? targetOf(piece, timezone) : null

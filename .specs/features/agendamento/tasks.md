@@ -1034,8 +1034,8 @@ T37
 
 **Done when**:
 
-- [ ] Funciona na visão Semana e na visão Dia
-- [ ] Gate check passes (quick)
+- [x] Funciona na visão Semana e na visão Dia
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

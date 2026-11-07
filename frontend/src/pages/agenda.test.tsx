@@ -3,14 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
-import { lists, sessions } from '@/lib/api'
+import { agenda, lists, sessions, tasks } from '@/lib/api'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession, ListCard } from '@/types'
+import type { AgendaSession, ListCard, Task } from '@/types'
 import AgendaPage from './agenda'
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
   sessions: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), tasks: vi.fn(), searchTasks: vi.fn(), createTask: vi.fn() },
+  agenda: { scheduled: vi.fn() },
+  tasks: { get: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
 }))
 
 vi.mock('sonner', async (importOriginal) => ({
@@ -71,6 +74,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-11-04T17:07:00.000Z'))
   vi.mocked(lists.list).mockResolvedValue({ timezone: SP, lists: [card] })
   vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday] })
+  vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [], projected: [] })
   vi.mocked(sessions.tasks).mockResolvedValue({
     tasks: [{ id: 't1', title: 'Write the report', list_id: WORK, list_name: 'Work', list_color: 3, column: 'today' }],
   })
@@ -1262,5 +1266,53 @@ describe('AgendaPage', () => {
       expect(screen.getByLabelText('Start')).toHaveValue('14:00')
       expect(screen.getByLabelText('End')).toHaveValue('14:05')
     })
+  })
+})
+
+describe('AgendaPage: the scheduled tasks (US-5)', () => {
+  it('reads the scheduled tasks of the week, draws them on the grid and opens the task dialog on a click', async () => {
+    vi.mocked(agenda.scheduled).mockResolvedValue({
+      timed: [
+        {
+          id: 't9',
+          title: 'Plan the sprint',
+          list: { id: WORK, name: 'Work', color: 3 },
+          column: 'this_week',
+          position: 0,
+          estimate_minutes: 60,
+          scheduled_on: '2026-11-05',
+          scheduled_time: '10:00',
+          series: null,
+        },
+      ],
+      untimed: [],
+      projected: [],
+    })
+    const plan: Task = {
+      id: 't9',
+      list_id: WORK,
+      title: 'Plan the sprint',
+      notes: '',
+      estimate_minutes: 60,
+      column: 'this_week',
+      position: 0,
+      completed_at: null,
+      created_at: '2026-11-01T00:00:00.000Z',
+      subtasks: [],
+      created_via: null,
+      scheduled_on: '2026-11-05',
+      scheduled_time: '10:00',
+      series: null,
+    }
+    vi.mocked(tasks.get).mockResolvedValue(plan)
+    const { user } = renderWithProviders(<AgendaPage />)
+
+    const block = await screen.findByRole('button', { name: 'Plan the sprint, Scheduled · 10:00 – 11:00' })
+    expect(agenda.scheduled).toHaveBeenCalledWith('2026-11-02', '2026-11-08')
+    await user.click(block)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Edit task' })
+    expect(await within(dialog).findByDisplayValue('Plan the sprint')).toBeInTheDocument()
+    expect(tasks.get).toHaveBeenCalledWith('t9')
   })
 })

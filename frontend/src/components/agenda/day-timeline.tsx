@@ -6,7 +6,7 @@ import { WeekGrid, type GridDrag } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { dayOf, dayPieces, mondayOf, weekDays } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
-import type { AgendaSession } from '@/types'
+import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 interface DayTimelineProps {
   /** The day shown, YYYY-MM-DD in the workspace timezone. */
@@ -40,6 +40,11 @@ interface DayTimelineProps {
   previewId?: string | null
   /** A control drawn in the first cell of the header, above the hour column (ADJ-15). */
   corner?: ReactNode
+  /** The scheduled tasks with a time and the projected occurrences of the week, as in the week view (US-5, US-11). */
+  timed?: ScheduledTask[]
+  projected?: ProjectedOccurrence[]
+  /** A click on a scheduled block opens its task. */
+  onOpenTask?: (taskId: string) => void
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -68,6 +73,9 @@ export function DayTimeline({
   selectedGroup = null,
   previewId = null,
   corner,
+  timed,
+  projected,
+  onOpenTask,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -135,6 +143,9 @@ export function DayTimeline({
         onSelectGroup={onSelectGroup}
         selectedGroup={selectedGroup}
         previewId={previewId}
+        timed={timed}
+        projected={projected}
+        onOpenTask={onOpenTask}
       />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}
