@@ -313,10 +313,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Salvar envia `base_version` e os blocos; 409 vira `conflict`, outra falha vira `failed`, sem perder o rascunho
-- [ ] Salvar invalida `['plan']`, `['plans']`, a Agenda agendada e o quadro
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `use-plan.test.tsx`
+- [x] Salvar envia `base_version` e os blocos; 409 vira `conflict`, outra falha vira `failed`, sem perder o rascunho
+- [x] Salvar invalida `['plan']`, `['plans']`, a Agenda agendada e o quadro
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `use-plan.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

@@ -36,7 +36,7 @@ vi.mock('axios', async (importOriginal) => {
   return { ...actual, default: Object.assign(Object.create(axios) as typeof axios, { create }) }
 })
 
-const { agenda, focus, reports, tasks } = await import('@/lib/api')
+const { agenda, focus, plans, reports, tasks } = await import('@/lib/api')
 
 const LIST = '6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b'
 const BASE = { occurred_at: '2026-10-24T13:00:00.000Z', device_id: 'device-1', list_id: LIST }
@@ -169,6 +169,39 @@ describe('the schedule calls (US-7, US-12, US-5)', () => {
     await agenda.scheduled('2026-11-09', '2026-11-15')
 
     expect(http.sent).toEqual([sent('get', '/api/agenda/scheduled?from=2026-11-09&to=2026-11-15')])
+  })
+})
+
+describe('the day plan calls (PLAN-08, PLAN-22)', () => {
+  const sent = (method: string, url: string, body?: unknown) => ({ method, url, body, authorization: 'Bearer token-123' })
+
+  it('reads the plan of a day and its candidates', async () => {
+    await plans.get('2026-11-08')
+    await plans.candidates('2026-11-08')
+
+    expect(http.sent).toEqual([sent('get', '/api/plans/2026-11-08'), sent('get', '/api/plans/2026-11-08/candidates')])
+  })
+
+  it('saves the whole day with PUT /api/plans/<day>, with base_version and the blocks', async () => {
+    const blocks = [
+      { kind: 'task' as const, task_id: 't1', start: '09:00', minutes: 60 },
+      { kind: 'break' as const, name: 'Almoço', list_id: 'l1', start: '12:00', minutes: 60 },
+    ]
+    await plans.save('2026-11-08', { base_version: 2, blocks })
+
+    expect(http.sent).toEqual([sent('put', '/api/plans/2026-11-08', { base_version: 2, blocks })])
+  })
+
+  it('reads the planned blocks of a period with GET /api/plans', async () => {
+    await plans.planned('2026-11-09', '2026-11-15')
+
+    expect(http.sent).toEqual([sent('get', '/api/plans?from=2026-11-09&to=2026-11-15')])
+  })
+
+  it('keeps the workday with PUT /api/users/me/workday', async () => {
+    await plans.setWorkday({ start: '08:30', end: '17:00' })
+
+    expect(http.sent).toEqual([sent('put', '/api/users/me/workday', { start: '08:30', end: '17:00' })])
   })
 })
 

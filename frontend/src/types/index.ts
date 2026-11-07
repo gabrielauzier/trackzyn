@@ -457,3 +457,34 @@ export interface Workday {
   start: string
   end: string
 }
+
+/** `GET`/`PUT /api/plans/:day`: the logged-in user's plan of a day in the current workspace (PLAN-12). */
+export interface PlanRead {
+  day: string
+  /** 0 while nothing is saved for the day; `PUT` sends it back as `base_version` (PLAN-35). */
+  version: number
+  /** The day is today or later in the workspace's timezone (PLAN-34). */
+  editable: boolean
+  workday: Workday
+  blocks: PlanBlock[]
+}
+
+/** A pending task the plan of a day offers (`GET /api/plans/:day/candidates`, PLAN-02). */
+export interface PlanCandidate {
+  id: string
+  title: string
+  list: PlanListRef
+  column: 'backlog' | 'this_week' | 'today'
+  position: number
+  estimate_minutes: number | null
+  scheduled_on: string | null
+  scheduled_time: string | null
+}
+
+/** A saved block with its day, as the Agenda draws it (`GET /api/plans`, PLAN-24). */
+export type PlannedBlock = PlanBlock & { day: string }
+
+/** The body of a block for `PUT /api/plans/:day`; `start` is `HH:MM`. */
+export type PlanBlockInput =
+  | { kind: 'task'; task_id: string; start: string; minutes: number }
+  | { kind: 'break'; name: string; list_id: string; start: string; minutes: number }

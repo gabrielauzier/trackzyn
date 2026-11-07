@@ -22,6 +22,10 @@ import type {
   FileSettings,
   FocusState,
   ListsResponse,
+  PlanBlockInput,
+  PlanCandidate,
+  PlannedBlock,
+  PlanRead,
   Overview,
   RecurrenceRule,
   ReportQuery,
@@ -33,6 +37,7 @@ import type {
   TaskColumn,
   TaskList,
   StoredFile,
+  Workday,
   Workspace,
   WorkspaceMember,
   WorkspaceRole,
@@ -453,6 +458,33 @@ export const tasks = {
 export const agenda = {
   scheduled: async (from: string, to: string): Promise<ScheduledResponse> => {
     const { data } = await api.get('/agenda/scheduled', { params: { from, to } })
+    return data
+  },
+}
+
+// Plans: the logged-in user's day plans in the current workspace (`day`, `from` and `to` are YYYY-MM-DD)
+export const plans = {
+  get: async (day: string): Promise<PlanRead> => {
+    const { data } = await api.get(`/plans/${day}`)
+    return data
+  },
+  /** Replaces the whole plan of the day; answers 409 `plan_changed` when `base_version` is not the saved one (PLAN-35). */
+  save: async (day: string, body: { base_version: number; blocks: PlanBlockInput[] }): Promise<PlanRead> => {
+    const { data } = await api.put(`/plans/${day}`, body)
+    return data
+  },
+  candidates: async (day: string): Promise<{ tasks: PlanCandidate[] }> => {
+    const { data } = await api.get(`/plans/${day}/candidates`)
+    return data
+  },
+  /** The saved blocks of a period, at most 42 days (PLAN-24). */
+  planned: async (from: string, to: string): Promise<{ blocks: PlannedBlock[] }> => {
+    const { data } = await api.get('/plans', { params: { from, to } })
+    return data
+  },
+  /** Keeps the workday in the user's preferences; answers 422 when the end is not after the start (PLAN-22, PLAN-23). */
+  setWorkday: async (workday: Workday): Promise<Workday> => {
+    const { data } = await api.put('/users/me/workday', workday)
     return data
   },
 }

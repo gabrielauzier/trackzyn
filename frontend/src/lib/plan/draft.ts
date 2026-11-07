@@ -1,5 +1,5 @@
 import { DAY_MINUTES, scheduledMinutes } from '@/lib/agenda/layout'
-import type { PlanBlock, PlanListRef, PlanTaskRef } from '@/types'
+import type { PlanBlock, PlanBlockInput, PlanListRef, PlanTaskRef } from '@/types'
 
 /** The step of the grid: a drop, a move and a pull of the bottom edge snap to it (PLAN-04, PLAN-05). */
 export const SNAP_MINUTES = 15
@@ -38,9 +38,7 @@ export type DraftAction =
   | { type: 'reset'; saved: PlanBlock[] }
 
 /** The body of a block for `PUT /api/plans/:day`. */
-export type BlockInput =
-  | { kind: 'task'; task_id: string; start: string; minutes: number }
-  | { kind: 'break'; name: string; list_id: string; start: string; minutes: number }
+export type BlockInput = PlanBlockInput
 
 export const emptyDraft: DraftState = { saved: [], blocks: [], error: null, next: 1 }
 
