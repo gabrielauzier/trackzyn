@@ -45,6 +45,23 @@ async function setup(rule: RecurrenceRule = DAILY, offset = 30, time: string | n
   return { ...roles, listId, taskId, seriesId, on }
 }
 
+/** The first day from `from` days on, in the workspace's timezone, that falls on `weekday` (1 = Monday to 7 = Sunday). */
+async function next(weekday: number, from = 7): Promise<string> {
+  const result = (await t.ctx.db.execute(
+    sql`SELECT d::date::text AS day FROM generate_series((now() AT TIME ZONE ${TZ})::date + ${from}::int, (now() AT TIME ZONE ${TZ})::date + ${from + 6}::int, '1 day') AS d
+        WHERE extract(isodow FROM d) = ${weekday} LIMIT 1`,
+  )) as unknown as { rows: Array<{ day: string }> }
+  return result.rows[0]!.day
+}
+
+/** A day `months` months from now on day `monthDay`, as `YYYY-MM-DD`. */
+async function monthDay(months: number, dayOfMonth: number): Promise<string> {
+  const result = (await t.ctx.db.execute(
+    sql`SELECT (date_trunc('month', (now() AT TIME ZONE ${TZ})::date) + make_interval(months => ${months}::int) + make_interval(days => ${dayOfMonth - 1}::int))::date::text AS day`,
+  )) as unknown as { rows: Array<{ day: string }> }
+  return result.rows[0]!.day
+}
+
 const others = async (seriesId: string, except: string) =>
   t.ctx.db
     .select()
@@ -157,5 +174,109 @@ describe('POST /api/tasks/:id/skip (US-12, D18)', () => {
     const reply = await t.app.inject({ method: 'POST', url: `/api/tasks/${taskId}/skip`, headers: { authorization: `Bearer ${token.value}` } })
     expect(reply.statusCode).toBe(200)
     expect(reply.json()).toMatchObject({ scheduled_on: await day(31) })
+  })
+})
+
+describe('PATCH /api/tasks/:id with recurrence and scope (US-9, US-12, D16)', () => {
+  /** A task scheduled for `on` at 09:00, made to repeat by `recurrence` through the PATCH. */
+  async function repeating(on: string, recurrence: object) {
+    const roles = await ownerViewerStranger(t)
+    await call('PATCH', `/api/workspaces/${roles.workspaceId}`, roles.owner.token, roles.workspaceId, { timezone: TZ })
+    const listId = (await call('POST', '/api/lists', roles.owner.token, roles.workspaceId, { name: 'Work', color: 1 })).json().id as string
+    const taskId = (await call('POST', '/api/tasks', roles.owner.token, roles.workspaceId, { list_id: listId, title: 'Review' })).json().id as string
+    const patch = (body: object) => call('PATCH', `/api/tasks/${taskId}`, roles.owner.token, roles.workspaceId, body)
+    const reply = await patch({ scheduled_on: on, scheduled_time: '09:00', recurrence })
+    return { ...roles, taskId, patch, reply }
+  }
+
+  it('recurrence in the body makes the task repeat and answers the series', async () => {
+    const saturday = await next(6)
+    const { reply } = await repeating(saturday, { freq: 'weekly', weekdays: [6] })
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({
+      scheduled_on: saturday,
+      series: { rule: { freq: 'weekly', interval: 1, weekdays: [6], month_day: null, until: null, count: null }, next_on: await next(6, 14) },
+    })
+  })
+
+  it('a weekly Saturday moved to Sunday for this and the next ones repeats on Sundays', async () => {
+    const saturday = await next(6)
+    const { patch } = await repeating(saturday, { freq: 'weekly', weekdays: [6] })
+    const sunday = await next(7, 8)
+
+    const reply = await patch({ scheduled_on: sunday, scheduled_time: '10:30', scope: 'series' })
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({ scheduled_on: sunday, scheduled_time: '10:30', series: { rule: { weekdays: [7] }, next_on: await next(7, 15) } })
+  })
+
+  it('moved for this occurrence only, the rule stays as it was', async () => {
+    const saturday = await next(6)
+    const { patch } = await repeating(saturday, { freq: 'weekly', weekdays: [6] })
+    const sunday = await next(7, 8)
+
+    const reply = await patch({ scheduled_on: sunday, scope: 'occurrence' })
+    expect(reply.json()).toMatchObject({ scheduled_on: sunday, series: { rule: { weekdays: [6] }, next_on: await next(6, 14) } })
+  })
+
+  it('a weekly rule on several days swaps only the day of the moved occurrence', async () => {
+    const monday = await next(1)
+    const { patch } = await repeating(monday, { freq: 'weekly', weekdays: [1, 3] })
+    const reply = await patch({ scheduled_on: await next(2, 7), scope: 'series' })
+    expect(reply.json().series.rule.weekdays).toEqual([2, 3])
+  })
+
+  it('a monthly rule moved for this and the next ones takes the new day of the month', async () => {
+    const thirteenth = await monthDay(2, 13)
+    const { patch } = await repeating(thirteenth, { freq: 'monthly', month_day: 13 })
+    const reply = await patch({ scheduled_on: await monthDay(2, 15), scope: 'series' })
+    expect(reply.json()).toMatchObject({ series: { rule: { month_day: 15 }, next_on: await monthDay(3, 15) } })
+  })
+
+  it('a new rule counts for the series from there on, and null stops it', async () => {
+    const saturday = await next(6)
+    const { patch, reply } = await repeating(saturday, { freq: 'weekly', weekdays: [6] })
+    const seriesId = reply.json().series.id as string
+
+    const changed = await patch({ recurrence: { freq: 'daily', interval: 2, count: 5 } })
+    expect(changed.json()).toMatchObject({ series: { id: seriesId, rule: { freq: 'daily', interval: 2, weekdays: null, count: 5 } } })
+    const stopped = await patch({ recurrence: null })
+    expect(stopped.json()).toMatchObject({ scheduled_on: saturday, series: null })
+    expect((await series(seriesId)).endedAt).not.toBeNull()
+  })
+
+  it('answers 422 recurrence_needs_day for a rule on a task without a day', async () => {
+    const { owner, workspaceId, listId } = await setup()
+    const plain = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Plain' })).json().id as string
+    const reply = await call('PATCH', `/api/tasks/${plain}`, owner.token, workspaceId, { recurrence: { freq: 'daily' } })
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json()).toMatchObject({ code: 'recurrence_needs_day' })
+  })
+
+  it('answers 422 for a weekly rule without weekdays, until with count and an interval out of range', async () => {
+    const { owner, workspaceId, taskId } = await setup()
+    const location = async (recurrence: object) => {
+      const reply = await call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, { recurrence })
+      expect(reply.statusCode).toBe(422)
+      return reply.json().detail[0].loc
+    }
+    expect(await location({ freq: 'weekly' })).toEqual(['body', 'recurrence', 'weekdays'])
+    expect(await location({ freq: 'weekly', weekdays: [] })).toEqual(['body', 'recurrence', 'weekdays'])
+    expect(await location({ freq: 'daily', until: await day(40), count: 3 })).toEqual(['body', 'recurrence', 'count'])
+    expect(await location({ freq: 'daily', interval: 100 })).toEqual(['body', 'recurrence', 'interval'])
+    expect(await location({ freq: 'monthly' })).toEqual(['body', 'recurrence', 'month_day'])
+  })
+
+  it('answers 422 recurrence_until_before_day for an end before the scheduled day', async () => {
+    const { owner, workspaceId, taskId } = await setup()
+    const reply = await call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, { recurrence: { freq: 'daily', until: await day(29) } })
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json()).toMatchObject({ code: 'recurrence_until_before_day' })
+  })
+
+  it('answers 403 to a viewer and keeps the rule', async () => {
+    const { viewer, owner, workspaceId, taskId, seriesId } = await setup()
+    const refused = await call('PATCH', `/api/tasks/${taskId}`, viewer.token, workspaceId, { recurrence: null })
+    expect(refused.statusCode).toBe(403)
+    expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).json()).toMatchObject({ series: { id: seriesId } })
   })
 })

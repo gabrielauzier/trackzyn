@@ -24,6 +24,9 @@ const daysBetween = (from: Date, to: Date) => Math.round((to.getTime() - from.ge
 const isoWeekday = (date: Date) => date.getUTCDay() || 7
 const lastDayOfMonth = (year: number, month: number) => new Date(Date.UTC(year, month + 1, 0)).getUTCDate()
 
+/** The weekday of a calendar date (`YYYY-MM-DD`), 1 (Monday) to 7 (Sunday). */
+export const weekdayOf = (day: string) => isoWeekday(toDate(day))
+
 /** The days the rule falls on in the `period`-th period from the one of `anchor` (day, week from Monday, or month). */
 function daysOfPeriod(rule: RecurrenceRule, anchor: Date, period: number): Date[] {
   if (rule.freq === 'daily') return [addDays(anchor, period)]

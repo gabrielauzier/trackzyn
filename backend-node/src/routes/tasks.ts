@@ -9,8 +9,9 @@ import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
 import { withoutNul } from './schemas.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
+import type { RecurrenceRule } from '../services/recurrence.ts'
 import { type Schedule, setSchedule } from '../services/schedule.ts'
-import { deleteOccurrence, seriesView, skipOccurrence } from '../services/series.ts'
+import { applyScheduleToSeries, deleteOccurrence, seriesView, setRecurrence, skipOccurrence } from '../services/series.ts'
 import { type TaskWithSubtasks, createTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -88,12 +89,42 @@ const timeNeedsDay = { path: ['scheduled_time'], message: 'scheduled_time needs 
 const createTaskRouteBody = createTaskBody
   .extend(scheduleFields)
   .refine((body) => body.scheduled_time == null || body.scheduled_on != null, timeNeedsDay)
-/** Leaving `scheduled_on` out keeps the task's day; clearing it with a time is a time without a day. */
-const updateTaskRouteBody = updateTaskBody
-  .extend(scheduleFields)
-  .refine((body) => body.scheduled_time == null || body.scheduled_on !== null, timeNeedsDay)
+/** A recurrence rule as the API takes it (US-7, US-9): the checks of the task_series table. */
+const recurrenceBody = z
+  .object({
+    freq: z.enum(SERIES_FREQS),
+    interval: z.number().int().min(1).max(99).default(1),
+    weekdays: z.array(z.number().int().min(1).max(7)).min(1).nullable().optional(),
+    month_day: z.number().int().min(1).max(31).nullable().optional(),
+    until: z.iso.date('Input should be a valid date (YYYY-MM-DD)').nullable().optional(),
+    count: z.number().int().min(1).max(999).nullable().optional(),
+  })
+  .refine((rule) => (rule.freq === 'weekly') === (rule.weekdays != null), { path: ['weekdays'], message: 'weekdays go with a weekly rule, and only with it' })
+  .refine((rule) => (rule.freq === 'monthly') === (rule.month_day != null), {
+    path: ['month_day'],
+    message: 'month_day goes with a monthly rule, and only with it',
+  })
+  .refine((rule) => rule.until == null || rule.count == null, { path: ['count'], message: 'A rule ends by until or by count, not both' })
+  .transform(
+    (rule): RecurrenceRule => ({
+      freq: rule.freq,
+      interval: rule.interval,
+      weekdays: rule.weekdays ?? null,
+      monthDay: rule.month_day ?? null,
+      until: rule.until ?? null,
+      count: rule.count ?? null,
+    }),
+  )
 /** This occurrence of a series, or this one and the next ones (D16). */
 const seriesScope = z.enum(['occurrence', 'series'])
+/**
+ * Leaving `scheduled_on` out keeps the task's day; clearing it with a time is a time without a day. `scope`
+ * only counts for an occurrence of a series (D16); `recurrence` makes the task repeat, changes its rule or,
+ * with null, stops it (US-9).
+ */
+const updateTaskRouteBody = updateTaskBody
+  .extend({ ...scheduleFields, recurrence: recurrenceBody.nullable().optional(), scope: seriesScope.optional() })
+  .refine((body) => body.scheduled_time == null || body.scheduled_on !== null, timeNeedsDay)
 export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
 export const addSubtaskBody = z.object({ title })
 
@@ -194,17 +225,28 @@ export function taskRoutes(ctx: AppContext) {
       async (request) => {
         const taskId = request.params.task_id.toLowerCase()
         const workspaceId = request.workspace.workspace.id
-        const { title, estimate_minutes, notes, scheduled_on, scheduled_time } = request.body
+        const { title, estimate_minutes, notes, scheduled_on, scheduled_time, recurrence, scope } = request.body
         const changes = { title, estimateMinutes: estimate_minutes, notes }
-        if (scheduled_on === undefined && scheduled_time === undefined) return toTaskRead(await updateTask(ctx.db, taskId, workspaceId, changes))
+        const scheduling = scheduled_on !== undefined || scheduled_time !== undefined
+        if (!scheduling && recurrence === undefined) return toTaskRead(await updateTask(ctx.db, taskId, workspaceId, changes))
+        const userId = request.workspace.user.id
         return toTaskRead(
           await ctx.db.transaction(async (transaction) => {
             const tx = transaction as typeof ctx.db
-            const updated = await updateTask(tx, taskId, workspaceId, changes)
-            // A field left out keeps its value: a new day keeps the time (US-1); clearing the day clears both (US-2).
-            const on = scheduled_on === undefined ? updated.scheduledOn : scheduled_on
-            const time = scheduled_time !== undefined ? scheduled_time : on === null ? null : updated.scheduledTime
-            return setSchedule(tx, taskId, workspaceId, { on, time }, request.workspace.user.id)
+            let updated = await updateTask(tx, taskId, workspaceId, changes)
+            if (scheduling) {
+              // A field left out keeps its value: a new day keeps the time (US-1); clearing the day clears both (US-2).
+              const on = scheduled_on === undefined ? updated.scheduledOn : scheduled_on
+              const time = scheduled_time !== undefined ? scheduled_time : on === null ? null : updated.scheduledTime
+              // "This and the next ones" moves the rule too; "only this one" changes the task alone (D16).
+              updated =
+                scope === 'series'
+                  ? await applyScheduleToSeries(tx, taskId, workspaceId, { on, time }, userId)
+                  : await setSchedule(tx, taskId, workspaceId, { on, time }, userId)
+            }
+            // A new rule always counts for the series from there on, without a scope (US-12).
+            if (recurrence !== undefined) updated = await setRecurrence(tx, taskId, workspaceId, recurrence)
+            return updated
           }),
         )
       },

@@ -451,8 +451,8 @@ T37
 
 **Done when**:
 
-- [ ] Semanal de sábado movida para domingo "esta e as próximas" passa a repetir aos domingos; mensal muda o `month_day`
-- [ ] Gate check passes (full)
+- [x] Semanal de sábado movida para domingo "esta e as próximas" passa a repetir aos domingos; mensal muda o `month_day`
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

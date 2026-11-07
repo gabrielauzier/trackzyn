@@ -3,8 +3,8 @@ import { and, eq, ne } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type Task, type TaskSeries, taskSeries, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
-import { type RecurrenceRule, nextOccurrence } from './recurrence.ts'
-import { setSchedule, workspaceClock } from './schedule.ts'
+import { type RecurrenceRule, nextOccurrence, weekdayOf } from './recurrence.ts'
+import { type Schedule, setSchedule, workspaceClock } from './schedule.ts'
 import { type TaskWithSubtasks, duplicateTask, findTask, getTask, lockList } from './tasks.ts'
 
 const seriesError = (message: string, code: string) => new HttpError(422, message, {}, { code })
@@ -202,5 +202,40 @@ export async function skipOccurrence(
     }
     await tx.update(taskSeries).set({ createdCount: series.createdCount + 1 }).where(eq(taskSeries.id, series.id))
     return setSchedule(tx, current.id, workspaceId, { on: next, time: current.scheduledTime }, byUserId, now)
+  })
+}
+
+/**
+ * Moves this occurrence and the next ones (US-12, D16): the task gets the new day and time by the rules of
+ * saving a schedule (`setSchedule`), and the rule of its live series follows the new day from there on. A
+ * weekly rule swaps the weekday of the old day for the one of the new day; a monthly rule takes the new day
+ * of the month. The time of the series is the open occurrence's, so the new time carries on by itself.
+ * A task outside a live series only gets the new schedule.
+ */
+export async function applyScheduleToSeries(
+  db: Database,
+  taskId: string,
+  workspaceId: string,
+  schedule: Schedule,
+  byUserId: string,
+  now: Date = new Date(),
+): Promise<TaskWithSubtasks> {
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    const before = await findTask(tx, taskId, workspaceId)
+    const saved = await setSchedule(tx, before.id, workspaceId, schedule, byUserId, now)
+    if (before.seriesId === null || before.scheduledOn === null || schedule.on === null || schedule.on === before.scheduledOn) return saved
+    const series = await lockSeries(tx, before.seriesId)
+    if (series === null || series.endedAt !== null) return saved
+
+    if (series.freq === 'weekly') {
+      const old = weekdayOf(before.scheduledOn)
+      const kept = (series.weekdays ?? []).filter((weekday) => weekday !== old)
+      const weekdays = [...new Set([...kept, weekdayOf(schedule.on)])].sort((a, b) => a - b)
+      await tx.update(taskSeries).set({ weekdays }).where(eq(taskSeries.id, series.id))
+    } else if (series.freq === 'monthly') {
+      await tx.update(taskSeries).set({ monthDay: Number(schedule.on.slice(8, 10)) }).where(eq(taskSeries.id, series.id))
+    }
+    return getTask(tx, before.id, workspaceId)
   })
 }
