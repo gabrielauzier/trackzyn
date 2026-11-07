@@ -260,6 +260,28 @@ describe('PATCH /api/tasks/:id with recurrence and scope (US-9, US-12, D16)', ()
     expect((await series(seriesId)).endedAt).not.toBeNull()
   })
 
+  it('D29 clearing the day of an occurrence ends the series and leaves a plain task without day or time, whatever the scope', async () => {
+    for (const scope of ['occurrence', 'series', undefined]) {
+      const saturday = await next(6)
+      const { patch, reply: created } = await repeating(saturday, { freq: 'weekly', weekdays: [6] })
+      const seriesId = created.json().series.id as string
+
+      const cleared = await patch({ scheduled_on: null, ...(scope === undefined ? {} : { scope }) })
+      expect(cleared.statusCode).toBe(200)
+      expect(cleared.json()).toMatchObject({ scheduled_on: null, scheduled_time: null, series: null })
+      expect((await series(seriesId)).endedAt).not.toBeNull()
+      expect(await t.ctx.db.select().from(tasks).where(eq(tasks.seriesId, seriesId))).toEqual([])
+    }
+  })
+
+  it('D29 clearing only the time of an occurrence keeps the series', async () => {
+    const saturday = await next(6)
+    const { patch, reply: created } = await repeating(saturday, { freq: 'weekly', weekdays: [6] })
+    const cleared = await patch({ scheduled_time: null, scope: 'occurrence' })
+    expect(cleared.json()).toMatchObject({ scheduled_on: saturday, scheduled_time: null, series: { id: created.json().series.id } })
+    expect((await series(created.json().series.id)).endedAt).toBeNull()
+  })
+
   it('answers 422 recurrence_needs_day for a rule on a task without a day', async () => {
     const { owner, workspaceId, listId } = await setup()
     const plain = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Plain' })).json().id as string

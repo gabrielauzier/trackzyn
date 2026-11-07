@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import type { PGlite } from '@electric-sql/pglite'
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { type TaskColumn, tasks, users, workspaces } from '../../src/db/schema.ts'
+import { type TaskColumn, taskSeries, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
 import { createList, updateList } from '../../src/services/lists.ts'
 import { applyDueSchedules, setSchedule } from '../../src/services/schedule.ts'
@@ -200,6 +200,32 @@ describe('setSchedule: the rules of saving a schedule (US-1, US-2, D3, D21)', ()
   it('US-2 clearing the schedule sets the day and the time to null and keeps the column', async () => {
     const id = await task('this_week', { on: '2026-11-13', time: '09:00' })
     expect(await schedule(id, null, null)).toMatchObject({ scheduledOn: null, scheduledTime: null, scheduleAppliedAt: null, column: 'this_week' })
+  })
+})
+
+describe('setSchedule on an occurrence of a series (US-12, D29)', () => {
+  async function occurrence(column: TaskColumn) {
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', time: '09:00', createdCount: 2, createdAt: EARLIER })
+    const done = await task('done', { on: '2026-11-10', time: '09:00' })
+    const open = await task(column, { on: '2026-11-11', time: '09:00', appliedAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(inArray(tasks.id, [done, open]))
+    return { seriesId, done, open }
+  }
+  const seriesRow = async (id: string) => (await db.select().from(taskSeries).where(eq(taskSeries.id, id)))[0]!
+
+  it('clearing the day ends the series and leaves the task plain, without day or time, in its column', async () => {
+    const { seriesId, done, open } = await occurrence('today')
+    expect(await schedule(open, null)).toMatchObject({ seriesId: null, series: null, scheduledOn: null, scheduledTime: null, column: 'today' })
+    expect((await seriesRow(seriesId)).endedAt).toEqual(NOW)
+    // The completed occurrence keeps pointing at the ended series.
+    expect(await row(done)).toMatchObject({ seriesId })
+  })
+
+  it('clearing the day of a completed occurrence leaves the series running', async () => {
+    const { seriesId, done } = await occurrence('this_week')
+    expect(await schedule(done, null)).toMatchObject({ scheduledOn: null, seriesId })
+    expect((await seriesRow(seriesId)).endedAt).toBeNull()
   })
 })
 

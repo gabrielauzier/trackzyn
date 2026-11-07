@@ -1,6 +1,6 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type TaskColumn, lists, tasks, workspaces } from '../db/schema.ts'
+import { type TaskColumn, lists, taskSeries, tasks, workspaces } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { daySql, dayTimezone } from './day.ts'
 import { type TaskWithSubtasks, findTask, getTask, lockList, moveTask } from './tasks.ts'
@@ -46,7 +46,8 @@ const scheduleError = (message: string, code: string) => new HttpError(422, mess
  * that already came to Today (D26); today takes the task to the end of Today and
  * marks it applied; a day of this week (Monday to Sunday) takes a Backlog task to the end of This week; This
  * week and Today keep a task given a later day. A day before today, or a time of today that has passed,
- * is refused with 422. An unchanged day and time change nothing, so clearing only the time of a task that
+ * is refused with 422. Clearing the day of an open occurrence ends its series and leaves a plain task (D29).
+ * An unchanged day and time change nothing, so clearing only the time of a task that
  * came to Today from an earlier day keeps that day.
  */
 export async function setSchedule(
@@ -91,9 +92,18 @@ export async function setSchedule(
       }
     }
 
+    // An open occurrence that loses its day ends its series and becomes a plain task (D29).
+    let seriesId = current.seriesId
+    if (on === null && seriesId !== null && current.column !== 'done') {
+      await tx
+        .update(taskSeries)
+        .set({ endedAt: now })
+        .where(and(eq(taskSeries.id, seriesId), isNull(taskSeries.endedAt)))
+      seriesId = null
+    }
     await tx
       .update(tasks)
-      .set({ scheduledOn: on, scheduledTime: time, scheduleAppliedAt: appliedAt, updatedAt: now })
+      .set({ scheduledOn: on, scheduledTime: time, scheduleAppliedAt: appliedAt, seriesId, updatedAt: now })
       .where(eq(tasks.id, current.id))
     if (target !== null) await moveTask(tx, current.id, workspaceId, { column: target, beforeTaskId: null, byUserId }, now)
     return getTask(tx, current.id, workspaceId)

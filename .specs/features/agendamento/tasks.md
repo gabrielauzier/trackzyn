@@ -634,8 +634,8 @@ T37
 
 **Done when**:
 
-- [ ] `PATCH` com `scheduled_on: null` numa ocorrência devolve `series: null` e a série fica encerrada
-- [ ] Gate check passes (full)
+- [x] `PATCH` com `scheduled_on: null` numa ocorrência devolve `series: null` e a série fica encerrada
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
