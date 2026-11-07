@@ -287,6 +287,7 @@ CREATE TABLE task_series (
   month_day smallint CHECK (month_day BETWEEN 1 AND 31),
   until date,
   "count" smallint CHECK ("count" BETWEEN 1 AND 999),
+  "time" time CHECK ("time" IS NULL OR extract(minute FROM "time")::int % 15 = 0),  -- hora da série (D27, migração 0012)
   created_count smallint NOT NULL DEFAULT 1,
   ended_at timestamptz,
   created_at timestamptz NOT NULL,

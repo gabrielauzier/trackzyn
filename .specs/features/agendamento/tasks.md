@@ -73,6 +73,14 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 T8 → T9 → T10 → T11 → T12 → T13 → T14
 ```
 
+### Phase 2b: Correções do backend (D24–D29)
+
+Decisões tomadas depois dos lotes 1 e 2 (2026-11-07).
+
+```
+T38 → T39 → T40 → T41 → T42 → T43 → T44
+```
+
 ### Phase 3: Leitura da Agenda e contrato externo
 
 ```
@@ -458,6 +466,181 @@ T37
 **Gate**: full
 
 **Commit**: `feat(backend): apply a schedule change to this and the next occurrences`
+
+---
+
+### T38: Ida para Hoje ignora listas arquivadas
+
+**What**: `applyDueSchedules` não move tarefas de listas arquivadas; ao desarquivar, a próxima leitura aplica a regra.
+**Where**: `backend-node/src/services/schedule.ts`
+**Depends on**: None (a fase anterior termina antes)
+**Reuses**: `applyDueSchedules`
+**Requirement**: US-4; D25
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Tarefa vencida em lista arquivada continua na coluna; depois de desarquivar, vai para Hoje na leitura seguinte
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): leave archived lists out of the move to today`
+
+---
+
+### T39: Mudar só a hora mantém a ida para Hoje
+
+**What**: `setSchedule` zera `schedule_applied_at` só quando o dia muda; mudar só a hora o mantém.
+**Where**: `backend-node/src/services/schedule.ts`
+**Depends on**: T38
+**Reuses**: `setSchedule`
+**Requirement**: Regras ao salvar; D26
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Tarefa tirada de Hoje à mão com dia passado: mudar a hora não a traz de volta; mudar o dia traz
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): keep a task out of today when only its time changes`
+
+---
+
+### T40: Agendamento no hash de idempotência
+
+**What**: O hash da requisição de `POST /api/tasks` inclui `scheduled_on` e `scheduled_time`, para a mesma chave com outro agendamento responder 409.
+**Where**: `backend-node/src/services/task-intake.ts`
+**Depends on**: T39
+**Reuses**: `requestHash` (IDEM-03)
+**Requirement**: US-7
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Mesma chave e mesmo agendamento repete a resposta; mesma chave e agendamento diferente responde 409
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): include the schedule in the task idempotency hash`
+
+---
+
+### T41: Hora na série
+
+**What**: Migração `0012_task_series_time.sql` e `schema.ts` com `task_series.time` (passo de 15 min), preenchida a partir da `scheduled_time` da ocorrência aberta das séries existentes.
+**Where**: `backend-node/src/db/schema.ts`
+**Depends on**: T40
+**Reuses**: T8, `test/fixtures/pg-columns.json`
+**Requirement**: Modelo de dados (Recorrência); D27
+
+**Tools**:
+
+- MCP: NONE
+- Skill: supabase-postgres-best-practices
+
+**Done when**:
+
+- [ ] Hora fora do passo recusada; séries existentes ficam com a hora da ocorrência aberta
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(backend): store the time on the task series`
+
+---
+
+### T42: A próxima ocorrência usa a hora da série
+
+**What**: `createNextOccurrence`, `setRecurrence` e `applyToSeries` passam a ler e gravar `task_series.time`: "Só esta" muda só a tarefa, "Esta e as próximas" muda as duas; a projeção usa a hora da série.
+**Where**: `backend-node/src/services/series.ts`
+**Depends on**: T41
+**Reuses**: `createNextOccurrence`, `applyToSeries`
+**Requirement**: US-10, US-12; D27
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Mudar a hora de uma ocorrência com "Só esta" e concluir: a próxima nasce com a hora da série
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): keep the series time when one occurrence moves`
+
+---
+
+### T43: Pular tira a ocorrência de Hoje
+
+**What**: `skipOccurrence` leva a tarefa que está em Hoje ou Esta semana para a coluna da nova data e zera `schedule_applied_at`.
+**Where**: `backend-node/src/services/series.ts`
+**Depends on**: T42
+**Reuses**: `skipOccurrence`, `moveTask`
+**Requirement**: US-12; D28
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Pular em Hoje com próxima data na semana vai para Esta semana; com data depois, para Backlog; o tempo registrado continua na tarefa
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): move a skipped occurrence out of today`
+
+---
+
+### T44: Remover o agendamento encerra a série
+
+**What**: `setSchedule` com dia nulo numa ocorrência encerra a série (`ended_at`) e deixa a tarefa comum, sem dia nem hora.
+**Where**: `backend-node/src/services/schedule.ts`
+**Depends on**: T43
+**Reuses**: `setRecurrence(null)`
+**Requirement**: US-12; D29
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `PATCH` com `scheduled_on: null` numa ocorrência devolve `series: null` e a série fica encerrada
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): end the series when an occurrence loses its day`
 
 ---
 
@@ -1039,10 +1222,11 @@ T37
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+Phase 1 → Phase 2 → Phase 2b → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7
 Phase 2:  T8 → T9 → T10 → T11 → T12 → T13 → T14
+Phase 2b: T38 → T39 → T40 → T41 → T42 → T43 → T44
 Phase 3:  T15 → T16 → T17
 Phase 4:  T18 → T19 → T20 → T21 → T22 → T23 → T24
 Phase 5:  T25 → T26 → T27 → T28 → T29 → T30 → T31

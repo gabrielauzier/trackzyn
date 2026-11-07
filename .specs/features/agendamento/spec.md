@@ -69,9 +69,10 @@ Tabela nova `task_series`, uma linha por série:
 | `until` | `date`, nulo | Último dia possível. |
 | `count` | `smallint`, nulo | Total de ocorrências, de 1 a 999. `until` e `count` não convivem (`check`). |
 | `created_count` | `smallint` | Ocorrências já criadas, para o `count`. |
+| `time` | `time`, nulo | A hora da série, no fuso do workspace, em passos de 15 min; a próxima ocorrência nasce com ela (D27). |
 | `ended_at` | `timestamptz`, nulo | Quando a série foi encerrada. |
 
-A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência aberta e as concluídas apontam para a série. A hora da série é a `scheduled_time` da ocorrência aberta. Regras estruturadas, e não uma string RRULE, porque a validação fica no schema e o contrato da API fica explícito; o conjunto cabe num subconjunto de RRULE se um dia houver exportação para iCal.
+A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência aberta e as concluídas apontam para a série. A hora da série fica em `task_series.time`: "Só esta ocorrência" muda só a `scheduled_time` da tarefa, "Esta e as próximas" muda as duas (D27). Regras estruturadas, e não uma string RRULE, porque a validação fica no schema e o contrato da API fica explícito; o conjunto cabe num subconjunto de RRULE se um dia houver exportação para iCal.
 
 ## Histórias de usuário
 
@@ -81,7 +82,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 
 - WHEN o usuário abre `⋮ > Agendar` THEN o menu SHALL mostrar `Hoje`, `Amanhã`, `Próxima segunda` e `Escolher data, hora e repetição…`.
 - `Escolher data, hora e repetição…` SHALL abrir um calendário com um campo de hora opcional (passos de 15 min), e SHALL recusar dias anteriores a hoje e horários de hoje que já passaram, no fuso do workspace.
-- Os atalhos de dia SHALL manter a hora já agendada, se houver.
+- Os atalhos de dia SHALL manter a hora já agendada, se houver. WHEN o atalho é `Hoje` e essa hora já passou THEN a tarefa SHALL ficar agendada para hoje sem hora, sem erro (D24).
 - WHEN a tarefa já tem agendamento THEN o submenu SHALL marcar o dia atual e mostrar `Remover agendamento`.
 - WHEN o usuário salva THEN o card SHALL mostrar o selo sem recarregar a página.
 - WHEN a tarefa está em Concluídas THEN `Agendar` SHALL ficar desabilitado.
@@ -97,7 +98,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 
 ### Regras ao salvar o agendamento (US-1, US-2, US-5 e US-6)
 
-- Mudar o dia ou a hora SHALL zerar `schedule_applied_at`.
+- Mudar o dia SHALL zerar `schedule_applied_at`; mudar só a hora SHALL mantê-lo, para uma tarefa tirada de Hoje à mão não voltar sozinha (D26).
 - WHEN a tarefa está em Backlog e o dia cai na semana corrente THEN ela SHALL ir para o fim de Esta semana (D3).
 - WHEN o dia é hoje THEN a tarefa SHALL ir para o fim de Hoje, mantendo dia e hora, e `schedule_applied_at` SHALL receber o instante (D21).
 - WHEN a tarefa já está em Esta semana ou Hoje e recebe um dia futuro THEN ela SHALL continuar onde está.
@@ -121,6 +122,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - WHEN a tarefa vai para Hoje THEN o dia e a hora (se houver) SHALL ficar guardados e `schedule_applied_at` SHALL receber o instante da ida (D21). Se o usuário a tirar de Hoje à mão, ela SHALL não voltar sozinha.
 - A ida para Hoje SHALL acontecer no começo do dia, qualquer que seja a hora agendada.
 - Tarefas já em Hoje ou em Concluídas SHALL ficar onde estão.
+- Tarefas de listas arquivadas SHALL ficar onde estão; ao desarquivar, a próxima leitura aplica a regra (D25).
 
 ### US-5. Ver as tarefas agendadas na Agenda
 
@@ -208,7 +210,8 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - `Esta e as próximas` SHALL mudar a regra a partir desta ocorrência: o dia da semana (semanal) ou o dia do mês (mensal) passam a ser os da nova data, e a hora passa a ser a nova hora.
 - Mudar a regra (no `Repetir`) SHALL valer sempre para a série dali em diante, sem pergunta.
 - WHEN o usuário exclui a ocorrência aberta THEN o app SHALL perguntar `Excluir só esta` (cria a próxima, como ao concluir) ou `Excluir esta e encerrar a série`.
-- O menu `⋮` de uma ocorrência SHALL ter `Pular esta ocorrência`, que move a mesma tarefa para a próxima data da regra, mantendo o tempo gasto (D18).
+- O menu `⋮` de uma ocorrência SHALL ter `Pular esta ocorrência`, que move a mesma tarefa para a próxima data da regra, mantendo o tempo gasto (D18). Se a tarefa estiver em Hoje ou Esta semana, ela SHALL ir para a coluna da nova data (Esta semana ou Backlog), e `schedule_applied_at` SHALL ser zerado (D28).
+- WHEN o usuário remove o agendamento de uma ocorrência THEN a série SHALL ser encerrada e a tarefa SHALL virar comum, sem dia nem hora (D29).
 
 ### US-14. Ver as tarefas agendadas sem hora na Agenda
 
@@ -259,6 +262,12 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - **D22 (2026-11-06):** arrastar uma tarefa da linha `Sem hora` para a grade define a hora, no passo de 15 min de hoje. O bloco nasce com 1h, como a nova sessão criada pela Agenda: a tarefa sem estimativa recebe 1h de estimativa; com estimativa, o bloco usa a estimativa (D7). Arrastar um bloco para `Sem hora` tira a hora.
 
 - **D23 (2026-11-06):** sem estimativa, o bloco agendado aparece com 1h na grade (substitui os 30 min da D7), o mesmo tamanho da nova sessão e do arraste de `Sem hora`.
+- **D24 (2026-11-07):** o atalho `Hoje` com uma hora que já passou agenda o dia de hoje sem hora, em vez de recusar.
+- **D25 (2026-11-07):** a ida para Hoje ignora as listas arquivadas.
+- **D26 (2026-11-07):** só mudar o dia reativa a ida para Hoje; mudar só a hora mantém `schedule_applied_at`. Ajusta a regra "mudar o dia ou a hora zera".
+- **D27 (2026-11-07):** a hora da série é guardada em `task_series.time`; mudar a hora de uma ocorrência com "Só esta" não muda a da próxima.
+- **D28 (2026-11-07):** pular uma ocorrência que está em Hoje ou Esta semana a leva para a coluna da nova data.
+- **D29 (2026-11-07):** remover o agendamento de uma ocorrência encerra a série.
 
 Não há decisões em aberto.
 
