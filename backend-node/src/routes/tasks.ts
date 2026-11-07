@@ -9,6 +9,7 @@ import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
 import { withoutNul } from './schemas.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
+import { type Schedule, setSchedule } from '../services/schedule.ts'
 import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -34,6 +35,8 @@ export const taskReadSchema = z.object({
   created_at: z.string(),
   subtasks: z.array(subtaskReadSchema),
   created_via: z.string().nullable(),
+  scheduled_on: z.string().nullable(),
+  scheduled_time: z.string().nullable(),
 })
 
 export const taskParams = z.object({ task_id: uuid })
@@ -54,6 +57,25 @@ export const createTaskBody = z.object({
 })
 
 export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: notes.optional() })
+
+/** The day (`YYYY-MM-DD`) and start time (`HH:MM`, in steps of 15 minutes) of a task, in the workspace's timezone (US-7). */
+const scheduleFields = {
+  scheduled_on: z.iso.date('Input should be a valid date (YYYY-MM-DD)').nullable().optional(),
+  scheduled_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, 'Input should be a time in steps of 15 minutes (HH:MM)')
+    .nullable()
+    .optional(),
+}
+const timeNeedsDay = { path: ['scheduled_time'], message: 'scheduled_time needs scheduled_on' }
+/** A new task has no day of its own: its time needs one in the same body. */
+const createTaskRouteBody = createTaskBody
+  .extend(scheduleFields)
+  .refine((body) => body.scheduled_time == null || body.scheduled_on != null, timeNeedsDay)
+/** Leaving `scheduled_on` out keeps the task's day; clearing it with a time is a time without a day. */
+const updateTaskRouteBody = updateTaskBody
+  .extend(scheduleFields)
+  .refine((body) => body.scheduled_time == null || body.scheduled_on !== null, timeNeedsDay)
 export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
 export const addSubtaskBody = z.object({ title })
 
@@ -84,6 +106,8 @@ export function toTaskRead(task: TaskWithSubtasks) {
     created_at: task.createdAt.toISOString(),
     subtasks: task.subtasks.map(toSubtaskRead),
     created_via: task.createdVia,
+    scheduled_on: task.scheduledOn,
+    scheduled_time: task.scheduledTime?.slice(0, 5) ?? null,
   }
 }
 
@@ -98,7 +122,7 @@ export function taskRoutes(ctx: AppContext) {
       '/api/tasks',
       {
         schema: {
-          body: createTaskBody,
+          body: createTaskRouteBody,
           response: { 201: taskReadSchema },
         },
         config: { tokenScope: 'tasks:create' },
@@ -106,13 +130,26 @@ export function taskRoutes(ctx: AppContext) {
       },
       async (request, reply) => {
         const workspaceId = request.workspace.workspace.id
-        const input = toTaskIntake(request.body)
+        const userId = request.workspace.user.id
+        const { scheduled_on: on, scheduled_time: time, ...body } = request.body
+        const input = toTaskIntake(body)
         const principal = request.tokenPrincipal
-        if (!principal) {
-          const task = await createTask(ctx.db, workspaceId, { ...input, userId: request.workspace.user.id })
-          return reply.code(201).send(toTaskRead(task))
-        }
-        const { task, replayed } = await createTaskFromToken(ctx.db, workspaceId, principal, input, idempotencyKey(request))
+        const create = async (db: typeof ctx.db) =>
+          principal
+            ? createTaskFromToken(db, workspaceId, principal, input, idempotencyKey(request))
+            : { task: await createTask(db, workspaceId, { ...input, userId }), replayed: false }
+        const schedule: Schedule | null = on == null ? null : { on, time: time ?? null }
+        // Created and scheduled in one transaction, so a refused schedule creates nothing. The rules of saving
+        // take the new task from its column to This week or Today by its day (D3, D12, D21).
+        const { task, replayed } =
+          schedule === null
+            ? await create(ctx.db)
+            : await ctx.db.transaction(async (transaction) => {
+                const tx = transaction as typeof ctx.db
+                const created = await create(tx)
+                if (created.replayed) return created
+                return { task: await setSchedule(tx, created.task.id, workspaceId, schedule, userId), replayed: false }
+              })
         if (replayed) reply.header('Idempotency-Replayed', 'true')
         return reply.code(201).send(toTaskRead(task))
       },
@@ -129,20 +166,29 @@ export function taskRoutes(ctx: AppContext) {
       {
         schema: {
           params: taskParams,
-          body: updateTaskBody,
+          body: updateTaskRouteBody,
           response: { 200: taskReadSchema },
         },
         config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
-      async (request) =>
-        toTaskRead(
-          await updateTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
-            title: request.body.title,
-            estimateMinutes: request.body.estimate_minutes,
-            notes: request.body.notes,
+      async (request) => {
+        const taskId = request.params.task_id.toLowerCase()
+        const workspaceId = request.workspace.workspace.id
+        const { title, estimate_minutes, notes, scheduled_on, scheduled_time } = request.body
+        const changes = { title, estimateMinutes: estimate_minutes, notes }
+        if (scheduled_on === undefined && scheduled_time === undefined) return toTaskRead(await updateTask(ctx.db, taskId, workspaceId, changes))
+        return toTaskRead(
+          await ctx.db.transaction(async (transaction) => {
+            const tx = transaction as typeof ctx.db
+            const updated = await updateTask(tx, taskId, workspaceId, changes)
+            // A field left out keeps its value: a new day keeps the time (US-1); clearing the day clears both (US-2).
+            const on = scheduled_on === undefined ? updated.scheduledOn : scheduled_on
+            const time = scheduled_time !== undefined ? scheduled_time : on === null ? null : updated.scheduledTime
+            return setSchedule(tx, taskId, workspaceId, { on, time }, request.workspace.user.id)
           }),
-        ),
+        )
+      },
     )
 
     typed.post(

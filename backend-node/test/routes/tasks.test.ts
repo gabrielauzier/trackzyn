@@ -52,6 +52,8 @@ describe('POST /api/tasks', () => {
       created_at: expect.any(String),
       subtasks: [],
       created_via: null,
+      scheduled_on: null,
+      scheduled_time: null,
     })
     const none = await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'No estimate', column: 'backlog' })
     expect(none.json()).toMatchObject({ estimate_minutes: null, column: 'backlog', position: 0 })

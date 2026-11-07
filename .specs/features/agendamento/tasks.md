@@ -276,8 +276,8 @@ T37
 
 **Done when**:
 
-- [ ] 422 para hora sem dia, data inválida e hora fora do passo; 403 para `viewer`; o token com `tasks:write` agenda
-- [ ] Gate check passes (full)
+- [x] 422 para hora sem dia, data inválida e hora fora do passo; 403 para `viewer`; o token com `tasks:write` agenda
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
