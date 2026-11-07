@@ -108,7 +108,7 @@ const TOOLS: readonly Tool[] = [
     }),
     run: async ({ ctx, workspace, principal }, { idempotency_key, recurrence, ...body }) => {
       const workspaceId = workspace.workspace.id
-      const input = toTaskIntake(body)
+      const input = toTaskIntake({ ...body, recurrence })
       const on = input.scheduledOn ?? null
       const time = input.scheduledTime ?? null
       // Created, scheduled and made to repeat in one transaction, so a refused schedule or rule creates nothing:

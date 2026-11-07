@@ -1267,8 +1267,8 @@ T45 → T46 → T47 → T48
 
 **Done when**:
 
-- [ ] Mesma chave e mesma regra repete a resposta; mesma chave e regra diferente responde 409; chaves antigas sem regra mantêm o hash
-- [ ] Gate check passes (full + `npm --prefix backend-node run build`)
+- [x] Mesma chave e mesma regra repete a resposta; mesma chave e regra diferente responde 409; chaves antigas sem regra mantêm o hash
+- [x] Gate check passes (full + `npm --prefix backend-node run build`)
 
 **Tests**: integration
 **Gate**: full

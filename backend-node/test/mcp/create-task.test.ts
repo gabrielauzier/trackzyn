@@ -236,6 +236,21 @@ describe('idempotency_key', () => {
     expect(await stored()).toHaveLength(1)
   })
 
+  it('US-7 MCP-05 the same key with the same rule replays; with another rule it answers the conflict and creates nothing', async () => {
+    const { create, stored } = await setup()
+    const day = new Date(Date.now() + 20 * 86_400_000).toISOString().slice(0, 10)
+    const args = { title: 'Weekly', scheduled_on: day, recurrence: { freq: 'daily', interval: 1 }, idempotency_key: 'k-rule' }
+    const first = await create(args)
+    expect(first.isError).toBe(false)
+    expect((await create(args)).json()).toMatchObject({ id: first.json().id, replayed: true })
+
+    const other = await create({ ...args, recurrence: { freq: 'daily', interval: 2 } })
+    expect(other).toMatchObject({ isError: true, text: 'Idempotency key reused with a different payload' })
+    const none = await create({ ...args, recurrence: null })
+    expect(none).toMatchObject({ isError: true, text: 'Idempotency key reused with a different payload' })
+    expect(await stored()).toHaveLength(1)
+  })
+
   it('MCP-05 the key of a deleted task answers Task was deleted', async () => {
     const { create, owner, workspaceId, stored } = await setup()
     const first = await create({ title: 'Once', idempotency_key: 'k-3' })
