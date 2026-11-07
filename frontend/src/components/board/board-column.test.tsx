@@ -11,7 +11,7 @@ vi.mock('@/lib/api', () => ({ tasks: { create: vi.fn() } }))
 const LIST = '99999999-9999-4999-8999-999999999999'
 
 function card(id: string, title: string, estimate: number | null = 60): TaskCardView {
-  return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null }
+  return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
 }
 
 const renderTask = (task: TaskCardView) => <p key={task.id}>{task.title}</p>

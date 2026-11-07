@@ -15,6 +15,9 @@ function task(overrides: Partial<TaskCardView> = {}): TaskCardView {
     position: 0,
     subtasks: { done: 0, total: 0 },
     created_via: null,
+    scheduled_on: null,
+    scheduled_time: null,
+    series: null,
     ...overrides,
   }
 }

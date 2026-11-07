@@ -36,7 +36,7 @@ vi.mock('axios', async (importOriginal) => {
   return { ...actual, default: Object.assign(Object.create(axios) as typeof axios, { create }) }
 })
 
-const { focus, reports, tasks } = await import('@/lib/api')
+const { agenda, focus, reports, tasks } = await import('@/lib/api')
 
 const LIST = '6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b'
 const BASE = { occurred_at: '2026-10-24T13:00:00.000Z', device_id: 'device-1', list_id: LIST }
@@ -115,6 +115,60 @@ describe('tasks.get and tasks.update (WIDGET-14, WIDGET-15)', () => {
     expect(http.sent).toEqual([
       { method: 'patch', url: '/api/tasks/task-1', body: { notes: 'Call the bank' }, authorization: 'Bearer token-123' },
     ])
+  })
+})
+
+describe('the schedule calls (US-7, US-12, US-5)', () => {
+  const sent = (method: string, url: string, body?: unknown) => ({ method, url, body, authorization: 'Bearer token-123' })
+
+  it('creates a task with its day and time in the body of POST /api/tasks', async () => {
+    await tasks.create({ list_id: LIST, title: 'Write', estimate_minutes: null, column: 'backlog', scheduled_on: '2026-11-13', scheduled_time: '14:00' })
+
+    expect(http.sent).toEqual([
+      sent('post', '/api/tasks', {
+        list_id: LIST,
+        title: 'Write',
+        estimate_minutes: null,
+        column: 'backlog',
+        scheduled_on: '2026-11-13',
+        scheduled_time: '14:00',
+      }),
+    ])
+  })
+
+  it('sends the day, the time, the rule and the scope in the body of PATCH /api/tasks/<id>', async () => {
+    const rule = { freq: 'weekly' as const, interval: 2, weekdays: [1, 3], month_day: null, until: null, count: 5 }
+    await tasks.update('task-1', { scheduled_on: '2026-11-13', scheduled_time: null, recurrence: rule, scope: 'series' })
+    await tasks.update('task-1', { scheduled_on: null, recurrence: null })
+
+    expect(http.sent).toEqual([
+      sent('patch', '/api/tasks/task-1', { scheduled_on: '2026-11-13', scheduled_time: null, recurrence: rule, scope: 'series' }),
+      sent('patch', '/api/tasks/task-1', { scheduled_on: null, recurrence: null }),
+    ])
+  })
+
+  it('deletes with DELETE /api/tasks/<id>, with the scope in the query only when given', async () => {
+    await tasks.remove('task-1')
+    await tasks.remove('task-1', 'series')
+    await tasks.remove('task-1', 'occurrence')
+
+    expect(http.sent).toEqual([
+      sent('delete', '/api/tasks/task-1'),
+      sent('delete', '/api/tasks/task-1?scope=series'),
+      sent('delete', '/api/tasks/task-1?scope=occurrence'),
+    ])
+  })
+
+  it('skips an occurrence with POST /api/tasks/<id>/skip and no body', async () => {
+    await tasks.skip('task-1')
+
+    expect(http.sent).toEqual([sent('post', '/api/tasks/task-1/skip')])
+  })
+
+  it('reads the scheduled tasks of a period with GET /api/agenda/scheduled', async () => {
+    await agenda.scheduled('2026-11-09', '2026-11-15')
+
+    expect(http.sent).toEqual([sent('get', '/api/agenda/scheduled?from=2026-11-09&to=2026-11-15')])
   })
 })
 

@@ -734,8 +734,8 @@ T37
 
 **Done when**:
 
-- [ ] Cada chamada nova monta a URL e o corpo certos
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Cada chamada nova monta a URL e o corpo certos
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

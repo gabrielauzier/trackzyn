@@ -34,7 +34,7 @@ const T2 = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const T3 = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 
 function card(id: string, title: string, estimate: number | null = 60): TaskCardView {
-  return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null }
+  return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
 }
 
 function boardOf(id: string, name: string): Board {
@@ -78,6 +78,9 @@ const fullTask: Task = {
   created_at: '2026-10-24T10:00:00Z',
   subtasks: [],
   created_via: null,
+  scheduled_on: null,
+  scheduled_time: null,
+  series: null,
 }
 
 function renderBoard(listId = WEEK) {
