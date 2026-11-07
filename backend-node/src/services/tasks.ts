@@ -42,7 +42,7 @@ export async function getTask(db: Database, taskId: string, workspaceId: string)
 }
 
 /** Serialises every change to the order of a list's tasks (two moves at once: the last one wins). */
-async function lockList(tx: Database, listId: string): Promise<void> {
+export async function lockList(tx: Database, listId: string): Promise<void> {
   await tx.select({ id: lists.id }).from(lists).where(eq(lists.id, listId)).for('update')
 }
 

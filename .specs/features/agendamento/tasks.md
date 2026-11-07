@@ -149,9 +149,9 @@ T37
 
 **Done when**:
 
-- [ ] Cada regra tem teste com o fuso do workspace e com a semana de segunda a domingo
-- [ ] Recusa dia anterior a hoje e hora de hoje que já passou
-- [ ] Gate check passes (full)
+- [x] Cada regra tem teste com o fuso do workspace e com a semana de segunda a domingo
+- [x] Recusa dia anterior a hoje e hora de hoje que já passou
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
