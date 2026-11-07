@@ -2,6 +2,7 @@ import { useMemo, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
+import { PlannedBlock, type PlannedPiece } from '@/components/agenda/planned-block'
 import { ScheduledBlock } from '@/components/agenda/scheduled-block'
 import { SessionBlock } from '@/components/agenda/session-block'
 import { UntimedRow } from '@/components/agenda/untimed-row'
@@ -24,8 +25,9 @@ import {
 } from '@/lib/agenda/layout'
 import type { DragTarget, useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
+import { clockMinutes } from '@/lib/plan/clock'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
+import type { AgendaSession, PlannedBlock as Planned, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 /** 144 px per hour: the scale at the default zoom (3x). */
 export const PX_PER_MINUTE = 2.4
@@ -74,6 +76,22 @@ interface WeekGridProps {
   untimed?: ScheduledTask[]
   /** `+X` of the `Sem hora` row: every scheduled task of the day. */
   onShowDay?: (day: string) => void
+  /** The blocks of the user's saved plans, drawn beside the sessions; nothing drags them (PLAN-24). */
+  planned?: Planned[]
+  /** A click on a planned block: a task opens the plan of its day, a break its panel (PLAN-29). */
+  onOpenPlanned?: (block: Planned) => void
+  /** `Começar` on a break of today's plan (PLAN-26, PLAN-28). */
+  onStartPlanned?: (block: Planned) => void
+}
+
+/** The planned blocks of each day, in minutes since its midnight and cut at 24:00 (PLAN-44). */
+function plannedPieces(planned: Planned[], days: string[]): Map<string, Omit<PlannedPiece, 'lane' | 'lanes'>[]> {
+  const pieces = new Map<string, Omit<PlannedPiece, 'lane' | 'lanes'>[]>(days.map((day) => [day, []]))
+  for (const block of planned) {
+    const start = clockMinutes(block.start) ?? 0
+    pieces.get(block.day)?.push({ planned: block, start, end: Math.min(DAY_MINUTES, start + block.minutes) })
+  }
+  return pieces
 }
 
 /** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
@@ -122,6 +140,9 @@ export function WeekGrid({
   onOpenTask,
   untimed,
   onShowDay,
+  planned = NONE,
+  onOpenPlanned,
+  onStartPlanned,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -151,7 +172,14 @@ export function WeekGrid({
     [sessions, adjusting, timezone],
   )
   const pieces = useMemo(() => dayPieces(shown, days, timezone, now), [shown, days, timezone, now])
-  const scheduled = useMemo(() => scheduledPieces(timed, projected, days), [timed, projected, days])
+  const laidPlanned = useMemo(() => plannedPieces(planned, days), [planned, days])
+  // A task with a block in the user's plan of its scheduled day shows only as the planned block (PLAN-25).
+  const shownTimed = useMemo(() => {
+    if (planned.length === 0) return timed
+    const plannedOn = new Set(planned.flatMap((block) => (block.kind === 'task' ? [`${block.day}:${block.task.id}`] : [])))
+    return timed.filter((task) => !plannedOn.has(`${task.scheduled_on}:${task.id}`))
+  }, [timed, planned])
+  const scheduled = useMemo(() => scheduledPieces(shownTimed, projected, days), [shownTimed, projected, days])
   // Decided on the saved sessions, so a block dragged shorter than the minimum stays until it is saved.
   const hiddenIds = useMemo(() => new Set(hidden ? sessions.filter(hidden).map((session) => session.id) : []), [sessions, hidden])
 
@@ -206,7 +234,13 @@ export function WeekGrid({
             // The session being adjusted follows the pointer on its own, outside any joined block.
             const moving = visible.filter((piece) => piece.session.id === adjusting?.sessionId)
             const resting = visible.filter((piece) => piece.session.id !== adjusting?.sessionId)
-            const laid = assignLanes<Piece | ScheduledPiece>([...joinPieces(resting, joinGap, apartId), ...moving, ...(scheduled.get(day) ?? [])])
+            // The planned blocks share the width with the sessions, so they never cover one (PLAN-24).
+            const laid = assignLanes<Piece | ScheduledPiece | Omit<PlannedPiece, 'lane' | 'lanes'>>([
+              ...joinPieces(resting, joinGap, apartId),
+              ...moving,
+              ...(scheduled.get(day) ?? []),
+              ...(laidPlanned.get(day) ?? []),
+            ])
             return (
               <div
                 key={day}
@@ -224,6 +258,18 @@ export function WeekGrid({
                 ))}
                 <div className="absolute inset-0 mx-0.5">
                   {laid.map((laidPiece) => {
+                    if ('planned' in laidPiece) {
+                      return (
+                        <PlannedBlock
+                          key={`planned:${laidPiece.planned.id}`}
+                          piece={laidPiece}
+                          pxPerMinute={pxPerMinute}
+                          today={today}
+                          onOpen={onOpenPlanned}
+                          onStart={onStartPlanned}
+                        />
+                      )
+                    }
                     if ('scheduled' in laidPiece) {
                       const entry = laidPiece.scheduled
                       const id = entry.kind === 'task' ? entry.task.id : `${entry.occurrence.series_id}:${entry.occurrence.on}`

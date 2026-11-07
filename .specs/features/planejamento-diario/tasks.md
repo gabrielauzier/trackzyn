@@ -637,10 +637,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Tarefa com bloco no plano e hora agendada no mesmo dia aparece uma vez, como bloco do plano
-- [ ] Sem `planned`, a grade fica igual (testes atuais passam)
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos em `week-grid.test.tsx`
+- [x] Tarefa com bloco no plano e hora agendada no mesmo dia aparece uma vez, como bloco do plano
+- [x] Sem `planned`, a grade fica igual (testes atuais passam)
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos em `week-grid.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

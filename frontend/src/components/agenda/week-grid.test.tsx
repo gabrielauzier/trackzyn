@@ -6,7 +6,7 @@ import { isHiddenSession } from '@/lib/agenda/hide'
 import { dayLimit, weekDays } from '@/lib/agenda/layout'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
+import type { AgendaSession, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
 import { PX_PER_MINUTE, WeekGrid } from './week-grid'
 
 const SP = 'America/Sao_Paulo'
@@ -695,5 +695,63 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
       fireEvent.pointerUp(window, { clientX: 350, clientY: y(15, 20) })
       expect(onDrop).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('WeekGrid: the saved plan (PLAN-24, PLAN-25)', () => {
+  const list = { id: 'l1', name: 'Work', color: 3 }
+  const timedTask = (id: string, day: string, time: string): ScheduledTask => ({
+    id,
+    title: `Scheduled ${id}`,
+    list,
+    column: 'this_week',
+    position: 0,
+    estimate_minutes: 60,
+    scheduled_on: day,
+    scheduled_time: time,
+    series: null,
+  })
+  const plannedTask = (id: string, day: string, start: string, taskId: string): PlannedBlock => ({
+    id,
+    day,
+    kind: 'task',
+    start,
+    minutes: 60,
+    task: { id: taskId, title: `Scheduled ${taskId}`, list, done: false, scheduled_on: day, estimate_minutes: 60 },
+  })
+  const lunch: PlannedBlock = { id: 'p-lunch', day: '2026-11-03', kind: 'break', start: '10:30', minutes: 60, name: 'Lunch', list }
+  const grid = (props: Partial<Parameters<typeof WeekGrid>[0]>) =>
+    renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} {...props} />)
+
+  it('draws the planned blocks in their day at their time, beside an overlapping session instead of over it', () => {
+    const { container } = grid({
+      sessions: [session('s', '2026-11-03T13:00:00.000Z', '2026-11-03T14:00:00.000Z')],
+      planned: [lunch, plannedTask('p-a', '2026-11-05', '14:00', 'a')],
+    })
+    const tuesday = within(column(container, '2026-11-03'))
+    const work = tuesday.getByRole('button', { name: 'Task s, 10:00 – 11:00' })
+    const pause = tuesday.getByRole('button', { name: /^Lunch, 10:30 – 11:30/ })
+    expect([pause.style.top, pause.style.height]).toEqual([`${y(10, 30)}px`, `${60 * PX_PER_MINUTE}px`])
+    expect([work.style.left, work.style.width, pause.style.left, pause.style.width]).toEqual(['0%', '50%', '50%', '50%'])
+    expect(within(column(container, '2026-11-05')).getByRole('button', { name: /^Scheduled a, 14:00 – 15:00/ })).toHaveAttribute('data-kind', 'task')
+  })
+
+  it('shows a task with a planned block and a time on the same day once, as the planned block', () => {
+    const { container } = grid({
+      timed: [timedTask('a', '2026-11-05', '10:00'), timedTask('b', '2026-11-05', '16:00')],
+      planned: [plannedTask('p-a', '2026-11-05', '14:00', 'a'), plannedTask('p-b', '2026-11-04', '09:00', 'b')],
+    })
+    const thursday = within(column(container, '2026-11-05'))
+    const blocksOfA = thursday.getAllByRole('button', { name: /^Scheduled a,/ })
+    expect(blocksOfA).toHaveLength(1)
+    expect(blocksOfA[0]).toHaveAttribute('data-plan-block', 'p-a')
+    // A block planned on another day leaves the scheduled block where it is.
+    expect(thursday.getByRole('button', { name: /^Scheduled b, Scheduled · 16:00/ })).toBeInTheDocument()
+  })
+
+  it('without planned blocks, draws the scheduled task as before', () => {
+    const { container } = grid({ timed: [timedTask('a', '2026-11-05', '10:00')] })
+    expect(container.querySelector('[data-plan-block]')).toBeNull()
+    expect(within(column(container, '2026-11-05')).getByRole('button', { name: /^Scheduled a, Scheduled · 10:00/ })).toBeInTheDocument()
   })
 })

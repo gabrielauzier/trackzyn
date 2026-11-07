@@ -223,7 +223,7 @@ O que o código já fixa:
 | PLAN-22 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-23 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-24 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
-| PLAN-25 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
+| PLAN-25 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-26 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
 | PLAN-27 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
 | PLAN-28 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
