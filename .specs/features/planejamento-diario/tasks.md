@@ -717,10 +717,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Três tarefas de 1h com o expediente livre desde 09:00 caem em 09:00, 10:00 e 11:00
-- [ ] Uma tarefa maior que todo buraco volta em `left`
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `fit.test.ts`
+- [x] Três tarefas de 1h com o expediente livre desde 09:00 caem em 09:00, 10:00 e 11:00
+- [x] Uma tarefa maior que todo buraco volta em `left`
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `fit.test.ts`
 
 **Tests**: unit
 **Gate**: quick

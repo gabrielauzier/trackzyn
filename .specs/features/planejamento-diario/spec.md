@@ -230,8 +230,8 @@ O que o código já fixa:
 | PLAN-29 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-30 | P2: Abrir o plano rápido de vários lugares | Tasks | Implementing |
 | PLAN-31 | P2: Abrir o plano rápido de vários lugares | Tasks | Implementing |
-| PLAN-32 | P3: Encaixar o que sobrou | Tasks | In Tasks |
-| PLAN-33 | P3: Encaixar o que sobrou | Tasks | In Tasks |
+| PLAN-32 | P3: Encaixar o que sobrou | Tasks | Implementing |
+| PLAN-33 | P3: Encaixar o que sobrou | Tasks | Implementing |
 | PLAN-34 | Edge Cases | Tasks | Implementing |
 | PLAN-35 | Edge Cases | Tasks | Implementing |
 | PLAN-36 | Edge Cases | Tasks | Implementing |
