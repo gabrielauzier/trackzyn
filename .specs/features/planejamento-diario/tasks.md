@@ -421,10 +421,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Cada tarefa aparece no grupo certo; a busca filtra por título e o filtro por lista
-- [ ] Tarefas no rascunho aparecem marcadas, mas ainda podem ser arrastadas
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `plan-sidebar.test.tsx`
+- [x] Cada tarefa aparece no grupo certo; a busca filtra por título e o filtro por lista
+- [x] Tarefas no rascunho aparecem marcadas, mas ainda podem ser arrastadas
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `plan-sidebar.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

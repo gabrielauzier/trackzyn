@@ -988,6 +988,25 @@
       "timed": "Agendada com hora",
       "workdayStart": "Início do expediente",
       "workdayEnd": "Fim do expediente"
+    },
+    "sidebar": {
+      "label": "Tarefas e pausas",
+      "breaks": "Pausas",
+      "coffee": "Café",
+      "lunch": "Almoço",
+      "newBreak": "Nova pausa",
+      "search": "Buscar tarefa",
+      "listFilter": "Filtrar por lista",
+      "allLists": "Todas as listas",
+      "groups": {
+        "day": "Agendadas para o dia",
+        "today": "Hoje",
+        "this_week": "Esta semana",
+        "backlog": "Backlog"
+      },
+      "planned": "no plano {{time}}",
+      "noEstimate": "sem estimativa",
+      "empty": "Nenhuma tarefa encontrada"
     }
   }
 }

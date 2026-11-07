@@ -212,7 +212,7 @@ O que o código já fixa:
 | PLAN-11 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-12 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-13 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-14 | P1: Planejar pausas | Tasks | In Tasks |
+| PLAN-14 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-15 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-16 | P1: Planejar pausas | Tasks | In Tasks |
 | PLAN-17 | P1: Planejar pausas | Tasks | Implementing |

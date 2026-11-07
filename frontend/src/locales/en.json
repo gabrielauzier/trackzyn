@@ -988,6 +988,25 @@
       "timed": "Scheduled with a time",
       "workdayStart": "Workday starts",
       "workdayEnd": "Workday ends"
+    },
+    "sidebar": {
+      "label": "Tasks and breaks",
+      "breaks": "Breaks",
+      "coffee": "Coffee",
+      "lunch": "Lunch",
+      "newBreak": "New break",
+      "search": "Search tasks",
+      "listFilter": "Filter by list",
+      "allLists": "All lists",
+      "groups": {
+        "day": "Scheduled for the day",
+        "today": "Today",
+        "this_week": "This week",
+        "backlog": "Backlog"
+      },
+      "planned": "planned {{time}}",
+      "noEstimate": "no estimate",
+      "empty": "No tasks found"
     }
   }
 }
