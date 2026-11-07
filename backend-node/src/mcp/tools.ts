@@ -21,7 +21,7 @@ import type { TokenPrincipal, TokenScope } from '../services/access-tokens.ts'
 import { buildBoard } from '../services/board.ts'
 import { createSubtask } from '../services/subtasks.ts'
 import type { Database } from '../db/client.ts'
-import { setSchedule } from '../services/schedule.ts'
+import { applyDueSchedules, setSchedule } from '../services/schedule.ts'
 import { setRecurrence } from '../services/series.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { deleteTask, getTask, moveTask } from '../services/tasks.ts'
@@ -80,7 +80,12 @@ const TOOLS: readonly Tool[] = [
     write: false,
     input: described(listParams, { list_id: 'The id of the list, as returned by list_lists.' }),
     pathArguments: ['list_id'],
-    run: ({ ctx, workspace }, { list_id }) => buildBoard(ctx.db, list_id.toLowerCase(), workspace.workspace, workspace.user.id),
+    run: async ({ ctx, workspace }, { list_id }) => {
+      const now = new Date()
+      // The tasks scheduled for today come to Today before the board is read, as on the REST board (US-4, AD-009).
+      await applyDueSchedules(ctx.db, workspace.workspace.id, now)
+      return buildBoard(ctx.db, list_id.toLowerCase(), workspace.workspace, workspace.user.id, now)
+    },
   }),
   tool({
     name: 'get_task',
@@ -89,7 +94,11 @@ const TOOLS: readonly Tool[] = [
     write: false,
     input: described(taskParams, { task_id: TASK_ID }),
     pathArguments: ['task_id'],
-    run: async ({ ctx, workspace }, { task_id }) => toTaskRead(await getTask(ctx.db, task_id.toLowerCase(), workspace.workspace.id)),
+    run: async ({ ctx, workspace }, { task_id }) => {
+      // A task scheduled for today answers its column in Today, as on the board (US-4, AD-009).
+      await applyDueSchedules(ctx.db, workspace.workspace.id)
+      return toTaskRead(await getTask(ctx.db, task_id.toLowerCase(), workspace.workspace.id))
+    },
   }),
   tool({
     name: 'create_task',

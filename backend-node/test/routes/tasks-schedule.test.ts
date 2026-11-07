@@ -95,6 +95,17 @@ describe('PATCH /api/tasks/:id with a schedule (US-1, US-2, US-7)', () => {
     expect(board.columns.backlog.tasks).toEqual([])
   })
 
+  it('AD-009 GET /api/tasks/:id answers a task due yesterday in Today, with no other read before', async () => {
+    const { owner, workspaceId, taskId } = await setup()
+    const yesterday = await day(-1)
+    // Saved in Backlog or This week, by the weekday the suite runs; not yet in Today.
+    const saved = (await call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, { scheduled_on: yesterday })).json()
+    expect(['backlog', 'this_week']).toContain(saved.column)
+    const reply = await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({ id: taskId, column: 'today', scheduled_on: yesterday })
+  })
+
   it('answers 403 Read-only role to a viewer and 404 to another workspace, and changes nothing', async () => {
     const { owner, viewer, stranger, workspaceId, strangerWorkspaceId, taskId } = await setup()
     const body = { scheduled_on: await day(30) }

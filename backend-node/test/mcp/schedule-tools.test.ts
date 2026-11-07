@@ -147,6 +147,32 @@ describe('get_task and get_board read the schedule (US-7)', () => {
   })
 })
 
+describe('get_board and get_task apply due schedules (US-4, AD-009)', () => {
+  it('get_board shows a task due yesterday in today, with no REST read before', async () => {
+    const { client, create, listId, stored } = await setup()
+    const id = (await create({ scheduled_on: date(-1) })).json().id as string
+    // Saved in Backlog or This week, by the weekday the suite runs; not yet in Today.
+    const [saved] = await stored()
+    expect(saved).toMatchObject({ id, scheduleAppliedAt: null })
+    expect(['backlog', 'this_week']).toContain(saved!.column)
+
+    const board = (await callTool(client, 'get_board', { list_id: listId })).json() as { columns: Record<string, { tasks: Array<Record<string, unknown>> }> }
+    expect(board.columns.today!.tasks).toEqual([expect.objectContaining({ id, scheduled_on: date(-1) })])
+    expect(board.columns.backlog!.tasks).toEqual([])
+    expect(board.columns.this_week!.tasks).toEqual([])
+  })
+
+  it('get_task answers a task due yesterday in today, with no REST read before', async () => {
+    const { client, create, stored } = await setup()
+    const id = (await create({ scheduled_on: date(-1) })).json().id as string
+    const [saved] = await stored()
+    expect(saved).toMatchObject({ id, scheduleAppliedAt: null })
+    expect(['backlog', 'this_week']).toContain(saved!.column)
+
+    expect((await callTool(client, 'get_task', { task_id: id })).json()).toMatchObject({ id, column: 'today', scheduled_on: date(-1) })
+  })
+})
+
 describe('tools/list', () => {
   it('describes scheduled_on, scheduled_time and recurrence on create_task and update_task', async () => {
     const { client } = await setup()

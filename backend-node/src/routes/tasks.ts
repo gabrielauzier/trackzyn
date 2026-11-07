@@ -11,7 +11,7 @@ import { withoutNul } from './schemas.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import type { RecurrenceRule } from '../services/recurrence.ts'
-import { type Schedule, setSchedule } from '../services/schedule.ts'
+import { type Schedule, applyDueSchedules, setSchedule } from '../services/schedule.ts'
 import { type SeriesScope, applyScheduleToSeries, deleteOccurrence, seriesView, setRecurrence, skipOccurrence } from '../services/series.ts'
 import { type TaskWithSubtasks, createTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
@@ -245,7 +245,11 @@ export function taskRoutes(ctx: AppContext) {
     typed.get(
       '/api/tasks/:task_id',
       { schema: { params: taskParams, response: { 200: taskReadSchema } }, config: { tokenScope: 'tasks:read' }, preValidation: reading },
-      async (request) => toTaskRead(await getTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id)),
+      async (request) => {
+        // A task scheduled for today answers its column in Today, as on the board (US-4, AD-009).
+        await applyDueSchedules(ctx.db, request.workspace.workspace.id)
+        return toTaskRead(await getTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id))
+      },
     )
 
     typed.patch(

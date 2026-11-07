@@ -1375,8 +1375,8 @@ T49 → T50 → T51
 
 **Done when**:
 
-- [ ] Tarefa vencida ontem aparece em Hoje pelo `get_board` do MCP, sem leitura REST antes; o mesmo para `get_task` e `GET /api/tasks/:id`
-- [ ] Gate check passes (full)
+- [x] Tarefa vencida ontem aparece em Hoje pelo `get_board` do MCP, sem leitura REST antes; o mesmo para `get_task` e `GET /api/tasks/:id`
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
