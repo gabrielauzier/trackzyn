@@ -506,6 +506,16 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent(/Work · This weekClick to open$/)
   })
 
+  it('US-14 puts the Sem hora row between the day headers and the timeline, with the untimed tasks of each day', () => {
+    const { container } = grid({ untimed: [{ ...scheduled('u', '2026-11-05', '10:00'), scheduled_time: null }] })
+    const row = container.querySelector<HTMLElement>('[data-untimed-row]')!
+    expect(container.querySelector('[data-agenda-header]')!.nextElementSibling).toBe(row)
+    expect(row.nextElementSibling).toBe(container.querySelector('[data-agenda-scroll]'))
+    expect(within(row.querySelector<HTMLElement>('[data-untimed-day="2026-11-05"]')!).getByRole('button', { name: /^Scheduled u/ })).toBeInTheDocument()
+    // Without a time it is not a block on the grid.
+    expect(within(column(container, '2026-11-05')).queryByRole('button', { name: /^Scheduled u/ })).toBeNull()
+  })
+
   it('starts no draft from a press on a block', () => {
     function WithDrag() {
       const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit: vi.fn() })

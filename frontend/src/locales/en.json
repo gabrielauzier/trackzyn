@@ -846,6 +846,11 @@
       "next": "Next occurrence · {{day}} · {{start}} – {{end}}",
       "openOrDrag": "Click to open · drag to reschedule",
       "open": "Click to open"
+    },
+    "untimed": {
+      "label": "Scheduled without a set time",
+      "more": "+{{count}}",
+      "showAll": "See all {{count}} tasks scheduled on {{day}}"
     }
   },
   "schedule": {

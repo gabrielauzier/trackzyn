@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { formatDuration } from '@/components/board/format-duration'
 import { ScheduledBlock } from '@/components/agenda/scheduled-block'
 import { SessionBlock } from '@/components/agenda/session-block'
+import { UntimedRow } from '@/components/agenda/untimed-row'
 import { minuteClock } from '@/lib/agenda/format'
 import { joinPieces } from '@/lib/agenda/join'
 import {
@@ -66,6 +67,10 @@ interface WeekGridProps {
   projected?: ProjectedOccurrence[]
   /** A click on a scheduled block opens its task: the task itself, or the open occurrence of a projection. */
   onOpenTask?: (taskId: string) => void
+  /** The tasks scheduled without a time; given, the `Sem hora` row shows under the day headers (US-14). */
+  untimed?: ScheduledTask[]
+  /** `+X` of the `Sem hora` row: every scheduled task of the day. */
+  onShowDay?: (day: string) => void
 }
 
 /** The whole session in minutes since the local midnight of the piece's day, which may run past either end of it. */
@@ -112,6 +117,8 @@ export function WeekGrid({
   timed = NONE,
   projected = NONE,
   onOpenTask,
+  untimed,
+  onShowDay,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -176,6 +183,7 @@ export function WeekGrid({
           )
         })}
       </div>
+      {untimed && <UntimedRow days={days} untimed={untimed} onOpenTask={onOpenTask} onShowDay={onShowDay} />}
       <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-14rem)] min-h-80 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-14 shrink-0" aria-hidden>

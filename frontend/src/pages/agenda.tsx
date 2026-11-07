@@ -113,9 +113,10 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const { query, create, update, remove } = useAgenda({ from: monday, to: sunday, listId })
   const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
   // The scheduled tasks of the whole workspace (D9), and the task a click on one opens (US-5).
-  const { timed, projected } = useScheduled(monday, sunday)
+  const { timed, untimed, projected } = useScheduled(monday, sunday)
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
-  const scheduledProps = { timed, projected, onOpenTask: setOpenTaskId }
+  // The day panel that `+X` of the `Sem hora` row opens is not drawn yet (US-14); the button does nothing until then.
+  const scheduledProps = { timed, untimed, projected, onOpenTask: setOpenTaskId }
   // An overlap is with any other session of the user, whatever the list filter (AGENDA-19).
   const everyList = useQuery({
     queryKey: agendaKey({ from: monday, to: sunday, listId: null }),

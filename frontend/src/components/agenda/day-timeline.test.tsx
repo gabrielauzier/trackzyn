@@ -253,3 +253,25 @@ describe('DayTimeline: the scheduled tasks (US-5)', () => {
     expect(onOpenTask).toHaveBeenCalledExactlyOnceWith('a')
   })
 })
+
+describe('DayTimeline: the Sem hora row (US-14)', () => {
+  it('shows the untimed tasks of the day in a single cell under the header', () => {
+    const untimed: ScheduledTask[] = [
+      {
+        id: 'u',
+        title: 'Call the bank',
+        list: { id: 'l1', name: 'Work', color: 3 },
+        column: 'today',
+        position: 0,
+        estimate_minutes: null,
+        scheduled_on: '2026-11-04',
+        scheduled_time: null,
+        series: null,
+      },
+    ]
+    const { container } = timeline('2026-11-04', { untimed })
+    const cells = container.querySelectorAll('[data-untimed-day]')
+    expect([...cells].map((cell) => cell.getAttribute('data-untimed-day'))).toEqual(['2026-11-04'])
+    expect(within(cells[0] as HTMLElement).getByRole('button', { name: 'Call the bank' })).toBeInTheDocument()
+  })
+})

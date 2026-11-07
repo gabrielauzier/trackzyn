@@ -45,6 +45,9 @@ interface DayTimelineProps {
   projected?: ProjectedOccurrence[]
   /** A click on a scheduled block opens its task. */
   onOpenTask?: (taskId: string) => void
+  /** The tasks scheduled without a time, for the `Sem hora` row (US-14). */
+  untimed?: ScheduledTask[]
+  onShowDay?: (day: string) => void
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -76,6 +79,8 @@ export function DayTimeline({
   timed,
   projected,
   onOpenTask,
+  untimed,
+  onShowDay,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -146,6 +151,8 @@ export function DayTimeline({
         timed={timed}
         projected={projected}
         onOpenTask={onOpenTask}
+        untimed={untimed}
+        onShowDay={onShowDay}
       />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}

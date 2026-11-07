@@ -846,6 +846,11 @@
       "next": "Próxima ocorrência · {{day}} · {{start}} – {{end}}",
       "openOrDrag": "Clique para abrir · arraste para reagendar",
       "open": "Clique para abrir"
+    },
+    "untimed": {
+      "label": "Agendadas sem hora definida",
+      "more": "+{{count}}",
+      "showAll": "Ver todas as {{count}} tarefas agendadas do dia {{day}}"
     }
   },
   "schedule": {

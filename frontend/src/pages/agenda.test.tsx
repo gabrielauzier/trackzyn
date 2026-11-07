@@ -1316,3 +1316,48 @@ describe('AgendaPage: the scheduled tasks (US-5)', () => {
     expect(tasks.get).toHaveBeenCalledWith('t9')
   })
 })
+
+describe('AgendaPage: the Sem hora row (US-14)', () => {
+  it('shows the tasks scheduled without a time in their day and opens the task dialog on a click', async () => {
+    vi.mocked(agenda.scheduled).mockResolvedValue({
+      timed: [],
+      untimed: [
+        {
+          id: 't8',
+          title: 'Call the bank',
+          list: { id: WORK, name: 'Work', color: 3 },
+          column: 'today',
+          position: 0,
+          estimate_minutes: null,
+          scheduled_on: '2026-11-04',
+          scheduled_time: null,
+          series: null,
+        },
+      ],
+      projected: [],
+    })
+    vi.mocked(tasks.get).mockResolvedValue({
+      id: 't8',
+      list_id: WORK,
+      title: 'Call the bank',
+      notes: '',
+      estimate_minutes: null,
+      column: 'today',
+      position: 0,
+      completed_at: null,
+      created_at: '2026-11-01T00:00:00.000Z',
+      subtasks: [],
+      created_via: null,
+      scheduled_on: '2026-11-04',
+      scheduled_time: null,
+      series: null,
+    })
+    const { user } = renderWithProviders(<AgendaPage />)
+
+    await waitFor(() => expect(document.querySelector('[data-untimed-day="2026-11-04"]')).not.toBeNull())
+    const cell = document.querySelector<HTMLElement>('[data-untimed-day="2026-11-04"]')!
+    await user.click(await within(cell).findByRole('button', { name: 'Call the bank' }))
+    expect(await screen.findByRole('dialog', { name: 'Edit task' })).toBeInTheDocument()
+    expect(tasks.get).toHaveBeenCalledWith('t8')
+  })
+})

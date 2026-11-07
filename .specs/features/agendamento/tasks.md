@@ -1059,8 +1059,8 @@ T37
 
 **Done when**:
 
-- [ ] Ordem de coluna e `position`; dia vazio mantém a altura; série sem hora mostra a ocorrência aberta com o ícone de repetição
-- [ ] Gate check passes (Build da fase)
+- [x] Ordem de coluna e `position`; dia vazio mantém a altura; série sem hora mostra a ocorrência aberta com o ícone de repetição
+- [x] Gate check passes (Build da fase)
 
 **Tests**: unit
 **Gate**: build
