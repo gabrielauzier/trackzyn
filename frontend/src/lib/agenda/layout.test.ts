@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { AgendaSession } from '@/types'
-import { assignLanes, dayPieces, dayTotal, mondayOf, weekDays, type Piece } from './layout'
+import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
+import { assignLanes, dayPieces, dayTotal, mondayOf, scheduledPieces, weekDays, type Piece, type ScheduledPiece } from './layout'
 
 const SP = 'America/Sao_Paulo'
 
@@ -94,5 +94,79 @@ describe('mondayOf and weekDays', () => {
     expect(weekDays(mondayOf('2026-11-04'))).toEqual([
       '2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08',
     ])
+  })
+})
+
+const scheduledTask = (id: string, day: string, time: string, estimate: number | null): ScheduledTask => ({
+  id,
+  title: `Task ${id}`,
+  list: { id: 'l1', name: 'Work', color: 3 },
+  column: 'this_week',
+  position: 0,
+  estimate_minutes: estimate,
+  scheduled_on: day,
+  scheduled_time: time,
+  series: null,
+})
+const projection = (on: string, time: string, estimate: number | null): ProjectedOccurrence => ({
+  series_id: 'series-1',
+  task_id: 'open',
+  title: 'Weekly review',
+  list: { id: 'l1', name: 'Work', color: 3 },
+  on,
+  time,
+  estimate_minutes: estimate,
+})
+const span = (pieces: { start: number; end: number }[] | undefined) => pieces?.map(({ start, end }) => [start, end])
+
+describe('scheduledPieces (US-5, D7, D23)', () => {
+  const week = weekDays('2026-11-02')
+
+  it('places a block at its time for its estimate, and for 1h without one', () => {
+    const pieces = scheduledPieces([scheduledTask('a', '2026-11-03', '10:00', 90), scheduledTask('b', '2026-11-04', '14:15', null)], [], week)
+    expect(span(pieces.get('2026-11-03'))).toEqual([[600, 690]])
+    expect(span(pieces.get('2026-11-04'))).toEqual([[855, 915]])
+    expect(pieces.get('2026-11-04')![0]).toMatchObject({ time: '14:15', minutes: 60, scheduled: { kind: 'task', task: { id: 'b' } } })
+  })
+
+  it('places a projection on its day, marked as one', () => {
+    const pieces = scheduledPieces([], [projection('2026-11-06', '09:00', 30)], week)
+    expect(span(pieces.get('2026-11-06'))).toEqual([[540, 570]])
+    expect(pieces.get('2026-11-06')![0]!.scheduled.kind).toBe('projection')
+  })
+
+  it('cuts a block that passes midnight into the end of its day and the start of the next', () => {
+    const pieces = scheduledPieces([scheduledTask('a', '2026-11-03', '23:30', 60)], [], week)
+    expect(span(pieces.get('2026-11-03'))).toEqual([[1410, 1440]])
+    expect(span(pieces.get('2026-11-04'))).toEqual([[0, 30]])
+    // Both pieces carry the whole block, for the tooltip.
+    expect(pieces.get('2026-11-04')![0]).toMatchObject({ time: '23:30', minutes: 60 })
+  })
+
+  it('leaves out the days not shown', () => {
+    const pieces = scheduledPieces([scheduledTask('a', '2026-11-08', '23:30', 60)], [], week)
+    expect(span(pieces.get('2026-11-08'))).toEqual([[1410, 1440]])
+    expect(pieces.has('2026-11-09')).toBe(false)
+  })
+})
+
+describe('assignLanes with scheduled blocks (US-5)', () => {
+  const at = (pieces: ReturnType<typeof scheduledPieces>) => pieces.get('2026-11-02')!
+
+  it('puts a scheduled block and a session that overlap side by side', () => {
+    const [block] = at(scheduledPieces([scheduledTask('t', '2026-11-02', '10:30', 60)], [], ['2026-11-02']))
+    const laid = assignLanes<Piece | ScheduledPiece>([piece('a', 600, 660), block!])
+    expect(laid.map((p) => [p.start, p.lane, p.lanes])).toEqual([[600, 0, 2], [630, 1, 2]])
+  })
+
+  it('puts two scheduled blocks that overlap side by side, and a projection apart at the full width', () => {
+    const pieces = at(
+      scheduledPieces(
+        [scheduledTask('t', '2026-11-02', '10:00', null), scheduledTask('u', '2026-11-02', '10:45', 30)],
+        [projection('2026-11-02', '13:00', 60)],
+        ['2026-11-02'],
+      ),
+    )
+    expect(assignLanes(pieces).map((p) => [p.start, p.lane, p.lanes])).toEqual([[600, 0, 2], [645, 1, 2], [780, 0, 1]])
   })
 })

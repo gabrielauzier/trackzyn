@@ -984,8 +984,8 @@ T37
 
 **Done when**:
 
-- [ ] Sobreposição com sessão e com outro bloco agendado; bloco que passa da meia-noite
-- [ ] Gate check passes (quick)
+- [x] Sobreposição com sessão e com outro bloco agendado; bloco que passa da meia-noite
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick
