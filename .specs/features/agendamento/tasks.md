@@ -201,8 +201,8 @@ T37
 
 **Done when**:
 
-- [ ] Uma tarefa agendada para hoje em Backlog aparece em Hoje na primeira leitura do dia
-- [ ] Gate check passes (full)
+- [x] Uma tarefa agendada para hoje em Backlog aparece em Hoje na primeira leitura do dia
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

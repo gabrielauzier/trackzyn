@@ -39,7 +39,7 @@ describe('GET /api/lists/:id/board', () => {
       },
     })
     expect(board.columns.today.tasks).toEqual([
-      { id: today.json().id, title: 'Focus', estimate_minutes: 30, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null },
+      { id: today.json().id, title: 'Focus', estimate_minutes: 30, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null },
     ])
     expect(board.columns.done.days).toHaveLength(1)
     expect(board.columns.done.days[0].tasks.map((task: { title: string }) => task.title)).toEqual(['Finished'])
@@ -101,5 +101,25 @@ describe('GET /api/lists/:id/board ordering Done', () => {
     expect(days[0]!.date > days[1]!.date).toBe(true)
     expect(days[0]!.tasks.map((task) => task.title)).toEqual(['First', 'Third', 'Second'])
     expect(days[1]!.tasks.map((task) => task.title)).toEqual(['Old two', 'Old one'])
+  })
+})
+
+describe('GET /api/lists/:id/board with scheduled tasks (US-3, US-4)', () => {
+  it('US-4 brings a Backlog task scheduled for today to Today on the first read of the day, with its day and time on the card', async () => {
+    const { owner, viewer, workspaceId } = await ownerViewerStranger(t)
+    await t.app.inject({ method: 'PATCH', url: `/api/workspaces/${workspaceId}`, headers: bearer(owner.token), payload: { timezone: 'America/Sao_Paulo' } })
+    const list = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Week', color: 2 })).json()
+    const due = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list.id, title: 'Due today' })).json()
+    const later = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list.id, title: 'Later' })).json()
+    // Scheduled on an earlier day for today in the workspace's timezone, and for a day far ahead.
+    const today = sql`(now() AT TIME ZONE 'America/Sao_Paulo')::date`
+    await t.ctx.db.execute(sql`UPDATE tasks SET scheduled_on = ${today}, scheduled_time = '23:45' WHERE id = ${due.id}`)
+    await t.ctx.db.execute(sql`UPDATE tasks SET scheduled_on = ${today} + 30 WHERE id = ${later.id}`)
+    const on = ((await t.ctx.db.execute(sql`SELECT (${today})::text AS on`)) as unknown as { rows: Array<{ on: string }> }).rows[0]!.on
+
+    const board = (await call('GET', `/api/lists/${list.id}/board`, viewer.token, workspaceId)).json()
+
+    expect(board.columns.today.tasks).toMatchObject([{ id: due.id, title: 'Due today', scheduled_on: on, scheduled_time: '23:45' }])
+    expect(board.columns.backlog.tasks).toMatchObject([{ id: later.id, scheduled_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/), scheduled_time: null }])
   })
 })

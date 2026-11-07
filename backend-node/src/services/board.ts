@@ -14,6 +14,9 @@ export interface TaskCardView {
   subtasks: { done: number; total: number }
   /** The name of the token that created the task, while that token exists. */
   created_via: string | null
+  /** The scheduled day (`YYYY-MM-DD`) and start time (`HH:MM`), in the workspace's timezone. */
+  scheduled_on: string | null
+  scheduled_time: string | null
 }
 
 export interface ColumnView {
@@ -66,6 +69,8 @@ interface TaskRow extends Record<string, unknown> {
   subtasks_done: number
   subtasks_total: number
   created_via: string | null
+  scheduled_on: string | null
+  scheduled_time: string | null
 }
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
@@ -112,7 +117,8 @@ export async function buildBoard(
                (extract(epoch FROM t.completed_at) * 1000)::float8 AS completed_ms,
                count(s.id) FILTER (WHERE s.done)::int AS subtasks_done,
                count(s.id)::int AS subtasks_total,
-               coalesce(p.name, CASE WHEN t.created_from = 'agenda' THEN 'Agenda' END) AS created_via
+               coalesce(p.name, CASE WHEN t.created_from = 'agenda' THEN 'Agenda' END) AS created_via,
+               t.scheduled_on::text AS scheduled_on, to_char(t.scheduled_time, 'HH24:MI') AS scheduled_time
         FROM tasks t
         LEFT JOIN subtasks s ON s.task_id = t.id
         LEFT JOIN personal_access_tokens p ON p.id = t.created_via_token_id
@@ -136,6 +142,8 @@ export async function buildBoard(
     position: row.position,
     subtasks: { done: row.subtasks_done, total: row.subtasks_total },
     created_via: row.created_via,
+    scheduled_on: row.scheduled_on,
+    scheduled_time: row.scheduled_time,
   })
   const inColumn = (column: TaskColumn) => found.filter((row) => row.column === column).map(view)
 
