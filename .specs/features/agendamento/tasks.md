@@ -111,6 +111,14 @@ T32 → T33 → T34 → T35 → T36
 T37
 ```
 
+### Phase 8: Correções finais (D30–D32)
+
+Decisões tomadas depois dos lotes 5 e 6 (2026-11-07).
+
+```
+T45 → T46 → T47 → T48
+```
+
 ---
 
 ## Task Breakdown
@@ -1219,10 +1227,110 @@ T37
 
 ---
 
+### T45: API aceita dia passado
+
+**What**: `setSchedule` deixa de recusar dia e hora no passado; a tarefa agendada para um dia passado vai para Hoje na leitura seguinte.
+**Where**: `backend-node/src/services/schedule.ts`
+**Depends on**: None (a fase anterior termina antes)
+**Reuses**: `setSchedule`, `applyDueSchedules`
+**Requirement**: D31
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `PATCH` com dia de ontem responde 200 e a próxima leitura do quadro mostra a tarefa em Hoje; os testes que esperavam `schedule_in_past` passam a esperar o novo comportamento
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): accept a schedule in the past`
+
+---
+
+### T46: Regra de repetição no hash de idempotência
+
+**What**: O hash de `POST /api/tasks` (e de `create_task`) inclui `recurrence`, para a mesma chave com outra regra responder 409.
+**Where**: `backend-node/src/services/task-intake.ts`
+**Depends on**: T45
+**Reuses**: `requestHash` (IDEM-03), T40
+**Requirement**: US-7
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Mesma chave e mesma regra repete a resposta; mesma chave e regra diferente responde 409; chaves antigas sem regra mantêm o hash
+- [ ] Gate check passes (full + `npm --prefix backend-node run build`)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): include the recurrence in the task idempotency hash`
+
+---
+
+### T47: Seletor mantém a regra ao mudar o dia de uma ocorrência
+
+**What**: Numa ocorrência, mudar o dia no `SchedulePicker` mantém a opção de `Repetir` da série (ex.: `Toda quinta`) e salvar abre `SeriesScopeDialog`; só escolher outra opção em `Repetir` muda a regra.
+**Where**: `frontend/src/components/schedule/schedule-picker.tsx`
+**Depends on**: T46
+**Reuses**: `SeriesScopeDialog` (T25), `asksSeriesScope` em `lib/schedule.ts`
+**Requirement**: US-12; D30
+
+**Tools**:
+
+- MCP: NONE
+- Skill: react-best-practices
+
+**Done when**:
+
+- [ ] Ocorrência de `Toda quinta` movida para sexta: a opção marcada continua `Toda quinta`, a pergunta aparece, `Esta e as próximas` envia `scope: series` sem nova regra
+- [ ] Gate check passes (`npm --prefix frontend test`)
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(frontend): keep the series rule when the picker moves an occurrence`
+
+---
+
+### T48: Novo agendamento pergunta o escopo da série
+
+**What**: Em `NewSchedulePanel`, escolher uma tarefa que é ocorrência de série abre `SeriesScopeDialog` antes de salvar e envia o `scope`.
+**Where**: `frontend/src/components/agenda/new-schedule-panel.tsx`
+**Depends on**: T47
+**Reuses**: `SeriesScopeDialog` (T25)
+**Requirement**: US-8, US-12; D32
+
+**Tools**:
+
+- MCP: NONE
+- Skill: react-best-practices
+
+**Done when**:
+
+- [ ] Tarefa sem série salva direto; ocorrência pergunta; Cancelar não chama a API
+- [ ] Gate check passes (Build da fase)
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): ask for the series scope in the new schedule panel`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 2b → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+Phase 1 → Phase 2 → Phase 2b → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7
 Phase 2:  T8 → T9 → T10 → T11 → T12 → T13 → T14
@@ -1232,6 +1340,7 @@ Phase 4:  T18 → T19 → T20 → T21 → T22 → T23 → T24
 Phase 5:  T25 → T26 → T27 → T28 → T29 → T30 → T31
 Phase 6:  T32 → T33 → T34 → T35 → T36
 Phase 7:  T37
+Phase 8:  T45 → T46 → T47 → T48
 ```
 
 Cada tarefa que mostra texto novo acrescenta as chaves em `frontend/src/locales/pt-BR.json` e `en.json` no mesmo commit.

@@ -157,6 +157,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - WHEN o usuário escolhe a tarefa THEN o sistema SHALL gravar o dia e a hora de início da janela, e valem as "Regras ao salvar o agendamento".
 - WHEN a tarefa não tem estimativa THEN ela SHALL receber como estimativa a duração da janela; com estimativa, a estimativa SHALL ser mantida e o bloco SHALL usar a estimativa (D11).
 - WHEN a tarefa já tem agendamento THEN escolher no painel SHALL substituí-lo.
+- WHEN a tarefa escolhida é ocorrência de uma série THEN o app SHALL perguntar `Só esta ocorrência` ou `Esta e as próximas` antes de salvar (D32).
 - WHEN o papel é `viewer` THEN a seleção SHALL não abrir o painel.
 - A barra da Agenda SHALL ter o botão `Agendar`, secundário e com ícone de relógio, antes de `Nova sessão`. Ele SHALL abrir o painel `Novo agendamento` com o dia de hoje (ou o dia exibido, na visão Dia), sem hora e com o seletor de data, hora e repetição. Para `viewer`, o botão SHALL ficar desabilitado.
 
@@ -206,6 +207,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 **Como** usuário, **quero** escolher se uma mudança vale só para esta ocorrência ou para a série **para** ajustar uma semana sem desfazer a regra.
 
 - WHEN o usuário muda o dia ou a hora da ocorrência aberta (pelo card, diálogo ou arraste na Agenda) THEN o app SHALL perguntar `Só esta ocorrência` ou `Esta e as próximas` (D16).
+- WHEN o usuário muda o dia de uma ocorrência no seletor THEN a opção de `Repetir` SHALL continuar a da série (ex.: `Toda quinta`), e salvar SHALL abrir a mesma pergunta; só escolher outra opção em `Repetir` muda a regra (D30).
 - `Só esta ocorrência` SHALL mudar apenas a tarefa; as projeções e a próxima ocorrência SHALL seguir a regra original.
 - `Esta e as próximas` SHALL mudar a regra a partir desta ocorrência: o dia da semana (semanal) ou o dia do mês (mensal) passam a ser os da nova data, e a hora passa a ser a nova hora.
 - Mudar a regra (no `Repetir`) SHALL valer sempre para a série dali em diante, sem pergunta.
@@ -268,6 +270,9 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - **D27 (2026-11-07):** a hora da série é guardada em `task_series.time`; mudar a hora de uma ocorrência com "Só esta" não muda a da próxima.
 - **D28 (2026-11-07):** pular uma ocorrência que está em Hoje ou Esta semana a leva para a coluna da nova data.
 - **D29 (2026-11-07):** remover o agendamento de uma ocorrência encerra a série.
+- **D30 (2026-11-07):** mudar o dia de uma ocorrência no seletor mantém a regra da série e pergunta "só esta ou esta e as próximas"; a regra só muda quando outra opção de `Repetir` é escolhida.
+- **D31 (2026-11-07):** a API aceita dia e hora no passado; só o seletor os bloqueia. Uma tarefa agendada para um dia passado vai para Hoje na leitura seguinte, e `Desfazer` na Agenda pode restaurar um dia que já passou.
+- **D32 (2026-11-07):** o painel `Novo agendamento` pergunta "só esta ou esta e as próximas" quando a tarefa escolhida é ocorrência de uma série.
 
 Não há decisões em aberto.
 

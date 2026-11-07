@@ -344,8 +344,9 @@ interface ProjectedOccurrence {
   title: string
   list: { id: string; name: string; color: string }
   on: string
-  time: string
+  time: string                        // task_series.time (D27)
   estimate_minutes: number | null
+  rule: RecurrenceRule                // para o tooltip "Repete toda sexta" (US-11)
 }
 
 // GET /agenda/scheduled?from=YYYY-MM-DD&to=YYYY-MM-DD
@@ -364,7 +365,7 @@ interface ScheduledResponse {
 
 | Error Scenario | Handling | User Impact |
 | --- | --- | --- |
-| Dia anterior a hoje ou hora de hoje que já passou | 422 `schedule_in_past` | O seletor já desabilita; via API, a mensagem de validação |
+| Dia anterior a hoje ou hora de hoje que já passou | Aceito pela API (D31); a tarefa vai para Hoje na leitura seguinte | O seletor desabilita; `Desfazer` na Agenda restaura dias passados |
 | Hora sem dia, fora do passo de 15 min | 422 de validação (zod) e `check` no banco | Mensagem de validação |
 | Regra inválida (semanal sem dias, `until` antes do dia, `until` com `count`) | 422 de validação | `CustomRecurrence` mostra o erro antes de enviar |
 | `recurrence` sem `scheduled_on` | 422 `recurrence_needs_day` | Só pela API/MCP; a tela sempre tem dia |
