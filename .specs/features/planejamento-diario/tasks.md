@@ -258,11 +258,11 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Soltar tarefa sem estimativa cria 1h; com estimativa, a estimativa
-- [ ] Mover e redimensionar encaixam em 15 min; editar aceita qualquer minuto
-- [ ] `isDirty` é falso logo depois de `reset(saved)` e verdadeiro depois de qualquer mudança
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `draft.test.ts`
+- [x] Soltar tarefa sem estimativa cria 1h; com estimativa, a estimativa
+- [x] Mover e redimensionar encaixam em 15 min; editar aceita qualquer minuto
+- [x] `isDirty` é falso logo depois de `reset(saved)` e verdadeiro depois de qualquer mudança
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `draft.test.ts`
 
 **Tests**: unit
 **Gate**: quick

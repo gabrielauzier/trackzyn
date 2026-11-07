@@ -202,10 +202,10 @@ O que o código já fixa:
 | PLAN-01 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-02 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-03 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-04 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-05 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-06 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-07 | P1: Montar o plano de um dia | Tasks | In Tasks |
+| PLAN-04 | P1: Montar o plano de um dia | Tasks | Implementing |
+| PLAN-05 | P1: Montar o plano de um dia | Tasks | Implementing |
+| PLAN-06 | P1: Montar o plano de um dia | Tasks | Implementing |
+| PLAN-07 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-08 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-09 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-10 | P1: Montar o plano de um dia | Tasks | Implementing |

@@ -429,3 +429,25 @@ export interface ScheduledResponse {
   untimed: ScheduledTask[]
   projected: ProjectedOccurrence[]
 }
+
+/** A list as a block of the day plan carries it; `color` is the index 1..8 into the `--chart-N` palette. */
+export interface PlanListRef {
+  id: string
+  name: string
+  color: number
+}
+
+/** The task of a planned block (PLAN-38, PLAN-39). */
+export interface PlanTaskRef {
+  id: string
+  title: string
+  list: PlanListRef
+  done: boolean
+  scheduled_on: string | null
+  estimate_minutes: number | null
+}
+
+/** A saved block of a day plan; `start` is `HH:MM` (planejamento-diario). */
+export type PlanBlock =
+  | { id: string; kind: 'task'; start: string; minutes: number; task: PlanTaskRef }
+  | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: PlanListRef }
