@@ -1,6 +1,6 @@
 import { useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, FileText, ListChecks, Pencil, Plus } from 'lucide-react'
+import { Check, ChevronDown, FileText, ListChecks, Pencil, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DURATION_ERROR_KEY, parseDuration, toDuration } from '@/components/board/estimate'
 import { formatDuration } from '@/components/board/format-duration'
@@ -29,9 +29,7 @@ interface TaskCardProps {
   notes?: (close: () => void) => ReactNode
   /** The quick actions that show when the card is hovered or focused; without it the card has none. */
   actions?: {
-    /** One column to the left or right. */
-    onMove: (task: TaskCardView, direction: 'left' | 'right') => void
-    /** The "more actions" menu. */
+    /** The "more actions" menu, which also moves the card one column. */
     menu: ReactNode
   }
   className?: string
@@ -79,31 +77,7 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
           >
             <FileText size={14} />
           </Button>
-          {canWrite && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="size-6"
-                aria-label={t('board.moveLeft')}
-                disabled={column === 'backlog'}
-                onClick={() => actions.onMove(task, 'left')}
-              >
-                <ArrowLeft size={14} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="size-6"
-                aria-label={t('board.moveRight')}
-                disabled={done}
-                onClick={() => actions.onMove(task, 'right')}
-              >
-                <ArrowRight size={14} />
-              </Button>
-              {actions.menu}
-            </>
-          )}
+          {canWrite && actions.menu}
         </div>
       )}
       <div className="flex items-start gap-2">

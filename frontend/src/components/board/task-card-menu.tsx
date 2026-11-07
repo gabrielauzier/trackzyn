@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Copy, MoreVertical, Replace, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Copy, MoreVertical, Replace, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -18,10 +18,14 @@ interface TaskCardMenuProps {
   onDuplicate: () => void
   onChangeList: (listId: string) => void
   onDelete: () => void
+  /** One column to the left; absent in the first column, where the item is off. */
+  onMoveLeft?: () => void
+  /** One column to the right; absent in Done, the last column, where the item is off. */
+  onMoveRight?: () => void
 }
 
-/** The "more actions" of a task card: duplicate, change list and delete. */
-export function TaskCardMenu({ lists, onDuplicate, onChangeList, onDelete }: TaskCardMenuProps) {
+/** The "more actions" of a task card: move one column, change list, duplicate and delete. */
+export function TaskCardMenu({ lists, onDuplicate, onChangeList, onDelete, onMoveLeft, onMoveRight }: TaskCardMenuProps) {
   const { t } = useTranslation()
   return (
     <DropdownMenu>
@@ -31,6 +35,14 @@ export function TaskCardMenu({ lists, onDuplicate, onChangeList, onDelete }: Tas
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {/* The arrows that sat on the card (2026-11-06). */}
+        <DropdownMenuItem disabled={!onMoveLeft} onSelect={onMoveLeft}>
+          <ArrowLeft size={14} /> {t('board.moveLeft')}
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={!onMoveRight} onSelect={onMoveRight}>
+          <ArrowRight size={14} /> {t('board.moveRight')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Replace size={14} /> {t('board.changeList')}

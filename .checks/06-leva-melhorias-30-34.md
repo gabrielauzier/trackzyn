@@ -82,8 +82,8 @@ Proof: `cd frontend && npx vitest run src/components/board/task-card.test.tsx -t
 **C7** - Card de Concluídas mostra um ícone de check com `aria-label` `Concluída`, que não é controle, e o título riscado
 Proof: `cd frontend && npx vitest run src/components/board/task-card.test.tsx -t "a done card shows a read-only check icon"`
 
-**C8** - Arrastar para Concluídas e a seta de Hoje concluem com o som uma vez
-Proof: `cd frontend && npx vitest run src/pages/list-board.test.tsx -t "the quick arrow from Today completes the task and plays the sound once"`
+**C8** - Arrastar para Concluídas e `Mover para a direita` no menu de um card de Hoje concluem com o som uma vez (as setas foram para o menu do card em 2026-11-06, a pedido do usuário)
+Proof: `cd frontend && npx vitest run src/pages/list-board.test.tsx -t "Move right from the menu of a Today card completes the task and plays the sound once"`
 Proof: `cd frontend && npx vitest run src/pages/list-board.test.tsx -t "dropping on Done completes the task"`
 
 **C9** - O título usa `line-clamp-3`, quebra palavras longas e tem `title` com o texto completo, nas quatro colunas

@@ -348,9 +348,10 @@ export default function ListBoardPage() {
         subtasks={<SubtaskList taskId={task.id} canWrite={canWrite} showSummary={false} />}
         notes={(close) => <QuickNote taskId={task.id} canWrite={canWrite} onClose={close} />}
         actions={{
-          onMove: (card, direction) => step(card, column, direction),
           menu: (
             <TaskCardMenu
+              onMoveLeft={column === 'backlog' ? undefined : () => step(task, column, 'left')}
+              onMoveRight={column === 'done' ? undefined : () => step(task, column, 'right')}
               lists={otherLists}
               onDuplicate={() => duplicateMutation.mutate(task.id)}
               onChangeList={(target) => changeListMutation.mutate({ id: task.id, listId: target })}

@@ -27,10 +27,10 @@ O design aprovado está em `Sources` e é vinculante.
 2. Enquanto a página rola e as tarefas da coluna `Hoje` passam por baixo da linha de botões, a linha continua visível no topo da área rolável, com o fundo da coluna e uma sombra embaixo.
 3. Sempre, os botões da linha seguem as regras de hoje: desabilitados com `Hoje` sem pendentes ou para `viewer`, e o olho só no desktop.
 4. Dado um dia de `Concluídas` com várias tarefas, então elas aparecem por `completed_at` decrescente: a última concluída no topo. Os dias continuam do mais novo para o mais antigo.
-5. Quando uma tarefa é concluída no quadro (arrastando para `Concluídas` ou pela seta das ações rápidas), então ela aparece na hora no topo do dia de hoje em `Concluídas`, e continua no topo depois que o quadro é recarregado.
+5. Quando uma tarefa é concluída no quadro (arrastando para `Concluídas` ou por `Mover para a direita` no menu do card), então ela aparece na hora no topo do dia de hoje em `Concluídas`, e continua no topo depois que o quadro é recarregado.
 6. Dado um card nas colunas `Backlog`, `Esta semana` ou `Hoje`, então ele não tem checkbox: em `Hoje`, o título vem logo depois do número da ordem; nas outras, começa na borda do card.
 7. Dado um card em `Concluídas`, então ele mostra à esquerda do título um ícone de check na cor primária, com `aria-label` `Concluída`, que não é um controle (não recebe foco nem clique), e o título riscado em cinza.
-8. Quando o usuário arrasta um card para `Concluídas` ou usa a seta das ações rápidas de um card de `Hoje`, então a tarefa é concluída como hoje: toca o som de conclusão uma vez e, se era a tarefa em foco, encerra o foco dela.
+8. Quando o usuário arrasta um card para `Concluídas` ou usa `Mover para a direita` no menu de um card de `Hoje`, então a tarefa é concluída como hoje: toca o som de conclusão uma vez e, se era a tarefa em foco, encerra o foco dela.
 9. Dado um card com título de mais de 3 linhas na largura da coluna, então o título mostra 3 linhas e termina em reticências; com até 3 linhas, aparece inteiro. Palavras sem espaço quebram em vez de passar da borda. O título completo fica na dica do botão (`title`). Vale nas quatro colunas e no card arrastado.
 
 ### Quadro: estimativa editável em `HH:MM` (#30)
