@@ -239,8 +239,8 @@ O que o código já fixa:
 | PLAN-38 | Edge Cases | Tasks | Implementing |
 | PLAN-39 | Edge Cases | Tasks | Implementing |
 | PLAN-40 | Edge Cases | Tasks | Implementing |
-| PLAN-41 | Edge Cases | Tasks | In Tasks |
-| PLAN-42 | Edge Cases | Tasks | In Tasks |
+| PLAN-41 | Edge Cases | Tasks | Implementing |
+| PLAN-42 | Edge Cases | Tasks | Implementing |
 | PLAN-43 | Edge Cases | Tasks | Implementing |
 | PLAN-44 | Edge Cases | Tasks | In Tasks |
 | PLAN-45 | Edge Cases | Tasks | In Tasks |

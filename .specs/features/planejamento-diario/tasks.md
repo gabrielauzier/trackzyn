@@ -230,11 +230,11 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Cada rota: caminho feliz, 422 (dia inválido, `HH:MM` inválido, limites, pausa sem nome), 403 `Read-only role` para viewer nas escritas, 403 para token `tkz_`, 404 para outro workspace
-- [ ] `PUT` responde 409 `plan_changed` com versão velha
-- [ ] `token-scopes.test.ts` passa com as rotas novas fechadas
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
-- [ ] Test count: anteriores + os novos de `routes/plans.test.ts`
+- [x] Cada rota: caminho feliz, 422 (dia inválido, `HH:MM` inválido, limites, pausa sem nome), 403 `Read-only role` para viewer nas escritas, 403 para token `tkz_`, 404 para outro workspace
+- [x] `PUT` responde 409 `plan_changed` com versão velha
+- [x] `token-scopes.test.ts` passa com as rotas novas fechadas
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Test count: anteriores + os novos de `routes/plans.test.ts`
 
 **Tests**: integration
 **Gate**: full
