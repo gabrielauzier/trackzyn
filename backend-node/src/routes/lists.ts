@@ -25,7 +25,14 @@ const listReadSchema = z.object({
 
 const listCardSchema = listReadSchema.extend({
   pending_count: z.number(),
-  preview: z.array(z.object({ id: z.string(), title: z.string() })),
+  preview: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      estimate_minutes: z.number().nullable(),
+      subtasks: z.object({ done: z.number(), total: z.number() }),
+    }),
+  ),
 })
 
 export const listParams = z.object({ list_id: uuid })
@@ -46,7 +53,16 @@ export function toListRead(list: List) {
 }
 
 function toListCard(card: ListCard) {
-  return { ...toListRead(card.list), pending_count: card.pendingCount, preview: card.preview }
+  return {
+    ...toListRead(card.list),
+    pending_count: card.pendingCount,
+    preview: card.preview.map((item) => ({
+      id: item.id,
+      title: item.title,
+      estimate_minutes: item.estimateMinutes,
+      subtasks: item.subtasks,
+    })),
+  }
 }
 
 /** What `GET /api/lists` answers, in REST and in MCP. */

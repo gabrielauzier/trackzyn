@@ -10,9 +10,12 @@ import { Archive, BarChart3, CalendarDays, Component, FolderOpen, LayoutGrid, Pl
  *
  * A link marked `write` leads to an action that changes data, so it is
  * hidden from a `viewer`.
+ *
+ * A link marked `admin` is for the instance's superuser (`is_superuser`)
+ * only: hidden from everyone else, and drawn with the `admin` badge (#32).
  */
 export type NavItem =
-  | { type: 'link'; key: string; path: string; icon: React.ElementType; feature?: string; write?: boolean }
+  | { type: 'link'; key: string; path: string; icon: React.ElementType; feature?: string; write?: boolean; admin?: boolean }
   | { type: 'separator'; labelKey: string }
 
 export const navItems: NavItem[] = [
@@ -22,14 +25,18 @@ export const navItems: NavItem[] = [
   { type: 'link', key: 'archivedLists', path: '/lists/archived', icon: Archive },
   { type: 'link', key: 'agenda', path: '/agenda', icon: CalendarDays },
   { type: 'link', key: 'reports', path: '/reports', icon: BarChart3 },
-  { type: 'link', key: 'files', path: '/files', icon: FolderOpen },
+  { type: 'link', key: 'files', path: '/files', icon: FolderOpen, admin: true },
   { type: 'separator', labelKey: 'nav.groupDevelopers' },
-  { type: 'link', key: 'components', path: '/components', icon: Component },
+  { type: 'link', key: 'components', path: '/components', icon: Component, admin: true },
 ]
 
+/** The paths of the superuser-only links: the palette hides them, and what leads to them, from everyone else. */
+export const adminPaths: string[] = navItems.flatMap((item) => (item.type === 'link' && item.admin ? [item.path] : []))
+
 /**
- * Drop links whose feature flag is off, and write actions when the user
- * cannot write, then drop any section header left with nothing under it.
+ * Drop links whose feature flag is off, write actions when the user cannot
+ * write, and admin links when the user is not a superuser, then drop any
+ * section header left with nothing under it.
  * Without the second pass, hiding a section's only link leaves a floating
  * heading.
  */
@@ -37,11 +44,14 @@ export function visibleNavItems(
   items: NavItem[],
   isEnabled: (flag: string) => boolean,
   canWrite = true,
+  isSuperuser = false,
 ): NavItem[] {
   const kept = items.filter(
     (item) =>
       item.type !== 'link' ||
-      ((item.feature === undefined || isEnabled(item.feature)) && (canWrite || !item.write)),
+      ((item.feature === undefined || isEnabled(item.feature)) &&
+        (canWrite || !item.write) &&
+        (isSuperuser || !item.admin)),
   )
   return kept.filter((item, index) => {
     if (item.type !== 'separator') return true

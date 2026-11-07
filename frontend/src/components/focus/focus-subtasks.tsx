@@ -1,11 +1,13 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 
 import { SubtaskList } from '@/components/board/subtask-list'
 import { useTask } from '@/components/board/use-task'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { useSubtasksChanged } from '@/lib/focus/use-subtasks-changed'
+import { cn } from '@/lib/utils'
 
 interface FocusSubtasksProps {
   taskId: string
@@ -16,15 +18,20 @@ interface FocusSubtasksProps {
 }
 
 /**
- * The subtasks of the task in focus, in its card past a line (canvas #16): `Subtarefas` with a bar and
- * `<feitas>/<total>`, the list with its checkboxes and `Nova subtarefa`; only `Adicionar subtarefa`
- * without any; `Tudo feito por aqui.` with `Concluir tarefa` once all are done; the first 5 pending
- * of a longer list until `Mostrar todas`.
+ * The subtasks of the task in focus, in its card past a line (canvas #16): `Subtarefas` with a bar,
+ * `<feitas>/<total>` and the chevron that shows or hides the list (#33); the list with its checkboxes
+ * and `Nova subtarefa`; only `Adicionar subtarefa` without any; `Tudo feito por aqui.` with
+ * `Concluir tarefa` once all are done; the first 5 pending of a longer list until `Mostrar todas`.
+ *
+ * The list starts hidden when every subtask is already done, and shown otherwise; once opened with all
+ * done it shows the done subtasks and `Adicionar subtarefa`, so another one can still be added (#28).
  */
 export function FocusSubtasks({ taskId, canWrite, onComplete }: FocusSubtasksProps) {
   const { t } = useTranslation()
   const { data: task } = useTask(taskId)
   const changed = useSubtasksChanged()
+  // Decided once per task, on the first answer that has its subtasks; the chevron changes it after that.
+  const [open, setOpen] = useState<{ taskId: string; open: boolean } | null>(null)
   if (!task) return null
 
   const total = task.subtasks.length
@@ -32,6 +39,9 @@ export function FocusSubtasks({ taskId, canWrite, onComplete }: FocusSubtasksPro
   if (total === 0 && !canWrite) return null
   const allDone = total > 0 && done === total
   const percent = total > 0 ? Math.round((done / total) * 100) : 0
+  const isOpen = open?.taskId === taskId ? open.open : !allDone
+  if (open?.taskId !== taskId) setOpen({ taskId, open: isOpen })
+  const shown = total === 0 || isOpen
 
   return (
     <div className="-mx-4 mt-3 space-y-2 border-t px-3 pt-3">
@@ -42,9 +52,31 @@ export function FocusSubtasks({ taskId, canWrite, onComplete }: FocusSubtasksPro
           <span className="text-xs text-muted-foreground tabular-nums">
             {done}/{total}
           </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="size-6 text-muted-foreground"
+            aria-expanded={shown}
+            aria-label={t(shown ? 'focus.subtasks.hide' : 'focus.subtasks.show')}
+            onClick={() => setOpen({ taskId, open: !shown })}
+          >
+            <ChevronDown size={16} className={cn('transition-transform', shown && 'rotate-180')} />
+          </Button>
         </div>
       )}
-      {allDone ? (
+      {shown && (
+        // With all done, every subtask shows: the first pending ones of `Mostrar todas` would be none.
+        <SubtaskList
+          taskId={taskId}
+          canWrite={canWrite}
+          showSummary={false}
+          limit={allDone ? undefined : 5}
+          addCollapsed
+          onSettled={changed}
+        />
+      )}
+      {allDone && (
         <div className="flex items-center justify-between gap-2 px-1">
           <span className="text-sm">{t('focus.subtasks.allDone')}</span>
           {canWrite && (
@@ -53,8 +85,6 @@ export function FocusSubtasks({ taskId, canWrite, onComplete }: FocusSubtasksPro
             </Button>
           )}
         </div>
-      ) : (
-        <SubtaskList taskId={taskId} canWrite={canWrite} showSummary={false} limit={5} addCollapsed onSettled={changed} />
       )}
     </div>
   )

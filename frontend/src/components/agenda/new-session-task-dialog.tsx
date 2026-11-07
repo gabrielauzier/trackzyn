@@ -6,11 +6,12 @@ import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Info } from 'lucide-react'
 
-import { isValidEstimate, toEstimate } from '@/components/board/estimate'
+import { DURATION_ERROR_KEY, durationMinutes, parseDuration } from '@/components/board/estimate'
 import { NoteEditor } from '@/components/board/note-editor'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { DurationInput } from '@/components/ui/duration-input'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -67,7 +68,11 @@ function NewTaskForm({
   const schema = z.object({
     listId: z.string().min(1),
     title: z.string().trim().min(1, t('board.titleRequired')).max(255, t('board.titleTooLong')),
-    estimate: z.string().refine(isValidEstimate, t('board.estimateRange')),
+    // HH:MM, from 00:01 to 24:00 with minutes up to 59; empty for no estimate, as on the board.
+    estimate: z.string().superRefine((value, ctx) => {
+      const parsed = parseDuration(value)
+      if ('error' in parsed) ctx.addIssue({ code: 'custom', message: t(DURATION_ERROR_KEY[parsed.error]) })
+    }),
     notes: z.string(),
   })
   type Values = z.infer<typeof schema>
@@ -79,7 +84,7 @@ function NewTaskForm({
 
   const create = useMutation({
     mutationFn: (values: Values) => {
-      const input: AgendaTaskInput = { list_id: values.listId, title: values.title, estimate_minutes: toEstimate(values.estimate) }
+      const input: AgendaTaskInput = { list_id: values.listId, title: values.title, estimate_minutes: durationMinutes(values.estimate) }
       // The switch decides what is saved: off, no notes, whatever was typed (PICK-15).
       if (withNotes) input.notes = values.notes
       return sessionsApi.createTask(input)
@@ -136,10 +141,11 @@ function NewTaskForm({
           name="estimate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('board.estimateMinutes')}</FormLabel>
+              <FormLabel>{t('board.estimate')}</FormLabel>
               <FormControl>
-                <Input inputMode="numeric" className="w-36" {...field} />
+                <DurationInput variant="field" {...field} />
               </FormControl>
+              <FormDescription>{t('board.estimateHint')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -26,6 +26,7 @@ import { formatDuration } from '@/components/board/format-duration'
 import { ElsewhereDialog } from '@/components/focus/elsewhere-dialog'
 import { ExtendPrompt } from '@/components/focus/extend-prompt'
 import { FocusControls } from '@/components/focus/focus-controls'
+import { FocusNotes } from '@/components/focus/focus-notes'
 import { FocusSubtasks } from '@/components/focus/focus-subtasks'
 import { FocusTaskCard } from '@/components/focus/focus-task-card'
 import { FocusDrop, NextTaskItem, NextTaskOverlay } from '@/components/focus/next-tasks'
@@ -342,6 +343,8 @@ export default function FocusPage() {
                     }
                   >
                     <FocusSubtasks taskId={task.id} canWrite={canWrite} onComplete={() => complete(task.id)} />
+                    {/* One per task in focus: a change of task saves what its open editor holds and closes it (#33). */}
+                    <FocusNotes key={task.id} taskId={task.id} canWrite={canWrite} />
                   </FocusTaskCard>
                 </FocusDrop>
               )

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
@@ -7,6 +7,7 @@ import { focus, lists, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import { play } from '@/lib/sounds/synth'
+import { toast } from 'sonner'
 import { i18n, renderWithProviders } from '@/test/utils'
 import type { Board, FocusState, ListCard, Task, TaskCardView } from '@/types'
 
@@ -110,6 +111,12 @@ function mockMatchMedia(matches: boolean) {
  * jsdom has no layout: lay the four columns out in a row so the keyboard
  * sensor can find the column to the left or right.
  */
+/** Moves a card one column from its "More actions" menu, where the arrows went. */
+async function moveFromMenu(user: ReturnType<typeof renderBoard>['user'], scope: ReturnType<typeof within>, name: 'Move left' | 'Move right') {
+  await user.click(scope.getByRole('button', { name: 'More actions' }))
+  await user.click(await screen.findByRole('menuitem', { name }))
+}
+
 function layOutColumns(todayStack: string[] = [TODAY_TASK]) {
   const columns = ['backlog', 'this_week', 'today', 'done']
   const taskColumn: Record<string, string> = { [DONE_TASK]: 'done' }
@@ -406,10 +413,11 @@ describe('ListBoardPage', () => {
       expect(tasks.move).toHaveBeenCalledWith(DONE_TASK, { column: 'today', before_task_id: TODAY_TASK }),
     )
     const today = document.querySelector<HTMLElement>('[data-column="today"]')!
-    const check = await within(today).findByRole('checkbox', { name: 'Complete DEV-1724' })
-    expect(check).toHaveAttribute('aria-checked', 'false')
-    expect(check).toBeEnabled()
-    expect(within(today).getByRole('button', { name: 'DEV-1724' })).not.toHaveClass('line-through')
+    const reopenedTitle = await within(today).findByRole('button', { name: 'DEV-1724' })
+    const reopenedCard = reopenedTitle.closest<HTMLElement>('[data-task-id]')!
+    expect(within(reopenedCard).queryByLabelText('Completed')).not.toBeInTheDocument()
+    expect(within(reopenedCard).queryByRole('checkbox')).not.toBeInTheDocument()
+    expect(reopenedTitle).not.toHaveClass('line-through')
     const done = document.querySelector<HTMLElement>('[data-column="done"]')!
     expect(within(done).queryByText('DEV-1724')).not.toBeInTheDocument()
   })
@@ -469,17 +477,38 @@ describe('ListBoardPage', () => {
   describe('quick actions of a card', () => {
     const inToday = () => within(document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!)
 
-    it('moves the card one column to the left or right with its arrows', async () => {
+    it('moves the card one column to the left or right from its menu', async () => {
       const { user } = renderBoard()
       await screen.findByText('DEV-1725')
 
-      await user.click(inToday().getByRole('button', { name: 'Move left' }))
+      await moveFromMenu(user, inToday(), 'Move left')
       await waitFor(() =>
         expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'this_week', before_task_id: null }),
       )
 
-      await user.click(inToday().getByRole('button', { name: 'Move right' }))
+      await moveFromMenu(user, inToday(), 'Move right')
       await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }))
+    })
+
+    it('keeps the move arrows in the menu, not on the card, and turns off the one past the edge', async () => {
+      const { user } = renderBoard()
+      await screen.findByText('DEV-1725')
+
+      // The card keeps only the subtasks, the notes and the menu.
+      expect(inToday().queryByRole('button', { name: 'Move left' })).not.toBeInTheDocument()
+      expect(inToday().queryByRole('button', { name: 'Move right' })).not.toBeInTheDocument()
+      await user.click(inToday().getByRole('button', { name: 'More actions' }))
+      const items = (await screen.findAllByRole('menuitem')).map((item) => item.textContent?.trim())
+      // First in the menu, before changing the list.
+      expect(items.slice(0, 3)).toEqual(['Move left', 'Move right', 'Change list'])
+      expect(screen.getByRole('menuitem', { name: 'Move left' })).not.toHaveAttribute('aria-disabled')
+      await user.keyboard('{Escape}')
+
+      // Done is the last column: nothing to its right.
+      const done = within(document.querySelector<HTMLElement>('[data-column="done"]')!)
+      await user.click(done.getAllByRole('button', { name: 'More actions' })[0]!)
+      expect(await screen.findByRole('menuitem', { name: 'Move right' })).toHaveAttribute('aria-disabled', 'true')
+      expect(screen.getByRole('menuitem', { name: 'Move left' })).not.toHaveAttribute('aria-disabled')
     })
 
     it('shows the subtasks and the notes of the card', async () => {
@@ -550,14 +579,151 @@ describe('ListBoardPage', () => {
     })
   })
 
-  it('completes a task from its check', async () => {
+  it('Move right from the menu of a Today card completes the task and plays the sound once', async () => {
     const { user } = renderBoard()
+    await screen.findByText('DEV-1725')
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Complete DEV-1725' }))
+    const card = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
+    await moveFromMenu(user, within(card), 'Move right')
 
     await waitFor(() =>
       expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }),
     )
+    expect(tasks.move).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(play).mock.calls).toEqual([['complete']])
+  })
+
+  it('dropping on Done completes the task', async () => {
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!.focus()
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowRight}')
+    await user.keyboard(' ')
+
+    await waitFor(() =>
+      expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }),
+    )
+    expect(tasks.move).toHaveBeenCalledTimes(1)
+    expect(focus.send).not.toHaveBeenCalled()
+    expect(vi.mocked(play).mock.calls).toEqual([['complete']])
+  })
+
+  it('a task completed on the board shows at the top of today in Done', async () => {
+    const todayDate = new Date().toLocaleDateString('en-CA')
+    const EARLIER = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+    let completed = false
+    // The move stays pending until released, so what shows first is the board's own update.
+    let release: () => void = () => {}
+    vi.mocked(tasks.move).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          release = () => {
+            completed = true
+            resolve({ ...fullTask, column: 'done' })
+          }
+        }),
+    )
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      const earlier = card(EARLIER, 'DEV-1700')
+      if (completed) {
+        // The server lists today's completions latest first.
+        board.columns.today.tasks = []
+        board.columns.done.days = [
+          { date: todayDate, tasks: [card(TODAY_TASK, 'DEV-1725'), earlier] },
+          ...board.columns.done.days,
+        ]
+      } else {
+        board.columns.done.days = [{ date: todayDate, tasks: [earlier] }, ...board.columns.done.days]
+      }
+      return board
+    })
+    const { user } = renderBoard()
+    await screen.findByText('DEV-1700')
+
+    const doneTitles = () => {
+      const done = document.querySelector<HTMLElement>('[data-column="done"]')!
+      return within(within(done).getAllByRole('group')[0]).getAllByRole('button', { name: /^DEV-/ }).map((b) => b.textContent)
+    }
+    expect(doneTitles()).toEqual(['DEV-1700'])
+
+    const today = document.querySelector<HTMLElement>(`[data-column="today"] [data-task-id="${TODAY_TASK}"]`)!
+    await moveFromMenu(user, within(today), 'Move right')
+
+    // At once, before the server answers.
+    await waitFor(() => expect(doneTitles()).toEqual(['DEV-1725', 'DEV-1700']))
+    expect(tasks.move).toHaveBeenCalledTimes(1)
+
+    // And still on top once the board reloads.
+    release()
+    await waitFor(() => expect(lists.board).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(doneTitles()).toEqual(['DEV-1725', 'DEV-1700']))
+  })
+
+  it('a failed estimate save restores it and shows the API error', async () => {
+    let rejectSave: (error: unknown) => void = () => {}
+    vi.mocked(tasks.update).mockImplementation(
+      () =>
+        new Promise((_, reject) => {
+          rejectSave = reject
+        }),
+    )
+    const { user } = renderBoard()
+    await screen.findByText('DEV-1725')
+    const inCard = () => within(document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!)
+
+    await user.click(inCard().getByRole('button', { name: 'Edit estimate' }))
+    const field = inCard().getByRole('textbox', { name: 'Edit estimate' })
+    expect(field).toHaveValue('01:00')
+    await user.clear(field)
+    await user.type(field, '0130{Enter}')
+
+    expect(tasks.update).toHaveBeenCalledWith(TODAY_TASK, { estimate_minutes: 90 })
+    // The new value shows while the save is on its way.
+    await waitFor(() => expect(inCard().getByRole('button', { name: 'Edit estimate' })).toHaveTextContent('1hr 30min'))
+    expect(screen.getByText('This list has 1 pending task, Est.: 1hr 30min')).toBeInTheDocument()
+
+    rejectSave({ response: { status: 422, data: { detail: 'Estimate is out of range' } } })
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Estimate is out of range'))
+    await waitFor(() => expect(inCard().getByRole('button', { name: 'Edit estimate' })).toHaveTextContent(/^1hr$/))
+    expect(screen.getByText('This list has 1 pending task, Est.: 1hr')).toBeInTheDocument()
+  })
+
+  it('saves an estimate edited on the card and updates the totals', async () => {
+    // The server keeps the new estimate and sums it again.
+    let saved = false
+    vi.mocked(tasks.update).mockImplementation(async () => {
+      saved = true
+      return { ...fullTask, estimate_minutes: 90 }
+    })
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      if (!saved) return board
+      board.columns.today.tasks = [card(TODAY_TASK, 'DEV-1725', 90)]
+      board.columns.today.estimate_minutes = 90
+      board.pending.estimate_minutes = 90
+      return board
+    })
+    const { user } = renderBoard()
+    await screen.findByText('DEV-1725')
+    const inCard = within(document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!)
+
+    await user.click(inCard.getByRole('button', { name: 'Edit estimate' }))
+    const field = inCard.getByRole('textbox', { name: 'Edit estimate' })
+    await user.clear(field)
+    await user.type(field, '0130{Enter}')
+
+    expect(tasks.update).toHaveBeenCalledWith(TODAY_TASK, { estimate_minutes: 90 })
+    expect(await screen.findByText('This list has 1 pending task, Est.: 1hr 30min')).toBeInTheDocument()
+    const today = document.querySelector<HTMLElement>('[data-column="today"]')!
+    expect(within(today).getByTitle('Pending estimate')).toHaveTextContent('1hr 30min')
+    expect(within(today).getByRole('button', { name: 'Edit estimate' })).toHaveTextContent('1hr 30min')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('goes to the focus page from Focus now (FOCUS-01)', async () => {
@@ -630,7 +796,9 @@ describe('ListBoardPage', () => {
   it('completes a task out of focus with a move and plays the completion sound once (SOUND-01)', async () => {
     const { user } = renderBoard()
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Complete DEV-1725' }))
+    await screen.findByText('DEV-1725')
+    const card = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
+    await moveFromMenu(user, within(card), 'Move right')
 
     await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(TODAY_TASK, { column: 'done', before_task_id: null }))
     expect(focus.send).not.toHaveBeenCalled()
@@ -642,7 +810,8 @@ describe('ListBoardPage', () => {
     const { user } = renderBoard()
     await screen.findByRole('timer', { name: 'Time in focus' })
 
-    await user.click(screen.getByRole('checkbox', { name: 'Complete DEV-1725' }))
+    const card = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
+    await moveFromMenu(user, within(card), 'Move right')
 
     await waitFor(() => expect(focusActions()).toHaveLength(1))
     expect(focusActions()[0]).toMatchObject({ type: 'complete', task_id: TODAY_TASK, list_id: WEEK })
@@ -713,6 +882,67 @@ describe('ListBoardPage', () => {
     expect(tasks.get).toHaveBeenCalledWith(TODAY_TASK)
   })
 
+  it('a writer sees the grab cursor on a task card, and the grabbing one while dragging it', async () => {
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
+    expect(wrapper).toHaveClass('cursor-grab')
+    // The title opens the task: it shows the pointer, not the grab hand.
+    expect(within(wrapper).getByRole('button', { name: 'DEV-1725' })).toHaveClass('cursor-pointer')
+
+    wrapper.focus()
+    await user.keyboard(' ')
+    // The card that follows the pointer is the grabbed one, with the accent border.
+    const overlay = await waitFor(() => {
+      const copies = document.querySelectorAll<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)
+      expect(copies.length).toBe(2)
+      return copies[1]
+    })
+    expect(overlay).toHaveClass('cursor-grabbing')
+    expect(overlay.querySelector('[data-slot="card"]')).toHaveClass('border-primary')
+    await user.keyboard('{Escape}')
+  })
+
+  it('a clicked task card keeps the accent border, through its own buttons and menu, until a click outside the cards', async () => {
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const wrapperOf = (id: string) => document.querySelector<HTMLElement>(`[data-column] [data-task-id="${id}"]`)!
+    const selected = (id: string) => wrapperOf(id).querySelector('[data-slot="card"]')!.classList.contains('border-primary')
+    expect(selected(TODAY_TASK)).toBe(false)
+
+    // A button inside the card selects it, and the border stays after the click.
+    await user.click(within(wrapperOf(TODAY_TASK)).getByRole('button', { name: 'Show subtasks' }))
+    expect(selected(TODAY_TASK)).toBe(true)
+
+    // Its menu opens outside the card: a click in it keeps the card selected.
+    await user.click(within(wrapperOf(TODAY_TASK)).getByRole('button', { name: 'More actions' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Change list' }))
+    expect(selected(TODAY_TASK)).toBe(true)
+    await user.keyboard('{Escape}{Escape}')
+    expect(selected(TODAY_TASK)).toBe(true)
+
+    // Another card takes the selection.
+    await user.click(within(wrapperOf(DONE_TASK)).getByRole('button', { name: 'Show notes' }))
+    expect(selected(DONE_TASK)).toBe(true)
+    expect(selected(TODAY_TASK)).toBe(false)
+
+    // A click outside every card clears it.
+    await user.click(document.body)
+    expect(selected(DONE_TASK)).toBe(false)
+  })
+
+  it('a task card reached with the keyboard is selected too', async () => {
+    renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const wrapper = document.querySelector<HTMLElement>(`[data-column] [data-task-id="${TODAY_TASK}"]`)!
+    act(() => wrapper.focus())
+    expect(wrapper.querySelector('[data-slot="card"]')).toHaveClass('border-primary')
+  })
+
   it('lets a viewer neither drag, add nor complete', async () => {
     state.canWrite = false
     renderBoard()
@@ -721,8 +951,12 @@ describe('ListBoardPage', () => {
     const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
     expect(wrapper).not.toHaveAttribute('aria-roledescription')
     expect(wrapper).not.toHaveAttribute('tabindex')
+    // Nothing to pick up, so no grab cursor.
+    expect(wrapper.className).not.toMatch(/(^|\s)cursor-grab/)
     expect(screen.queryByRole('button', { name: 'Add task' })).not.toBeInTheDocument()
-    expect(screen.getByRole('checkbox', { name: 'Complete DEV-1725' })).toBeDisabled()
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    expect(within(wrapper).queryByRole('button', { name: 'Move right' })).not.toBeInTheDocument()
+    expect(within(wrapper).queryByRole('button', { name: 'Edit estimate' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
   })
 

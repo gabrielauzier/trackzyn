@@ -20,6 +20,8 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { cn } from '@/lib/utils'
+import { useCardSelection } from '@/lib/use-card-selection'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { formatClock } from '@/lib/focus/format-clock'
@@ -92,7 +94,7 @@ function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: st
   return { ...board, columns }
 }
 
-/** The board with `taskId` last among today's completions, as the server lists them once the task is done. */
+/** The board with `taskId` first among today's completions, as the server lists them (latest first) once it is done. */
 function placeInDone(board: Board, taskId: string): Board {
   const moved = findCard(board, columnsOf(board).get(taskId) ?? 'backlog', taskId)?.task
   if (!moved) return board
@@ -103,7 +105,7 @@ function placeInDone(board: Board, taskId: string): Board {
   const todayDate = new Date().toLocaleDateString('en-CA')
   const [first, ...rest] = days
   const withToday =
-    first?.date === todayDate ? [{ ...first, tasks: [...first.tasks, moved] }, ...rest] : [{ date: todayDate, tasks: [moved] }, ...days]
+    first?.date === todayDate ? [{ ...first, tasks: [moved, ...first.tasks] }, ...rest] : [{ date: todayDate, tasks: [moved] }, ...days]
   return {
     ...board,
     columns: {
@@ -111,6 +113,31 @@ function placeInDone(board: Board, taskId: string): Board {
       this_week: { ...this_week, tasks: without(this_week.tasks) },
       today: { ...today, tasks: without(today.tasks) },
       done: { ...done, days: withToday },
+    },
+  }
+}
+
+const estimateOf = (tasks: TaskCardView[]) => tasks.reduce((total, task) => total + (task.estimate_minutes ?? 0), 0)
+
+/** The board with the estimate of `taskId` set to `minutes`, and the column and list totals that count it. */
+function withEstimate(board: Board, taskId: string, minutes: number | null): Board {
+  const set = (tasks: TaskCardView[]) =>
+    tasks.map((task) => (task.id === taskId ? { ...task, estimate_minutes: minutes } : task))
+  const backlog = set(board.columns.backlog.tasks)
+  const thisWeek = set(board.columns.this_week.tasks)
+  const today = set(board.columns.today.tasks)
+  // The same sums the server makes: This week counts Today's estimate too.
+  return {
+    ...board,
+    pending: { ...board.pending, estimate_minutes: estimateOf(backlog) + estimateOf(thisWeek) + estimateOf(today) },
+    columns: {
+      backlog: { ...board.columns.backlog, tasks: backlog, estimate_minutes: estimateOf(backlog) },
+      this_week: { ...board.columns.this_week, tasks: thisWeek, estimate_minutes: estimateOf(thisWeek) + estimateOf(today) },
+      today: { ...board.columns.today, tasks: today, estimate_minutes: estimateOf(today) },
+      done: {
+        ...board.columns.done,
+        days: board.columns.done.days.map((day) => ({ ...day, tasks: set(day.tasks) })),
+      },
     },
   }
 }
@@ -126,6 +153,8 @@ export default function ListBoardPage() {
   const [tab, setTab] = useState<TaskColumn>('today')
   const [deleting, setDeleting] = useState<TaskCardView | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
+  // The card a press last landed in keeps the accent border, through its own buttons and menus.
+  const { selected: selectedCard, select: selectCard } = useCardSelection('data-task-id')
   // While a card is dragged over another column the board shows it there already, before it is dropped.
   const [preview, setPreview] = useState<Board | null>(null)
   const dragOrigin = useRef<TaskColumn | null>(null)
@@ -167,8 +196,22 @@ export default function ListBoardPage() {
     onSettled: () => void refresh(),
   })
 
+  // The card shows the new estimate at once; a failed save puts the previous one back (#30).
+  const estimateMutation = useMutation({
+    mutationFn: ({ id, minutes }: { id: string; minutes: number | null; previous: number | null }) =>
+      tasksApi.update(id, { estimate_minutes: minutes }),
+    onMutate: ({ id, minutes }) => {
+      queryClient.setQueryData<Board>(boardKey, (current) => current && withEstimate(current, id, minutes))
+    },
+    onError: (e, { id, previous }) => {
+      queryClient.setQueryData<Board>(boardKey, (current) => current && withEstimate(current, id, previous))
+      onActionError(e)
+    },
+    onSettled: () => void refresh(),
+  })
+
   const sensors = useSensors(
-    // A few pixels of travel before a drag starts, so a click still opens the task or ticks it.
+    // A few pixels of travel before a drag starts, so a click still opens the task or edits its estimate.
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
@@ -295,20 +338,23 @@ export default function ListBoardPage() {
   }
 
   const renderTask = (column: TaskColumn) => (task: TaskCardView, index: number) => (
-    <SortableTask key={task.id} id={task.id} canWrite={canWrite}>
+    <SortableTask key={task.id} id={task.id} canWrite={canWrite} onFocusCard={() => selectCard(task.id)}>
       <TaskCard
         task={task}
         column={column}
         number={index + 1}
         canWrite={canWrite}
         onOpen={(card) => setOpenTaskId(card.id)}
-        onComplete={(card) => complete(card.id)}
+        onEstimateChange={(card, minutes) =>
+          estimateMutation.mutate({ id: card.id, minutes, previous: card.estimate_minutes })
+        }
         subtasks={<SubtaskList taskId={task.id} canWrite={canWrite} showSummary={false} />}
         notes={(close) => <QuickNote taskId={task.id} canWrite={canWrite} onClose={close} />}
         actions={{
-          onMove: (card, direction) => step(card, column, direction),
           menu: (
             <TaskCardMenu
+              onMoveLeft={column === 'backlog' ? undefined : () => step(task, column, 'left')}
+              onMoveRight={column === 'done' ? undefined : () => step(task, column, 'right')}
               lists={otherLists}
               onDuplicate={() => duplicateMutation.mutate(task.id)}
               onChangeList={(target) => changeListMutation.mutate({ id: task.id, listId: target })}
@@ -316,7 +362,8 @@ export default function ListBoardPage() {
             />
           ),
         }}
-        className={task.id === focusedId ? 'border-2 border-primary' : undefined}
+        // In focus, the thick accent border; selected by a press or the keyboard, the accent border.
+        className={cn(task.id === focusedId && 'border-2 border-primary', task.id === selectedCard && 'border-primary')}
       />
       {task.id === focusedId && running && focus.display && (
         <span role="timer" aria-label={t('board.inFocus')} className="mt-1 block text-right font-mono text-sm font-semibold tabular-nums">
@@ -415,8 +462,15 @@ export default function ListBoardPage() {
             was over another column's SortableContext, and looked like it had vanished. */}
         <DragOverlay>
           {draggedCard && (
-            <div data-task-id={draggedCard.task.id}>
-              <TaskCard task={draggedCard.task} column={draggedCard.column} number={draggedCard.number} canWrite={canWrite} onOpen={noop} onComplete={noop} />
+            <div data-task-id={draggedCard.task.id} className="cursor-grabbing">
+              <TaskCard
+                task={draggedCard.task}
+                column={draggedCard.column}
+                number={draggedCard.number}
+                canWrite={canWrite}
+                onOpen={noop}
+                className="border-primary"
+              />
             </div>
           )}
         </DragOverlay>
@@ -447,7 +501,18 @@ function ColumnDrop({ column, ids, children }: { column: TaskColumn; ids: string
   )
 }
 
-function SortableTask({ id, canWrite, children }: { id: string; canWrite: boolean; children: ReactNode }) {
+function SortableTask({
+  id,
+  canWrite,
+  onFocusCard,
+  children,
+}: {
+  id: string
+  canWrite: boolean
+  /** The keyboard reached the card itself: it is selected, as a press on it would. */
+  onFocusCard: () => void
+  children: ReactNode
+}) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled: !canWrite,
@@ -465,7 +530,11 @@ function SortableTask({ id, canWrite, children }: { id: string; canWrite: boolea
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         transition,
       }}
-      className={isDragging ? 'opacity-40' : undefined}
+      // As on the home screen: the grab hand where the card can be picked up.
+      onFocus={(event) => {
+        if (event.target === event.currentTarget) onFocusCard()
+      }}
+      className={cn('outline-none', canWrite && 'cursor-grab', isDragging && 'opacity-40')}
       {...dragProps}
     >
       {children}

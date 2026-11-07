@@ -4,14 +4,17 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
+import { Check, Plus, X } from 'lucide-react'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
-import { isValidEstimate, toEstimate } from '@/components/board/estimate'
+import { DURATION_ERROR_KEY, durationMinutes, parseDuration } from '@/components/board/estimate'
 import { Button } from '@/components/ui/button'
+import { DurationInput } from '@/components/ui/duration-input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { TaskColumn } from '@/types'
+
 
 interface AddTaskFormProps {
   listId: string
@@ -42,14 +45,18 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
   const queryClient = useQueryClient()
   const schema = z.object({
     title: z.string().trim().min(1, t('board.titleRequired')).max(255, t('board.titleTooLong')),
-    estimate: z.string().refine(isValidEstimate, t('board.estimateRange')),
+    // HH:MM, from 00:01 to 24:00 with minutes up to 59; empty for no estimate.
+    estimate: z.string().superRefine((value, ctx) => {
+      const parsed = parseDuration(value)
+      if ('error' in parsed) ctx.addIssue({ code: 'custom', message: t(DURATION_ERROR_KEY[parsed.error]) })
+    }),
   })
   type Values = z.infer<typeof schema>
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { title: '', estimate: '' } })
 
   const create = useMutation({
     mutationFn: (values: Values) =>
-      tasksApi.create({ list_id: listId, title: values.title, estimate_minutes: toEstimate(values.estimate), column }),
+      tasksApi.create({ list_id: listId, title: values.title, estimate_minutes: durationMinutes(values.estimate), column }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['lists'] })
       onClose()
@@ -79,11 +86,46 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
           control={form.control}
           name="estimate"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('board.estimateMinutes')}</FormLabel>
-              <FormControl>
-                <Input inputMode="numeric" {...field} />
-              </FormControl>
+            // The card's inline HH:MM field, with no label: the placeholder says the format and, while
+            // it is empty, a tooltip says what it is. Cancel and Add sit at the end of its row as icons,
+            // so the form fits a narrow column without cutting a button.
+            <FormItem className="gap-1">
+              <div data-slot="estimate-row" className="flex items-center gap-1.5">
+                <TooltipProvider>
+                  <Tooltip open={field.value === '' ? undefined : false}>
+                    <TooltipTrigger asChild>
+                      <FormControl>
+                        <DurationInput aria-label={t('board.estimate')} {...field} />
+                      </FormControl>
+                    </TooltipTrigger>
+                    {/* Below the field: its right side holds the two buttons. */}
+                    <TooltipContent side="bottom" align="start" className="flex flex-col">
+                      <span className="font-semibold">{t('board.estimate')}</span>
+                      <span>{t('board.estimateEmptyHint')}</span>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span className="flex-1" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label={t('common.cancel')}
+                  title={t('common.cancel')}
+                  onClick={onClose}
+                >
+                  <X size={16} />
+                </Button>
+                <Button
+                  type="submit"
+                  size="icon-sm"
+                  aria-label={t('board.add')}
+                  title={t('board.add')}
+                  disabled={create.isPending}
+                >
+                  <Check size={16} />
+                </Button>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -93,15 +135,8 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
             {serverError}
           </p>
         )}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit" size="sm" disabled={create.isPending}>
-            {t('board.add')}
-          </Button>
-        </div>
       </form>
     </Form>
   )
 }
+

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { sql } from 'drizzle-orm'
 import { inWorkspace, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
 import { mintToken } from '../support/tokens.ts'
@@ -71,5 +72,34 @@ describe('GET /api/lists/:id/board with the origin of the tasks', () => {
 
     expect(bySession.json().columns.backlog.tasks).toMatchObject(expected)
     expect(byToken.json().columns.backlog.tasks).toMatchObject(expected)
+  })
+})
+
+describe('GET /api/lists/:id/board ordering Done', () => {
+  it('done days list the latest completed task first', async () => {
+    const { owner, workspaceId } = await ownerViewerStranger(t)
+    const list = (await call('POST', '/api/lists', owner.token, workspaceId, { name: 'Week', color: 2 })).json()
+    const ids: Record<string, string> = {}
+    for (const title of ['First', 'Second', 'Third', 'Old one', 'Old two']) {
+      const created = await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list.id, title, column: 'today' })
+      ids[title] = created.json().id
+      await call('POST', `/api/tasks/${ids[title]}/move`, owner.token, workspaceId, { column: 'done', before_task_id: null })
+    }
+    // Completion times out of step with the creation and the position order: Second, then Third, then First.
+    const at = async (title: string, offset: string) =>
+      t.ctx.db.execute(sql`UPDATE tasks SET completed_at = now() - ${offset}::interval WHERE id = ${ids[title]}`)
+    await at('First', '1 second')
+    await at('Second', '3 seconds')
+    await at('Third', '2 seconds')
+    await at('Old one', '1 day 2 seconds')
+    await at('Old two', '1 day 1 second')
+
+    const board = (await call('GET', `/api/lists/${list.id}/board`, owner.token, workspaceId)).json()
+    const days = board.columns.done.days as Array<{ date: string; tasks: Array<{ title: string }> }>
+
+    expect(days).toHaveLength(2)
+    expect(days[0]!.date > days[1]!.date).toBe(true)
+    expect(days[0]!.tasks.map((task) => task.title)).toEqual(['First', 'Third', 'Second'])
+    expect(days[1]!.tasks.map((task) => task.title)).toEqual(['Old two', 'Old one'])
   })
 })

@@ -52,6 +52,9 @@ export default function FocusWidgetPage() {
   }
   // The pointer went down on `Subtarefas` while the notes are open: leaving the notes field then keeps the size.
   const toSubtasks = useRef(false)
+  // The pointer went down on `Anotações` while the notes are open: that press already left the field (which
+  // saves and closes it), so its click closes and does not open them again.
+  const notesOpenAtPress = useRef(false)
   const [picking, setPicking] = useState(false)
   const [acknowledged, setAcknowledged] = useState(0)
 
@@ -113,7 +116,15 @@ export default function FocusWidgetPage() {
         pending={state.today.pending}
         canWrite={canWrite}
         actions={widgetActions}
+        onNotesPointerDown={() => {
+          notesOpenAtPress.current = opened.current === 'notes'
+        }}
         onNotes={() => {
+          // A second click closes: leaving the field already saved and closed the notes.
+          if (notesOpenAtPress.current) {
+            notesOpenAtPress.current = false
+            return
+          }
           sized.current = true
           show('notes')
         }}

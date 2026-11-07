@@ -257,6 +257,7 @@ describe('LoginPage', () => {
       notifyFocusChanged: vi.fn(),
       onFocusChanged: vi.fn(() => () => {}),
       onWidgetState: vi.fn(() => () => {}),
+      onWidgetHover: vi.fn(() => () => {}),
     }
     Object.defineProperty(window, 'trackzyn', { value: desktopApi, configurable: true })
     try {
@@ -321,6 +322,7 @@ describe('LoginPage SSO', () => {
       notifyFocusChanged: vi.fn(),
       onFocusChanged: vi.fn(() => () => {}),
       onWidgetState: vi.fn(() => () => {}),
+      onWidgetHover: vi.fn(() => () => {}),
     }
     Object.defineProperty(window, 'trackzyn', { value: desktopApi, configurable: true })
     return desktopApi

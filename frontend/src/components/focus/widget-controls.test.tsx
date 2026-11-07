@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 
-import { WidgetControls } from '@/components/focus/widget-controls'
+import { HIDE_DELAY_MS, WidgetControls } from '@/components/focus/widget-controls'
 import type { Display } from '@/lib/focus/display'
+import type { TrackzynApi } from '@/lib/platform'
 import { renderWithProviders } from '@/test/utils'
 
 type WidgetTask = { id: string; title: string; spent_seconds?: number; subtasks?: { done: number; total: number } }
@@ -247,5 +248,113 @@ describe('WidgetControls with subtasks (#16)', () => {
     expect(buttonNames()).toEqual(['Break', 'Notes', 'Start', 'Skip', 'Complete', 'Expand'])
     await user.click(screen.getByRole('button', { name: 'Start' }))
     expect(actions.start).toHaveBeenCalledWith(TASK.id)
+  })
+})
+
+/** The desktop bridge of the widget window, whose main process reports the cursor (#34). */
+function installHoverBridge() {
+  const listeners = new Set<(state: { hovering: boolean }) => void>()
+  const onWidgetHover = vi.fn((callback: (state: { hovering: boolean }) => void) => {
+    listeners.add(callback)
+    return () => void listeners.delete(callback)
+  })
+  Object.defineProperty(window, 'trackzyn', {
+    value: { isDesktop: true, windowRole: 'widget', onWidgetHover } as unknown as TrackzynApi,
+    configurable: true,
+  })
+  const report = (hovering: boolean) => act(() => listeners.forEach((listener) => listener({ hovering })))
+  return { onWidgetHover, listeners, report }
+}
+
+describe('WidgetControls with the cursor read by the desktop (#34)', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    Reflect.deleteProperty(window, 'trackzyn')
+  })
+
+  it('the controls follow the hover reported by the desktop', () => {
+    vi.useFakeTimers()
+    const desktop = installHoverBridge()
+    const { widget, unmount } = renderControls({ mode: 'countdown', seconds: 60 })
+    expect(desktop.onWidgetHover).toHaveBeenCalledTimes(1)
+    expect(screen.queryAllByRole('button')).toEqual([])
+
+    // The page's own mouse events do not reach it over the drag region; only the report counts.
+    fireEvent.mouseOver(widget)
+    expect(screen.queryAllByRole('button')).toEqual([])
+
+    // The cursor enters: the six controls, under the title and the timer, in the same 64 px.
+    desktop.report(true)
+    expect(buttonNames()).toEqual(SIX)
+    expect(widget).toHaveClass('h-16')
+    const row = widget.querySelector('[data-widget-controls]')!
+    expect(screen.getByRole('timer').compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    // A page mouseleave changes nothing either.
+    fireEvent.mouseLeave(widget)
+    act(() => vi.advanceTimersByTime(HIDE_DELAY_MS * 2))
+    expect(buttonNames()).toEqual(SIX)
+
+    // It leaves: still there for 150 ms, gone after.
+    expect(HIDE_DELAY_MS).toBe(150)
+    desktop.report(false)
+    act(() => vi.advanceTimersByTime(149))
+    expect(buttonNames()).toEqual(SIX)
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.queryAllByRole('button')).toEqual([])
+    expect(screen.getByText(TASK.title)).toBeInTheDocument()
+
+    // Back within 150 ms of leaving: they stay, with no flicker.
+    desktop.report(true)
+    desktop.report(false)
+    act(() => vi.advanceTimersByTime(100))
+    desktop.report(true)
+    act(() => vi.advanceTimersByTime(HIDE_DELAY_MS * 2))
+    expect(buttonNames()).toEqual(SIX)
+
+    // And any time later, again and again.
+    for (let round = 0; round < 3; round += 1) {
+      desktop.report(false)
+      act(() => vi.advanceTimersByTime(HIDE_DELAY_MS))
+      expect(screen.queryAllByRole('button')).toEqual([])
+      desktop.report(true)
+      expect(buttonNames()).toEqual(SIX)
+    }
+
+    // The keyboard inside the widget keeps them with the cursor away.
+    desktop.report(false)
+    act(() => vi.advanceTimersByTime(HIDE_DELAY_MS))
+    fireEvent.focus(widget)
+    expect(buttonNames()).toEqual(SIX)
+
+    unmount()
+    expect(desktop.listeners.size).toBe(0)
+  })
+
+  it('only the controls row is outside the drag region', () => {
+    const desktop = installHoverBridge()
+    const { widget, unmount } = renderControls({ mode: 'countdown', seconds: 60 })
+    const noDrag = () => Array.from(widget.querySelectorAll<HTMLElement>('.\\[-webkit-app-region\\:no-drag\\]'))
+
+    // At rest: the whole window drags, with nothing taken out of it.
+    expect(widget).toHaveClass('[-webkit-app-region:drag]')
+    expect(noDrag()).toEqual([])
+
+    // With the controls: their row, and only it, takes the clicks; the title and the timer still drag.
+    desktop.report(true)
+    const row = widget.querySelector<HTMLElement>('[data-widget-controls]')!
+    expect(noDrag()).toEqual([row])
+    for (const button of screen.getAllByRole('button')) expect(row.contains(button)).toBe(true)
+    expect(screen.getByRole('timer').closest('.\\[-webkit-app-region\\:no-drag\\]')).toBeNull()
+    expect(screen.getByText(TASK.title).closest('.\\[-webkit-app-region\\:no-drag\\]')).toBeNull()
+    unmount()
+
+    // With nothing left in Today, only Expand is out of the drag area.
+    renderControls({ mode: 'all_clear', seconds: 0 }, { task: null })
+    const clear = screen.getByRole('group', { name: 'Focus widget' })
+    const out = Array.from(clear.querySelectorAll<HTMLElement>('.\\[-webkit-app-region\\:no-drag\\]'))
+    expect(out).toHaveLength(1)
+    expect(out[0]).toContainElement(screen.getByRole('button', { name: 'Expand' }))
+    expect(screen.getByText('All clear').closest('.\\[-webkit-app-region\\:no-drag\\]')).toBeNull()
   })
 })

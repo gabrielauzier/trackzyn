@@ -41,8 +41,10 @@ describe('trusted ipc handlers', () => {
 
 describe('every ipc channel the main process serves', () => {
   const source = readFileSync(path.resolve(__dirname, 'index.ts'), 'utf8')
-  // Export and import are menu items of the main process, not channels; these three only carry events to the renderer.
-  const SEND_ONLY = ['exportState', 'updateAvailable', 'widgetState']
+  // Export and import are menu items of the main process, not channels; these four only carry events to the renderer.
+  const SEND_ONLY = ['exportState', 'updateAvailable', 'widgetState', 'widgetHover']
+  // The cursor over the widget is read and sent by its own module, which index.ts starts per widget (#34).
+  const SENT_FROM: Record<string, string> = { widgetHover: 'widget-hover.ts' }
   const handled = Object.entries(IPC).filter(([key]) => !SEND_ONLY.includes(key))
 
   it('is registered through trustedHandle and never through ipcMain directly', () => {
@@ -63,7 +65,11 @@ describe('every ipc channel the main process serves', () => {
     for (const [key] of handled) {
       expect(source, `IPC.${key}`).toContain(`trustedHandle(ipcMain, IPC.${key},`)
     }
-    for (const key of SEND_ONLY) expect(source, `IPC.${key}`).toContain(`.send(IPC.${key},`)
+    for (const key of SEND_ONLY) {
+      const from = SENT_FROM[key] ? readFileSync(path.resolve(__dirname, SENT_FROM[key]), 'utf8') : source
+      expect(from, `IPC.${key}`).toContain(`.send(IPC.${key},`)
+    }
+    expect(source).toContain('trackWidgetHover(win, { screen })')
     // No channel is served that this list does not know.
     const served = [...source.matchAll(/trustedHandle\(ipcMain, IPC\.(\w+),/g)].map((match) => match[1]).sort()
     expect(served).toEqual(handled.map(([key]) => key).sort())

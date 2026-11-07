@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 
 import { AddTaskForm } from '@/components/board/add-task-form'
 import { tasks } from '@/lib/api'
@@ -58,14 +58,82 @@ describe('AddTaskForm', () => {
     expect(tasks.create).not.toHaveBeenCalled()
   })
 
-  it('blocks an estimate of 1441 minutes', async () => {
+  it('shows the estimate as an HH:MM field with no label, with Cancel and Add as icons on its row', async () => {
+    await open()
+
+    expect(screen.queryByText('Estimate (min)')).not.toBeInTheDocument()
+    const field = screen.getByRole('textbox', { name: 'Estimate' })
+    expect(field).toHaveAttribute('placeholder', 'HH:MM')
+    // The card's inline field, not a form-sized Input.
+    expect(field).toHaveAttribute('data-slot', 'duration-input')
+    // One row: the field, then Cancel and Add, both icon-only (option B, 2026-11-06), so the
+    // form fits a narrow column without cutting a button.
+    const row = field.closest<HTMLElement>('[data-slot="estimate-row"]')!
+    expect(row).not.toBeNull()
+    const cancel = within(row).getByRole('button', { name: 'Cancel' })
+    const add = within(row).getByRole('button', { name: 'Add' })
+    expect(within(row).getAllByRole('button')).toEqual([cancel, add])
+    for (const button of [cancel, add]) {
+      expect(button.textContent?.trim()).toBe('')
+      expect(button.querySelector('svg')).not.toBeNull()
+    }
+    expect(add).toHaveAttribute('type', 'submit')
+    expect(field.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // No other buttons in the form.
+    expect(screen.getAllByRole('button')).toEqual([cancel, add])
+  })
+
+  it('closes from the Cancel icon without creating anything', async () => {
     const { user } = await open()
 
     await user.type(screen.getByLabelText('Title'), 'Write the report')
-    await user.type(screen.getByLabelText('Estimate (min)'), '1441')
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByLabelText('Title')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
+    expect(tasks.create).not.toHaveBeenCalled()
+  })
+
+  it('puts the colon after the hours as the digits are typed', async () => {
+    const { user } = await open()
+
+    await user.type(screen.getByRole('textbox', { name: 'Estimate' }), '0130')
+
+    expect(screen.getByRole('textbox', { name: 'Estimate' })).toHaveValue('01:30')
+  })
+
+  it('blocks an estimate above 24:00', async () => {
+    const { user } = await open()
+
+    await user.type(screen.getByLabelText('Title'), 'Write the report')
+    const field = screen.getByRole('textbox', { name: 'Estimate' })
+    await user.type(field, '2500')
     await user.click(screen.getByRole('button', { name: 'Add' }))
 
-    expect(await screen.findByText('Use 1 to 1440 minutes')).toBeInTheDocument()
+    expect(await screen.findByText('Use 00:01 to 24:00')).toBeInTheDocument()
+    expect(field).toHaveAttribute('aria-invalid', 'true')
+    expect(tasks.create).not.toHaveBeenCalled()
+  })
+
+  it('blocks minutes above 59', async () => {
+    const { user } = await open()
+
+    await user.type(screen.getByLabelText('Title'), 'Write the report')
+    await user.type(screen.getByRole('textbox', { name: 'Estimate' }), '0175')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+
+    expect(await screen.findByText('Minutes from 00 to 59')).toBeInTheDocument()
+    expect(tasks.create).not.toHaveBeenCalled()
+  })
+
+  it('blocks a half-typed estimate', async () => {
+    const { user } = await open()
+
+    await user.type(screen.getByLabelText('Title'), 'Write the report')
+    await user.type(screen.getByRole('textbox', { name: 'Estimate' }), '013')
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+
+    expect(await screen.findByText('Use HH:MM')).toBeInTheDocument()
     expect(tasks.create).not.toHaveBeenCalled()
   })
 
@@ -85,11 +153,11 @@ describe('AddTaskForm', () => {
     )
   })
 
-  it('sends the estimate in minutes', async () => {
+  it('sends the HH:MM estimate in minutes', async () => {
     const { user } = await open()
 
     await user.type(screen.getByLabelText('Title'), 'Write the report')
-    await user.type(screen.getByLabelText('Estimate (min)'), '90')
+    await user.type(screen.getByRole('textbox', { name: 'Estimate' }), '0130')
     await user.click(screen.getByRole('button', { name: 'Add' }))
 
     await waitFor(() =>
@@ -100,6 +168,29 @@ describe('AddTaskForm', () => {
         column: 'today',
       }),
     )
+  })
+
+  it('names the empty estimate field in a tooltip on hover', async () => {
+    const { user } = await open()
+
+    await user.hover(screen.getByRole('textbox', { name: 'Estimate' }))
+
+    const tooltip = await screen.findByRole('tooltip')
+    expect(tooltip).toHaveTextContent('Estimate')
+    expect(tooltip).toHaveTextContent('Leave empty for no estimate')
+  })
+
+  it('shows no tooltip over an estimate that has a value', async () => {
+    const { user } = await open()
+    const field = screen.getByRole('textbox', { name: 'Estimate' })
+    await user.type(field, '0130')
+    await user.unhover(field)
+
+    await user.hover(field)
+    // Longer than the 200 ms the tooltip waits before opening.
+    await new Promise((resolve) => setTimeout(resolve, 400))
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 
   it('shows a 422 from the server and keeps the form', async () => {

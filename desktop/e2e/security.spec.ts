@@ -26,6 +26,7 @@ const TRACKZYN_MEMBERS = [
   'onFocusChanged',
   'onPauseRequest',
   'onUpdateAvailable',
+  'onWidgetHover',
   'onWidgetState',
   'openExternal',
   'openLogs',
@@ -94,7 +95,7 @@ test('renderer cannot navigate away', async () => {
 })
 
 // The title is what task 3's proof (C20a) calls; the bridge has grown since (SSO, local mode, export, focus, widget),
-// so the list above is the current one (22 members) and this test fixes that list.
+// so the list above is the current one (23 members) and this test fixes that list.
 test('window.trackzyn exposes exactly the eight members', async () => {
   const { page } = await launchApp({ serverUrl: server.url })
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible()

@@ -325,6 +325,8 @@
     "uploading": "Enviando"
   },
   "nav": {
+    "adminBadge": "admin",
+    "adminLink": "{{name}} (admin)",
     "collapseSidebar": "Recolher barra lateral",
     "components": "Componentes",
     "expandSidebar": "Expandir barra lateral",
@@ -512,7 +514,6 @@
   "board": {
     "createdVia": "via {{name}}",
     "orderInToday": "Ordem em Hoje",
-    "complete": "Concluir {{title}}",
     "estimate": "Estimativa",
     "spent": "Tempo gasto",
     "subtaskSummary": "{{done}}/{{total}} Subtarefas",
@@ -521,10 +522,15 @@
     "addTask": "Adicionar tarefa",
     "add": "Adicionar",
     "taskTitle": "Título",
-    "estimateMinutes": "Estimativa (min)",
     "titleRequired": "Informe um título",
     "titleTooLong": "Use no máximo 255 caracteres",
-    "estimateRange": "Use de 1 a 1440 minutos",
+    "completed": "Concluída",
+    "editEstimate": "Editar estimativa",
+    "estimateMinutesRange": "Minutos de 00 a 59",
+    "estimateLimit": "Use de 00:01 a 24:00",
+    "estimateFormat": "Use o formato HH:MM",
+    "estimateHint": "HH:MM · deixe vazio para sem estimativa",
+    "estimateEmptyHint": "Deixe vazio para sem estimativa",
     "newSubtask": "Nova subtarefa",
     "subtaskTitle": "Título da subtarefa",
     "renameSubtask": "Renomear {{title}}",
@@ -666,7 +672,15 @@
       "summary": "Subtarefas · {{done}}/{{total}}",
       "allDone": "Tudo feito por aqui.",
       "completeTask": "Concluir tarefa",
-      "showAll": "Mostrar todas ({{total}})"
+      "showAll": "Mostrar todas ({{total}})",
+      "show": "Mostrar subtarefas",
+      "hide": "Esconder subtarefas"
+    },
+    "notes": {
+      "title": "Anotação",
+      "hint": "Salva ao sair",
+      "editor": "Anotação da tarefa",
+      "showMore": "Mostrar anotação"
     }
   },
   "reports": {

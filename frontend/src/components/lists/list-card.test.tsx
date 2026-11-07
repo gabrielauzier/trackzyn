@@ -22,8 +22,10 @@ const card: ListCardData = {
   created_at: '2026-10-24T10:00:00Z',
   pending_count: 5,
   preview: [
-    { id: 't1', title: 'Write the report' },
-    { id: 't2', title: 'Review the PR' },
+    { id: 't1', title: 'Write the report', estimate_minutes: 30, subtasks: { done: 0, total: 1 } },
+    { id: 't2', title: 'Review the PR', estimate_minutes: 120, subtasks: { done: 0, total: 0 } },
+    { id: 't3', title: 'Plan the week', estimate_minutes: null, subtasks: { done: 1, total: 2 } },
+    { id: 't4', title: 'Fourth from the API', estimate_minutes: null, subtasks: { done: 0, total: 0 } },
   ],
 }
 
@@ -60,11 +62,89 @@ describe('ListCard', () => {
     }
   })
 
-  it('fills four preview rows, leaving the missing ones empty', () => {
+  it('shows up to three tasks with subtasks and estimate', () => {
     renderWithProviders(<ListCard list={card} canWrite onRename={vi.fn()} />)
 
     const rows = within(screen.getByRole('list')).getAllByRole('listitem')
-    expect(rows.map((row) => row.textContent)).toEqual(['Write the report', 'Review the PR', '', ''])
+    // The API sends 4 (the MCP reads the same preview); the card shows the first 3.
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'Write the report1 subtask · 30min',
+      'Review the PR2hr',
+      'Plan the week2 subtasks',
+    ])
+    for (const row of rows) {
+      expect(row).toHaveClass('rounded-lg', 'border')
+      // No reorder handle in the card's rows.
+      expect(within(row).queryByRole('button')).not.toBeInTheDocument()
+    }
+    expect(within(rows[0]!).getByText('Write the report')).toHaveClass('truncate')
+    expect(within(rows[0]!).getByText('1 subtask · 30min')).toBeInTheDocument()
+  })
+
+  it('shows the subtasks and estimate in Portuguese', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      renderWithProviders(<ListCard list={card} canWrite onRename={vi.fn()} />)
+      expect(screen.getByText('1 subtarefa · 30min')).toBeInTheDocument()
+      expect(screen.getByText('2h')).toBeInTheDocument()
+      expect(screen.getByText('2 subtarefas')).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('keeps its height without empty rows', () => {
+    const heightOf = (count: number) => {
+      const { unmount } = renderWithProviders(
+        <ListCard list={{ ...card, preview: card.preview.slice(0, count) }} canWrite onRename={vi.fn()} />,
+      )
+      const list = screen.getByRole('list')
+      const drawn = within(list).queryAllByRole('listitem').length
+      const className = list.className
+      unmount()
+      return { drawn, className }
+    }
+
+    const full = heightOf(3)
+    expect(full.drawn).toBe(3)
+    // A fixed height of three rows, whatever the count.
+    expect(full.className).toMatch(/(^|\s)h-\d+(\s|$)/)
+    expect(full.className).toContain('grid-rows-3')
+    for (const count of [0, 1, 2]) {
+      const { drawn, className } = heightOf(count)
+      expect(drawn).toBe(count)
+      expect(className).toBe(full.className)
+    }
+  })
+
+  it('holds the rows to the card width so a long title truncates', () => {
+    const long = { ...card.preview[0], title: 'A'.repeat(200) }
+    renderWithProviders(<ListCard list={{ ...card, preview: [long] }} canWrite onRename={vi.fn()} />)
+
+    // An undeclared grid column is `auto` and grows to the longest title; one column of
+    // `minmax(0, 1fr)` stays as wide as the card.
+    expect(screen.getByRole('list').className).toMatch(/(^|\s)grid-cols-1(\s|$)/)
+    const title = screen.getByTitle(long.title)
+    expect(title.className).toContain('truncate')
+    expect(title.className).toContain('min-w-0')
+  })
+
+  it('shows the title link in the accent color on hover', () => {
+    renderWithProviders(<ListCard list={card} canWrite onRename={vi.fn()} />)
+
+    const link = screen.getByRole('link', { name: card.name })
+    expect(link).toHaveClass('hover:text-primary')
+    // The color changes smoothly, like the other hovered controls.
+    expect(link.className).toMatch(/(^|\s)transition-colors(\s|$)/)
+  })
+
+  it('shows an accent border while the card is pressed', () => {
+    renderWithProviders(<ListCard list={card} canWrite onRename={vi.fn()} />)
+
+    const cardNode = screen.getByRole('link', { name: card.name }).closest<HTMLElement>('[data-slot="card"]')!
+    expect(cardNode).toHaveClass('active:border-primary')
+    // At rest, the usual border.
+    expect(cardNode.className).not.toMatch(/(^|\s)border-primary(\s|$)/)
   })
 
   it('hides the menu from a viewer', () => {

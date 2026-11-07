@@ -11,7 +11,7 @@ import { play } from '@/lib/sounds/synth'
 import * as queue from '@/lib/focus/queue'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
-import { renderWithProviders } from '@/test/utils'
+import { placeCaretAtEnd, renderWithProviders } from '@/test/utils'
 import type { FocusState, ListCard, Subtask, Task } from '@/types'
 
 const role = vi.hoisted(() => ({ canWrite: true }))
@@ -19,7 +19,7 @@ const role = vi.hoisted(() => ({ canWrite: true }))
 vi.mock('@/lib/api', () => ({
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   lists: { list: vi.fn(), move: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
-  tasks: { create: vi.fn(), move: vi.fn(), get: vi.fn() },
+  tasks: { create: vi.fn(), move: vi.fn(), get: vi.fn(), update: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn(), move: vi.fn() },
   authHeaders: () => ({}),
 }))
@@ -932,7 +932,9 @@ describe('FocusPage subtasks of the task in focus (#16)', () => {
     await user.click(field)
     await user.keyboard('{Enter}')
     expect(within(card()).getByText('Enter a title')).toBeInTheDocument()
-    await user.type(field, 'x'.repeat(256))
+    // The long titles are pasted: typed one key at a time they took past the 5 s limit on CI, and
+    // the keys still pending then landed in the next test.
+    await user.paste('x'.repeat(256))
     await user.keyboard('{Enter}')
     expect(within(card()).getByText('Use at most 255 characters')).toBeInTheDocument()
     expect(subtasks.create).not.toHaveBeenCalled()
@@ -945,7 +947,9 @@ describe('FocusPage subtasks of the task in focus (#16)', () => {
     expect(within(card()).getByText('1/5')).toBeInTheDocument()
 
     // 255 characters are fine.
-    await user.type(field, `${'y'.repeat(255)}{Enter}`)
+    await user.click(field)
+    await user.paste('y'.repeat(255))
+    await user.keyboard('{Enter}')
     expect(subtasks.create).toHaveBeenLastCalledWith(taskA.id, 'y'.repeat(255))
   })
 
@@ -1020,5 +1024,98 @@ describe('FocusPage subtasks of the task in focus (#16)', () => {
     expect(within(item(taskB.title)).getByText('2 subtasks · 30min')).toBeInTheDocument()
     expect(within(item(taskC.title)).getByText('20min')).toBeInTheDocument()
     expect(item(taskC.title)).not.toHaveTextContent('subtask')
+  })
+})
+
+describe('FocusPage notes of the task in focus (#33)', () => {
+  /** B counting here, with A right after it in Today. */
+  function bInFocus(): FocusState {
+    const base = counting(deviceId(), paused({ task: taskB, today: { ...paused().today, tasks: [{ ...taskB, position: 0 }, { ...taskA, position: 1 }] } }))
+    return { ...base, session: { ...base.session!, task_id: taskB.id } }
+  }
+
+  beforeEach(() => {
+    vi.mocked(focus.get).mockResolvedValue(counting(deviceId()))
+    vi.mocked(tasks.get).mockImplementation(async (id: string) => ({ ...taskWith(id, []), notes: id === taskA.id ? '<p>Ask Ana</p>' : '' }))
+    vi.mocked(tasks.update).mockImplementation(async (id: string, payload) => ({ ...taskWith(id, []), ...payload }) as Task)
+  })
+
+  const card = () => screen.getByRole('timer').closest<HTMLElement>('[data-running]')!
+
+  async function openNotes(user: ReturnType<typeof renderFocus>['user']) {
+    await screen.findByRole('button', { name: 'Pause' })
+    // Under the subtasks, in the card.
+    await user.click(await within(card()).findByRole('button', { name: /^Notes/ }))
+    const field = await within(card()).findByRole('textbox', { name: 'Task notes' })
+    await waitFor(() => expect(field).toHaveFocus())
+    return field
+  }
+
+  it('changing the task in focus saves and closes the open notes', async () => {
+    // Skip here: the editor is left for the button, and what it holds is saved for A.
+    vi.mocked(focus.send).mockResolvedValue(bInFocus())
+    const { user, unmount } = renderFocus()
+    let field = await openNotes(user)
+    placeCaretAtEnd(field)
+    await user.paste(', then the chart')
+    vi.mocked(focus.get).mockResolvedValue(bInFocus())
+    await user.click(screen.getByRole('button', { name: 'Skip' }))
+
+    await waitFor(() => expect(within(card()).getByText(taskB.title)).toBeInTheDocument())
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(taskA.id, { notes: '<p>Ask Ana, then the chart</p>' }))
+    expect(tasks.update).toHaveBeenCalledTimes(1)
+    expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument()
+    unmount()
+
+    // The task changes elsewhere (the widget's Skip) while the editor still has the focus here.
+    vi.mocked(tasks.update).mockClear()
+    vi.mocked(focus.get).mockResolvedValue(counting(deviceId()))
+    const second = renderFocus()
+    field = await openNotes(second.user)
+    placeCaretAtEnd(field)
+    await second.user.paste(', today')
+    vi.mocked(focus.get).mockResolvedValue(bInFocus())
+    await second.queryClient.invalidateQueries({ queryKey: ['focus', LIST] })
+
+    await waitFor(() => expect(within(card()).getByText(taskB.title)).toBeInTheDocument())
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(taskA.id, { notes: '<p>Ask Ana, today</p>' }))
+    expect(tasks.update).toHaveBeenCalledTimes(1)
+    expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument()
+    // The notes of B, closed, with nothing written.
+    expect(within(card()).getByRole('button', { name: /^Notes/ })).toHaveAttribute('data-muted', 'true')
+  })
+
+  it('a second click on Notes closes the open notes for good, and saves what was written', async () => {
+    const { user } = renderFocus()
+    const button = () => within(card()).getByRole('button', { name: /^Notes/ })
+
+    // Unchanged: the second click closes it, and it does not open again.
+    await openNotes(user)
+    await user.click(button())
+    await waitFor(() => expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument())
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument()
+    expect(button()).toHaveAttribute('aria-expanded', 'false')
+    expect(tasks.update).not.toHaveBeenCalled()
+
+    // Written: the second click saves it and closes it.
+    const field = await openNotes(user)
+    placeCaretAtEnd(field)
+    await user.paste(', then the chart')
+    await user.click(button())
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(taskA.id, { notes: '<p>Ask Ana, then the chart</p>' }))
+    await waitFor(() => expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument())
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument()
+  })
+
+  it('without a change, a new task in focus sends no notes', async () => {
+    const { user, queryClient } = renderFocus()
+    await openNotes(user)
+    vi.mocked(focus.get).mockResolvedValue(bInFocus())
+    await queryClient.invalidateQueries({ queryKey: ['focus', LIST] })
+
+    await waitFor(() => expect(within(card()).getByText(taskB.title)).toBeInTheDocument())
+    expect(tasks.update).not.toHaveBeenCalled()
   })
 })

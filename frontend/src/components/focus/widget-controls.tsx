@@ -5,13 +5,14 @@ import { Check, CircleCheck, ListChecks, Maximize2, NotebookPen, Pause, Play, Sk
 import { BreakPicker } from '@/components/focus/break-picker'
 import type { FocusControlActions } from '@/components/focus/focus-controls'
 import { Button } from '@/components/ui/button'
+import { onWidgetHover } from '@/lib/desktop/focus-window'
 import type { Display } from '@/lib/focus/display'
 import { formatClock } from '@/lib/focus/format-clock'
 import { cn } from '@/lib/utils'
 
 const DRAG_REGION = '[-webkit-app-region:drag]'
 const NO_DRAG_REGION = '[-webkit-app-region:no-drag]'
-/** How long the controls stay after the mouse leaves, so moving between them does not flicker. */
+/** How long the controls stay after the cursor leaves, so moving between them does not flicker. */
 export const HIDE_DELAY_MS = 150
 
 interface WidgetControlsProps {
@@ -30,6 +31,8 @@ interface WidgetControlsProps {
   subtasksOpen?: boolean
   /** The pointer went down on `Subtarefas`, before the notes field loses focus to it. */
   onSubtasksPointerDown?: () => void
+  /** The pointer went down on `Anotações`, before the notes field loses focus to it. */
+  onNotesPointerDown?: () => void
   onExpand: () => void
   /** Told when the break picker opens and closes, so the widget can grow for it. */
   onPanelChange: (open: boolean) => void
@@ -64,10 +67,14 @@ function IconButton({ label, onClick, disabled, pressed, onPointerDown, children
 
 /**
  * The focus widget: the title of the task, cut with an ellipsis, and the timer (WIDGET-07); with the
- * mouse over it (or the keyboard inside it), `Intervalo`, `Anotações`, `Pausar` or `Retomar`, `Pular`,
+ * cursor over it (or the keyboard inside it, or the break picker open), `Intervalo`, `Anotações`, `Pausar` or `Retomar`, `Pular`,
  * `Concluir` and `Expandir` (WIDGET-08), and `Estender` and `Concluir` at `00:00:00` (WIDGET-13).
- * With nothing left in Today, `Tudo limpo` and `Expandir` (WIDGET-16). The background drags the
- * window and the buttons stay out of the drag area (WIDGET-06).
+ * With nothing left in Today, `Tudo limpo` and `Expandir` (WIDGET-16). The whole window drags, and only
+ * the row of buttons stays out of the drag area (WIDGET-06).
+ *
+ * Over a drag region the page gets no mouse events, so on the desktop the cursor comes from the main
+ * process, which reads it against the window bounds (#34); the controls hide `HIDE_DELAY_MS` after it
+ * leaves. Without that report (a bridge from before it), the page's own mouse events stand in.
  */
 export function WidgetControls({
   display,
@@ -79,6 +86,7 @@ export function WidgetControls({
   onSubtasks,
   subtasksOpen = false,
   onSubtasksPointerDown,
+  onNotesPointerDown,
   onExpand,
   onPanelChange,
 }: WidgetControlsProps) {
@@ -91,11 +99,37 @@ export function WidgetControls({
   // A click focuses the button it hits; only focus from the keyboard keeps the controls on screen.
   const pointer = useRef(false)
 
+  // Whether the desktop reports the cursor; then the page's own mouse events are ignored.
+  const reported = useRef(false)
+
   const cancelHide = () => {
     if (hideTimer.current) clearTimeout(hideTimer.current)
     hideTimer.current = null
   }
-  useEffect(() => cancelHide, [])
+  const enter = () => {
+    cancelHide()
+    setHovered(true)
+  }
+  const leave = () => {
+    cancelHide()
+    hideTimer.current = setTimeout(() => setHovered(false), HIDE_DELAY_MS)
+  }
+  useEffect(() => {
+    const clear = () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current)
+      hideTimer.current = null
+    }
+    const off = onWidgetHover((hovering) => {
+      clear()
+      if (hovering) setHovered(true)
+      else hideTimer.current = setTimeout(() => setHovered(false), HIDE_DELAY_MS)
+    })
+    reported.current = off !== null
+    return () => {
+      off?.()
+      clear()
+    }
+  }, [])
 
   const expand = (
     <IconButton label={t('focus.widget.expand')} onClick={onExpand}>
@@ -119,7 +153,7 @@ export function WidgetControls({
           <ListChecks />
         </IconButton>
       )}
-      <IconButton label={t('focus.widget.notes')} onClick={onNotes}>
+      <IconButton label={t('focus.widget.notes')} onClick={onNotes} onPointerDown={onNotesPointerDown}>
         <NotebookPen />
       </IconButton>
     </>
@@ -189,12 +223,10 @@ export function WidgetControls({
       aria-label={t('focus.widget.label')}
       tabIndex={0}
       onMouseOver={() => {
-        cancelHide()
-        setHovered(true)
+        if (!reported.current) enter()
       }}
       onMouseLeave={() => {
-        cancelHide()
-        hideTimer.current = setTimeout(() => setHovered(false), HIDE_DELAY_MS)
+        if (!reported.current) leave()
       }}
       onPointerDown={() => (pointer.current = true)}
       onKeyDown={() => (pointer.current = false)}
@@ -227,7 +259,11 @@ export function WidgetControls({
               {formatClock(display.mode === 'awaiting_extend' ? 0 : display.seconds)}
             </span>
           </div>
-          {shown && <div className={cn('-mx-1.5 flex items-center justify-between', NO_DRAG_REGION)}>{controls}</div>}
+          {shown && (
+            <div data-widget-controls className={cn('-mx-1.5 flex items-center justify-between', NO_DRAG_REGION)}>
+              {controls}
+            </div>
+          )}
         </>
       )}
     </div>

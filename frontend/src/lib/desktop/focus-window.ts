@@ -45,6 +45,18 @@ export function onFocusChanged(callback: () => void): () => void {
   return isDesktop() ? getDesktopApi().onFocusChanged(callback) : () => undefined
 }
 
+/**
+ * Runs `callback` each time the desktop says the cursor entered (`true`) or left (`false`) the widget
+ * window (#34); the page gets no mouse events over the window's drag region. Returns the unsubscribe, or
+ * `null` where nothing reports it: the browser, or a desktop bridge from before the hover existed.
+ */
+export function onWidgetHover(callback: (hovering: boolean) => void): (() => void) | null {
+  if (!isDesktop()) return null
+  const api = getDesktopApi()
+  if (typeof api.onWidgetHover !== 'function') return null
+  return api.onWidgetHover((state) => callback(state.hovering === true))
+}
+
 const FOCUS_LIST_KEY = 'trackzyn.focus.list'
 
 /** Keeps the list of the focus screen for the widget, which opens on it with a paused task. */

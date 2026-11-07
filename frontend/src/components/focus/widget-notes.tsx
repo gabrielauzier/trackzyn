@@ -7,8 +7,7 @@ import { useTask } from '@/components/board/use-task'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { resizeWidget } from '@/lib/desktop/focus-window'
-
-const NOTES_MAX = 10_000
+import { NOTES_MAX } from '@/lib/notes'
 
 interface WidgetNotesProps {
   taskId: string

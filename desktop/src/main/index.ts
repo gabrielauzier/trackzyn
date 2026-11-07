@@ -21,6 +21,7 @@ import { ImportJournalError, recoverImport } from './export-import'
 import { createTransfer } from './transfer'
 import { createUpdater } from './updater'
 import { createWidgetController } from './widget-controller'
+import { trackWidgetHover } from './widget-hover'
 import { bindWidgetShortcut } from './widget-shortcut'
 import { createWidgetWindow } from './widget-window'
 import { createMainWindow } from './window'
@@ -260,6 +261,8 @@ function start() {
       createWindow: (bounds) => {
         const win = createWidgetWindow(bounds, { appVersion: app.getVersion() })
         bindWidgetShortcut(win.webContents, widget, process.platform)
+        // The page gets no mouse events over its drag region: the cursor is read here (#34).
+        trackWidgetHover(win, { screen })
         return win
       },
     })

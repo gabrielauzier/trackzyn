@@ -19,13 +19,15 @@ export const IPC = {
   focusChanged: 'focus:changed',
   widgetState: 'widget:state',
   widgetResize: 'widget:resize',
+  /** Main to the widget page: the cursor entered (`hovering: true`) or left the widget window (#34). */
+  widgetHover: 'widget:hover',
 } as const
 
 export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** What the renderer sees as `window.trackzyn`. Exactly these twenty-two members. */
+/** What the renderer sees as `window.trackzyn`. Exactly these twenty-three members. */
 export interface TrackzynApi {
   isDesktop: true
   platform: string
@@ -63,6 +65,8 @@ export interface TrackzynApi {
   onFocusChanged(callback: () => void): () => void
   /** Tells whether the focus widget is open. Returns an unsubscribe. */
   onWidgetState(callback: (state: { open: boolean }) => void): () => void
+  /** In the widget: runs `callback` when the cursor enters or leaves the widget window, read by the main process. Returns an unsubscribe. */
+  onWidgetHover(callback: (state: { hovering: boolean }) => void): () => void
 }
 
 export type WindowRole = 'main' | 'widget'

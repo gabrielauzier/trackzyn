@@ -205,6 +205,95 @@ describe('BoardColumn open-without-starting (#14)', () => {
   })
 })
 
+describe('BoardColumn focus buttons at the top of Today', () => {
+  const asDesktop = () =>
+    Object.defineProperty(window, 'trackzyn', {
+      value: { isDesktop: true, windowRole: 'main' } as unknown as TrackzynApi,
+      configurable: true,
+    })
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'trackzyn')
+  })
+
+  const today = (tasks: TaskCardView[], canWrite = true) =>
+    renderWithProviders(
+      <BoardColumn
+        column="today"
+        view={progressView({ tasks, estimate_minutes: 60, done: 1, total: tasks.length + 1 })}
+        listId={LIST}
+        canWrite={canWrite}
+        renderTask={renderTask}
+        onFocusNow={vi.fn()}
+        onOpenFocus={vi.fn()}
+      />,
+    )
+
+  const follows = (a: Node, b: Node) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+  it('Today shows the focus buttons between the progress bar and the first task', () => {
+    asDesktop()
+    today([card('a', 'DEV-1725'), card('b', 'DEV-1726')])
+
+    const progress = screen.getByRole('progressbar')
+    const focusNow = screen.getByRole('button', { name: 'Focus now' })
+    const eye = screen.getByRole('button', { name: 'Open focus without starting the timer' })
+    const firstTask = screen.getByText('DEV-1725')
+    expect(follows(progress, focusNow)).toBe(true)
+    expect(follows(screen.getByText('1/3 Done'), focusNow)).toBe(true)
+    expect(follows(focusNow, eye)).toBe(true)
+    expect(follows(eye, firstTask)).toBe(true)
+    // Nothing of the row is left at the foot of the column, after the tasks and Add task.
+    expect(follows(focusNow, screen.getByRole('button', { name: 'Add task' }))).toBe(true)
+    expect(screen.getAllByRole('button', { name: 'Focus now' })).toHaveLength(1)
+    expect(focusNow.parentElement!.className).not.toMatch(/\bmt-auto\b/)
+  })
+
+  it('the focus buttons row sticks to the top while the column scrolls', () => {
+    today([card('a', 'DEV-1725')])
+
+    const row = screen.getByRole('button', { name: 'Focus now' }).closest<HTMLElement>('[data-slot="focus-buttons"]')!
+    expect(row).not.toBeNull()
+    expect(row).toHaveClass('sticky', 'z-10')
+    // At the top of the scrolling area (below the app bar where the narrow layout has one).
+    expect(row.className).toMatch(/(^|\s)top-\S+/)
+    // The column's own background, opaque, and no line under it: nothing between the row and the
+    // first card (2026-11-06, the user asked for the shadow to go).
+    expect(row.className).toMatch(/(^|\s)bg-/)
+    expect(row.className).not.toMatch(/(^|\s)(shadow|border)(-|\s|$)/)
+    // Nor on the container that holds the buttons (the buttons keep their own outline).
+    const inner = row.firstElementChild as HTMLElement
+    expect(inner.className).not.toMatch(/(^|\s)(shadow|border)(-|\s|$)/)
+    // The tasks scroll under it: they come after it, outside it.
+    expect(row).not.toContainElement(screen.getByText('DEV-1725'))
+  })
+
+  it('focus buttons keep their disabled and desktop-only rules at the top', () => {
+    asDesktop()
+    const { unmount } = today([])
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Open focus without starting the timer' })).toBeDisabled()
+    // Still above the empty state, not at the foot.
+    expect(follows(screen.getByRole('button', { name: 'Focus now' }), screen.getByText('All clear'))).toBe(true)
+    unmount()
+
+    const viewer = today([card('a', 'DEV-1725')], false)
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Open focus without starting the timer' })).toBeDisabled()
+    viewer.unmount()
+
+    const writer = today([card('a', 'DEV-1725')])
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Open focus without starting the timer' })).toBeEnabled()
+    writer.unmount()
+
+    Reflect.deleteProperty(window, 'trackzyn')
+    today([card('a', 'DEV-1725')])
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: 'Open focus without starting the timer' })).not.toBeInTheDocument()
+  })
+})
+
 describe('DoneColumn', () => {
   const done: Board['columns']['done'] = {
     today_count: 0,

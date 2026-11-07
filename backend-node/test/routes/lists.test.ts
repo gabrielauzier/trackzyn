@@ -96,6 +96,30 @@ describe('GET /api/lists', () => {
     const { owner, workspaceId } = await setup()
     expect((await call('GET', '/api/lists?archived=maybe', owner.token, workspaceId)).statusCode).toBe(422)
   })
+
+  it('preview items carry the estimate and the subtask counts', async () => {
+    const { owner, workspaceId } = await setup()
+    const list = await createList(owner, workspaceId)
+    const task = (title: string, column: string, estimate?: number) =>
+      call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list.id, title, column, estimate_minutes: estimate })
+    const first = (await task('With subtasks', 'today', 30)).json() as { id: string }
+    await task('Bare', 'this_week')
+    await task('Two hours', 'backlog', 120)
+    const subtask = (title: string) => call('POST', `/api/tasks/${first.id}/subtasks`, owner.token, workspaceId, { title })
+    const done = (await subtask('One')).json() as { id: string }
+    await subtask('Two')
+    await subtask('Three')
+    expect((await call('PATCH', `/api/subtasks/${done.id}`, owner.token, workspaceId, { done: true })).statusCode).toBe(200)
+
+    const reply = await call('GET', '/api/lists', owner.token, workspaceId)
+    expect(reply.statusCode).toBe(200)
+    const [card] = reply.json().lists as Array<{ preview: unknown[] }>
+    expect(card!.preview).toEqual([
+      { id: first.id, title: 'With subtasks', estimate_minutes: 30, subtasks: { done: 1, total: 3 } },
+      { id: expect.any(String), title: 'Bare', estimate_minutes: null, subtasks: { done: 0, total: 0 } },
+      { id: expect.any(String), title: 'Two hours', estimate_minutes: 120, subtasks: { done: 0, total: 0 } },
+    ])
+  })
 })
 
 describe('POST /api/lists', () => {

@@ -325,6 +325,8 @@
     "uploading": "Uploading"
   },
   "nav": {
+    "adminBadge": "admin",
+    "adminLink": "{{name}} (admin)",
     "collapseSidebar": "Collapse sidebar",
     "components": "Components",
     "expandSidebar": "Expand sidebar",
@@ -512,7 +514,6 @@
   "board": {
     "createdVia": "via {{name}}",
     "orderInToday": "Order in Today",
-    "complete": "Complete {{title}}",
     "estimate": "Estimate",
     "spent": "Time spent",
     "subtaskSummary": "{{done}}/{{total}} Subtasks",
@@ -521,10 +522,15 @@
     "addTask": "Add task",
     "add": "Add",
     "taskTitle": "Title",
-    "estimateMinutes": "Estimate (min)",
     "titleRequired": "Enter a title",
     "titleTooLong": "Use at most 255 characters",
-    "estimateRange": "Use 1 to 1440 minutes",
+    "completed": "Completed",
+    "editEstimate": "Edit estimate",
+    "estimateMinutesRange": "Minutes from 00 to 59",
+    "estimateLimit": "Use 00:01 to 24:00",
+    "estimateFormat": "Use HH:MM",
+    "estimateHint": "HH:MM · leave empty for no estimate",
+    "estimateEmptyHint": "Leave empty for no estimate",
     "newSubtask": "New subtask",
     "subtaskTitle": "Subtask title",
     "renameSubtask": "Rename {{title}}",
@@ -666,7 +672,15 @@
       "summary": "Subtasks · {{done}}/{{total}}",
       "allDone": "All done here.",
       "completeTask": "Complete task",
-      "showAll": "Show all ({{total}})"
+      "showAll": "Show all ({{total}})",
+      "show": "Show subtasks",
+      "hide": "Hide subtasks"
+    },
+    "notes": {
+      "title": "Notes",
+      "hint": "Saves when you leave",
+      "editor": "Task notes",
+      "showMore": "Show notes"
     }
   },
   "reports": {

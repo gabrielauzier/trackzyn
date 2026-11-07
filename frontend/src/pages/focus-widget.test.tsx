@@ -211,6 +211,34 @@ describe('FocusWidgetPage', () => {
     expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
   })
 
+  it('a second click on Notes closes the open notes for good, and saves what was written', async () => {
+    vi.mocked(tasks.get).mockResolvedValue({ id: taskA.id, notes: '' } as never)
+    vi.mocked(tasks.update).mockResolvedValue({ id: taskA.id, notes: 'Numbers' } as never)
+    const { user, hover } = renderWidget()
+    await screen.findByText('DEV-1725')
+    await hover()
+
+    // Unchanged: the second click closes it, and it does not open again.
+    await user.click(screen.getByRole('button', { name: 'Notes' }))
+    await screen.findByRole('textbox', { name: 'Notes' })
+    await user.click(screen.getByRole('button', { name: 'Notes' }))
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument())
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
+    expect(tasks.update).not.toHaveBeenCalled()
+
+    // Written: the second click saves it and closes it.
+    await user.click(screen.getByRole('button', { name: 'Notes' }))
+    const notes = await screen.findByRole('textbox', { name: 'Notes' })
+    selectContents(notes)
+    await user.paste('Numbers')
+    await user.click(screen.getByRole('button', { name: 'Notes' }))
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(taskA.id, { notes: '<p>Numbers</p>' }))
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument())
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
+  })
+
   it('shows an action the server refused in the widget, grown for it (Edge Case, SYNC-07)', async () => {
     vi.mocked(focus.send).mockRejectedValue({ response: { status: 422, data: { code: 'invalid_time' } } })
     const { user, hover } = renderWidget()

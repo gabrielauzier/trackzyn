@@ -141,7 +141,8 @@ export interface TaskList {
 /** A list as the home shows it: the next pending titles and how many are left. */
 export interface ListCard extends TaskList {
   pending_count: number
-  preview: { id: string; title: string }[]
+  /** Up to 4 pending tasks, Today first; the card shows the first 3. */
+  preview: { id: string; title: string; estimate_minutes: number | null; subtasks: { done: number; total: number } }[]
 }
 
 export interface ListsResponse {
