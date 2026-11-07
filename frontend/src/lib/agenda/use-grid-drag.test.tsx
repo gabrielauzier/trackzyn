@@ -398,4 +398,50 @@ describe('useGridDrag', () => {
       expect(onDrop).not.toHaveBeenCalled()
     })
   })
+
+  describe('a window from now on, for Novo agendamento (US-8, D10)', () => {
+    function Selection({ limit, onCommit }: { limit: number; onCommit: (draft: Draft) => void }) {
+      const drag = useGridDrag({ pxPerMinute: 1, limit: () => limit, onCommit, scheduleAfterNow: true })
+      return <div data-agenda-column data-testid="column" onPointerDown={(event) => drag.startCreate(event, DAY)} />
+    }
+    const click = (element: HTMLElement, y: number) => {
+      fireEvent.pointerDown(element, { clientX: 0, clientY: y, button: 0 })
+      fireEvent.pointerUp(window, { clientX: 0, clientY: y })
+    }
+
+    it('selects 15:00 – 16:45 from a drag of 15:10 to 16:40 after now, in steps of 15 min', () => {
+      const onCommit = vi.fn()
+      render(<Selection limit={at(14, 7)} onCommit={onCommit} />)
+      drag(screen.getByTestId('column'), at(15, 10), at(16, 40))
+      expect(onCommit).toHaveBeenCalledWith({ mode: 'create', day: DAY, start: at(15, 0), end: at(16, 45), sessionId: null })
+    })
+
+    it('starts at the first quarter from now: a drag from 14:10 at 14:07 starts at 14:15', () => {
+      const onCommit = vi.fn()
+      render(<Selection limit={at(14, 7)} onCommit={onCommit} />)
+      drag(screen.getByTestId('column'), at(14, 10), at(15, 0))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(14, 15), end: at(15, 0) }))
+    })
+
+    it('makes a click after now one hour, not cut at now', () => {
+      const onCommit = vi.fn()
+      render(<Selection limit={at(14, 7)} onCommit={onCommit} />)
+      click(screen.getByTestId('column'), at(18, 5))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(18, 0), end: at(19, 0) }))
+    })
+
+    it('selects on a day that has not begun', () => {
+      const onCommit = vi.fn()
+      render(<Selection limit={0} onCommit={onCommit} />)
+      drag(screen.getByTestId('column'), at(9, 10), at(10, 0))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(9, 0), end: at(10, 0) }))
+    })
+
+    it('AGENDA-23 still stops a window that begins before now at now', () => {
+      const onCommit = vi.fn()
+      render(<Selection limit={at(14, 7)} onCommit={onCommit} />)
+      drag(screen.getByTestId('column'), at(13, 10), at(15, 0))
+      expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(13, 0), end: at(14, 0) }))
+    })
+  })
 })

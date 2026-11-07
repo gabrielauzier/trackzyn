@@ -871,7 +871,13 @@
       "replaces": "Scheduled for {{day}}: this schedule replaces it.",
       "taskTitle": "Task title",
       "backlogHint": "The task is created in the Backlog of this list."
-    }
+    },
+    "drop": {
+      "scheduledAt": "Scheduled for {{day}}, {{time}}",
+      "scheduledOn": "Scheduled for {{day}}",
+      "undo": "Undo"
+    },
+    "schedule": "Schedule"
   },
   "schedule": {
     "dayMonthFormat": "MMM d",

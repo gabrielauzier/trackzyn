@@ -5,14 +5,14 @@ import { toast } from 'sonner'
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
 import { agenda, lists, sessions, tasks } from '@/lib/api'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession, ListCard, Task } from '@/types'
+import type { AgendaSession, ListCard, ScheduledTask, Task } from '@/types'
 import AgendaPage from './agenda'
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
   sessions: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), tasks: vi.fn(), searchTasks: vi.fn(), createTask: vi.fn() },
   agenda: { scheduled: vi.fn() },
-  tasks: { get: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  tasks: { get: vi.fn(), update: vi.fn(), remove: vi.fn(), create: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
 }))
 
@@ -1361,3 +1361,256 @@ describe('AgendaPage: the Sem hora row (US-14)', () => {
     expect(tasks.get).toHaveBeenCalledWith('t8')
   })
 })
+
+describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', () => {
+  const realMatchMedia = window.matchMedia
+  const realWidth = window.innerWidth
+  /** A window `px` wide, whose media queries answer for that width. */
+  function setWidth(px: number) {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: px })
+    window.matchMedia = ((query: string) => {
+      const max = /max-width:\s*(\d+)px/.exec(query)
+      return {
+        matches: max ? px <= Number(max[1]) : false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }
+    }) as unknown as typeof window.matchMedia
+  }
+  afterEach(() => {
+    window.matchMedia = realMatchMedia
+    Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: realWidth })
+    vi.restoreAllMocks()
+  })
+
+  const px = (hours: number, minutes = 0) => (hours * 60 + minutes) * PX_PER_MINUTE
+  const scheduledTask = (id: string, title: string, overrides: Partial<ScheduledTask> = {}): ScheduledTask => ({
+    id,
+    title,
+    list: { id: WORK, name: 'Work', color: 3 },
+    column: 'this_week',
+    position: 0,
+    estimate_minutes: null,
+    scheduled_on: '2026-11-05',
+    scheduled_time: null,
+    series: null,
+    ...overrides,
+  })
+  const columnOf = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-agenda-column="${day}"]`)!
+
+  describe('the toolbar', () => {
+    it('has Schedule, secondary with a clock, right before New session at 1280 px, and it opens New schedule on today without a time', async () => {
+      setWidth(1280)
+      const { user } = renderWithProviders(<AgendaPage />)
+      const schedule = await screen.findByRole('button', { name: 'Schedule' })
+      expect(schedule).toHaveAttribute('data-variant', 'secondary')
+      expect(schedule.querySelector('svg')).toHaveClass('lucide-clock')
+      expect(schedule.nextElementSibling).toBe(screen.getByRole('button', { name: 'New session' }))
+
+      await user.click(schedule)
+      expect(await screen.findByRole('heading', { name: 'New schedule' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Wed, Nov 4' })).toHaveAttribute('aria-pressed', 'true')
+      expect(screen.getByLabelText('Time')).toHaveValue('')
+    })
+
+    it('calls it Agendar in Portuguese', async () => {
+      await i18n.changeLanguage('pt-BR')
+      renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Agendar' })).toBeEnabled()
+    })
+
+    it('has Schedule at 390 px too, and it opens New schedule on the day shown', async () => {
+      setWidth(390)
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('group', { name: 'Days of the week' })
+      await user.click(container.querySelector<HTMLElement>('[data-day-pill="2026-11-05"]')!)
+      await user.click(await screen.findByRole('button', { name: 'Schedule' }))
+      expect(await screen.findByRole('heading', { name: 'New schedule' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Thu, Nov 5' })).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    it.each([390, 1280])('turns Schedule off for a viewer at %i px', async (width) => {
+      setWidth(width)
+      workspace.canWrite = false
+      renderWithProviders(<AgendaPage />)
+      expect(await screen.findByRole('button', { name: 'Schedule' })).toBeDisabled()
+    })
+  })
+
+  describe('selecting a window (US-8, D10)', () => {
+    it('opens New schedule with the day and the window for a selection after now, drawing the draft', async () => {
+      setWidth(1280)
+      const { container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      const thursday = columnOf(container, '2026-11-05')
+      fireEvent.pointerDown(thursday, { clientY: px(15, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(16, 40) })
+      fireEvent.pointerUp(window, { clientY: px(16, 40) })
+      expect(await screen.findByRole('heading', { name: 'New schedule' })).toBeInTheDocument()
+      expect(screen.getByTestId('new-schedule-window')).toHaveTextContent('Thu, Nov 5 · 15:00 – 16:45')
+      expect(screen.queryByRole('heading', { name: 'New session' })).toBeNull()
+      expect(thursday.querySelector('[data-draft]')).toHaveTextContent('15:00 – 16:45')
+    })
+
+    it('opens New session for a selection before now, as before (AGENDA-14)', async () => {
+      setWidth(1280)
+      const { container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      fireEvent.pointerDown(columnOf(container, '2026-11-04'), { clientY: px(9, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(10) })
+      fireEvent.pointerUp(window, { clientY: px(10) })
+      expect(await screen.findByRole('heading', { name: 'New session' })).toBeInTheDocument()
+      expect(screen.queryByRole('heading', { name: 'New schedule' })).toBeNull()
+    })
+
+    it('schedules the task chosen in the window, its estimate from the window, and closes the panel', async () => {
+      setWidth(1280)
+      vi.mocked(tasks.get).mockResolvedValue({
+        id: 't1', list_id: WORK, title: 'Write the report', notes: '', estimate_minutes: null, column: 'today', position: 0,
+        completed_at: null, created_at: '2026-11-01T00:00:00.000Z', subtasks: [], created_via: null, scheduled_on: null, scheduled_time: null, series: null,
+      })
+      vi.mocked(tasks.update).mockResolvedValue({} as Task)
+      const { user, container } = renderWithProviders(<AgendaPage />)
+      await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
+      fireEvent.pointerDown(columnOf(container, '2026-11-05'), { clientY: px(15, 5), button: 0 })
+      fireEvent.pointerUp(window, { clientY: px(15, 5) })
+      await screen.findByRole('heading', { name: 'New schedule' })
+      await user.click(screen.getByRole('combobox', { name: 'Task' }))
+      await user.click(await screen.findByRole('option', { name: 'Write the report' }))
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t1', { scheduled_on: '2026-11-05', scheduled_time: '15:00', estimate_minutes: 60 }))
+      await waitFor(() => expect(screen.queryByRole('heading', { name: 'New schedule' })).toBeNull())
+      expect(container.querySelector('[data-draft]')).toBeNull()
+    })
+
+    it.each([390, 1280])('opens no panel from a selection after now for a viewer at %i px', async (width) => {
+      setWidth(width)
+      workspace.canWrite = false
+      const { container } = renderWithProviders(<AgendaPage />)
+      await waitFor(() => expect(container.querySelector('[data-agenda-column]')).not.toBeNull())
+      const column = container.querySelector<HTMLElement>('[data-agenda-column="2026-11-04"]')!
+      fireEvent.pointerDown(column, { clientY: px(18), button: 0 })
+      fireEvent.pointerMove(window, { clientY: px(19) })
+      fireEvent.pointerUp(window, { clientY: px(19) })
+      expect(container.querySelector('[data-draft]')).toBeNull()
+      expect(screen.queryByRole('heading', { name: 'New schedule' })).toBeNull()
+    })
+  })
+
+  it('+X opens the day panel in the place of the side panel, and Close takes it away (US-14)', async () => {
+    setWidth(1280)
+    vi.mocked(agenda.scheduled).mockResolvedValue({
+      timed: [],
+      untimed: ['a', 'b', 'c', 'd'].map((id, position) => scheduledTask(id, `Task ${id}`, { position })),
+      projected: [],
+    })
+    const { user } = renderWithProviders(<AgendaPage />)
+    await user.click(await screen.findByRole('button', { name: /^See all 4 tasks scheduled on Thu, Nov 5/ }))
+    expect(await screen.findByRole('heading', { name: 'Thursday, Nov 5' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'No time · 4' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('heading', { name: 'Thursday, Nov 5' })).toBeNull()
+  })
+
+  describe('dropping a task (US-6, US-14, D22)', () => {
+    // Each day is 100 px wide from Monday at x = 0; the Sem hora row is from y = -120 to -8, the grid from y = 0.
+    beforeEach(() => {
+      setWidth(1280)
+      const real = HTMLElement.prototype.getBoundingClientRect
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        const { agendaColumn, untimedDay } = this.dataset
+        const left = (day: string) => (Number(day.slice(8)) - 2) * 100
+        if (untimedDay) return DOMRect.fromRect({ x: left(untimedDay), y: -120, width: 100, height: 112 })
+        if (agendaColumn) return DOMRect.fromRect({ x: left(agendaColumn), y: 0, width: 100, height: 24 * 60 * PX_PER_MINUTE })
+        if (this.hasAttribute('data-agenda-scroll')) return DOMRect.fromRect({ x: 0, y: 0, width: 700, height: 24 * 60 * PX_PER_MINUTE })
+        return real.call(this)
+      })
+      vi.mocked(tasks.update).mockResolvedValue({} as Task)
+    })
+
+    function dragTo(element: HTMLElement, from: { x: number; y: number }, to: { x: number; y: number }) {
+      fireEvent.pointerDown(element, { clientX: from.x, clientY: from.y, button: 0 })
+      fireEvent.pointerMove(window, { clientX: to.x, clientY: to.y })
+      fireEvent.pointerUp(window, { clientX: to.x, clientY: to.y })
+    }
+    const lastToast = () => vi.mocked(toast.success).mock.calls.at(-1)!
+
+    it('from Sem hora to the grid: saves the start time and 1h of estimate, and Desfazer puts the day, the time and the estimate back', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [scheduledTask('u', 'Call the bank')], projected: [] })
+      const { container } = renderWithProviders(<AgendaPage />)
+      await waitFor(() => expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull())
+      dragTo(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { x: 320, y: -100 }, { x: 450, y: px(15, 20) })
+
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('u', { scheduled_on: '2026-11-06', scheduled_time: '15:15', estimate_minutes: 60 }))
+      await waitFor(() => expect(toast.success).toHaveBeenCalled())
+      const [text, options] = lastToast()
+      expect(text).toBe('Scheduled for Fri, Nov 6, 15:15')
+      const action = (options as { action: { label: string; onClick: () => void } }).action
+      expect(action.label).toBe('Undo')
+      action.onClick()
+      await waitFor(() => expect(tasks.update).toHaveBeenLastCalledWith('u', { scheduled_on: '2026-11-05', scheduled_time: null, estimate_minutes: null }))
+    })
+
+    it('says Agendada para <dia>, HH:MM with Desfazer in Portuguese', async () => {
+      await i18n.changeLanguage('pt-BR')
+      vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [scheduledTask('u', 'Ligar para o banco', { estimate_minutes: 30 })], projected: [] })
+      const { container } = renderWithProviders(<AgendaPage />)
+      await waitFor(() => expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull())
+      dragTo(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { x: 320, y: -100 }, { x: 450, y: px(15, 20) })
+      // With an estimate, the estimate stays (D22).
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('u', { scheduled_on: '2026-11-06', scheduled_time: '15:15' }))
+      await waitFor(() => expect(toast.success).toHaveBeenCalled())
+      const [text, options] = lastToast()
+      expect(text).toBe('Agendada para sex, 6 nov, 15:15')
+      expect((options as { action: { label: string } }).action.label).toBe('Desfazer')
+    })
+
+    it('a block dragged to another day and time in the future keeps its estimate (US-6)', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],
+        untimed: [],
+        projected: [],
+      })
+      renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 550, y: px(8, 10) })
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-07', scheduled_time: '08:00' }))
+      await waitFor(() => expect(lastToast()[0]).toBe('Scheduled for Sat, Nov 7, 08:00'))
+    })
+
+    it('a block dragged to Sem hora loses its time, and the notice says the day only', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],
+        untimed: [],
+        projected: [],
+      })
+      renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 450, y: -60 })
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-06', scheduled_time: null }))
+      await waitFor(() => expect(lastToast()[0]).toBe('Scheduled for Fri, Nov 6'))
+    })
+
+    it('asks Só esta ocorrência or Esta e as próximas before moving an occurrence of a series (US-12)', async () => {
+      const rule = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Weekly review', { scheduled_time: '10:00', estimate_minutes: 60, series: { id: 'sr', rule } })],
+        untimed: [],
+        projected: [],
+      })
+      const { user } = renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Weekly review/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 350, y: px(16, 10) })
+      expect(await screen.findByRole('button', { name: /^This occurrence only/ })).toBeInTheDocument()
+      expect(tasks.update).not.toHaveBeenCalled()
+      await user.click(screen.getByRole('button', { name: /^This occurrence only/ }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-05', scheduled_time: '16:00', scope: 'occurrence' }))
+    })
+  })
+})
+

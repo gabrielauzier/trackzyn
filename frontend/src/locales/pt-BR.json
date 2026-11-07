@@ -871,7 +871,13 @@
       "replaces": "Agendada para {{day}}: este agendamento substitui o atual.",
       "taskTitle": "Título da tarefa",
       "backlogHint": "A tarefa é criada no Backlog desta lista."
-    }
+    },
+    "drop": {
+      "scheduledAt": "Agendada para {{day}}, {{time}}",
+      "scheduledOn": "Agendada para {{day}}",
+      "undo": "Desfazer"
+    },
+    "schedule": "Agendar"
   },
   "schedule": {
     "dayMonthFormat": "d MMM",

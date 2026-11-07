@@ -1184,8 +1184,8 @@ T37
 
 **Done when**:
 
-- [ ] `viewer`: botão desabilitado, seleção no futuro não abre painel; testes a 390 px e 1280 px
-- [ ] Gate check passes (Build da fase)
+- [x] `viewer`: botão desabilitado, seleção no futuro não abre painel; testes a 390 px e 1280 px
+- [x] Gate check passes (Build da fase)
 
 **Tests**: unit
 **Gate**: build

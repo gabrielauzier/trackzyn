@@ -90,6 +90,11 @@ export interface GridDragOptions {
   onScheduledDrop?: (drop: ScheduledDrop) => void
   /** The zone under the pointer; absent, the column the gesture began on, on the day of `dayAt`. */
   zoneAt?: (clientX: number, clientY: number) => DropZone | null
+  /**
+   * A window selected from now on is not cut at now, for `Novo agendamento` (US-8, D10): it starts at the first quarter
+   * from now and may run to midnight. Absent, every selection stops at now (AGENDA-23).
+   */
+  scheduleAfterNow?: boolean
 }
 
 const MAX_MINUTES = DAY_MINUTES
@@ -127,6 +132,8 @@ interface Gesture {
   moved: boolean
   /** The draft before the gesture: a pending new time stays when the block is released in place. */
   before: Draft | null
+  /** A selection that begins at now or later: the window of a new schedule (US-8). */
+  future: boolean
 }
 
 /** A click: the pointer travelled less than this, in px, before it was released. */
@@ -154,13 +161,22 @@ const columnTopOf = (event: ReactPointerEvent) => {
  * (ADJ-10), pull the top or the bottom edge (AGENDA-18, AGENDA-29) and move a whole block, saved or new
  * (AGENDA-30, ADJ-12). Everything snaps to 15 min, never ends after now and lasts from 1 min to 24 h.
  */
-export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCommit, onScheduledDrop, zoneAt }: GridDragOptions) {
+export function useGridDrag({
+  pxPerMinute,
+  snapMinutes = 15,
+  limit,
+  dayAt,
+  onCommit,
+  onScheduledDrop,
+  zoneAt,
+  scheduleAfterNow = false,
+}: GridDragOptions) {
   const [draft, setDraft] = useState<Draft | null>(null)
   const gesture = useRef<Gesture | null>(null)
   const latest = useRef<Draft | null>(null)
-  const options = useRef({ pxPerMinute, snapMinutes, limit, dayAt, onCommit, onScheduledDrop, zoneAt })
+  const options = useRef({ pxPerMinute, snapMinutes, limit, dayAt, onCommit, onScheduledDrop, zoneAt, scheduleAfterNow })
   useEffect(() => {
-    options.current = { pxPerMinute, snapMinutes, limit, dayAt, onCommit, onScheduledDrop, zoneAt }
+    options.current = { pxPerMinute, snapMinutes, limit, dayAt, onCommit, onScheduledDrop, zoneAt, scheduleAfterNow }
   })
   const [scheduledDraft, setScheduledDraft] = useState<ScheduledDraft | null>(null)
   const scheduledGesture = useRef<ScheduledGesture | null>(null)
@@ -186,6 +202,12 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
     const pointer = (clientY - current.columnTop) / px
     const { target, mode } = current
 
+    if (mode === 'create' && current.future) {
+      const first = ceil(limitOf(target.day))
+      const start = Math.max(first, floor(Math.max(0, Math.min(current.grab, pointer))))
+      const end = Math.min(DAY_MINUTES, Math.max(ceil(Math.max(current.grab, pointer)), start + step))
+      return end > start ? { mode, day: target.day, start, end, sessionId: target.sessionId } : null
+    }
     if (mode === 'create') {
       const cap = floor(Math.min(limitOf(target.day), DAY_MINUTES))
       const from = Math.max(0, Math.min(current.grab, pointer))
@@ -219,15 +241,17 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
       if (event.button !== 0) return
       event.stopPropagation()
       const columnTop = columnTopOf(event)
+      const grab = (event.clientY - columnTop) / options.current.pxPerMinute
       const current: Gesture = {
         mode,
         target,
         columnTop,
-        grab: (event.clientY - columnTop) / options.current.pxPerMinute,
+        grab,
         startX: event.clientX,
         startY: event.clientY,
         moved: false,
         before: latest.current,
+        future: mode === 'create' && options.current.scheduleAfterNow && grab >= options.current.limit(target.day),
       }
       if (mode === 'create') {
         const first = place(current, event.clientX, event.clientY)
@@ -265,7 +289,8 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
       if (current.mode === 'create' && !current.moved) {
         // A click creates an hour, cut at now on today and at midnight (ADJ-10).
         const { limit: limitOf, snapMinutes: step } = options.current
-        const cap = Math.floor(Math.min(limitOf(final.day), DAY_MINUTES) / step) * step
+        // A new schedule runs to midnight (US-8).
+        const cap = current.future ? DAY_MINUTES : Math.floor(Math.min(limitOf(final.day), DAY_MINUTES) / step) * step
         final = { ...final, end: Math.max(final.end, Math.min(cap, final.start + CLICK_MINUTES)) }
         show(final)
       }
