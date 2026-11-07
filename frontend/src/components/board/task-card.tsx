@@ -45,7 +45,13 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
   const locale = i18n.language
 
   return (
-    <Card className={cn('group relative gap-2 px-3 py-2.5 shadow-none', className)}>
+    // The accent border while pressed, and while the card keeps the focus a click gave it on the board.
+    <Card
+      className={cn(
+        'group relative gap-2 px-3 py-2.5 shadow-none transition-colors active:border-primary group-focus/task:border-primary',
+        className,
+      )}
+    >
       {actions && (
         <div
           className={cn(
@@ -113,7 +119,7 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
           onClick={() => onOpen(task)}
           title={task.title}
           className={cn(
-            'line-clamp-3 min-w-0 flex-1 text-left text-sm font-medium break-words hover:underline',
+            'line-clamp-3 min-w-0 flex-1 cursor-pointer text-left text-sm font-medium break-words hover:underline',
             done && 'text-muted-foreground line-through',
           )}
         >

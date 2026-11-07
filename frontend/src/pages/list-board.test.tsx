@@ -855,6 +855,50 @@ describe('ListBoardPage', () => {
     expect(tasks.get).toHaveBeenCalledWith(TODAY_TASK)
   })
 
+  it('a writer sees the grab cursor on a task card, and the grabbing one while dragging it', async () => {
+    layOutColumns()
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
+    expect(wrapper).toHaveClass('cursor-grab')
+    // The title opens the task: it shows the pointer, not the grab hand.
+    expect(within(wrapper).getByRole('button', { name: 'DEV-1725' })).toHaveClass('cursor-pointer')
+
+    wrapper.focus()
+    await user.keyboard(' ')
+    // The card that follows the pointer is the grabbed one, with the accent border.
+    const overlay = await waitFor(() => {
+      const copies = document.querySelectorAll<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)
+      expect(copies.length).toBe(2)
+      return copies[1]
+    })
+    expect(overlay).toHaveClass('cursor-grabbing')
+    expect(overlay.querySelector('[data-slot="card"]')).toHaveClass('border-primary')
+    await user.keyboard('{Escape}')
+  })
+
+  it('a clicked task card keeps the accent border until something else is clicked', async () => {
+    const { user } = renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
+    const cardNode = wrapper.querySelector<HTMLElement>('[data-slot="card"]')!
+    // Pressed, and then for as long as the card keeps the focus the click gave it.
+    expect(wrapper).toHaveClass('group/task', 'outline-none')
+    expect(cardNode).toHaveClass('active:border-primary', 'group-focus/task:border-primary')
+    expect(cardNode.className).not.toMatch(/(^|\s)border-primary(\s|$)/)
+
+    // A click on the body of the card (its number in Today) focuses the card itself.
+    await user.click(within(wrapper).getByTitle('Order in Today'))
+    expect(wrapper).toHaveFocus()
+
+    // A click elsewhere takes the focus, and the border, away.
+    await user.click(document.body)
+    expect(wrapper).not.toHaveFocus()
+    expect(wrapper).toBeInTheDocument()
+  })
+
   it('lets a viewer neither drag, add nor complete', async () => {
     state.canWrite = false
     renderBoard()
@@ -862,7 +906,11 @@ describe('ListBoardPage', () => {
     await screen.findByText('DEV-1725')
     const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
     expect(wrapper).not.toHaveAttribute('aria-roledescription')
-    expect(wrapper).not.toHaveAttribute('tabindex')
+    // Out of the Tab order and not a button: -1 only lets a click focus it, for the selected border.
+    expect(wrapper).toHaveAttribute('tabindex', '-1')
+    expect(wrapper).not.toHaveAttribute('role')
+    // Nothing to pick up, so no grab cursor.
+    expect(wrapper.className).not.toMatch(/(^|\s)cursor-grab/)
     expect(screen.queryByRole('button', { name: 'Add task' })).not.toBeInTheDocument()
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
     expect(within(wrapper).queryByRole('button', { name: 'Move right' })).not.toBeInTheDocument()

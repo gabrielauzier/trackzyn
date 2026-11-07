@@ -20,6 +20,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { cn } from '@/lib/utils'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { formatClock } from '@/lib/focus/format-clock'
@@ -456,8 +457,15 @@ export default function ListBoardPage() {
             was over another column's SortableContext, and looked like it had vanished. */}
         <DragOverlay>
           {draggedCard && (
-            <div data-task-id={draggedCard.task.id}>
-              <TaskCard task={draggedCard.task} column={draggedCard.column} number={draggedCard.number} canWrite={canWrite} onOpen={noop} />
+            <div data-task-id={draggedCard.task.id} className="cursor-grabbing">
+              <TaskCard
+                task={draggedCard.task}
+                column={draggedCard.column}
+                number={draggedCard.number}
+                canWrite={canWrite}
+                onOpen={noop}
+                className="border-primary"
+              />
             </div>
           )}
         </DragOverlay>
@@ -506,7 +514,10 @@ function SortableTask({ id, canWrite, children }: { id: string; canWrite: boolea
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         transition,
       }}
-      className={isDragging ? 'opacity-40' : undefined}
+      // As on the home screen: the grab hand where the card can be picked up, and a click focuses the
+      // card so its accent border stays; a viewer's card is focusable by a click, out of the Tab order.
+      tabIndex={canWrite ? undefined : -1}
+      className={cn('group/task outline-none', canWrite && 'cursor-grab', isDragging && 'opacity-40')}
       {...dragProps}
     >
       {children}
