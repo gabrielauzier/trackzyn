@@ -357,6 +357,74 @@
       "maxLength": null
     }
   ],
+  "task_series": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "freq",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 8
+    },
+    {
+      "column": "interval",
+      "type": "smallint",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "weekdays",
+      "type": "ARRAY",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "month_day",
+      "type": "smallint",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "until",
+      "type": "date",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "count",
+      "type": "smallint",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_count",
+      "type": "smallint",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "ended_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
   "tasks": [
     {
       "column": "id",
@@ -451,6 +519,12 @@
     {
       "column": "schedule_applied_at",
       "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "series_id",
+      "type": "uuid",
       "nullable": true,
       "maxLength": null
     }

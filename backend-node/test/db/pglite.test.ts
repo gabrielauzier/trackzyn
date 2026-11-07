@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { connectPglite, type Database } from '../../src/db/client.ts'
 import { applyMigrations } from '../../src/db/migrate.ts'
 
-const TABLES = ['app_settings', 'files', 'focus_actions', 'focus_sessions', 'lists', 'personal_access_tokens', 'subtasks', 'task_idempotency_keys', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
+const TABLES = ['app_settings', 'files', 'focus_actions', 'focus_sessions', 'lists', 'personal_access_tokens', 'subtasks', 'task_idempotency_keys', 'task_series', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
   return ((await db.execute(query)) as unknown as { rows: T[] }).rows
@@ -29,9 +29,9 @@ describe('the Drizzle schema on PGlite', () => {
 
   it('matches the PostgreSQL column catalog', async () => {
     // pg-columns.json is information_schema.columns of a PostgreSQL 16 that ran the same migrations.
-    // Last read on 2026-11-07 from a PostgreSQL 16.15, through 0010_task_schedule, in a scratch database that
-    // got the drizzle/*.sql files in journal order: the only change from the reading through 0009 was
-    // tasks.scheduled_on (date), tasks.scheduled_time (time) and tasks.schedule_applied_at (timestamptz), all nullable.
+    // Last read on 2026-11-07 from a PostgreSQL 16.15, through 0011_task_series, in a scratch database that
+    // got the drizzle/*.sql files in journal order: the only change from the reading through 0010 was the new
+    // task_series table and tasks.series_id (uuid, nullable).
     const expected = JSON.parse(readFileSync(join(import.meta.dirname, '../fixtures/pg-columns.json'), 'utf8')) as Record<
       string,
       Array<{ column: string; type: string; nullable: boolean; maxLength: number | null }>

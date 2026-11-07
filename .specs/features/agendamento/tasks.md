@@ -301,8 +301,8 @@ T37
 
 **Done when**:
 
-- [ ] Cada `check` tem um caso aceito e um recusado; apagar o workspace apaga a série; apagar a série deixa as tarefas com `series_id` nulo
-- [ ] Gate check passes (full)
+- [x] Cada `check` tem um caso aceito e um recusado; apagar o workspace apaga a série; apagar a série deixa as tarefas com `series_id` nulo
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
