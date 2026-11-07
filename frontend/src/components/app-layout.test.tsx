@@ -4,8 +4,11 @@
  */
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { AppLayout } from './app-layout'
+import { DraftGuardProvider } from '@/lib/plan/draft-guard'
+import { useDraftGuard } from '@/lib/plan/draft-guard-context'
 import FocusPage from '@/pages/focus'
 import { i18n, renderWithProviders, t } from '@/test/utils'
 import { installPrintStyles } from '@/test/print-styles'
@@ -218,6 +221,47 @@ describe('app layout sidebar', () => {
     renderWithProviders(<AppLayout />, { route: '/' })
 
     expect(within(screen.getByRole('navigation')).getByRole('link', { name: 'Plan' })).toHaveAttribute('href', '/planejar')
+  })
+
+  it('PLAN-36 a sidebar link out of an unsaved plan asks Descartar o rascunho? and leaves only on Descartar', async () => {
+    state.canWrite = true
+    await i18n.changeLanguage('pt-BR')
+    try {
+      /** The plan of a day holding an unsaved draft. */
+      function PlanWithDraft() {
+        const { setDraftDay } = useDraftGuard()
+        useEffect(() => setDraftDay('2026-11-09'), [setDraftDay])
+        return null
+      }
+      function Where() {
+        return <span data-testid="where">{useLocation().pathname}</span>
+      }
+      const { user } = renderWithProviders(
+        <DraftGuardProvider>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route path="/planejar/:day" element={<PlanWithDraft />} />
+              <Route path="/agenda" element={null} />
+            </Route>
+          </Routes>
+          <Where />
+        </DraftGuardProvider>,
+        { route: '/planejar/2026-11-09' },
+      )
+      const agenda = within(screen.getByRole('navigation')).getByRole('link', { name: 'Agenda' })
+
+      await user.click(agenda)
+      const dialog = await screen.findByRole('dialog', { name: 'Descartar o rascunho?' })
+      expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-09')
+      await user.click(within(dialog).getByRole('button', { name: 'Continuar planejando' }))
+      expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-09')
+
+      await user.click(agenda)
+      await user.click(within(await screen.findByRole('dialog', { name: 'Descartar o rascunho?' })).getByRole('button', { name: 'Descartar' }))
+      await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/agenda'))
+    } finally {
+      await i18n.changeLanguage('en')
+    }
   })
 
   it('selects Archived lists on its page', () => {

@@ -1,8 +1,12 @@
+import { useEffect, useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
+import { useLocation } from 'react-router-dom'
 
 import { CommandPalette } from '@/components/command-palette'
-import { renderWithProviders } from '@/test/utils'
+import { DraftGuardProvider } from '@/lib/plan/draft-guard'
+import { useDraftGuard } from '@/lib/plan/draft-guard-context'
+import { i18n, renderWithProviders } from '@/test/utils'
 
 const state = vi.hoisted(() => ({ isSuperuser: false }))
 
@@ -15,10 +19,27 @@ vi.mock('@/hooks/use-feature-flags', () => ({
 
 const options = () => screen.getAllByRole('option').map((option) => option.textContent ?? '')
 
-afterEach(() => {
+afterEach(async () => {
   state.isSuperuser = false
   localStorage.clear()
+  await i18n.changeLanguage('en')
 })
+
+/** The plan of a day holding an unsaved draft, with the palette open over it. */
+function PlanWithDraft() {
+  const { setDraftDay } = useDraftGuard()
+  const [open, setOpen] = useState(true)
+  useEffect(() => setDraftDay('2026-11-09'), [setDraftDay])
+  return (
+    <>
+      <CommandPalette open={open} onOpenChange={setOpen} />
+      <button type="button" onClick={() => setOpen(true)}>
+        palette
+      </button>
+      <span data-testid="where">{useLocation().pathname}</span>
+    </>
+  )
+}
 
 describe('CommandPalette', () => {
   it('the palette hides admin screens from non-admins', async () => {
@@ -48,5 +69,28 @@ describe('CommandPalette', () => {
     for (const shown of ['Files', 'Components', 'Upload a file']) {
       expect(home.some((text) => text.includes(shown)), shown).toBe(true)
     }
+  })
+
+  it('PLAN-36 leaving an unsaved plan from the palette asks Descartar o rascunho? first', async () => {
+    await i18n.changeLanguage('pt-BR')
+    const { user } = renderWithProviders(
+      <DraftGuardProvider>
+        <PlanWithDraft />
+      </DraftGuardProvider>,
+      { route: '/planejar/2026-11-09' },
+    )
+    const reports = (await screen.findAllByRole('option')).find((option) => option.textContent?.includes('Relatórios'))!
+    await user.click(reports)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Descartar o rascunho?' })
+    expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-09')
+    await user.click(within(dialog).getByRole('button', { name: 'Continuar planejando' }))
+    expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-09')
+
+    // The palette again: `Descartar` goes where it was asked to.
+    await user.click(screen.getByRole('button', { name: 'palette' }))
+    await user.click((await screen.findAllByRole('option')).find((option) => option.textContent?.includes('Relatórios'))!)
+    await user.click(within(await screen.findByRole('dialog', { name: 'Descartar o rascunho?' })).getByRole('button', { name: 'Descartar' }))
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/reports'))
   })
 })
