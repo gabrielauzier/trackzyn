@@ -214,9 +214,9 @@ O que o código já fixa:
 | PLAN-13 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-14 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-15 | P1: Planejar pausas | Tasks | Implementing |
-| PLAN-16 | P1: Planejar pausas | Tasks | In Tasks |
+| PLAN-16 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-17 | P1: Planejar pausas | Tasks | Implementing |
-| PLAN-18 | P1: Planejar pausas | Tasks | In Tasks |
+| PLAN-18 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-19 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-20 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-21 | P1: Ver se o dia cabe | Tasks | Implementing |

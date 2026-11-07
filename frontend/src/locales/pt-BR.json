@@ -1007,6 +1007,17 @@
       "planned": "no plano {{time}}",
       "noEstimate": "sem estimativa",
       "empty": "Nenhuma tarefa encontrada"
+    },
+    "breakRange": "A pausa vai de 5 min a 2h",
+    "breakDialog": {
+      "title": "Nova pausa",
+      "hint": "De 5 min a 2h. Ao começar a pausa, o tempo vira um Intervalo nesta lista.",
+      "name": "Nome",
+      "duration": "Duração",
+      "list": "Lista do intervalo",
+      "nameRange": "O nome vai de 1 a 40 caracteres",
+      "cancel": "Cancelar",
+      "create": "Criar pausa"
     }
   }
 }

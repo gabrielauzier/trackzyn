@@ -448,10 +448,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Nome vazio ou com mais de 40 caracteres não cria; duração fora de 5 min a 2h mostra `A pausa vai de 5 min a 2h`
-- [ ] Esc fecha sem criar
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `break-dialog.test.tsx`
+- [x] Nome vazio ou com mais de 40 caracteres não cria; duração fora de 5 min a 2h mostra `A pausa vai de 5 min a 2h`
+- [x] Esc fecha sem criar
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `break-dialog.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

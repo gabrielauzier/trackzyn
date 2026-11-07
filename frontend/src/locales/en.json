@@ -1007,6 +1007,17 @@
       "planned": "planned {{time}}",
       "noEstimate": "no estimate",
       "empty": "No tasks found"
+    },
+    "breakRange": "A break lasts from 5 min to 2h",
+    "breakDialog": {
+      "title": "New break",
+      "hint": "From 5 min to 2h. When you start the break, the time becomes a Break in this list.",
+      "name": "Name",
+      "duration": "Duration",
+      "list": "Break list",
+      "nameRange": "The name takes 1 to 40 characters",
+      "cancel": "Cancel",
+      "create": "Create break"
     }
   }
 }
