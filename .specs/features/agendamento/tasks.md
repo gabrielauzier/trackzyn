@@ -1400,8 +1400,8 @@ T49 → T50 → T51
 
 **Done when**:
 
-- [ ] `delete_task` numa ocorrência cria a próxima e mantém a série; numa tarefa sem série, nada muda
-- [ ] Gate check passes (full + `npm --prefix backend-node run build`)
+- [x] `delete_task` numa ocorrência cria a próxima e mantém a série; numa tarefa sem série, nada muda
+- [x] Gate check passes (full + `npm --prefix backend-node run build`)
 
 **Tests**: integration
 **Gate**: build

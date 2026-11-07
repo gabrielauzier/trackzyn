@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { tasks } from '../../src/db/schema.ts'
+import { taskSeries, tasks } from '../../src/db/schema.ts'
 import { callTool, connect, listen } from '../support/mcp.ts'
 import { inWorkspace, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
@@ -170,6 +170,32 @@ describe('get_board and get_task apply due schedules (US-4, AD-009)', () => {
     expect(['backlog', 'this_week']).toContain(saved!.column)
 
     expect((await callTool(client, 'get_task', { task_id: id })).json()).toMatchObject({ id, column: 'today', scheduled_on: date(-1) })
+  })
+})
+
+describe('delete_task on an occurrence (US-12, D13)', () => {
+  it('deletes only this occurrence and creates the next, keeping the series, as REST DELETE without a scope', async () => {
+    const { client, create, stored } = await setup()
+    const created = (await create({ scheduled_on: date(20), scheduled_time: '09:00', recurrence: { freq: 'daily', interval: 1 } })).json() as { id: string; series: { id: string } }
+    const id = created.id
+    const seriesId = created.series.id
+
+    const result = await callTool(client, 'delete_task', { task_id: id })
+    expect(result.isError).toBe(false)
+    expect(result.json()).toEqual({ id, deleted: true })
+
+    expect((await stored()).map((task) => [task.title, task.seriesId, task.scheduledOn, task.scheduledTime])).toEqual([
+      ['Review', seriesId, date(21), '09:00:00'],
+    ])
+    const [series] = await t.ctx.db.select().from(taskSeries).where(eq(taskSeries.id, seriesId))
+    expect(series).toMatchObject({ createdCount: 2, endedAt: null })
+  })
+
+  it('deletes a task outside a series and creates nothing', async () => {
+    const { client, create, stored } = await setup()
+    const id = (await create({ scheduled_on: date(20) })).json().id as string
+    expect((await callTool(client, 'delete_task', { task_id: id })).json()).toEqual({ id, deleted: true })
+    expect(await stored()).toEqual([])
   })
 })
 

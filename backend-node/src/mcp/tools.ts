@@ -22,9 +22,9 @@ import { buildBoard } from '../services/board.ts'
 import { createSubtask } from '../services/subtasks.ts'
 import type { Database } from '../db/client.ts'
 import { applyDueSchedules, setSchedule } from '../services/schedule.ts'
-import { setRecurrence } from '../services/series.ts'
+import { deleteOccurrence, setRecurrence } from '../services/series.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
-import { deleteTask, getTask, moveTask } from '../services/tasks.ts'
+import { getTask, moveTask } from '../services/tasks.ts'
 
 /** Who is calling and from where, as the guards of `POST /api/mcp` left them. */
 export interface ToolCaller {
@@ -178,14 +178,16 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'delete_task',
-    description: 'Delete a task with its subtasks and the time recorded on it. This cannot be undone.',
+    description:
+      'Delete a task with its subtasks and the time recorded on it. This cannot be undone. On a repeating task, it deletes only this occurrence and creates the next one; the recurrence goes on.',
     scope: 'tasks:delete',
     write: true,
     input: described(taskParams, { task_id: TASK_ID }),
     pathArguments: ['task_id'],
     run: async ({ ctx, workspace }, { task_id }) => {
       const id = task_id.toLowerCase()
-      await deleteTask(ctx.db, id, workspace.workspace.id)
+      // As REST DELETE without a scope: an occurrence is deleted alone and the next one is created (US-12, D13).
+      await deleteOccurrence(ctx.db, id, workspace.workspace.id, 'occurrence', workspace.user.id)
       return { id, deleted: true }
     },
   }),
