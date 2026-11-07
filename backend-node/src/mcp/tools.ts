@@ -5,12 +5,26 @@ import { zodIssueToItem } from '../plugins/errors.ts'
 import { type WorkspaceContext, ensureWritable } from '../plugins/workspace.ts'
 import { listParams, listsView } from '../routes/lists.ts'
 import { withoutNul } from '../routes/schemas.ts'
-import { addSubtaskBody, createTaskBody, moveTaskBody, taskParams, toSubtaskRead, toTaskRead, updateTaskBody } from '../routes/tasks.ts'
+import {
+  addSubtaskBody,
+  createTaskBody,
+  moveTaskBody,
+  recurrenceBody,
+  scheduleFields,
+  taskParams,
+  toSubtaskRead,
+  toTaskRead,
+  updateTaskAndSchedule,
+  updateTaskBody,
+} from '../routes/tasks.ts'
 import type { TokenPrincipal, TokenScope } from '../services/access-tokens.ts'
 import { buildBoard } from '../services/board.ts'
 import { createSubtask } from '../services/subtasks.ts'
+import type { Database } from '../db/client.ts'
+import { setSchedule } from '../services/schedule.ts'
+import { setRecurrence } from '../services/series.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
-import { deleteTask, getTask, moveTask, updateTask } from '../services/tasks.ts'
+import { deleteTask, getTask, moveTask } from '../services/tasks.ts'
 
 /** Who is calling and from where, as the guards of `POST /api/mcp` left them. */
 export interface ToolCaller {
@@ -41,6 +55,15 @@ function described<Input extends z.ZodObject>(input: Input, texts: { [Field in k
 
 const TASK_ID = 'The id of the task, as returned by get_board or create_task.'
 
+/** The schedule fields of create_task and update_task (US-7). */
+const scheduleInput = { ...scheduleFields, recurrence: recurrenceBody.nullable().optional() }
+const SCHEDULE_TEXTS = {
+  scheduled_on: 'The day to do the task (YYYY-MM-DD) in the workspace timezone, today or later, or null for none. A day of this week takes a backlog task to this_week; today takes it to today.',
+  scheduled_time: 'The start time (HH:MM, in steps of 15 minutes) in the workspace timezone, or null for none. Needs scheduled_on.',
+  recurrence:
+    'Makes the task repeat from scheduled_on, or null to stop. {freq: daily | weekly | monthly, interval: 1 to 99, weekdays: [1 (Monday) to 7 (Sunday)] for weekly, month_day: 1 to 31 for monthly, until: YYYY-MM-DD or count: 1 to 999 to end it}. The next occurrence is created when this one is completed. Needs scheduled_on.',
+}
+
 const TOOLS: readonly Tool[] = [
   tool({
     name: 'list_lists',
@@ -52,7 +75,7 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'get_board',
-    description: 'Get the board of a list: its tasks grouped by column (backlog, this_week, today, done), with estimates, time spent and subtask progress.',
+    description: 'Get the board of a list: its tasks grouped by column (backlog, this_week, today, done), with estimates, time spent, subtask progress, the scheduled day and time and the recurrence rule with its next day.',
     scope: 'tasks:read',
     write: false,
     input: described(listParams, { list_id: 'The id of the list, as returned by list_lists.' }),
@@ -61,7 +84,7 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'get_task',
-    description: 'Get one task with its notes, estimate, column and subtasks.',
+    description: 'Get one task with its notes, estimate, column, subtasks, scheduled day and time and the recurrence rule with its next day.',
     scope: 'tasks:read',
     write: false,
     input: described(taskParams, { task_id: TASK_ID }),
@@ -70,10 +93,11 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'create_task',
-    description: 'Create a task in a list, optionally with notes, an estimate and subtasks. It goes to the end of its column. Send an idempotency_key when you may retry, so that a retry does not create the task twice. The list must not be archived.',
+    description: 'Create a task in a list, optionally with notes, an estimate, subtasks, a scheduled day and time and a recurrence. It goes to the end of its column. Send an idempotency_key when you may retry, so that a retry does not create the task twice. The list must not be archived.',
     scope: 'tasks:create',
     write: true,
-    input: described(createTaskBody.extend({ idempotency_key: withoutNul(z.string().min(1).max(255)).optional() }), {
+    input: described(createTaskBody.extend({ ...scheduleInput, idempotency_key: withoutNul(z.string().min(1).max(255)).optional() }), {
+      ...SCHEDULE_TEXTS,
       list_id: 'The id of the list, as returned by list_lists.',
       title: 'The title of the task, 1 to 255 characters.',
       estimate_minutes: 'How long the task should take, from 1 to 1440 minutes, or null for no estimate.',
@@ -82,25 +106,40 @@ const TOOLS: readonly Tool[] = [
       subtasks: 'Subtask titles in order, up to 50, each 1 to 255 characters.',
       idempotency_key: 'Any unique string, up to 255 characters. Within 24 hours, the same key with the same arguments returns the same task and replayed: true instead of creating another; with other arguments it fails.',
     }),
-    run: async ({ ctx, workspace, principal }, { idempotency_key, ...body }) => {
-      const { task, replayed } = await createTaskFromToken(ctx.db, workspace.workspace.id, principal, toTaskIntake(body), idempotency_key)
+    run: async ({ ctx, workspace, principal }, { idempotency_key, recurrence, ...body }) => {
+      const workspaceId = workspace.workspace.id
+      const input = toTaskIntake(body)
+      const on = input.scheduledOn ?? null
+      const time = input.scheduledTime ?? null
+      // Created, scheduled and made to repeat in one transaction, so a refused schedule or rule creates nothing:
+      // a time or a rule without a day is refused with 422 (US-7).
+      const { task, replayed } = await ctx.db.transaction(async (transaction) => {
+        const tx = transaction as Database
+        const created = await createTaskFromToken(tx, workspaceId, principal, input, idempotency_key)
+        if (created.replayed) return created
+        let scheduled = created.task
+        if (on !== null || time !== null) scheduled = await setSchedule(tx, scheduled.id, workspaceId, { on, time }, workspace.user.id)
+        if (recurrence != null) scheduled = await setRecurrence(tx, scheduled.id, workspaceId, recurrence)
+        return { task: scheduled, replayed: false }
+      })
       return { ...toTaskRead(task), replayed }
     },
   }),
   tool({
     name: 'update_task',
-    description: 'Change the title, estimate or notes of a task. Send only the fields to change. To change its column, use move_task.',
+    description: 'Change the title, estimate, notes, scheduled day and time or recurrence of a task. Send only the fields to change; a new day keeps the time. To change its column, use move_task.',
     scope: 'tasks:write',
     write: true,
-    input: described(taskParams.extend(updateTaskBody.shape), {
+    input: described(taskParams.extend({ ...updateTaskBody.shape, ...scheduleInput }), {
+      ...SCHEDULE_TEXTS,
       task_id: TASK_ID,
       title: 'The new title, 1 to 255 characters.',
       estimate_minutes: 'The new estimate, from 1 to 1440 minutes, or null to remove it.',
       notes: 'The new notes, replacing the current ones, up to 10000 characters.',
     }),
     pathArguments: ['task_id'],
-    run: async ({ ctx, workspace }, { task_id, title, estimate_minutes, notes }) =>
-      toTaskRead(await updateTask(ctx.db, task_id.toLowerCase(), workspace.workspace.id, { title, estimateMinutes: estimate_minutes, notes })),
+    run: async ({ ctx, workspace }, { task_id, ...changes }) =>
+      toTaskRead(await updateTaskAndSchedule(ctx.db, task_id.toLowerCase(), workspace.workspace.id, workspace.user.id, changes)),
   }),
   tool({
     name: 'move_task',

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
+import type { Database } from '../db/client.ts'
 import { SERIES_FREQS, type Subtask, TASK_COLUMNS } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { authGuards } from '../plugins/auth.ts'
@@ -11,7 +12,7 @@ import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../ser
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import type { RecurrenceRule } from '../services/recurrence.ts'
 import { type Schedule, setSchedule } from '../services/schedule.ts'
-import { applyScheduleToSeries, deleteOccurrence, seriesView, setRecurrence, skipOccurrence } from '../services/series.ts'
+import { type SeriesScope, applyScheduleToSeries, deleteOccurrence, seriesView, setRecurrence, skipOccurrence } from '../services/series.ts'
 import { type TaskWithSubtasks, createTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -76,7 +77,7 @@ export const createTaskBody = z.object({
 export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: notes.optional() })
 
 /** The day (`YYYY-MM-DD`) and start time (`HH:MM`, in steps of 15 minutes) of a task, in the workspace's timezone (US-7). */
-const scheduleFields = {
+export const scheduleFields = {
   scheduled_on: z.iso.date('Input should be a valid date (YYYY-MM-DD)').nullable().optional(),
   scheduled_time: z
     .string()
@@ -90,7 +91,7 @@ const createTaskRouteBody = createTaskBody
   .extend(scheduleFields)
   .refine((body) => body.scheduled_time == null || body.scheduled_on != null, timeNeedsDay)
 /** A recurrence rule as the API takes it (US-7, US-9): the checks of the task_series table. */
-const recurrenceBody = z
+export const recurrenceBody = z
   .object({
     freq: z.enum(SERIES_FREQS),
     interval: z.number().int().min(1).max(99).default(1),
@@ -161,6 +162,42 @@ export function toTaskRead(task: TaskWithSubtasks) {
   }
 }
 
+/** What PATCH /api/tasks/:id and the update_task tool change: the fields, the schedule and the rule (US-7). */
+export interface TaskUpdate {
+  title?: string
+  estimate_minutes?: number | null
+  notes?: string
+  scheduled_on?: string | null
+  scheduled_time?: string | null
+  recurrence?: RecurrenceRule | null
+  scope?: SeriesScope
+}
+
+/** Applies a `TaskUpdate` in one transaction, so a refused schedule or rule changes nothing. */
+export async function updateTaskAndSchedule(db: Database, taskId: string, workspaceId: string, userId: string, body: TaskUpdate): Promise<TaskWithSubtasks> {
+  const { title, estimate_minutes, notes, scheduled_on, scheduled_time, recurrence, scope } = body
+  const changes = { title, estimateMinutes: estimate_minutes, notes }
+  const scheduling = scheduled_on !== undefined || scheduled_time !== undefined
+  if (!scheduling && recurrence === undefined) return updateTask(db, taskId, workspaceId, changes)
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    let updated = await updateTask(tx, taskId, workspaceId, changes)
+    if (scheduling) {
+      // A field left out keeps its value: a new day keeps the time (US-1); clearing the day clears both (US-2).
+      const on = scheduled_on === undefined ? updated.scheduledOn : scheduled_on
+      const time = scheduled_time !== undefined ? scheduled_time : on === null ? null : updated.scheduledTime
+      // "This and the next ones" moves the rule too; "only this one" changes the task alone (D16).
+      updated =
+        scope === 'series'
+          ? await applyScheduleToSeries(tx, taskId, workspaceId, { on, time }, userId)
+          : await setSchedule(tx, taskId, workspaceId, { on, time }, userId)
+    }
+    // A new rule always counts for the series from there on, without a scope (US-12).
+    if (recurrence !== undefined) updated = await setRecurrence(tx, taskId, workspaceId, recurrence)
+    return updated
+  })
+}
+
 export function taskRoutes(ctx: AppContext) {
   return async (app: FastifyInstance): Promise<void> => {
     const typed = app.withTypeProvider<ZodTypeProvider>()
@@ -225,30 +262,7 @@ export function taskRoutes(ctx: AppContext) {
       async (request) => {
         const taskId = request.params.task_id.toLowerCase()
         const workspaceId = request.workspace.workspace.id
-        const { title, estimate_minutes, notes, scheduled_on, scheduled_time, recurrence, scope } = request.body
-        const changes = { title, estimateMinutes: estimate_minutes, notes }
-        const scheduling = scheduled_on !== undefined || scheduled_time !== undefined
-        if (!scheduling && recurrence === undefined) return toTaskRead(await updateTask(ctx.db, taskId, workspaceId, changes))
-        const userId = request.workspace.user.id
-        return toTaskRead(
-          await ctx.db.transaction(async (transaction) => {
-            const tx = transaction as typeof ctx.db
-            let updated = await updateTask(tx, taskId, workspaceId, changes)
-            if (scheduling) {
-              // A field left out keeps its value: a new day keeps the time (US-1); clearing the day clears both (US-2).
-              const on = scheduled_on === undefined ? updated.scheduledOn : scheduled_on
-              const time = scheduled_time !== undefined ? scheduled_time : on === null ? null : updated.scheduledTime
-              // "This and the next ones" moves the rule too; "only this one" changes the task alone (D16).
-              updated =
-                scope === 'series'
-                  ? await applyScheduleToSeries(tx, taskId, workspaceId, { on, time }, userId)
-                  : await setSchedule(tx, taskId, workspaceId, { on, time }, userId)
-            }
-            // A new rule always counts for the series from there on, without a scope (US-12).
-            if (recurrence !== undefined) updated = await setRecurrence(tx, taskId, workspaceId, recurrence)
-            return updated
-          }),
-        )
+        return toTaskRead(await updateTaskAndSchedule(ctx.db, taskId, workspaceId, request.workspace.user.id, request.body))
       },
     )
 

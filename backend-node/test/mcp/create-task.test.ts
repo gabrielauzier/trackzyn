@@ -51,7 +51,18 @@ describe('tools/list', () => {
     expect(description?.length).toBeGreaterThan(20)
     expect(inputSchema.required).toEqual(['list_id', 'title'])
     const fields = inputSchema.properties as Record<string, Record<string, unknown>>
-    expect(Object.keys(fields).sort()).toEqual(['column', 'estimate_minutes', 'idempotency_key', 'list_id', 'notes', 'subtasks', 'title'])
+    expect(Object.keys(fields).sort()).toEqual([
+      'column',
+      'estimate_minutes',
+      'idempotency_key',
+      'list_id',
+      'notes',
+      'recurrence',
+      'scheduled_on',
+      'scheduled_time',
+      'subtasks',
+      'title',
+    ])
     expect(fields.list_id).toMatchObject({ type: 'string', pattern: expect.any(String) })
     expect(fields.title).toMatchObject({ type: 'string', minLength: 1, maxLength: 255 })
     expect(fields.column).toMatchObject({ enum: ['backlog', 'this_week', 'today', 'done'], default: 'backlog' })

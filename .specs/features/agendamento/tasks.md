@@ -709,8 +709,8 @@ T37
 
 **Done when**:
 
-- [ ] Erro de validação para `recurrence` sem `scheduled_on`
-- [ ] Gate check passes (full) e Build da fase
+- [x] Erro de validação para `recurrence` sem `scheduled_on`
+- [x] Gate check passes (full) e Build da fase
 
 **Tests**: integration
 **Gate**: build
