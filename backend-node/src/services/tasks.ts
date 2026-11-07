@@ -1,13 +1,28 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type Subtask, type Task, type TaskColumn, type TaskOrigin, focusSessions, lists, personalAccessTokens, subtasks, tasks } from '../db/schema.ts'
+import {
+  type Subtask,
+  type Task,
+  type TaskColumn,
+  type TaskOrigin,
+  type TaskSeries,
+  focusSessions,
+  lists,
+  personalAccessTokens,
+  subtasks,
+  taskSeries,
+  tasks,
+} from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { endOpenSessions } from './focus-settle.ts'
 import { getList } from './lists.ts'
 
-/** `createdVia` is the name of the token that created the task, while that token exists (ORIGIN-02, ORIGIN-05). */
-export type TaskWithSubtasks = Task & { subtasks: Subtask[]; createdVia: string | null }
+/**
+ * `createdVia` is the name of the token that created the task, while that token exists (ORIGIN-02, ORIGIN-05);
+ * `series` is the series the task is an occurrence of.
+ */
+export type TaskWithSubtasks = Task & { subtasks: Subtask[]; createdVia: string | null; series: TaskSeries | null }
 
 const notFound = () => new HttpError(404, 'Task not found')
 
@@ -30,15 +45,16 @@ export function createdVia(tokenName: string | null, createdFrom: TaskOrigin | n
 
 export async function getTask(db: Database, taskId: string, workspaceId: string): Promise<TaskWithSubtasks> {
   const [row] = await db
-    .select({ task: tasks, createdVia: personalAccessTokens.name })
+    .select({ task: tasks, createdVia: personalAccessTokens.name, series: taskSeries })
     .from(tasks)
     .innerJoin(lists, eq(lists.id, tasks.listId))
     .leftJoin(personalAccessTokens, eq(personalAccessTokens.id, tasks.createdViaTokenId))
+    .leftJoin(taskSeries, eq(taskSeries.id, tasks.seriesId))
     .where(and(eq(tasks.id, taskId), eq(lists.workspaceId, workspaceId)))
     .limit(1)
   if (!row) throw notFound()
   const found = await db.select().from(subtasks).where(eq(subtasks.taskId, row.task.id)).orderBy(asc(subtasks.position))
-  return { ...row.task, subtasks: found, createdVia: createdVia(row.createdVia, row.task.createdFrom) }
+  return { ...row.task, subtasks: found, createdVia: createdVia(row.createdVia, row.task.createdFrom), series: row.series }
 }
 
 /** Serialises every change to the order of a list's tasks (two moves at once: the last one wins). */
@@ -221,7 +237,7 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       position,
     }))
     if (copies.length > 0) await tx.insert(subtasks).values(copies)
-    return { ...copy, subtasks: copies, createdVia: null }
+    return { ...copy, subtasks: copies, createdVia: null, series: null }
   })
 }
 

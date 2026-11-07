@@ -351,8 +351,8 @@ T37
 
 **Done when**:
 
-- [ ] Recusa regra sem dia agendado, semanal sem dias e `until` antes do dia
-- [ ] Gate check passes (full)
+- [x] Recusa regra sem dia agendado, semanal sem dias e `until` antes do dia
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

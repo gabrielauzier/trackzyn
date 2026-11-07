@@ -7,6 +7,7 @@ import { workspaceContext } from '../plugins/workspace.ts'
 import { buildBoard } from '../services/board.ts'
 import { applyDueSchedules } from '../services/schedule.ts'
 import { UUID_PATTERN } from '../services/users.ts'
+import { seriesReadSchema } from './tasks.ts'
 
 const taskCard = z.object({
   id: z.string(),
@@ -16,10 +17,9 @@ const taskCard = z.object({
   position: z.number(),
   subtasks: z.object({ done: z.number(), total: z.number() }),
   created_via: z.string().nullable(),
-  // SPEC_DEVIATION: T4 lists `series` on each task too.
-  // Reason: the series table arrives with T8 (phase 2); until then no task has a series, so the field waits for it.
   scheduled_on: z.string().nullable(),
   scheduled_time: z.string().nullable(),
+  series: seriesReadSchema.nullable(),
 })
 const column = z.object({ tasks: z.array(taskCard), estimate_minutes: z.number() })
 const progressColumn = column.extend({ done: z.number(), total: z.number() })

@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
-import { type Subtask, TASK_COLUMNS } from '../db/schema.ts'
+import { SERIES_FREQS, type Subtask, TASK_COLUMNS } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
@@ -10,6 +10,7 @@ import { withoutNul } from './schemas.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { type Schedule, setSchedule } from '../services/schedule.ts'
+import { seriesView } from '../services/series.ts'
 import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -21,6 +22,20 @@ const subtaskReadSchema = z.object({
   title: z.string(),
   done: z.boolean(),
   position: z.number(),
+})
+
+/** The series of a task: its rule and the next day it projects (US-7). */
+export const seriesReadSchema = z.object({
+  id: z.string(),
+  rule: z.object({
+    freq: z.enum(SERIES_FREQS),
+    interval: z.number(),
+    weekdays: z.array(z.number()).nullable(),
+    month_day: z.number().nullable(),
+    until: z.string().nullable(),
+    count: z.number().nullable(),
+  }),
+  next_on: z.string().nullable(),
 })
 
 export const taskReadSchema = z.object({
@@ -37,6 +52,7 @@ export const taskReadSchema = z.object({
   created_via: z.string().nullable(),
   scheduled_on: z.string().nullable(),
   scheduled_time: z.string().nullable(),
+  series: seriesReadSchema.nullable(),
 })
 
 export const taskParams = z.object({ task_id: uuid })
@@ -108,6 +124,7 @@ export function toTaskRead(task: TaskWithSubtasks) {
     created_via: task.createdVia,
     scheduled_on: task.scheduledOn,
     scheduled_time: task.scheduledTime?.slice(0, 5) ?? null,
+    series: task.series === null ? null : seriesView(task.series, task.scheduledOn),
   }
 }
 

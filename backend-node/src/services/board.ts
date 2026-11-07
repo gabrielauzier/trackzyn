@@ -1,9 +1,10 @@
 import { sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import type { TaskColumn, Workspace } from '../db/schema.ts'
+import type { SeriesFreq, TaskColumn, Workspace } from '../db/schema.ts'
 import { daySql, dayTimezone } from './day.ts'
 import { settle, spentSeconds } from './focus-settle.ts'
 import { getList } from './lists.ts'
+import { seriesView } from './series.ts'
 
 export interface TaskCardView {
   id: string
@@ -17,6 +18,8 @@ export interface TaskCardView {
   /** The scheduled day (`YYYY-MM-DD`) and start time (`HH:MM`), in the workspace's timezone. */
   scheduled_on: string | null
   scheduled_time: string | null
+  /** The series the task is an occurrence of: its rule and the next day it projects. */
+  series: ReturnType<typeof seriesView> | null
 }
 
 export interface ColumnView {
@@ -71,6 +74,15 @@ interface TaskRow extends Record<string, unknown> {
   created_via: string | null
   scheduled_on: string | null
   scheduled_time: string | null
+  series_id: string | null
+  series_freq: SeriesFreq | null
+  series_interval: number | null
+  series_weekdays: number[] | null
+  series_month_day: number | null
+  series_until: string | null
+  series_count: number | null
+  series_created_count: number | null
+  series_ended_at: Date | null
 }
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
@@ -118,13 +130,17 @@ export async function buildBoard(
                count(s.id) FILTER (WHERE s.done)::int AS subtasks_done,
                count(s.id)::int AS subtasks_total,
                coalesce(p.name, CASE WHEN t.created_from = 'agenda' THEN 'Agenda' END) AS created_via,
-               t.scheduled_on::text AS scheduled_on, to_char(t.scheduled_time, 'HH24:MI') AS scheduled_time
+               t.scheduled_on::text AS scheduled_on, to_char(t.scheduled_time, 'HH24:MI') AS scheduled_time,
+               ts.id AS series_id, ts.freq AS series_freq, ts."interval" AS series_interval, ts.weekdays AS series_weekdays,
+               ts.month_day AS series_month_day, ts.until::text AS series_until, ts."count" AS series_count,
+               ts.created_count AS series_created_count, ts.ended_at AS series_ended_at
         FROM tasks t
+        LEFT JOIN task_series ts ON ts.id = t.series_id
         LEFT JOIN subtasks s ON s.task_id = t.id
         LEFT JOIN personal_access_tokens p ON p.id = t.created_via_token_id
         WHERE t.list_id = ${list.id}
           AND (t."column" <> 'done' OR ${completedDate} = ${today}::date OR ${completedDate} = (SELECT day FROM previous))
-        GROUP BY t.id, p.name
+        GROUP BY t.id, p.name, ts.id
         ORDER BY t.position, t.created_at`,
   )
 
@@ -144,6 +160,23 @@ export async function buildBoard(
     created_via: row.created_via,
     scheduled_on: row.scheduled_on,
     scheduled_time: row.scheduled_time,
+    series:
+      row.series_id === null
+        ? null
+        : seriesView(
+            {
+              id: row.series_id,
+              freq: row.series_freq!,
+              interval: row.series_interval!,
+              weekdays: row.series_weekdays,
+              monthDay: row.series_month_day,
+              until: row.series_until,
+              count: row.series_count,
+              createdCount: row.series_created_count!,
+              endedAt: row.series_ended_at,
+            },
+            row.scheduled_on,
+          ),
   })
   const inColumn = (column: TaskColumn) => found.filter((row) => row.column === column).map(view)
 
