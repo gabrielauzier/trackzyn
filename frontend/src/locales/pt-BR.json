@@ -819,7 +819,8 @@
     "zoomLevel": "{{level}}x",
     "moveConfirm": {
       "pending": "Novo horário — ainda não salvo",
-      "save": "Salvar horário"
+      "save": "Salvar horário",
+      "noTime": "Sem hora"
     },
     "viewMenu": {
       "label": "Opções de exibição",

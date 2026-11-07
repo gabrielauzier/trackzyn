@@ -1539,12 +1539,19 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       fireEvent.pointerUp(window, { clientX: to.x, clientY: to.y })
     }
     const lastToast = () => vi.mocked(toast.success).mock.calls.at(-1)!
+    /** `Salvar horário` of the confirmation a drop opens; nothing is saved before it (D35). */
+    const saveTime = async (name = 'Save time') => {
+      const button = await screen.findByRole('button', { name })
+      expect(tasks.update).not.toHaveBeenCalled()
+      fireEvent.click(button)
+    }
 
     it('from Sem hora to the grid: saves the start time and 1h of estimate, and Desfazer puts the day, the time and the estimate back', async () => {
       vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [scheduledTask('u', 'Call the bank')], projected: [] })
       const { container } = renderWithProviders(<AgendaPage />)
       await waitFor(() => expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull())
       dragTo(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { x: 320, y: -100 }, { x: 450, y: px(15, 20) })
+      await saveTime()
 
       await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('u', { scheduled_on: '2026-11-06', scheduled_time: '15:15', estimate_minutes: 60 }))
       await waitFor(() => expect(toast.success).toHaveBeenCalled())
@@ -1562,6 +1569,7 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       const { container } = renderWithProviders(<AgendaPage />)
       await waitFor(() => expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull())
       dragTo(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { x: 320, y: -100 }, { x: 450, y: px(15, 20) })
+      await saveTime('Salvar horário')
       // With an estimate, the estimate stays (D22).
       await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('u', { scheduled_on: '2026-11-06', scheduled_time: '15:15' }))
       await waitFor(() => expect(toast.success).toHaveBeenCalled())
@@ -1579,6 +1587,7 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       renderWithProviders(<AgendaPage />)
       const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
       dragTo(block, { x: 350, y: px(10, 10) }, { x: 550, y: px(8, 10) })
+      await saveTime()
       await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-07', scheduled_time: '08:00' }))
       await waitFor(() => expect(lastToast()[0]).toBe('Scheduled for Sat, Nov 7, 08:00'))
     })
@@ -1592,6 +1601,7 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       renderWithProviders(<AgendaPage />)
       const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
       dragTo(block, { x: 350, y: px(10, 10) }, { x: 450, y: -60 })
+      await saveTime()
       await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-06', scheduled_time: null }))
       await waitFor(() => expect(lastToast()[0]).toBe('Scheduled for Fri, Nov 6'))
     })
@@ -1606,10 +1616,48 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       const { user } = renderWithProviders(<AgendaPage />)
       const block = await screen.findByRole('button', { name: /^Weekly review/ })
       dragTo(block, { x: 350, y: px(10, 10) }, { x: 350, y: px(16, 10) })
+      await saveTime()
       expect(await screen.findByRole('button', { name: /^This occurrence only/ })).toBeInTheDocument()
       expect(tasks.update).not.toHaveBeenCalled()
       await user.click(screen.getByRole('button', { name: /^This occurrence only/ }))
       await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-05', scheduled_time: '16:00', scope: 'occurrence' }))
+    })
+
+    it('D35 asks to confirm a moved block: the old time struck through, the new one, and the block at the new time until then', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],
+        untimed: [],
+        projected: [],
+      })
+      const { container } = renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 550, y: px(8, 10) })
+
+      const panel = (await screen.findByRole('heading', { name: 'Plan the sprint' })).closest('aside')!
+      expect(within(panel).getByText('New time — not saved yet')).toBeInTheDocument()
+      expect(within(panel).getByText('Thu, Nov 5 · 10:00 – 11:30').tagName).toBe('DEL')
+      expect(within(panel).getByText('Sat, Nov 7 · 08:00 – 09:30')).toBeInTheDocument()
+      expect(within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-07"]')!).getByRole('button', { name: /^Plan the sprint/ })).toBeInTheDocument()
+      expect(tasks.update).not.toHaveBeenCalled()
+    })
+
+    it.each(['Cancel', 'Escape'])('D35 %s puts the block back and saves nothing', async (how) => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],
+        untimed: [],
+        projected: [],
+      })
+      const { container, user } = renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 550, y: px(8, 10) })
+      await screen.findByRole('button', { name: 'Save time' })
+
+      if (how === 'Cancel') await user.click(screen.getByRole('button', { name: 'Cancel' }))
+      else await user.keyboard('{Escape}')
+
+      expect(screen.queryByRole('button', { name: 'Save time' })).toBeNull()
+      expect(within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-05"]')!).getByRole('button', { name: /^Plan the sprint/ })).toBeInTheDocument()
+      expect(tasks.update).not.toHaveBeenCalled()
     })
   })
 })

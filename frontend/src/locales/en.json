@@ -819,7 +819,8 @@
     "zoomLevel": "{{level}}x",
     "moveConfirm": {
       "pending": "New time — not saved yet",
-      "save": "Save time"
+      "save": "Save time",
+      "noTime": "No time"
     },
     "viewMenu": {
       "label": "View options",

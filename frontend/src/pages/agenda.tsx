@@ -11,6 +11,7 @@ import { DayScheduledPanel } from '@/components/agenda/day-scheduled-panel'
 import { DayTimeline } from '@/components/agenda/day-timeline'
 import { NewSchedulePanel } from '@/components/agenda/new-schedule-panel'
 import { SessionGroupList } from '@/components/agenda/session-group-list'
+import { ScheduledMoveConfirm } from '@/components/agenda/scheduled-move-confirm'
 import { SessionMoveConfirm } from '@/components/agenda/session-move-confirm'
 import { SessionDetails, SessionPanel, type PanelTimes } from '@/components/agenda/session-panel'
 import { AgendaViewMenu } from '@/components/agenda/view-menu'
@@ -34,7 +35,7 @@ import { type WeekDay, readShownDays, saveShownDays } from '@/lib/agenda/week-da
 import { type Zoom, pxPerMinuteAt, readZoom, saveZoom } from '@/lib/agenda/zoom'
 import { asksSeriesScope, longDay, type ScheduleChangeFields } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, AgendaSessionChanges, ListCard, SeriesScope } from '@/types'
+import type { AgendaSession, AgendaSessionChanges, ListCard, ScheduledTask, SeriesScope, TaskSchedule } from '@/types'
 
 const ALL_LISTS = 'all'
 
@@ -46,6 +47,12 @@ interface PendingDrop {
   id: string
   change: ScheduleChange
   undo: ScheduleChange
+}
+
+/** A drop waiting for `Salvar horário`: the task as saved and where it was released (D35). */
+interface ConfirmingDrop extends PendingDrop {
+  task: ScheduledTask
+  schedule: TaskSchedule
 }
 
 /** The clock of the grid: the open session and the now line move with it. */
@@ -130,7 +137,24 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   const { query, create, update, remove } = useAgenda({ from: monday, to: sunday, listId })
   const sessions = useMemo(() => query.data?.sessions ?? [], [query.data])
   // The scheduled tasks of the whole workspace (D9), and the task a click on one opens (US-5).
-  const { timed, untimed, projected } = useScheduled(monday, sunday)
+  const scheduled = useScheduled(monday, sunday)
+  const { projected } = scheduled
+  /** A scheduled task dropped at a new day or time, shown there until it is saved or cancelled (D35). */
+  const [confirming, setConfirming] = useState<ConfirmingDrop | null>(null)
+  const { timed, untimed } = useMemo(() => {
+    if (!confirming) return scheduled
+    const others = (list: ScheduledTask[]) => list.filter((item) => item.id !== confirming.id)
+    const { change, task } = confirming
+    const moved: ScheduledTask = {
+      ...task,
+      scheduled_on: change.scheduled_on ?? task.scheduled_on,
+      scheduled_time: change.scheduled_time === undefined ? task.scheduled_time : change.scheduled_time,
+      estimate_minutes: change.estimate_minutes === undefined ? task.estimate_minutes : change.estimate_minutes,
+    }
+    return moved.scheduled_time === null
+      ? { timed: others(scheduled.timed), untimed: [...others(scheduled.untimed), moved] }
+      : { timed: [...others(scheduled.timed), moved], untimed: others(scheduled.untimed) }
+  }, [scheduled, confirming])
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
   /** The day whose scheduled tasks show in the place of the side panel, from `+X` of the `Sem hora` row (US-14). */
   const [dayPanel, setDayPanel] = useState<string | null>(null)
@@ -225,10 +249,20 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
       change.estimate_minutes = 60
       undo.estimate_minutes = null
     }
-    const pending = { id: taskId, change, undo }
     const schedule = { scheduled_on: task.scheduled_on, scheduled_time: task.scheduled_time, series: task.series && { ...task.series, next_on: null } }
-    if (asksSeriesScope(schedule, change)) setScoping(pending)
-    else saveMove(pending)
+    // Nothing is saved before `Salvar horário`, as a moved session (D35).
+    closeSelected()
+    setDayPanel(null)
+    setScheduling(null)
+    setConfirming({ id: taskId, change, undo, task, schedule })
+  }
+  /** `Salvar horário`: an occurrence of a series still asks `Só esta` or `Esta e as próximas` (US-12). */
+  const confirmMove = () => {
+    if (!confirming) return
+    const { id, change, undo, schedule } = confirming
+    setConfirming(null)
+    if (asksSeriesScope(schedule, change)) setScoping({ id, change, undo })
+    else saveMove({ id, change, undo })
   }
   const drag = useGridDrag({
     pxPerMinute,
@@ -444,7 +478,17 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               />
             )}
           </div>
-          {dayPanel && (
+          {confirming && (
+            <ScheduledMoveConfirm
+              key={confirming.id}
+              task={confirming.task}
+              to={{ day: confirming.change.scheduled_on!, time: confirming.change.scheduled_time ?? null }}
+              minutes={(confirming.change.estimate_minutes ?? confirming.task.estimate_minutes) ?? 60}
+              onCancel={() => setConfirming(null)}
+              onSave={confirmMove}
+            />
+          )}
+          {!confirming && dayPanel && (
             <DayScheduledPanel
               key={dayPanel}
               day={dayPanel}
@@ -455,7 +499,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               onClose={() => setDayPanel(null)}
             />
           )}
-          {!dayPanel && canWrite && scheduling && (
+          {!confirming && !dayPanel && canWrite && scheduling && (
             <NewSchedulePanel
               key={`${scheduling.day}:${scheduling.window?.start ?? ''}:${scheduling.window?.end ?? ''}`}
               day={scheduling.day}
@@ -474,7 +518,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               }}
             />
           )}
-          {!dayPanel && !scheduling && canWrite && draft && (
+          {!confirming && !dayPanel && !scheduling && canWrite && draft && (
             <SessionPanel
               times={{ day: draft.day, start: draft.start, end: draft.end }}
               onTimesChange={changeTimes}
@@ -489,7 +533,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               }}
             />
           )}
-          {!dayPanel && !scheduling && !draft && selected && editTimes && canWrite && (
+          {!confirming && !dayPanel && !scheduling && !draft && selected && editTimes && canWrite && (
             <SessionPanel
               key={selected.id}
               editing={selected}
@@ -520,7 +564,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               }}
             />
           )}
-          {!dayPanel && !scheduling && !draft && selected && pending && !editTimes && canWrite && (
+          {!confirming && !dayPanel && !scheduling && !draft && selected && pending && !editTimes && canWrite && (
             <SessionMoveConfirm
               key={selected.id}
               session={selected}
@@ -545,7 +589,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               }}
             />
           )}
-          {!dayPanel && !scheduling && !draft && selected && !editTimes && !pending && (
+          {!confirming && !dayPanel && !scheduling && !draft && selected && !editTimes && !pending && (
             <SessionDetails
               key={selected.id}
               session={selected}
@@ -566,7 +610,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
             />
           )}
           {/* While a delete is on its way the chosen session is gone from the list: no flash of the block's list. */}
-          {!dayPanel && !scheduling && !draft && !selected && group.length > 0 && !remove.isPending && (
+          {!confirming && !dayPanel && !scheduling && !draft && !selected && group.length > 0 && !remove.isPending && (
             <SessionGroupList
               sessions={group}
               timezone={timezone}

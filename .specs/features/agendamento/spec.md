@@ -142,7 +142,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 
 **Como** usuário, **quero** arrastar o bloco agendado para outro horário ou dia **para** reorganizar a semana como no Google Agenda.
 
-- WHEN o usuário arrasta o bloco agendado e solta THEN o sistema SHALL gravar o novo dia e a nova hora, encaixados em 15 min, sem mudar a estimativa.
+- WHEN o usuário arrasta o bloco agendado e solta THEN a Agenda SHALL mostrar o bloco no novo lugar e, no lugar do painel lateral, a confirmação `Novo horário — ainda não salvo`, com o dia e a hora antigos riscados e os novos; só `Salvar horário` SHALL gravar o novo dia e a nova hora, encaixados em 15 min, sem mudar a estimativa, e `Cancelar` ou `Esc` SHALL devolver o bloco sem gravar nada (D35).
 - O arraste do bloco agendado SHALL funcionar também no futuro; o bloqueio de AGENDA-23 continua valendo só para sessões.
 - WHEN o papel é `viewer` THEN o bloco SHALL não ser arrastável.
 - Ao soltar, valem as "Regras ao salvar o agendamento".
@@ -275,6 +275,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - **D32 (2026-11-07):** o painel `Novo agendamento` pergunta "só esta ou esta e as próximas" quando a tarefa escolhida é ocorrência de uma série.
 - **D33 (2026-11-07):** o `delete_task` do MCP numa ocorrência aberta segue o `DELETE` da API sem escopo: exclui só esta e cria a próxima.
 - **D34 (2026-11-07):** a hora do agendamento é um campo `HH:MM`, não uma lista de horários, e aceita qualquer minuto (10:10 vale). A API, o MCP e o banco deixam de exigir o passo de 15 min (migration 0013); os segundos continuam zerados. O arraste na grade continua encaixando em 15 min (D22).
+- **D35 (2026-11-07):** soltar uma tarefa agendada na Agenda (bloco, linha `Sem hora` ou de `Sem hora` para a grade) pede confirmação como a sessão movida: o painel `Novo horário — ainda não salvo` com `Cancelar` e `Salvar horário`. Numa série, a pergunta `Só esta` ou `Esta e as próximas` vem depois de `Salvar horário`. O aviso com `Desfazer` continua depois de salvar.
 
 Não há decisões em aberto.
 
