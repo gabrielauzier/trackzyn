@@ -426,8 +426,8 @@ T37
 
 **Done when**:
 
-- [ ] 409 para tarefa sem série; ao passar do `count`, a série encerra e a tarefa vira comum
-- [ ] Gate check passes (full)
+- [x] 409 para tarefa sem série; ao passar do `count`, a série encerra e a tarefa vira comum
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

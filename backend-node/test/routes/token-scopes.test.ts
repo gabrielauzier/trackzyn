@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { TOKEN_SCOPES, type TokenScope } from '../../src/db/schema.ts'
+import { setRecurrence } from '../../src/services/series.ts'
 import { invite, ownerViewerStranger } from '../support/roles.ts'
 import { CLOSED_AGENDA_ROUTES, MCP_ROUTES, TOKEN_ROUTES, routeKey } from '../support/token-routes.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
@@ -31,6 +32,13 @@ const session = async <T = Record<string, string>>(method: Method, url: string, 
 }
 const newList = async (name: string) => (await session('POST', '/api/lists', { name, color: 1 })).id!
 const newTask = async () => (await session('POST', '/api/tasks', { list_id: listId, title: 'A task', column: 'backlog' })).id!
+/** A task scheduled far ahead that repeats every day, so it can skip an occurrence. */
+const newSeriesTask = async () => {
+  const taskId = await newTask()
+  await session('PATCH', `/api/tasks/${taskId}`, { scheduled_on: '2099-01-02' })
+  await setRecurrence(t.ctx.db, taskId, workspaceId, { freq: 'daily', interval: 1, weekdays: null, monthDay: null, until: null, count: null })
+  return taskId
+}
 const newSubtask = async () => {
   const taskId = await newTask()
   return (await session('POST', `/api/tasks/${taskId}/subtasks`, { title: 'A subtask' })).id!
@@ -47,6 +55,7 @@ const CALLS: Record<string, () => Promise<{ url: string; payload?: object; ok: n
   'POST /api/tasks/:task_id/move': async () => ({ url: `/api/tasks/${await newTask()}/move`, payload: { column: 'today', before_task_id: null }, ok: 200 }),
   'POST /api/tasks/:task_id/move-to-list': async () => ({ url: `/api/tasks/${await newTask()}/move-to-list`, payload: { list_id: otherListId }, ok: 200 }),
   'POST /api/tasks/:task_id/duplicate': async () => ({ url: `/api/tasks/${await newTask()}/duplicate`, ok: 201 }),
+  'POST /api/tasks/:task_id/skip': async () => ({ url: `/api/tasks/${await newSeriesTask()}/skip`, ok: 200 }),
   'POST /api/tasks/:task_id/subtasks': async () => ({ url: `/api/tasks/${await newTask()}/subtasks`, payload: { title: 'Sub' }, ok: 201 }),
   'PATCH /api/subtasks/:subtask_id': async () => ({ url: `/api/subtasks/${await newSubtask()}`, payload: { done: true }, ok: 200 }),
   'POST /api/subtasks/:subtask_id/move': async () => ({ url: `/api/subtasks/${await newSubtask()}/move`, payload: { before_subtask_id: null }, ok: 200 }),
@@ -78,7 +87,7 @@ describe('the routes open to tokens', () => {
     const byKey = (a: { method: string; url: string }, b: { method: string; url: string }) => routeKey(a).localeCompare(routeKey(b))
 
     expect(declared.toSorted(byKey)).toEqual([...TOKEN_ROUTES, ...MCP_ROUTES].toSorted(byKey))
-    expect(TOKEN_ROUTES).toHaveLength(14)
+    expect(TOKEN_ROUTES).toHaveLength(15)
   })
 
   it('SCOPE-03 SCOPE-04 every registered route outside the table answers 403 to a token with every scope', async () => {

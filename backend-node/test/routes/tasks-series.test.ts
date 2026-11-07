@@ -128,3 +128,34 @@ describe('DELETE /api/tasks/:id with a scope (US-12)', () => {
     expect((await series(seriesId)).endedAt).toBeNull()
   })
 })
+
+describe('POST /api/tasks/:id/skip (US-12, D18)', () => {
+  it('moves the occurrence to the next day of the rule and answers the task', async () => {
+    const { owner, workspaceId, taskId, seriesId } = await setup()
+    const reply = await call('POST', `/api/tasks/${taskId}/skip`, owner.token, workspaceId)
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({ id: taskId, scheduled_on: await day(31), scheduled_time: '09:00', series: { id: seriesId } })
+    expect((await series(seriesId)).createdCount).toBe(2)
+  })
+
+  it('answers 409 not_in_series for a task without a series, 403 to a viewer and 404 to another workspace', async () => {
+    const { owner, viewer, stranger, workspaceId, strangerWorkspaceId, listId, taskId } = await setup()
+    const plain = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Plain' })).json().id as string
+    const refused = await call('POST', `/api/tasks/${plain}/skip`, owner.token, workspaceId)
+    expect(refused.statusCode).toBe(409)
+    expect(refused.json()).toMatchObject({ code: 'not_in_series' })
+
+    const before = await day(30)
+    expect((await call('POST', `/api/tasks/${taskId}/skip`, viewer.token, workspaceId)).statusCode).toBe(403)
+    expect((await call('POST', `/api/tasks/${taskId}/skip`, stranger.token, strangerWorkspaceId)).statusCode).toBe(404)
+    expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).json()).toMatchObject({ scheduled_on: before })
+  })
+
+  it('a token with tasks:write skips the occurrence', async () => {
+    const { owner, workspaceId, taskId } = await setup()
+    const token = await mintToken(t, owner.token, workspaceId, ['tasks:write'])
+    const reply = await t.app.inject({ method: 'POST', url: `/api/tasks/${taskId}/skip`, headers: { authorization: `Bearer ${token.value}` } })
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({ scheduled_on: await day(31) })
+  })
+})

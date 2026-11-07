@@ -171,3 +171,36 @@ export async function deleteOccurrence(
     await tx.delete(tasks).where(eq(tasks.id, current.id))
   })
 }
+
+/**
+ * Skips this occurrence (US-12, D18): the same task moves to the next day of the rule after its day and after
+ * today, at the same time, by the rules of saving a schedule, and keeps its time spent; the series counts one
+ * more occurrence. When the rule has no occurrence left, the series ends and the task stays as a plain one.
+ * A task outside a live series answers 409 `not_in_series`.
+ */
+export async function skipOccurrence(
+  db: Database,
+  taskId: string,
+  workspaceId: string,
+  byUserId: string,
+  now: Date = new Date(),
+): Promise<TaskWithSubtasks> {
+  const task = await findTask(db, taskId, workspaceId)
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    await lockList(tx, task.listId)
+    const current = await findTask(tx, task.id, workspaceId)
+    const series = current.seriesId === null ? null : await lockSeries(tx, current.seriesId)
+    if (series === null || series.endedAt !== null) throw new HttpError(409, 'The task is not in a series', {}, { code: 'not_in_series' })
+
+    const { today } = await workspaceClock(tx, workspaceId, now)
+    const next = nextOccurrence(ruleOf(series), current.scheduledOn ?? today, today, series.createdCount)
+    if (next === null) {
+      await tx.update(taskSeries).set({ endedAt: now }).where(eq(taskSeries.id, series.id))
+      await tx.update(tasks).set({ seriesId: null, updatedAt: now }).where(eq(tasks.id, current.id))
+      return getTask(tx, current.id, workspaceId)
+    }
+    await tx.update(taskSeries).set({ createdCount: series.createdCount + 1 }).where(eq(taskSeries.id, series.id))
+    return setSchedule(tx, current.id, workspaceId, { on: next, time: current.scheduledTime }, byUserId, now)
+  })
+}

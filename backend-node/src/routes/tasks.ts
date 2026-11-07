@@ -10,7 +10,7 @@ import { withoutNul } from './schemas.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { type Schedule, setSchedule } from '../services/schedule.ts'
-import { deleteOccurrence, seriesView } from '../services/series.ts'
+import { deleteOccurrence, seriesView, skipOccurrence } from '../services/series.ts'
 import { type TaskWithSubtasks, createTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
@@ -229,6 +229,13 @@ export function taskRoutes(ctx: AppContext) {
             byUserId: request.workspace.user.id,
           }),
         ),
+    )
+
+    typed.post(
+      '/api/tasks/:task_id/skip',
+      { schema: { params: taskParams, response: { 200: taskReadSchema } }, config: { tokenScope: 'tasks:write' }, preValidation: writing },
+      async (request) =>
+        toTaskRead(await skipOccurrence(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, request.workspace.user.id)),
     )
 
     typed.post(
