@@ -1,4 +1,4 @@
-import type { AgendaSession } from '@/types'
+import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 const MINUTE_MS = 60_000
 const DAY_MS = 24 * 60 * MINUTE_MS
@@ -21,6 +21,25 @@ export interface Piece {
 }
 
 export type LaidOutPiece = Piece & { lane: number; lanes: number }
+
+/** What a scheduled block stands for: a pending task with a time, or a future occurrence of a series (US-5, US-11). */
+export type ScheduledEntry = { kind: 'task'; task: ScheduledTask } | { kind: 'projection'; occurrence: ProjectedOccurrence }
+
+/** The part of a scheduled block that falls on one day of the grid, in minutes since that day's midnight. */
+export interface ScheduledPiece {
+  scheduled: ScheduledEntry
+  day: string
+  start: number
+  end: number
+  /** The whole block: its start, `HH:MM`, and its length in minutes, which may run past midnight. */
+  time: string
+  minutes: number
+}
+
+export type LaidOutScheduled = ScheduledPiece & { lane: number; lanes: number }
+
+/** The length of a scheduled block: the estimate of the task, or 1h without one (D7, D23). */
+export const scheduledMinutes = (estimate: number | null) => estimate ?? 60
 
 /** How far `timeZone` is ahead of UTC at `instant`, in milliseconds. */
 function offsetAt(instant: number, timeZone: string): number {
@@ -105,13 +124,54 @@ export function dayPieces(sessions: AgendaSession[], days: string[], timeZone: s
 }
 
 /**
- * Side-by-side lanes for the pieces of one day (AGENDA-06): pieces that overlap, directly or through
- * another piece, share the column width; each takes the first lane free at its start.
+ * The scheduled blocks cut at midnight into one piece per day of `days` they touch, as sessions are (AGENDA-07):
+ * each from its wall-clock time in the workspace timezone, for its estimate or 1h (D23). Pieces of a day come
+ * sorted by start.
  */
-export function assignLanes(pieces: Piece[]): LaidOutPiece[] {
+export function scheduledPieces(timed: ScheduledTask[], projected: ProjectedOccurrence[], days: string[]): Map<string, ScheduledPiece[]> {
+  const pieces = new Map<string, ScheduledPiece[]>(days.map((day) => [day, []]))
+  const entries: { scheduled: ScheduledEntry; day: string; time: string; minutes: number }[] = [
+    ...timed
+      .filter((task) => task.scheduled_time !== null)
+      .map((task) => ({
+        scheduled: { kind: 'task' as const, task },
+        day: task.scheduled_on,
+        time: task.scheduled_time!,
+        minutes: scheduledMinutes(task.estimate_minutes),
+      })),
+    ...projected.map((occurrence) => ({
+      scheduled: { kind: 'projection' as const, occurrence },
+      day: occurrence.on,
+      time: occurrence.time,
+      minutes: scheduledMinutes(occurrence.estimate_minutes),
+    })),
+  ]
+  for (const entry of entries) {
+    const [hours, mins] = entry.time.split(':').map(Number)
+    const start = hours! * 60 + mins!
+    const end = start + entry.minutes
+    // The days the block reaches, from its own: past midnight it goes on the next morning.
+    for (let offset = 0; offset * DAY_MINUTES < end; offset += 1) {
+      const day = addDays(entry.day, offset)
+      const from = Math.max(start - offset * DAY_MINUTES, 0)
+      const to = Math.min(end - offset * DAY_MINUTES, DAY_MINUTES)
+      pieces.get(day)?.push({ ...entry, day, start: from, end: to })
+    }
+  }
+  for (const list of pieces.values()) list.sort((a, b) => a.start - b.start || a.end - b.end)
+  return pieces
+}
+
+/**
+ * Side-by-side lanes for the pieces of one day (AGENDA-06): pieces that overlap, directly or through
+ * another piece, share the column width; each takes the first lane free at its start. Sessions and
+ * scheduled blocks share the lanes (US-5).
+ */
+export function assignLanes<T extends { start: number; end: number }>(pieces: T[]): (T & { lane: number; lanes: number })[] {
+  type Laid = T & { lane: number; lanes: number }
   const sorted = [...pieces].sort((a, b) => a.start - b.start || a.end - b.end)
-  const result: LaidOutPiece[] = []
-  let group: LaidOutPiece[] = []
+  const result: Laid[] = []
+  let group: Laid[] = []
   let laneEnds: number[] = []
   let groupEnd = -Infinity
   const close = () => {

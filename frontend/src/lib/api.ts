@@ -23,7 +23,10 @@ import type {
   FocusState,
   ListsResponse,
   Overview,
+  RecurrenceRule,
   ReportQuery,
+  ScheduledResponse,
+  SeriesScope,
   SessionsReport,
   Subtask,
   Task,
@@ -392,6 +395,8 @@ export const tasks = {
     title: string
     estimate_minutes: number | null
     column: TaskColumn
+    scheduled_on?: string | null
+    scheduled_time?: string | null
   }): Promise<Task> => {
     const { data } = await api.post('/tasks', payload)
     return data
@@ -402,7 +407,18 @@ export const tasks = {
   },
   update: async (
     id: string,
-    payload: { title?: string; estimate_minutes?: number | null; notes?: string },
+    payload: {
+      title?: string
+      estimate_minutes?: number | null
+      notes?: string
+      /** A field left out keeps its value; null clears it (clearing the day clears the time). */
+      scheduled_on?: string | null
+      scheduled_time?: string | null
+      /** Null stops the repetition; a rule always counts for the series from there on. */
+      recurrence?: RecurrenceRule | null
+      /** Only for an occurrence of a series (D16); the API takes `occurrence` when left out. */
+      scope?: SeriesScope
+    },
   ): Promise<Task> => {
     const { data } = await api.patch(`/tasks/${id}`, payload)
     return data
@@ -422,8 +438,22 @@ export const tasks = {
     const { data } = await api.post(`/tasks/${id}/move`, payload)
     return data
   },
-  remove: async (id: string): Promise<void> => {
-    await api.delete(`/tasks/${id}`)
+  /** Deletes the task; for an occurrence of a series, `series` also ends the series (US-12). */
+  remove: async (id: string, scope?: SeriesScope): Promise<void> => {
+    await api.delete(`/tasks/${id}`, scope === undefined ? {} : { params: { scope } })
+  },
+  /** Moves an occurrence of a series to the next day of its rule, keeping the time spent (D18). */
+  skip: async (id: string): Promise<Task> => {
+    const { data } = await api.post(`/tasks/${id}/skip`)
+    return data
+  },
+}
+
+// Agenda: the scheduled tasks of the whole workspace (`from`/`to` are YYYY-MM-DD, at most 42 days)
+export const agenda = {
+  scheduled: async (from: string, to: string): Promise<ScheduledResponse> => {
+    const { data } = await api.get('/agenda/scheduled', { params: { from, to } })
+    return data
   },
 }
 

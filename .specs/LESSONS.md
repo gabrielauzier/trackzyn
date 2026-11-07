@@ -302,6 +302,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)
 - last seen: 2026-11-05T05:07:21Z
 
+### L-049 - Assert API payloads through the HTTP route and its response schema, not only the service, so fields the serializer strips are caught
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: agendamento
+- evidence: backend-node/src/routes/scheduled.ts:26 (US-11 projected[].rule stripped by response schema) (routes)
+- last seen: 2026-11-07T08:41:46Z
+
+### L-050 - When a rule must run on every read, list each read path including MCP tools and test the rule through each one
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `mcp` · harmful: 0
+- features: agendamento
+- evidence: backend-node/src/mcp/tools.ts:83 (AD-009 get_board without applyDueSchedules) (mcp)
+- last seen: 2026-11-07T08:41:46Z
+
+### L-051 - Define the default scope of token and MCP writes wherever the app asks the user to choose a scope
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `mcp` · harmful: 0
+- features: agendamento
+- evidence: validation.md US-12 MCP delete_task on an open occurrence (mcp)
+- last seen: 2026-11-07T08:41:46Z
+
+### L-052 - Give REST and MCP create bodies the same fields, or reject an unsupported field with 422, instead of stripping it silently
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: agendamento
+- evidence: backend-node/src/routes/tasks.ts:67 (REST POST /api/tasks strips recurrence, 201 series null) (routes)
+- last seen: 2026-11-07T09:00:49Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

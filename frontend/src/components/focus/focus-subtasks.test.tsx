@@ -27,6 +27,9 @@ function taskWith(items: Subtask[]): Task {
     created_at: '2026-10-24T12:00:00.000Z',
     subtasks: items,
     created_via: null,
+    scheduled_on: null,
+    scheduled_time: null,
+    series: null,
   }
 }
 

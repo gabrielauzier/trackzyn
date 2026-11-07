@@ -31,6 +31,12 @@ abstract class _$TaskCWProxy {
 
   Task priority(String? priority);
 
+  Task scheduledOn(String? scheduledOn);
+
+  Task scheduledTime(String? scheduledTime);
+
+  Task series(TaskSeries? series);
+
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `Task(...).copyWith.fieldName(value)`.
   ///
@@ -51,6 +57,9 @@ abstract class _$TaskCWProxy {
     String? tags,
     String? status,
     String? priority,
+    String? scheduledOn,
+    String? scheduledTime,
+    TaskSeries? series,
   });
 }
 
@@ -99,6 +108,16 @@ class _$TaskCWProxyImpl implements _$TaskCWProxy {
   Task priority(String? priority) => this(priority: priority);
 
   @override
+  Task scheduledOn(String? scheduledOn) => this(scheduledOn: scheduledOn);
+
+  @override
+  Task scheduledTime(String? scheduledTime) =>
+      this(scheduledTime: scheduledTime);
+
+  @override
+  Task series(TaskSeries? series) => this(series: series);
+
+  @override
   /// Creates a new instance with the provided field values.
   /// Passing `null` to a nullable field nullifies it, while `null` for a non-nullable field is ignored. To update a single field use `Task(...).copyWith.fieldName(value)`.
   ///
@@ -119,6 +138,9 @@ class _$TaskCWProxyImpl implements _$TaskCWProxy {
     Object? tags = const $CopyWithPlaceholder(),
     Object? status = const $CopyWithPlaceholder(),
     Object? priority = const $CopyWithPlaceholder(),
+    Object? scheduledOn = const $CopyWithPlaceholder(),
+    Object? scheduledTime = const $CopyWithPlaceholder(),
+    Object? series = const $CopyWithPlaceholder(),
   }) {
     return Task(
       id:
@@ -181,6 +203,21 @@ class _$TaskCWProxyImpl implements _$TaskCWProxy {
               ? _value.priority
               // ignore: cast_nullable_to_non_nullable
               : priority as String?,
+      scheduledOn:
+          scheduledOn == const $CopyWithPlaceholder()
+              ? _value.scheduledOn
+              // ignore: cast_nullable_to_non_nullable
+              : scheduledOn as String?,
+      scheduledTime:
+          scheduledTime == const $CopyWithPlaceholder()
+              ? _value.scheduledTime
+              // ignore: cast_nullable_to_non_nullable
+              : scheduledTime as String?,
+      series:
+          series == const $CopyWithPlaceholder()
+              ? _value.series
+              // ignore: cast_nullable_to_non_nullable
+              : series as TaskSeries?,
     );
   }
 }

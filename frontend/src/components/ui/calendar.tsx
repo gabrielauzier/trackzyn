@@ -27,6 +27,14 @@ interface CalendarProps {
   locale?: Locale
   onSelect?: (date: Date | undefined) => void
   className?: string
+  /** The first day of the week, 0 (Sunday) to 6; the locale's when left out. */
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  /** The days that cannot be picked. */
+  disabled?: (date: Date) => boolean
+  /** The day marked as today; the browser's when left out (a workspace may be in another timezone). */
+  today?: Date
+  /** The accessible name of each day; only the number when left out. */
+  labelDay?: (date: Date) => string
 }
 
 type View = 'days' | 'months' | 'years'
@@ -38,6 +46,10 @@ function Calendar({
   locale,
   onSelect,
   className,
+  weekStartsOn,
+  disabled,
+  today: todayDate,
+  labelDay,
 }: CalendarProps) {
   const [viewMonth, setViewMonth] = useState(defaultMonth ?? selected ?? new Date())
   const [view, setView] = useState<View>('days')
@@ -70,8 +82,8 @@ function Calendar({
 
   const monthStart = startOfMonth(viewMonth)
   const monthEnd = endOfMonth(viewMonth)
-  const calStart = startOfWeek(monthStart, { locale })
-  const calEnd = endOfWeek(monthEnd, { locale })
+  const calStart = startOfWeek(monthStart, { locale, weekStartsOn })
+  const calEnd = endOfWeek(monthEnd, { locale, weekStartsOn })
 
   const weeks: Date[][] = []
   let day = calStart
@@ -135,15 +147,21 @@ function Calendar({
               week.map((d, di) => {
                 const inMonth = isSameMonth(d, viewMonth)
                 const isSelected = selected && isSameDay(d, selected)
-                const today = isToday(d)
+                const today = todayDate ? isSameDay(d, todayDate) : isToday(d)
+                const off = disabled?.(d) ?? false
 
                 return (
                   <button
                     key={`${wi}-${di}`}
                     type="button"
+                    disabled={off}
+                    aria-label={labelDay?.(d)}
+                    aria-pressed={labelDay ? Boolean(isSelected) : undefined}
+                    aria-current={labelDay && today ? 'date' : undefined}
                     onClick={() => onSelect?.(d)}
                     className={cn(
                       'size-8 inline-flex items-center justify-center rounded-lg text-sm transition-colors',
+                      off && 'pointer-events-none opacity-40',
                       !inMonth && 'text-muted-foreground/40',
                       inMonth && !isSelected && 'text-foreground hover:bg-muted/60',
                       today && !isSelected && 'bg-accent text-accent-foreground font-medium',

@@ -11,6 +11,7 @@ export const TOKEN_ROUTES: ReadonlyArray<{ method: string; url: string; scope: T
   { method: 'POST', url: '/api/tasks/:task_id/move', scope: 'tasks:write' },
   { method: 'POST', url: '/api/tasks/:task_id/move-to-list', scope: 'tasks:write' },
   { method: 'POST', url: '/api/tasks/:task_id/duplicate', scope: 'tasks:write' },
+  { method: 'POST', url: '/api/tasks/:task_id/skip', scope: 'tasks:write' },
   { method: 'POST', url: '/api/tasks/:task_id/subtasks', scope: 'tasks:write' },
   { method: 'PATCH', url: '/api/subtasks/:subtask_id', scope: 'tasks:write' },
   { method: 'POST', url: '/api/subtasks/:subtask_id/move', scope: 'tasks:write' },
@@ -34,6 +35,7 @@ export const CLOSED_AGENDA_ROUTES: ReadonlyArray<{ method: string; url: string }
   { method: 'POST', url: '/api/sessions' },
   { method: 'PATCH', url: '/api/sessions/:id' },
   { method: 'DELETE', url: '/api/sessions/:id' },
+  { method: 'GET', url: '/api/agenda/scheduled' },
 ]
 
 export const routeKey = (route: { method: string; url: string }) => `${route.method} ${route.url}`

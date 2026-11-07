@@ -23,6 +23,10 @@ interface SessionTaskPickerProps {
   /** The popover's state, when the panel drives it (it closes it for the modal and opens it again on Cancel). */
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  /** Offers only the pending tasks, as `Novo agendamento` does (US-8); Done is offered otherwise. */
+  pendingOnly?: boolean
+  /** The text of the create option for the search text; `Criar nova tarefa` or `Criar "<busca>"` otherwise. */
+  createLabel?: (query: string) => string
 }
 
 /** `title` with the first match of `query` wrapped in `<mark>`, ignoring case (PICK-08). */
@@ -42,7 +46,16 @@ function Highlighted({ title, query }: { title: string; query: string }) {
  * The task field of a new session (PICK-06 to PICK-11): a popover with a search that asks 300 ms after the last key,
  * the 10 tasks updated last or the matches grouped by list, and `Criar nova tarefa` after them.
  */
-export function SessionTaskPicker({ value, lists, onChange, onCreate, open: openProp, onOpenChange: onOpenChangeProp }: SessionTaskPickerProps) {
+export function SessionTaskPicker({
+  value,
+  lists,
+  onChange,
+  onCreate,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+  pendingOnly = false,
+  createLabel,
+}: SessionTaskPickerProps) {
   const { t } = useTranslation()
   const [openState, setOpenState] = useState(false)
   const open = openProp ?? openState
@@ -59,7 +72,7 @@ export function SessionTaskPicker({ value, lists, onChange, onCreate, open: open
     queryFn: () => sessionsApi.searchTasks(settled),
     enabled: open,
   })
-  const results = useMemo(() => found.data?.tasks ?? [], [found.data])
+  const results = useMemo(() => (found.data?.tasks ?? []).filter((task) => !pendingOnly || task.column !== 'done'), [found.data, pendingOnly])
   // The groups follow the order of the lists; inside each, the order the API gave: the latest first (PICK-07).
   const groups = useMemo(
     () =>
@@ -184,7 +197,7 @@ export function SessionTaskPicker({ value, lists, onChange, onCreate, open: open
             onClick={() => onCreate(query)}
           >
             <Plus className="size-4 shrink-0" aria-hidden />
-            {empty ? t('agenda.picker.createNamed', { title: settled }) : t('agenda.picker.create')}
+            {createLabel ? createLabel(query) : empty ? t('agenda.picker.createNamed', { title: settled }) : t('agenda.picker.create')}
           </button>
         </div>
       </PopoverContent>

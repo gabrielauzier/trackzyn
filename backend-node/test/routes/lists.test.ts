@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { type TestApp, bearer, createTestApp, register } from '../support/test-app.ts'
 
@@ -268,5 +269,22 @@ describe('DELETE /api/lists/:id', () => {
     expect((await call('DELETE', `/api/lists/${list.id}`, stranger.token, strangerWorkspaceId)).statusCode).toBe(404)
     expect((await call('DELETE', `/api/lists/${randomUUID()}`, owner.token, workspaceId)).statusCode).toBe(404)
     expect((await call('GET', `/api/lists/${list.id}`, owner.token, workspaceId)).statusCode).toBe(200)
+  })
+})
+
+describe('GET /api/lists with scheduled tasks (US-4)', () => {
+  it('LIST-05 the 4-row preview already counts a Backlog task scheduled for today as a task of Today', async () => {
+    const { owner, viewer, workspaceId } = await setup()
+    await t.app.inject({ method: 'PATCH', url: `/api/workspaces/${workspaceId}`, headers: bearer(owner.token), payload: { timezone: 'America/Sao_Paulo' } })
+    const list = await createList(owner, workspaceId)
+    for (const title of ['one', 'two', 'three', 'four']) await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list.id, title })
+    const due = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: list.id, title: 'due today' })).json()
+    // Last in Backlog, scheduled for today in the workspace's timezone.
+    await t.ctx.db.execute(sql`UPDATE tasks SET scheduled_on = (now() AT TIME ZONE 'America/Sao_Paulo')::date WHERE id = ${due.id}`)
+
+    const reply = await call('GET', '/api/lists', viewer.token, workspaceId)
+    const [card] = reply.json().lists as Array<{ pending_count: number; preview: Array<{ title: string }> }>
+    expect(card!.pending_count).toBe(5)
+    expect(card!.preview.map((item) => item.title)).toEqual(['due today', 'one', 'two', 'three'])
   })
 })

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { type User, completedBy, inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
-import { type TestApp, createTestApp } from '../support/test-app.ts'
+import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
 import { focusActions } from '../../src/db/schema.ts'
 
 let t: TestApp
@@ -419,5 +419,31 @@ describe('every focus action', () => {
       expect(reply.statusCode, path).toBe(422)
       expectServerNow(reply.json())
     }
+  })
+})
+
+describe('GET /api/focus with a task scheduled for today (US-4)', () => {
+  const scheduleForToday = async (taskId: string) => {
+    await t.app.inject({ method: 'PATCH', url: `/api/workspaces/${workspaceId}`, headers: bearer(owner.token), payload: { timezone: 'America/Sao_Paulo' } })
+    await t.ctx.db.execute(sql`UPDATE tasks SET scheduled_on = (now() AT TIME ZONE 'America/Sao_Paulo')::date WHERE id = ${taskId}`)
+  }
+
+  it('the focus screen lists a Backlog task scheduled for today among the next tasks of Today', async () => {
+    const due = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Due', estimate_minutes: 15 })).json().id as string
+    await scheduleForToday(due)
+
+    const state = (await call('GET', `/api/focus?list_id=${listId}`, viewer.token, workspaceId)).json()
+    expect(state.today.tasks.map((task: { id: string }) => task.id)).toEqual([taskA, taskB, due])
+    expect(state.today).toMatchObject({ pending: 3, estimate_minutes: 105 })
+  })
+
+  it('the widget, reading without a list, lists it among the next tasks of Today of the open session', async () => {
+    expect((await start(taskA)).statusCode).toBe(200)
+    const due = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Due' })).json().id as string
+    await scheduleForToday(due)
+
+    const state = (await call('GET', '/api/focus', owner.token, workspaceId)).json()
+    expect(state.session).toMatchObject({ task_id: taskA })
+    expect(state.today.tasks.map((task: { id: string }) => task.id)).toEqual([taskA, taskB, due])
   })
 })

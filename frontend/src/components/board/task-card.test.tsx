@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, screen, within } from '@testing-library/react'
 
 import { TaskCard } from '@/components/board/task-card'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { TaskCardView } from '@/types'
+import type { TaskCardView, TaskColumn } from '@/types'
 
 function task(overrides: Partial<TaskCardView> = {}): TaskCardView {
   return {
@@ -15,6 +15,9 @@ function task(overrides: Partial<TaskCardView> = {}): TaskCardView {
     position: 0,
     subtasks: { done: 0, total: 0 },
     created_via: null,
+    scheduled_on: null,
+    scheduled_time: null,
+    series: null,
     ...overrides,
   }
 }
@@ -359,5 +362,93 @@ describe('TaskCard estimate in HH:MM', () => {
     expect(text.querySelector('svg')).toBeNull()
     await user.click(text)
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+})
+
+describe('TaskCard schedule badge (US-3, US-11)', () => {
+  // Wednesday 2026-11-11, 14:07 in America/Sao_Paulo.
+  const TZ = 'America/Sao_Paulo'
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-11T17:07:00Z'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const FRIDAYS = { id: 'series-1', rule: { freq: 'weekly' as const, interval: 1, weekdays: [5], month_day: null, until: null, count: null }, next_on: '2026-11-20' }
+  const show = (overrides: Partial<TaskCardView>, column: TaskColumn) =>
+    renderWithProviders(<TaskCard task={task(overrides)} column={column} number={1} timeZone={TZ} canWrite {...noop} />)
+
+  it('shows the day in Backlog and This week, with the calendar icon and the full day as its tip', () => {
+    const { unmount } = show({ scheduled_on: '2026-11-12' }, 'backlog')
+    const badge = screen.getByTitle('Thu, Nov 12')
+    expect(badge).toHaveTextContent('Tomorrow')
+    expect(badge.querySelector('.lucide-calendar-days')).not.toBeNull()
+    unmount()
+
+    show({ scheduled_on: '2026-11-20' }, 'this_week')
+    expect(screen.getByTitle('Fri, Nov 20')).toHaveTextContent('Nov 20')
+  })
+
+  it('joins the time with the clock icon, and shows only the time in Today', () => {
+    const { unmount } = show({ scheduled_on: '2026-11-13', scheduled_time: '14:00' }, 'this_week')
+    const badge = screen.getByTitle('Fri, Nov 13 · 14:00')
+    expect(badge).toHaveTextContent('Fri 14:00')
+    expect(badge.querySelector('.lucide-clock')).not.toBeNull()
+    unmount()
+
+    show({ scheduled_on: '2026-11-11', scheduled_time: '16:00' }, 'today')
+    expect(screen.getByTitle('Wed, Nov 11 · 16:00')).toHaveTextContent(/^16:00$/)
+  })
+
+  it('D21 shows Agendada in Today for a task without a time, with the day it was scheduled for as its tip', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      show({ scheduled_on: '2026-11-04' }, 'today')
+      const badge = screen.getByTitle('Agendada para qua, 4 nov')
+      expect(badge).toHaveTextContent('Agendada')
+      expect(badge.querySelector('.lucide-calendar-check')).not.toBeNull()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('D5 shows no badge in Done', () => {
+    show({ scheduled_on: '2026-11-11', scheduled_time: '09:00' }, 'done')
+    expect(screen.queryByTitle(/Nov 11/)).not.toBeInTheDocument()
+    expect(screen.queryByText('09:00')).not.toBeInTheDocument()
+  })
+
+  it('shows no badge on a task that is not scheduled', () => {
+    show({}, 'today')
+    expect(screen.queryByText('Scheduled')).not.toBeInTheDocument()
+  })
+
+  it('adds the repeat icon after the day and time of a series, and the rule to the tip', () => {
+    show({ scheduled_on: '2026-11-13', scheduled_time: '14:00', series: FRIDAYS }, 'this_week')
+    const badge = screen.getByTitle(/Repeats every Friday/)
+    expect(badge).toHaveAttribute('title', 'Fri, Nov 13 · 14:00\nRepeats every Friday')
+    const icon = within(badge).getByRole('img', { name: 'Repeats' })
+    expect(within(badge).getByText('Fri 14:00').compareDocumentPosition(icon) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('sits on the estimate row, outside the title and the quick actions, so the title keeps its three lines', () => {
+    renderWithProviders(
+      <TaskCard
+        task={task({ scheduled_on: '2026-11-13', scheduled_time: '14:00' })}
+        column="this_week"
+        timeZone={TZ}
+        canWrite
+        {...noop}
+        actions={{ menu: <button type="button">menu</button> }}
+      />,
+    )
+    const badge = screen.getByTitle('Fri, Nov 13 · 14:00')
+    const title = screen.getByRole('button', { name: 'DEV-1725' })
+    expect(title).toHaveClass('line-clamp-3')
+    expect(title.contains(badge)).toBe(false)
+    expect(screen.getByRole('button', { name: 'menu' }).parentElement!.contains(badge)).toBe(false)
+    expect(badge.closest('div')).toBe(screen.getByTitle('Time spent').parentElement)
   })
 })
