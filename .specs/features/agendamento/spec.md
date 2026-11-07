@@ -50,7 +50,7 @@ O que o código e as decisões anteriores já fixam:
 | --- | --- | --- |
 | `scheduled_on` | `date`, nulo | O dia agendado, no fuso do workspace. |
 | `scheduled_time` | `time`, nulo | A hora de início, no fuso do workspace, em passos de 15 min. Só existe com `scheduled_on` (`check`). |
-| `schedule_applied_at` | `timestamptz`, nulo | Quando a tarefa foi para Hoje por este agendamento. Volta a nulo sempre que o dia ou a hora mudam. |
+| `schedule_applied_at` | `timestamptz`, nulo | Quando a tarefa foi para Hoje por este agendamento. Volta a nulo quando o dia muda; mudar só a hora o mantém (D26). |
 
 Dia e hora ficam separados, e não num `timestamptz`, porque o dia sem hora é um caso de primeira classe e porque "hoje" é calculado no fuso do workspace. Se o fuso do workspace mudar, a tarefa continua no mesmo horário de parede, como no Google Agenda.
 
