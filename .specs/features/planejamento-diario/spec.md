@@ -215,7 +215,7 @@ O que o código já fixa:
 | PLAN-14 | P1: Planejar pausas | Tasks | In Tasks |
 | PLAN-15 | P1: Planejar pausas | Tasks | In Tasks |
 | PLAN-16 | P1: Planejar pausas | Tasks | In Tasks |
-| PLAN-17 | P1: Planejar pausas | Tasks | In Tasks |
+| PLAN-17 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-18 | P1: Planejar pausas | Tasks | In Tasks |
 | PLAN-19 | P1: Ver se o dia cabe | Tasks | In Tasks |
 | PLAN-20 | P1: Ver se o dia cabe | Tasks | In Tasks |
@@ -238,10 +238,10 @@ O que o código já fixa:
 | PLAN-37 | Edge Cases | Tasks | In Tasks |
 | PLAN-38 | Edge Cases | Tasks | In Tasks |
 | PLAN-39 | Edge Cases | Tasks | In Tasks |
-| PLAN-40 | Edge Cases | Tasks | In Tasks |
+| PLAN-40 | Edge Cases | Tasks | Implementing |
 | PLAN-41 | Edge Cases | Tasks | In Tasks |
 | PLAN-42 | Edge Cases | Tasks | In Tasks |
-| PLAN-43 | Edge Cases | Tasks | In Tasks |
+| PLAN-43 | Edge Cases | Tasks | Implementing |
 | PLAN-44 | Edge Cases | Tasks | In Tasks |
 | PLAN-45 | Edge Cases | Tasks | In Tasks |
 

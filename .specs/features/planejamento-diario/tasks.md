@@ -91,11 +91,11 @@ T24 → T25
 
 **Done when**:
 
-- [ ] A migração, gerada com `npx drizzle-kit generate --name day_plans`, roda no PGlite
-- [ ] O banco recusa: bloco de tarefa sem `task_id`, pausa sem nome ou sem lista, pausa fora de 5–120 min, tarefa fora de 5–1440 min, hora com segundos e um segundo plano do mesmo usuário, workspace e dia
-- [ ] Excluir a tarefa apaga o bloco; excluir o plano apaga os blocos
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
-- [ ] Test count: os testes anteriores continuam passando, mais os novos de `day-plans-schema.test.ts`
+- [x] A migração, gerada com `npx drizzle-kit generate --name day_plans`, roda no PGlite
+- [x] O banco recusa: bloco de tarefa sem `task_id`, pausa sem nome ou sem lista, pausa fora de 5–120 min, tarefa fora de 5–1440 min, hora com segundos e um segundo plano do mesmo usuário, workspace e dia
+- [x] Excluir a tarefa apaga o bloco; excluir o plano apaga os blocos
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Test count: os testes anteriores continuam passando, mais os novos de `day-plans-schema.test.ts`
 
 **Tests**: integration
 **Gate**: full

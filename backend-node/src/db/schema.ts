@@ -390,6 +390,67 @@ export const taskIdempotencyKeys = pgTable(
   (t) => [primaryKey({ columns: [t.tokenId, t.key] })],
 )
 
+export const DAY_PLAN_BLOCK_KINDS = ['task', 'break'] as const
+export type DayPlanBlockKind = (typeof DAY_PLAN_BLOCK_KINDS)[number]
+
+/** The plan of one user for one day of one workspace (planejamento-diario, PLAN-D2); `version` guards two tabs (PLAN-35). */
+export const dayPlans = pgTable(
+  'day_plans',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    /** The planned day, in the workspace's timezone (`YYYY-MM-DD`). */
+    day: date('day', { mode: 'string' }).notNull(),
+    /** 1 on the first save, plus 1 on each save after it. */
+    version: integer('version').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [unique('uq_day_plans_user_workspace_day').on(t.userId, t.workspaceId, t.day)],
+)
+
+/** A block of a day plan: a task, or a break with its name and the list of the break session (PLAN-D3, PLAN-D4). */
+export const dayPlanBlocks = pgTable(
+  'day_plan_blocks',
+  {
+    id: uuid('id').primaryKey(),
+    planId: uuid('plan_id')
+      .notNull()
+      .references(() => dayPlans.id, { onDelete: 'cascade' }),
+    kind: varchar('kind', { length: 8 }).$type<DayPlanBlockKind>().notNull(),
+    /** Only for a task; deleting the task drops the block (PLAN-40). */
+    taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'cascade' }),
+    /** Only for a break, 1 to 40 characters. */
+    name: varchar('name', { length: 40 }),
+    /** Only for a break: the list of the break session it starts. */
+    listId: uuid('list_id').references(() => lists.id, { onDelete: 'cascade' }),
+    /** The start, to the minute, in the workspace's timezone. */
+    startTime: time('start_time').notNull(),
+    /** A task lasts 5 to 1440 minutes; a break 5 to 120, the limit of a break session. */
+    minutes: smallint('minutes').notNull(),
+  },
+  (t) => [
+    index('ix_day_plan_blocks_plan_start').on(t.planId, t.startTime),
+    // Partial, so the cascades from tasks and lists touch only the blocks that point at them.
+    index('ix_day_plan_blocks_task').on(t.taskId).where(sql`${t.taskId} IS NOT NULL`),
+    index('ix_day_plan_blocks_list').on(t.listId).where(sql`${t.listId} IS NOT NULL`),
+    check('ck_day_plan_blocks_kind', sql`${t.kind} IN ('task', 'break')`),
+    check(
+      'ck_day_plan_blocks_shape',
+      sql`(${t.kind} = 'task' AND ${t.taskId} IS NOT NULL AND ${t.name} IS NULL AND ${t.listId} IS NULL) OR (${t.kind} = 'break' AND ${t.taskId} IS NULL AND ${t.name} IS NOT NULL AND char_length(${t.name}) BETWEEN 1 AND 40 AND ${t.listId} IS NOT NULL)`,
+    ),
+    check(
+      'ck_day_plan_blocks_minutes',
+      sql`(${t.kind} = 'task' AND ${t.minutes} BETWEEN 5 AND 1440) OR (${t.kind} = 'break' AND ${t.minutes} BETWEEN 5 AND 120)`,
+    ),
+    check('ck_day_plan_blocks_start_minute', sql`extract(second FROM ${t.startTime}) = 0`),
+  ],
+)
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Workspace = typeof workspaces.$inferSelect
@@ -403,3 +464,5 @@ export type TaskSeries = typeof taskSeries.$inferSelect
 export type FocusSession = typeof focusSessions.$inferSelect
 export type FocusAction = typeof focusActions.$inferSelect
 export type AccessToken = typeof personalAccessTokens.$inferSelect
+export type DayPlan = typeof dayPlans.$inferSelect
+export type DayPlanBlock = typeof dayPlanBlocks.$inferSelect
