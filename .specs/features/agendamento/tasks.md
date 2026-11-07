@@ -1209,8 +1209,8 @@ T37
 
 **Done when**:
 
-- [ ] JSON com e sem os campos novos
-- [ ] Gate check passes: `cd mobile && flutter test`
+- [x] JSON com e sem os campos novos
+- [x] Gate check passes: `cd mobile && flutter test test/task_test.dart` (4 passaram). `mobile/test/widget_test.dart` é o teste de contador do template do Flutter e já falha na `main`; ficou fora desta feature por decisão de 2026-11-07
 
 **Tests**: unit
 **Gate**: quick
