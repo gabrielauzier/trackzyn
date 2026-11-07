@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { eq } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type TaskSeries, taskSeries, tasks } from '../db/schema.ts'
+import { type Task, type TaskSeries, taskSeries, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { type RecurrenceRule, nextOccurrence } from './recurrence.ts'
-import { type TaskWithSubtasks, findTask, getTask, lockList } from './tasks.ts'
+import { setSchedule, workspaceClock } from './schedule.ts'
+import { type TaskWithSubtasks, duplicateTask, findTask, getTask, lockList } from './tasks.ts'
 
 const seriesError = (message: string, code: string) => new HttpError(422, message, {}, { code })
 
@@ -97,4 +98,43 @@ export async function setRecurrence(
     }
     return getTask(tx, current.id, workspaceId)
   })
+}
+
+/**
+ * Creates the next occurrence of the series of `occurrence`, which is leaving the pending columns (completed,
+ * or deleted on its own): a copy with the same title, notes, estimate, list and subtasks, none of them done
+ * (D19), on the first day of the rule after its day and after today (D17), at the same time. The time spent
+ * and the sessions stay on `occurrence`. The column follows the rules of saving a schedule (D3), and the
+ * series counts one more occurrence. When the rule has no occurrence left (`count` or `until`), the series
+ * ends instead. Nothing happens for an ended series or while another occurrence is pending (D13), so two
+ * completions at once create one occurrence: the series is locked for the update. Runs in the caller's
+ * transaction, which holds the lock of the list.
+ */
+export async function createNextOccurrence(
+  tx: Database,
+  occurrence: Task,
+  workspaceId: string,
+  byUserId: string,
+  now: Date,
+): Promise<TaskWithSubtasks | null> {
+  if (occurrence.seriesId === null) return null
+  const series = await lockSeries(tx, occurrence.seriesId)
+  if (series === null || series.endedAt !== null) return null
+  const [pending] = await tx
+    .select({ id: tasks.id })
+    .from(tasks)
+    .where(and(eq(tasks.seriesId, series.id), ne(tasks.column, 'done'), ne(tasks.id, occurrence.id)))
+    .limit(1)
+  if (pending) return null
+
+  const { today } = await workspaceClock(tx, workspaceId, now)
+  const next = nextOccurrence(ruleOf(series), occurrence.scheduledOn ?? today, today, series.createdCount)
+  if (next === null) {
+    await tx.update(taskSeries).set({ endedAt: now }).where(eq(taskSeries.id, series.id))
+    return null
+  }
+  const copy = await duplicateTask(tx, occurrence.id, workspaceId, now)
+  await tx.update(tasks).set({ seriesId: series.id }).where(eq(tasks.id, copy.id))
+  await tx.update(taskSeries).set({ createdCount: series.createdCount + 1 }).where(eq(taskSeries.id, series.id))
+  return setSchedule(tx, copy.id, workspaceId, { on: next, time: occurrence.scheduledTime }, byUserId, now)
 }

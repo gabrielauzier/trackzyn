@@ -17,6 +17,7 @@ import {
 import { HttpError } from '../http/http-error.ts'
 import { endOpenSessions } from './focus-settle.ts'
 import { getList } from './lists.ts'
+import { createNextOccurrence } from './series.ts'
 
 /**
  * `createdVia` is the name of the token that created the task, while that token exists (ORIGIN-02, ORIGIN-05);
@@ -140,6 +141,7 @@ export async function updateTask(
  * columns it left and entered from 0 to n-1. Entering `done` records `completed_at = now` and
  * `completed_by_user_id = byUserId` (AD-006); leaving it clears both, and moving inside `done` keeps them.
  * A task that is not in `today` afterwards loses its open focus session, ended at `now` (FOCUS-15).
+ * Completing an occurrence of a series creates its next occurrence (`createNextOccurrence`).
  */
 export async function moveTask(
   db: Database,
@@ -186,6 +188,8 @@ export async function moveTask(
       const left = await columnIds(current.column)
       for (const [position, id] of left.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
     }
+    // Completing an occurrence of a series creates the next one in the same write (US-10, D13).
+    if (target.column === 'done' && !stays) await createNextOccurrence(tx as Database, current, workspaceId, target.byUserId, now)
   })
   return getTask(db, task.id, workspaceId)
 }

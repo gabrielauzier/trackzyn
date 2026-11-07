@@ -376,8 +376,8 @@ T37
 
 **Done when**:
 
-- [ ] Tempo e sessões ficam na concluída; voltar a concluída de Concluídas não apaga a nova
-- [ ] Gate check passes (full)
+- [x] Tempo e sessões ficam na concluída; voltar a concluída de Concluídas não apaga a nova
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
