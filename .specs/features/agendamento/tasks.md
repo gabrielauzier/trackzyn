@@ -934,8 +934,8 @@ T37
 
 **Done when**:
 
-- [ ] Tarefa sem série não abre a pergunta
-- [ ] Gate check passes (quick)
+- [x] Tarefa sem série não abre a pergunta
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

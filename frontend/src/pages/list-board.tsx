@@ -38,6 +38,7 @@ import { TaskCard } from '@/components/board/task-card'
 import { TaskCardMenu, type ScheduleChange } from '@/components/board/task-card-menu'
 import { TaskDialog } from '@/components/board/task-dialog'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
+import { SeriesScopeDialog } from '@/components/schedule/series-scope-dialog'
 import { ListBadge } from '@/components/lists/list-badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,7 +50,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { FocusRouteState } from '@/lib/desktop/focus-window'
-import type { Board, TaskCardView, TaskColumn } from '@/types'
+import { asksSeriesScope } from '@/lib/schedule'
+import type { Board, SeriesScope, TaskCardView, TaskColumn } from '@/types'
 
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
 /** The drag overlay's card is only a picture of the dragged one, so its actions do nothing. */
@@ -152,6 +154,8 @@ export default function ListBoardPage() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
   const [tab, setTab] = useState<TaskColumn>('today')
   const [deleting, setDeleting] = useState<TaskCardView | null>(null)
+  /** A new day or time of an occurrence of a series, waiting for `Só esta` or `Esta e as próximas` (US-12). */
+  const [scoping, setScoping] = useState<{ id: string; change: ScheduleChange } | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
   // The card a press last landed in keeps the accent border, through its own buttons and menus.
   const { selected: selectedCard, select: selectCard } = useCardSelection('data-task-id')
@@ -191,7 +195,8 @@ export default function ListBoardPage() {
   })
   // The badge follows from the board read again after the save (US-1).
   const scheduleMutation = useMutation({
-    mutationFn: ({ id, change }: { id: string; change: ScheduleChange }) => tasksApi.update(id, change),
+    mutationFn: ({ id, change, scope }: { id: string; change: ScheduleChange; scope?: SeriesScope }) =>
+      tasksApi.update(id, scope === undefined ? change : { ...change, scope }),
     onError: onActionError,
     onSettled: () => void refresh(),
   })
@@ -200,8 +205,9 @@ export default function ListBoardPage() {
     onError: onActionError,
     onSettled: () => void refresh(),
   })
+  // An occurrence of a series is deleted with the scope chosen (US-12).
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => tasksApi.remove(id),
+    mutationFn: ({ id, scope }: { id: string; scope?: SeriesScope }) => (scope === undefined ? tasksApi.remove(id) : tasksApi.remove(id, scope)),
     onSuccess: () => setDeleting(null),
     onError: onActionError,
     onSettled: () => void refresh(),
@@ -375,7 +381,9 @@ export default function ListBoardPage() {
                 task,
                 done: column === 'done',
                 timeZone: shown.timezone,
-                onChange: (change) => scheduleMutation.mutate({ id: task.id, change }),
+                // A new day or time of an occurrence asks first (US-12).
+                onChange: (change) =>
+                  asksSeriesScope(task, change) ? setScoping({ id: task.id, change }) : scheduleMutation.mutate({ id: task.id, change }),
                 onSkip: () => skipMutation.mutate(task.id),
               }}
             />
@@ -497,12 +505,30 @@ export default function ListBoardPage() {
       </DndContext>
 
       <DeleteConfirmationDialog
-        open={deleting !== null}
+        open={deleting !== null && deleting.series === null}
         title={t('board.deleteTask')}
         description={t('board.deleteTaskDescription', { title: deleting?.title ?? '' })}
         isPending={deleteMutation.isPending}
         onClose={() => setDeleting(null)}
-        onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
+        onConfirm={() => deleting && deleteMutation.mutate({ id: deleting.id })}
+      />
+      <SeriesScopeDialog
+        open={Boolean(deleting?.series)}
+        variant="delete"
+        title={deleting?.title}
+        nextOn={deleting?.series?.next_on ?? null}
+        isPending={deleteMutation.isPending}
+        onCancel={() => setDeleting(null)}
+        onChoose={(scope) => deleting && deleteMutation.mutate({ id: deleting.id, scope })}
+      />
+      <SeriesScopeDialog
+        open={scoping !== null}
+        variant="move"
+        onCancel={() => setScoping(null)}
+        onChoose={(scope) => {
+          if (scoping) scheduleMutation.mutate({ ...scoping, scope })
+          setScoping(null)
+        }}
       />
       <TaskDialog taskId={openTaskId} canWrite={canWrite} timeZone={board.timezone} onClose={() => setOpenTaskId(null)} />
     </div>

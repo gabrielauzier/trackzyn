@@ -220,3 +220,23 @@ export const defaultCustomRule = (day: string): RecurrenceRule => ({
   until: null,
   count: null,
 })
+
+/** What a save changes in the schedule of a task; a field left out keeps its value. */
+export interface ScheduleChangeFields {
+  scheduled_on?: string | null
+  scheduled_time?: string | null
+  recurrence?: RecurrenceRule | null
+}
+
+/**
+ * Whether a save moves an occurrence of a series and so asks `Só esta ocorrência` or `Esta e as próximas`
+ * (US-12, D16): its day or its time changes. A new rule always counts for the series, and removing the
+ * schedule ends it (D29), so neither asks.
+ */
+export function asksSeriesScope(task: TaskSchedule, change: ScheduleChangeFields): boolean {
+  if (task.series === null || change.recurrence !== undefined || change.scheduled_on === null) return false
+  return (
+    (change.scheduled_on !== undefined && change.scheduled_on !== task.scheduled_on) ||
+    (change.scheduled_time !== undefined && change.scheduled_time !== task.scheduled_time)
+  )
+}

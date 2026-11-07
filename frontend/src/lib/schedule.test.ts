@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 
 import i18n from '@/lib/i18n'
-import { recurrenceSummary, repeatsLabel, scheduleBadge } from '@/lib/schedule'
+import { asksSeriesScope, recurrenceSummary, repeatsLabel, scheduleBadge } from '@/lib/schedule'
 import type { RecurrenceRule, TaskColumn, TaskSchedule } from '@/types'
 
 // Wednesday 2026-11-11, 14:07 in America/Sao_Paulo (UTC-3).
@@ -155,5 +155,24 @@ describe('recurrenceSummary and repeatsLabel (US-9, US-11)', () => {
       'A cada 2 meses, no dia 13, até 13 mar',
     )
     expect(summary('en', rule({ freq: 'daily', until: '2026-12-20' }))).toBe('Every day, until Dec 20')
+  })
+})
+
+describe('asksSeriesScope (US-12, D16)', () => {
+  const occurrence = schedule('2026-11-13', '10:00', FRIDAYS)
+
+  it('asks when the day or the time of an occurrence changes', () => {
+    expect(asksSeriesScope(occurrence, { scheduled_on: '2026-11-12' })).toBe(true)
+    expect(asksSeriesScope(occurrence, { scheduled_time: '11:00' })).toBe(true)
+    expect(asksSeriesScope(occurrence, { scheduled_time: null })).toBe(true)
+    expect(asksSeriesScope(occurrence, { scheduled_on: '2026-11-13', scheduled_time: '11:00' })).toBe(true)
+  })
+
+  it('does not ask for a task without a series, the same day and time, a new rule or removing the schedule', () => {
+    expect(asksSeriesScope(schedule('2026-11-13', '10:00'), { scheduled_on: '2026-11-12' })).toBe(false)
+    expect(asksSeriesScope(occurrence, { scheduled_on: '2026-11-13', scheduled_time: '10:00' })).toBe(false)
+    expect(asksSeriesScope(occurrence, { scheduled_on: '2026-11-12', recurrence: rule({ freq: 'daily' }) })).toBe(false)
+    expect(asksSeriesScope(occurrence, { recurrence: null })).toBe(false)
+    expect(asksSeriesScope(occurrence, { scheduled_on: null })).toBe(false)
   })
 })

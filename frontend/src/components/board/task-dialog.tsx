@@ -20,8 +20,9 @@ import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SchedulePicker } from '@/components/schedule/schedule-picker'
-import { longDay, recurrenceSummary } from '@/lib/schedule'
-import type { RecurrenceRule, Task } from '@/types'
+import { SeriesScopeDialog } from '@/components/schedule/series-scope-dialog'
+import { asksSeriesScope, longDay, recurrenceSummary, type ScheduleChangeFields } from '@/lib/schedule'
+import type { SeriesScope, Task } from '@/types'
 
 const NOTES_MAX = 10_000
 
@@ -105,8 +106,9 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
     },
     onError: (e) => form.setError('root.server', { message: extractApiError(e, t('common.error')) }),
   })
+  // An occurrence of a series is deleted with the scope chosen (US-12).
   const remove = useMutation({
-    mutationFn: () => tasksApi.remove(task.id),
+    mutationFn: (scope?: SeriesScope) => (scope === undefined ? tasksApi.remove(task.id) : tasksApi.remove(task.id, scope)),
     onSuccess: () => {
       setConfirmDelete(false)
       void refresh()
@@ -199,14 +201,26 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
           </DialogFooter>
         )}
       </form>
-      <DeleteConfirmationDialog
-        open={confirmDelete}
-        title={t('board.deleteTask')}
-        description={t('board.deleteTaskDescription', { title: task.title })}
-        isPending={remove.isPending}
-        onClose={() => setConfirmDelete(false)}
-        onConfirm={() => remove.mutate()}
-      />
+      {task.series ? (
+        <SeriesScopeDialog
+          open={confirmDelete}
+          variant="delete"
+          title={task.title}
+          nextOn={task.series.next_on}
+          isPending={remove.isPending}
+          onCancel={() => setConfirmDelete(false)}
+          onChoose={(scope) => remove.mutate(scope)}
+        />
+      ) : (
+        <DeleteConfirmationDialog
+          open={confirmDelete}
+          title={t('board.deleteTask')}
+          description={t('board.deleteTaskDescription', { title: task.title })}
+          isPending={remove.isPending}
+          onClose={() => setConfirmDelete(false)}
+          onConfirm={() => remove.mutate(undefined)}
+        />
+      )}
     </Form>
   )
 }
@@ -218,8 +232,7 @@ function endOf(start: string, minutes: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 }
 
-/** What the schedule field saves; a field left out keeps its value. */
-type ScheduleChange = { scheduled_on?: string | null; scheduled_time?: string | null; recurrence?: RecurrenceRule | null }
+type ScheduleChange = ScheduleChangeFields & { scope?: SeriesScope }
 
 /**
  * `Agendamento` (US-2): `Sem agendamento`, `Qui, 12 nov` or `Qui, 12 nov · 10:00 – 12:00 · ↻ toda quinta`, the end
@@ -231,6 +244,8 @@ function ScheduleField({ task, canWrite, timeZone }: { task: Task; canWrite: boo
   const language = i18n.resolvedLanguage ?? i18n.language
   const queryClient = useQueryClient()
   const [picking, setPicking] = useState(false)
+  /** A new day or time of an occurrence of a series, waiting for `Só esta` or `Esta e as próximas` (US-12). */
+  const [scoping, setScoping] = useState<ScheduleChange | null>(null)
   const save = useMutation({
     mutationFn: (change: ScheduleChange) => tasksApi.update(task.id, change),
     onSuccess: () => {
@@ -238,6 +253,12 @@ function ScheduleField({ task, canWrite, timeZone }: { task: Task; canWrite: boo
       void queryClient.invalidateQueries({ queryKey: ['lists'] })
     },
   })
+  // The question takes the place of the picker; the picker closes once the change is saved.
+  const change = (next: ScheduleChange) => {
+    if (!asksSeriesScope(task, next)) return save.mutate(next)
+    setPicking(false)
+    setScoping(next)
+  }
 
   const day = task.scheduled_on
   const time = task.scheduled_time
@@ -281,15 +302,15 @@ function ScheduleField({ task, canWrite, timeZone }: { task: Task; canWrite: boo
                   pending={save.isPending}
                   onCancel={() => setPicking(false)}
                   onSubmit={(value) => {
-                    const change: ScheduleChange = { scheduled_on: value.on, scheduled_time: value.time }
-                    if (JSON.stringify(value.recurrence) !== JSON.stringify(task.series?.rule ?? null)) change.recurrence = value.recurrence
-                    save.mutate(change)
+                    const picked: ScheduleChange = { scheduled_on: value.on, scheduled_time: value.time }
+                    if (JSON.stringify(value.recurrence) !== JSON.stringify(task.series?.rule ?? null)) picked.recurrence = value.recurrence
+                    change(picked)
                   }}
                 />
               </PopoverContent>
             </Popover>
             {time !== null && (
-              <Button type="button" variant="ghost" size="sm" onClick={() => save.mutate({ scheduled_time: null })}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => change({ scheduled_time: null })}>
                 <X size={14} /> {t('schedule.clearTime')}
               </Button>
             )}
@@ -301,6 +322,15 @@ function ScheduleField({ task, canWrite, timeZone }: { task: Task; canWrite: boo
           </div>
         )}
       </div>
+      <SeriesScopeDialog
+        open={scoping !== null}
+        variant="move"
+        onCancel={() => setScoping(null)}
+        onChoose={(scope) => {
+          if (scoping) save.mutate({ ...scoping, scope })
+          setScoping(null)
+        }}
+      />
       {save.isError && (
         <p role="alert" className="text-sm text-destructive">
           {extractApiError(save.error, t('common.error'))}
