@@ -759,8 +759,8 @@ T37
 
 **Done when**:
 
-- [ ] Cada formato do spec tem caso, em pt-BR e inglês; Concluídas devolve nenhum selo
-- [ ] Gate check passes (quick)
+- [x] Cada formato do spec tem caso, em pt-BR e inglês; Concluídas devolve nenhum selo
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick
