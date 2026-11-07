@@ -1134,8 +1134,8 @@ T37
 
 **Done when**:
 
-- [ ] Os 6 estados do artboard `Estados do arraste` têm teste
-- [ ] Gate check passes (quick)
+- [x] Os 6 estados do artboard `Estados do arraste` têm teste
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

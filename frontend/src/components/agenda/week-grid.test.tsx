@@ -1,10 +1,11 @@
 import { fireEvent, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { dropZoneAt } from '@/lib/agenda/drop-zone'
 import { isHiddenSession } from '@/lib/agenda/hide'
 import { dayLimit, weekDays } from '@/lib/agenda/layout'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
-import { renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders } from '@/test/utils'
 import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
 import { PX_PER_MINUTE, WeekGrid } from './week-grid'
 
@@ -567,6 +568,132 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
       expect(onDrop).toHaveBeenCalledWith({ taskId: 'a', day: '2026-11-05', time: '16:00', from: { day: '2026-11-05', time: '10:00' } })
       expect(container.querySelector('[data-drag-ghost]')).toBeNull()
       expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+    })
+  })
+
+  describe('dragging between Sem hora and the grid (US-14, D22): the states of the drag', () => {
+    const untimedTask = (id: string, day: string, estimate: number | null = null): ScheduledTask => ({
+      ...scheduled(id, day, '00:00', estimate),
+      scheduled_time: null,
+    })
+    // Each day is 100 px wide from Monday at x = 0; the Sem hora row is from y = -120 to -8, the grid from y = 0.
+    beforeEach(() => {
+      const real = HTMLElement.prototype.getBoundingClientRect
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        const { agendaColumn, untimedDay } = this.dataset
+        const left = (day: string) => (Number(day.slice(8)) - 2) * 100
+        if (untimedDay) return DOMRect.fromRect({ x: left(untimedDay), y: -120, width: 100, height: 112 })
+        if (agendaColumn) return DOMRect.fromRect({ x: left(agendaColumn), y: 0, width: 100, height: 24 * 60 * PX_PER_MINUTE })
+        if (this.hasAttribute('data-agenda-scroll')) return DOMRect.fromRect({ x: 0, y: 0, width: 700, height: 24 * 60 * PX_PER_MINUTE })
+        return real.call(this)
+      })
+    })
+    afterEach(() => vi.restoreAllMocks())
+
+    function Board({ onDrop = vi.fn(), timed = [], untimed }: { onDrop?: () => void; timed?: ScheduledTask[]; untimed: ScheduledTask[] }) {
+      const drag = useGridDrag({
+        pxPerMinute: PX_PER_MINUTE,
+        limit: (day) => dayLimit(day, NOW, SP),
+        onCommit: vi.fn(),
+        onScheduledDrop: onDrop,
+        zoneAt: dropZoneAt,
+      })
+      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={timed} untimed={untimed} />
+    }
+    const cellOf = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-untimed-day="${day}"]`)!
+
+    it('hover: the task of the row shows a solid edge and the open hand, and a viewer cannot drag it', () => {
+      const { unmount } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03')]} />)
+      const task = screen.getByRole('button', { name: /^Scheduled u/ })
+      expect(task).toHaveAttribute('data-draggable', 'true')
+      expect(task).toHaveClass('cursor-grab', 'hover:border-solid')
+      unmount()
+      grid({ untimed: [untimedTask('u', '2026-11-03')] })
+      expect(screen.getByRole('button', { name: /^Scheduled u/ })).not.toHaveAttribute('data-draggable')
+    })
+
+    it('dragging: the task fades in its place and a copy with a shadow follows the pointer', () => {
+      const { container } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03')]} />)
+      const task = screen.getByRole('button', { name: /^Scheduled u/ })
+      fireEvent.pointerDown(task, { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 160, clientY: -60 })
+      expect(task).toHaveClass('opacity-30')
+      const ghost = container.querySelector<HTMLElement>('[data-drag-ghost]')!
+      expect(ghost).toHaveClass('shadow-lg')
+      expect(ghost).toHaveTextContent('Scheduled u')
+      expect([ghost.style.left, ghost.style.top]).toEqual(['168px', '-52px'])
+    })
+
+    it('over the grid: the draft of 1 h from the pointer with the label of the day and the times, saved on release', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} untimed={[untimedTask('u', '2026-11-03')]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled u/ }), { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(15, 20) })
+      const draft = column(container, '2026-11-05').querySelector<HTMLElement>('[data-scheduled-draft]')!
+      expect(draft).toHaveTextContent('Thu, Nov 5 · 15:15 – 16:15')
+      expect([draft.style.top, draft.style.height]).toEqual([`${y(15, 15)}px`, `${60 * PX_PER_MINUTE}px`])
+      fireEvent.pointerUp(window, { clientX: 350, clientY: y(15, 20) })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'u', day: '2026-11-05', time: '15:15', from: { day: '2026-11-03', time: null } })
+    })
+
+    it('over the grid: a task with an estimate drafts its estimate', () => {
+      const { container } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03', 30)]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled u/ }), { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(15, 20) })
+      expect(column(container, '2026-11-05').querySelector('[data-scheduled-draft]')).toHaveTextContent('15:15 – 15:45')
+    })
+
+    it('over the Sem hora row of another day: the cell is outlined and says Mover para <dia> · sem hora; the release changes only the day', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} untimed={[untimedTask('u', '2026-11-03')]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled u/ }), { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 150, clientY: -90 })
+      // Its own day is not a target.
+      expect(container.querySelector('[data-drop-target]')).toBeNull()
+      fireEvent.pointerMove(window, { clientX: 450, clientY: -90 })
+      const cell = cellOf(container, '2026-11-06')
+      expect(cell).toHaveAttribute('data-drop-target', 'true')
+      expect(cell).toHaveClass('outline-dashed', 'outline-indigo-500')
+      expect(within(cell).getByText('Move to Fri, Nov 6 · no time')).toBeInTheDocument()
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      fireEvent.pointerUp(window, { clientX: 450, clientY: -90 })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'u', day: '2026-11-06', time: null, from: { day: '2026-11-03', time: null } })
+    })
+
+    it('says Mover para <dia> · sem hora in Portuguese', async () => {
+      await i18n.changeLanguage('pt-BR')
+      try {
+        const { container } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03')]} />)
+        fireEvent.pointerDown(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { clientX: 120, clientY: -100, button: 0 })
+        fireEvent.pointerMove(window, { clientX: 450, clientY: -90 })
+        expect(within(cellOf(container, '2026-11-06')).getByText('Mover para sex, 6 nov · sem hora')).toBeInTheDocument()
+      } finally {
+        await i18n.changeLanguage('en')
+      }
+    })
+
+    it('a block dragged to the Sem hora row of its own day loses its time', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} timed={[scheduled('a', '2026-11-05', '10:00')]} untimed={[]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled a/ }), { clientX: 350, clientY: y(10, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: -60 })
+      expect(cellOf(container, '2026-11-05')).toHaveAttribute('data-drop-target', 'true')
+      fireEvent.pointerUp(window, { clientX: 350, clientY: -60 })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'a', day: '2026-11-05', time: null, from: { day: '2026-11-05', time: '10:00' } })
+    })
+
+    it('Esc cancels: the draft, the copy and the faded place go, and nothing is saved', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} untimed={[untimedTask('u', '2026-11-03')]} />)
+      const task = screen.getByRole('button', { name: /^Scheduled u/ })
+      fireEvent.pointerDown(task, { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(15, 20) })
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      expect(task).not.toHaveClass('opacity-30')
+      fireEvent.pointerUp(window, { clientX: 350, clientY: y(15, 20) })
+      expect(onDrop).not.toHaveBeenCalled()
     })
   })
 })

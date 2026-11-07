@@ -850,7 +850,8 @@
     "untimed": {
       "label": "Scheduled without a set time",
       "more": "+{{count}}",
-      "showAll": "See all {{count}} tasks scheduled on {{day}}"
+      "showAll": "See all {{count}} tasks scheduled on {{day}}",
+      "moveTo": "Move to {{day}} · no time"
     },
     "dayPanel": {
       "dateFormat": "EEEE, MMM d",

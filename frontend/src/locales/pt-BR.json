@@ -850,7 +850,8 @@
     "untimed": {
       "label": "Agendadas sem hora definida",
       "more": "+{{count}}",
-      "showAll": "Ver todas as {{count}} tarefas agendadas do dia {{day}}"
+      "showAll": "Ver todas as {{count}} tarefas agendadas do dia {{day}}",
+      "moveTo": "Mover para {{day}} · sem hora"
     },
     "dayPanel": {
       "dateFormat": "EEEE, d MMM",

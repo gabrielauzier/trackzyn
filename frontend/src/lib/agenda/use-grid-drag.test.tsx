@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { useGridDrag, type Draft, type DragTarget, type ScheduledDrop, type ScheduledTarget } from './use-grid-drag'
+import { useGridDrag, type Draft, type DragTarget, type DropZone, type ScheduledDrop, type ScheduledTarget, type UntimedTarget } from './use-grid-drag'
 
 const DAY = '2026-11-03'
 const at = (hours: number, minutes: number) => hours * 60 + minutes
@@ -292,6 +292,109 @@ describe('useGridDrag', () => {
       render(<Scheduled onDrop={onDrop} onCommit={onCommit} />)
       drag(screen.getByTestId('block'), at(14, 10), at(16, 10))
       expect(onCommit).not.toHaveBeenCalled()
+      expect(onDrop).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('dropUntimed (US-14, D22)', () => {
+    const call: UntimedTarget = { taskId: 'u1', title: 'Call the bank', color: 3, day: DAY, length: 60 }
+    const block: ScheduledTarget = { taskId: 't1', title: 'Plan', color: 3, day: DAY, time: '14:00', length: 90 }
+    // Above y = 0 is the `Sem hora` row: x < 100 is Tuesday's cell, from 100 Thursday's; below, the grid from y = 0, Thursday from x = 100.
+    const zoneAt = (clientX: number, clientY: number): DropZone | null => {
+      if (clientX < 0) return null
+      const day = clientX >= 100 ? '2026-11-05' : DAY
+      return clientY < 0 ? { day, untimed: true } : { day, untimed: false, top: 0 }
+    }
+
+    function Row({ onDrop }: { onDrop: (drop: ScheduledDrop) => void }) {
+      const drag = useGridDrag({ pxPerMinute: 1, limit: () => 0, onCommit: vi.fn(), onScheduledDrop: onDrop, zoneAt })
+      const draft = drag.scheduledDraft
+      return (
+        <div>
+          <div data-testid="untimed" onPointerDown={(event) => drag.startDropUntimed(event, call)} />
+          <div data-testid="scheduled" onPointerDown={(event) => drag.startMoveScheduled(event, block)} />
+          {draft && <output data-testid="draft">{`${draft.day} ${draft.start ?? 'untimed'} ${draft.length}${draft.nowhere ? ' nowhere' : ''}`}</output>}
+        </div>
+      )
+    }
+
+    function press(element: HTMLElement, x: number, y: number) {
+      fireEvent.pointerDown(element, { clientX: x, clientY: y, button: 0 })
+    }
+
+    it('drafts 1 h from the quarter under the pointer over the grid, and saves that start time', () => {
+      const onDrop = vi.fn()
+      render(<Row onDrop={onDrop} />)
+      press(screen.getByTestId('untimed'), 10, -20)
+      fireEvent.pointerMove(window, { clientX: 150, clientY: at(10, 7) })
+      expect(screen.getByTestId('draft')).toHaveTextContent(`2026-11-05 ${at(10, 0)} 60`)
+      fireEvent.pointerUp(window, { clientX: 150, clientY: at(10, 7) })
+      expect(onDrop).toHaveBeenCalledExactlyOnceWith({ taskId: 'u1', day: '2026-11-05', time: '10:00', from: { day: DAY, time: null } })
+    })
+
+    it('drafts the estimate when the task has one', () => {
+      function WithEstimate() {
+        const drag = useGridDrag({ pxPerMinute: 1, limit: () => 0, onCommit: vi.fn(), onScheduledDrop: vi.fn(), zoneAt })
+        return (
+          <div>
+            <div data-testid="estimated" onPointerDown={(event) => drag.startDropUntimed(event, { ...call, length: 45 })} />
+            {drag.scheduledDraft && <output data-testid="estimated-draft">{`${drag.scheduledDraft.start}-${drag.scheduledDraft.start! + drag.scheduledDraft.length}`}</output>}
+          </div>
+        )
+      }
+      render(<WithEstimate />)
+      press(screen.getByTestId('estimated'), 10, -20)
+      fireEvent.pointerMove(window, { clientX: 10, clientY: at(9, 20) })
+      expect(screen.getByTestId('estimated-draft')).toHaveTextContent(`${at(9, 15)}-${at(10, 0)}`)
+    })
+
+    it('changes only the day when released over the Sem hora row of another day', () => {
+      const onDrop = vi.fn()
+      render(<Row onDrop={onDrop} />)
+      press(screen.getByTestId('untimed'), 10, -20)
+      fireEvent.pointerMove(window, { clientX: 150, clientY: -20 })
+      expect(screen.getByTestId('draft')).toHaveTextContent('2026-11-05 untimed')
+      fireEvent.pointerUp(window, { clientX: 150, clientY: -20 })
+      expect(onDrop).toHaveBeenCalledExactlyOnceWith({ taskId: 'u1', day: '2026-11-05', time: null, from: { day: DAY, time: null } })
+    })
+
+    it('saves nothing when released back over its own day of the row', () => {
+      const onDrop = vi.fn()
+      render(<Row onDrop={onDrop} />)
+      press(screen.getByTestId('untimed'), 10, -20)
+      fireEvent.pointerMove(window, { clientX: 20, clientY: -30 })
+      fireEvent.pointerUp(window, { clientX: 20, clientY: -30 })
+      expect(onDrop).not.toHaveBeenCalled()
+    })
+
+    it('clears the time of a block released over the Sem hora row, keeping that day', () => {
+      const onDrop = vi.fn()
+      render(<Row onDrop={onDrop} />)
+      press(screen.getByTestId('scheduled'), 10, at(14, 10))
+      fireEvent.pointerMove(window, { clientX: 10, clientY: -20 })
+      fireEvent.pointerUp(window, { clientX: 10, clientY: -20 })
+      expect(onDrop).toHaveBeenCalledExactlyOnceWith({ taskId: 't1', day: DAY, time: null, from: { day: DAY, time: '14:00' } })
+    })
+
+    it('cancels on Esc: the task goes back and nothing is saved', () => {
+      const onDrop = vi.fn()
+      render(<Row onDrop={onDrop} />)
+      press(screen.getByTestId('untimed'), 10, -20)
+      fireEvent.pointerMove(window, { clientX: 150, clientY: at(10, 7) })
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(screen.queryByTestId('draft')).toBeNull()
+      fireEvent.pointerUp(window, { clientX: 150, clientY: at(10, 7) })
+      expect(onDrop).not.toHaveBeenCalled()
+    })
+
+    it('puts the task back when released over neither the grid nor the row', () => {
+      const onDrop = vi.fn()
+      render(<Row onDrop={onDrop} />)
+      press(screen.getByTestId('untimed'), 10, -20)
+      fireEvent.pointerMove(window, { clientX: 150, clientY: at(10, 7) })
+      fireEvent.pointerMove(window, { clientX: -50, clientY: at(10, 7) })
+      expect(screen.getByTestId('draft')).toHaveTextContent('nowhere')
+      fireEvent.pointerUp(window, { clientX: -50, clientY: at(10, 7) })
       expect(onDrop).not.toHaveBeenCalled()
     })
   })

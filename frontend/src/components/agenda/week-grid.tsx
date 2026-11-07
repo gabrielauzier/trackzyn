@@ -187,7 +187,7 @@ export function WeekGrid({
           )
         })}
       </div>
-      {untimed && <UntimedRow days={days} untimed={untimed} onOpenTask={onOpenTask} onShowDay={onShowDay} />}
+      {untimed && <UntimedRow days={days} untimed={untimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />}
       <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-14rem)] min-h-80 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-14 shrink-0" aria-hidden>
@@ -294,7 +294,7 @@ export function WeekGrid({
                       </SessionBlock>
                     )
                   })}
-                  {scheduledDraft && scheduledDraft.start !== null && scheduledDraft.day === day && (
+                  {scheduledDraft && !scheduledDraft.nowhere && scheduledDraft.start !== null && scheduledDraft.day === day && (
                     <div
                       data-scheduled-draft
                       aria-hidden
