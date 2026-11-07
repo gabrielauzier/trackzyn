@@ -344,6 +344,7 @@ export default function ListBoardPage() {
         column={column}
         number={index + 1}
         canWrite={canWrite}
+        timeZone={shown.timezone}
         onOpen={(card) => setOpenTaskId(card.id)}
         onEstimateChange={(card, minutes) =>
           estimateMutation.mutate({ id: card.id, minutes, previous: card.estimate_minutes })
@@ -468,6 +469,7 @@ export default function ListBoardPage() {
                 column={draggedCard.column}
                 number={draggedCard.number}
                 canWrite={canWrite}
+                timeZone={shown.timezone}
                 onOpen={noop}
                 className="border-primary"
               />

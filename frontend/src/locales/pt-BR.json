@@ -876,6 +876,7 @@
     "weekdayShort_4": "qui",
     "weekdayShort_5": "sex",
     "weekdayShort_6": "sáb",
-    "weekdayShort_7": "dom"
+    "weekdayShort_7": "dom",
+    "repeatIcon": "Repete"
   }
 }

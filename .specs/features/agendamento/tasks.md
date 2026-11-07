@@ -784,8 +784,8 @@ T37
 
 **Done when**:
 
-- [ ] Selo em Backlog, Esta semana e Hoje; nenhum em Concluídas
-- [ ] Gate check passes (quick)
+- [x] Selo em Backlog, Esta semana e Hoje; nenhum em Concluídas
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

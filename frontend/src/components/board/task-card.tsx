@@ -1,7 +1,8 @@
 import { useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, ChevronDown, FileText, ListChecks, Pencil, Plus } from 'lucide-react'
+import { CalendarCheck, CalendarDays, Check, ChevronDown, Clock, FileText, ListChecks, Pencil, Plus, Repeat } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { scheduleBadge, type ScheduleBadge } from '@/lib/schedule'
 import { DURATION_ERROR_KEY, parseDuration, toDuration } from '@/components/board/estimate'
 import { formatDuration } from '@/components/board/format-duration'
 import { Button } from '@/components/ui/button'
@@ -32,11 +33,14 @@ interface TaskCardProps {
     /** The "more actions" menu, which also moves the card one column. */
     menu: ReactNode
   }
+  /** The workspace's timezone, which decides the day of the schedule badge. */
+  timeZone?: string
   className?: string
 }
 
-export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateChange, subtasks, notes, actions, className }: TaskCardProps) {
+export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateChange, subtasks, notes, actions, timeZone, className }: TaskCardProps) {
   const { t, i18n } = useTranslation()
+  const badge = scheduleBadge(task, column, { now: new Date(), timeZone, t, language: i18n.language })
   const [expanded, setExpanded] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const done = column === 'done'
@@ -97,15 +101,18 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
       </div>
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        {canWrite && onEstimateChange ? (
-          <EstimateEditor task={task} onSave={(minutes) => onEstimateChange(task, minutes)} />
-        ) : (
-          <span>
-            {task.estimate_minutes !== null && (
-              <span title={t('board.estimate')}>{formatDuration(task.estimate_minutes * 60, locale)}</span>
-            )}
-          </span>
-        )}
+        <span className="flex min-w-0 items-center gap-1.5">
+          {canWrite && onEstimateChange ? (
+            <EstimateEditor task={task} onSave={(minutes) => onEstimateChange(task, minutes)} />
+          ) : (
+            <span>
+              {task.estimate_minutes !== null && (
+                <span title={t('board.estimate')}>{formatDuration(task.estimate_minutes * 60, locale)}</span>
+              )}
+            </span>
+          )}
+          {badge && <ScheduleBadgeView badge={badge} />}
+        </span>
         <span title={t('board.spent')} className="font-medium text-foreground">
           {formatDuration(task.spent_seconds, locale)}
         </span>
@@ -142,6 +149,23 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
   )
 }
 
+const BADGE_ICONS = { calendar: CalendarDays, clock: Clock, check: CalendarCheck }
+
+/** The day and time a task is scheduled for, with the repeat icon of a series (US-3, US-11). */
+function ScheduleBadgeView({ badge }: { badge: ScheduleBadge }) {
+  const { t } = useTranslation()
+  const Icon = BADGE_ICONS[badge.icon]
+  return (
+    <span
+      title={badge.tooltip}
+      className="inline-flex min-w-0 shrink items-center gap-1 rounded bg-muted px-1.5 text-[11px] leading-5 whitespace-nowrap text-muted-foreground"
+    >
+      <Icon size={11} aria-hidden className="shrink-0" />
+      <span className="truncate">{badge.label}</span>
+      {badge.repeats && <Repeat size={11} role="img" aria-label={t('schedule.repeatIcon')} className="shrink-0" />}
+    </span>
+  )
+}
 
 /** A press on the estimate is not the start of a drag of the card. */
 const keepFromDrag = (event: PointerEvent) => event.stopPropagation()

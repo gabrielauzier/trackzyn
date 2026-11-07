@@ -876,6 +876,7 @@
     "weekdayShort_4": "Thu",
     "weekdayShort_5": "Fri",
     "weekdayShort_6": "Sat",
-    "weekdayShort_7": "Sun"
+    "weekdayShort_7": "Sun",
+    "repeatIcon": "Repeats"
   }
 }
