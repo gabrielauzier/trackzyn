@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { cn } from '@/lib/utils'
+import { useCardSelection } from '@/lib/use-card-selection'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { formatClock } from '@/lib/focus/format-clock'
@@ -152,6 +153,8 @@ export default function ListBoardPage() {
   const [tab, setTab] = useState<TaskColumn>('today')
   const [deleting, setDeleting] = useState<TaskCardView | null>(null)
   const [draggedId, setDraggedId] = useState<string | null>(null)
+  // The card a press last landed in keeps the accent border, through its own buttons and menus.
+  const { selected: selectedCard, select: selectCard } = useCardSelection('data-task-id')
   // While a card is dragged over another column the board shows it there already, before it is dropped.
   const [preview, setPreview] = useState<Board | null>(null)
   const dragOrigin = useRef<TaskColumn | null>(null)
@@ -335,7 +338,7 @@ export default function ListBoardPage() {
   }
 
   const renderTask = (column: TaskColumn) => (task: TaskCardView, index: number) => (
-    <SortableTask key={task.id} id={task.id} canWrite={canWrite}>
+    <SortableTask key={task.id} id={task.id} canWrite={canWrite} onFocusCard={() => selectCard(task.id)}>
       <TaskCard
         task={task}
         column={column}
@@ -359,7 +362,8 @@ export default function ListBoardPage() {
             />
           ),
         }}
-        className={task.id === focusedId ? 'border-2 border-primary' : undefined}
+        // In focus, the thick accent border; selected by a press or the keyboard, the accent border.
+        className={cn(task.id === focusedId && 'border-2 border-primary', task.id === selectedCard && 'border-primary')}
       />
       {task.id === focusedId && running && focus.display && (
         <span role="timer" aria-label={t('board.inFocus')} className="mt-1 block text-right font-mono text-sm font-semibold tabular-nums">
@@ -497,7 +501,18 @@ function ColumnDrop({ column, ids, children }: { column: TaskColumn; ids: string
   )
 }
 
-function SortableTask({ id, canWrite, children }: { id: string; canWrite: boolean; children: ReactNode }) {
+function SortableTask({
+  id,
+  canWrite,
+  onFocusCard,
+  children,
+}: {
+  id: string
+  canWrite: boolean
+  /** The keyboard reached the card itself: it is selected, as a press on it would. */
+  onFocusCard: () => void
+  children: ReactNode
+}) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled: !canWrite,
@@ -515,10 +530,11 @@ function SortableTask({ id, canWrite, children }: { id: string; canWrite: boolea
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         transition,
       }}
-      // As on the home screen: the grab hand where the card can be picked up, and a click focuses the
-      // card so its accent border stays; a viewer's card is focusable by a click, out of the Tab order.
-      tabIndex={canWrite ? undefined : -1}
-      className={cn('group/task outline-none', canWrite && 'cursor-grab', isDragging && 'opacity-40')}
+      // As on the home screen: the grab hand where the card can be picked up.
+      onFocus={(event) => {
+        if (event.target === event.currentTarget) onFocusCard()
+      }}
+      className={cn('outline-none', canWrite && 'cursor-grab', isDragging && 'opacity-40')}
       {...dragProps}
     >
       {children}

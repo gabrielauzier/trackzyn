@@ -30,6 +30,7 @@ import { ListCard } from '@/components/lists/list-card'
 import { ListDialog } from '@/components/lists/list-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { useCardSelection } from '@/lib/use-card-selection'
 import type { ListCard as ListCardData, ListsResponse } from '@/types'
 
 const LISTS_KEY = ['lists', { archived: false }] as const
@@ -58,6 +59,8 @@ export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [creating, setCreating] = useState(false)
   const [renaming, setRenaming] = useState<ListCardData | null>(null)
+  // The card a press last landed in keeps the accent border, through its link and its menu.
+  const { selected: selectedCard, select: selectCard } = useCardSelection('data-list-id')
 
   const { data, isLoading } = useQuery({
     queryKey: LISTS_KEY,
@@ -130,7 +133,14 @@ export default function HomePage() {
           <SortableContext items={lists.map((list) => list.id)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {lists.map((list) => (
-                <SortableListCard key={list.id} list={list} canWrite={canWrite} onRename={setRenaming} />
+                <SortableListCard
+                  key={list.id}
+                  list={list}
+                  canWrite={canWrite}
+                  selected={list.id === selectedCard}
+                  onFocusCard={() => selectCard(list.id)}
+                  onRename={setRenaming}
+                />
               ))}
               {canWrite && (
                 <button
@@ -156,10 +166,16 @@ export default function HomePage() {
 function SortableListCard({
   list,
   canWrite,
+  selected,
+  onFocusCard,
   onRename,
 }: {
   list: ListCardData
   canWrite: boolean
+  /** The card a press last landed in: it keeps the accent border. */
+  selected: boolean
+  /** The keyboard reached the card itself: it is selected, as a press on it would. */
+  onFocusCard: () => void
   onRename: (list: ListCardData) => void
 }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
@@ -182,18 +198,18 @@ function SortableListCard({
         transition,
       }}
       // Only a writer is told the card can be picked up (#31).
-      // A click focuses the card, and the accent border stays while it keeps the focus; a viewer's
-      // card is focusable by a click too, out of the Tab order.
-      tabIndex={canWrite ? undefined : -1}
+      onFocus={(event) => {
+        if (event.target === event.currentTarget) onFocusCard()
+      }}
       className={cn(
-        'group/list outline-none',
+        'outline-none',
         canWrite && (isDragging ? 'cursor-grabbing' : 'cursor-grab'),
         isDragging && 'relative z-10 opacity-80',
       )}
       {...dragProps}
     >
       {/* Dragged, the accent border stays on after the press, the keyboard drag included. */}
-      <ListCard list={list} canWrite={canWrite} onRename={onRename} className={cn('h-full group-focus/list:border-primary', isDragging && 'border-primary')} />
+      <ListCard list={list} canWrite={canWrite} onRename={onRename} className={cn('h-full', (selected || isDragging) && 'border-primary')} />
     </div>
   )
 }

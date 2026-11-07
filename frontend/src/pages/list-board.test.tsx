@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
@@ -905,25 +905,42 @@ describe('ListBoardPage', () => {
     await user.keyboard('{Escape}')
   })
 
-  it('a clicked task card keeps the accent border until something else is clicked', async () => {
+  it('a clicked task card keeps the accent border, through its own buttons and menu, until a click outside the cards', async () => {
     const { user } = renderBoard()
 
     await screen.findByText('DEV-1725')
-    const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
-    const cardNode = wrapper.querySelector<HTMLElement>('[data-slot="card"]')!
-    // Pressed, and then for as long as the card keeps the focus the click gave it.
-    expect(wrapper).toHaveClass('group/task', 'outline-none')
-    expect(cardNode).toHaveClass('active:border-primary', 'group-focus/task:border-primary')
-    expect(cardNode.className).not.toMatch(/(^|\s)border-primary(\s|$)/)
+    const wrapperOf = (id: string) => document.querySelector<HTMLElement>(`[data-column] [data-task-id="${id}"]`)!
+    const selected = (id: string) => wrapperOf(id).querySelector('[data-slot="card"]')!.classList.contains('border-primary')
+    expect(selected(TODAY_TASK)).toBe(false)
 
-    // A click on the body of the card (its number in Today) focuses the card itself.
-    await user.click(within(wrapper).getByTitle('Order in Today'))
-    expect(wrapper).toHaveFocus()
+    // A button inside the card selects it, and the border stays after the click.
+    await user.click(within(wrapperOf(TODAY_TASK)).getByRole('button', { name: 'Show subtasks' }))
+    expect(selected(TODAY_TASK)).toBe(true)
 
-    // A click elsewhere takes the focus, and the border, away.
+    // Its menu opens outside the card: a click in it keeps the card selected.
+    await user.click(within(wrapperOf(TODAY_TASK)).getByRole('button', { name: 'More actions' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Change list' }))
+    expect(selected(TODAY_TASK)).toBe(true)
+    await user.keyboard('{Escape}{Escape}')
+    expect(selected(TODAY_TASK)).toBe(true)
+
+    // Another card takes the selection.
+    await user.click(within(wrapperOf(DONE_TASK)).getByRole('button', { name: 'Show notes' }))
+    expect(selected(DONE_TASK)).toBe(true)
+    expect(selected(TODAY_TASK)).toBe(false)
+
+    // A click outside every card clears it.
     await user.click(document.body)
-    expect(wrapper).not.toHaveFocus()
-    expect(wrapper).toBeInTheDocument()
+    expect(selected(DONE_TASK)).toBe(false)
+  })
+
+  it('a task card reached with the keyboard is selected too', async () => {
+    renderBoard()
+
+    await screen.findByText('DEV-1725')
+    const wrapper = document.querySelector<HTMLElement>(`[data-column] [data-task-id="${TODAY_TASK}"]`)!
+    act(() => wrapper.focus())
+    expect(wrapper.querySelector('[data-slot="card"]')).toHaveClass('border-primary')
   })
 
   it('lets a viewer neither drag, add nor complete', async () => {
@@ -933,9 +950,7 @@ describe('ListBoardPage', () => {
     await screen.findByText('DEV-1725')
     const wrapper = document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!
     expect(wrapper).not.toHaveAttribute('aria-roledescription')
-    // Out of the Tab order and not a button: -1 only lets a click focus it, for the selected border.
-    expect(wrapper).toHaveAttribute('tabindex', '-1')
-    expect(wrapper).not.toHaveAttribute('role')
+    expect(wrapper).not.toHaveAttribute('tabindex')
     // Nothing to pick up, so no grab cursor.
     expect(wrapper.className).not.toMatch(/(^|\s)cursor-grab/)
     expect(screen.queryByRole('button', { name: 'Add task' })).not.toBeInTheDocument()
