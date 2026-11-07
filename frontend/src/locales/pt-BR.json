@@ -1037,6 +1037,16 @@
       "over": "{{duration}} além do expediente",
       "workday": "Expediente {{start}} – {{end}}",
       "bar": "{{percent}}% do tempo livre planejado"
+    },
+    "workday": {
+      "title": "Seu expediente",
+      "hint": "Vale para todos os dias e só para você.",
+      "start": "Início",
+      "end": "Fim",
+      "order": "O fim precisa ser depois do início",
+      "failed": "Não foi possível salvar o expediente.",
+      "cancel": "Cancelar",
+      "save": "Salvar"
     }
   }
 }

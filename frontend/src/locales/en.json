@@ -1037,6 +1037,16 @@
       "over": "{{duration}} past the workday",
       "workday": "Workday {{start}} – {{end}}",
       "bar": "{{percent}}% of the free time planned"
+    },
+    "workday": {
+      "title": "Your workday",
+      "hint": "It applies to every day and only to you.",
+      "start": "Start",
+      "end": "End",
+      "order": "The end must be after the start",
+      "failed": "Could not save the workday.",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   }
 }

@@ -529,10 +529,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Fim antes ou igual ao início mostra `O fim precisa ser depois do início` e não salva
-- [ ] Salvar recalcula a barra
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `workday-editor.test.tsx`
+- [x] Fim antes ou igual ao início mostra `O fim precisa ser depois do início` e não salva
+- [x] Salvar recalcula a barra
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `workday-editor.test.tsx`
 
 **Tests**: unit
 **Gate**: quick
