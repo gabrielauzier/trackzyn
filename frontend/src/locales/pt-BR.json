@@ -877,6 +877,13 @@
     "weekdayShort_5": "sex",
     "weekdayShort_6": "sáb",
     "weekdayShort_7": "dom",
-    "repeatIcon": "Repete"
+    "repeatIcon": "Repete",
+    "time": "Hora",
+    "noTime": "Sem hora",
+    "clearTime": "Limpar hora",
+    "timePassed": "Esse horário de hoje já passou",
+    "repeat": "Repetir",
+    "noRepeat": "Não repete",
+    "custom": "Personalizado…"
   }
 }

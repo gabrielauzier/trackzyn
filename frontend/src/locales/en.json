@@ -877,6 +877,13 @@
     "weekdayShort_5": "Fri",
     "weekdayShort_6": "Sat",
     "weekdayShort_7": "Sun",
-    "repeatIcon": "Repeats"
+    "repeatIcon": "Repeats",
+    "time": "Time",
+    "noTime": "No time",
+    "clearTime": "Clear time",
+    "timePassed": "This time of today has already passed",
+    "repeat": "Repeat",
+    "noRepeat": "Does not repeat",
+    "custom": "Custom…"
   }
 }

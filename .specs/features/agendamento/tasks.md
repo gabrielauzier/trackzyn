@@ -809,8 +809,8 @@ T37
 
 **Done when**:
 
-- [ ] Opção mensal do dia 29 a 31 diz "ou no último dia"; hora de hoje que já passou é recusada
-- [ ] Gate check passes (quick)
+- [x] Opção mensal do dia 29 a 31 diz "ou no último dia"; hora de hoje que já passou é recusada
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

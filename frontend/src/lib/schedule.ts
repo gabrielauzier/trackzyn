@@ -116,3 +116,56 @@ export function repeatsLabel(rule: RecurrenceRule, t: TFunction, language: strin
   const phrase = summary.startsWith(weekdays) ? t('schedule.onWeekdays') + summary.slice(weekdays.length) : uncapitalize(summary)
   return t('schedule.repeats', { rule: phrase })
 }
+
+/** The options of `Repetir`, built from the chosen day (US-9). */
+export type RepeatPreset = 'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'custom'
+
+/** Every start time of a day, in steps of 15 minutes. */
+export const TIMES = Array.from({ length: 96 }, (_, step) => {
+  const minutes = step * 15
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+})
+
+/** The wall-clock time of `now` in `timeZone`, `HH:MM`. */
+export function clockIn(timeZone: string | null | undefined, now: Date): string {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: timeZone ?? undefined, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now)
+}
+
+const plain = (rule: Omit<RecurrenceRule, 'until' | 'count'>): RecurrenceRule => ({ ...rule, until: null, count: null })
+
+/** The rule of a preset on `day`. */
+export function presetRule(preset: RepeatPreset, day: string): RecurrenceRule | null {
+  switch (preset) {
+    case 'daily':
+      return plain({ freq: 'daily', interval: 1, weekdays: null, month_day: null })
+    case 'weekdays':
+      return plain({ freq: 'weekly', interval: 1, weekdays: [1, 2, 3, 4, 5], month_day: null })
+    case 'weekly':
+      return plain({ freq: 'weekly', interval: 1, weekdays: [weekdayOf(day)], month_day: null })
+    case 'monthly':
+      return plain({ freq: 'monthly', interval: 1, weekdays: null, month_day: dayDate(day).getDate() })
+    default:
+      return null
+  }
+}
+
+/** Which preset an existing rule is on `day`; anything the presets do not say is custom. */
+export function presetOf(rule: RecurrenceRule | null, day: string | null): RepeatPreset {
+  if (rule === null) return 'none'
+  if (day !== null) {
+    for (const preset of ['daily', 'weekdays', 'weekly', 'monthly'] as const) {
+      const candidate = presetRule(preset, day)!
+      const same = (a: number[] | null, b: number[] | null) => JSON.stringify(a && [...a].sort()) === JSON.stringify(b && [...b].sort())
+      if (
+        candidate.freq === rule.freq &&
+        candidate.interval === rule.interval &&
+        same(candidate.weekdays, rule.weekdays) &&
+        candidate.month_day === rule.month_day &&
+        rule.until === null &&
+        rule.count === null
+      )
+        return preset
+    }
+  }
+  return 'custom'
+}
