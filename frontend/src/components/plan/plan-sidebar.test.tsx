@@ -1,9 +1,12 @@
+import { useReducer } from 'react'
 import { fireEvent, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { DraftBlock } from '@/lib/plan/draft'
+import { clampTask, draftReducer, emptyDraft, type DraftBlock } from '@/lib/plan/draft'
+import { fit } from '@/lib/plan/fit'
+import { scheduledMinutes } from '@/lib/agenda/layout'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { PlanCandidate } from '@/types'
+import type { PlanCandidate, PlanTaskRef } from '@/types'
 import { PlanSidebar } from './plan-sidebar'
 
 const DAY = '2026-11-09'
@@ -162,3 +165,76 @@ describe('PlanSidebar breaks (PLAN-14)', () => {
     expect(onNewBreak).toHaveBeenCalledOnce()
   })
 })
+
+describe('PlanSidebar: Encaixar (PLAN-32, PLAN-33)', () => {
+  const workday = { start: '09:00', end: '18:00' }
+
+  /** The side list over a draft, as the page wires `Encaixar`: `fit` around what the draft holds, and nothing saved. */
+  function Harness({ taken = [] }: { taken?: { start: number; minutes: number }[] }) {
+    const [draft, dispatch] = useReducer(draftReducer, emptyDraft)
+    const onFit = (tasks: PlanTaskRef[]) => {
+      const sized = tasks.map((task) => ({ task, minutes: clampTask(scheduledMinutes(task.estimate_minutes)) }))
+      const { placed, left } = fit(sized, [...taken, ...draft.blocks], workday)
+      for (const { task, start } of placed) dispatch({ type: 'add', item: { kind: 'task', task: task.task }, start })
+      return left.map(({ task }) => task)
+    }
+    return (
+      <>
+        <PlanSidebar day={DAY} candidates={candidates} blocks={draft.blocks} breakList={work} onDragStart={vi.fn()} onFit={onFit} />
+        <ol aria-label="draft">
+          {draft.blocks.map((block) => (
+            <li key={block.key}>{`${block.kind === 'task' ? block.task.id : block.name}@${block.start}`}</li>
+          ))}
+        </ol>
+      </>
+    )
+  }
+  const draftItems = () => within(screen.getByRole('list', { name: 'draft' })).queryAllByRole('listitem').map((item) => item.textContent)
+
+  it('puts the marked tasks into the draft in the order marked, from the start of the workday', async () => {
+    const { user } = renderWithProviders(<Harness />)
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Fix the widget bug' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Review the PR' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Update the résumé' }))
+
+    await user.click(screen.getByRole('button', { name: 'Fit (3)' }))
+
+    // 2h from 09:00, then 1h30 from 11:00, then 1h (no estimate) from 12:30.
+    expect(draftItems()).toEqual(['widget@540', 'review@660', 'resume@750'])
+    expect(screen.queryAllByRole('checkbox', { checked: true })).toHaveLength(0)
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('leaves the tasks that fit nowhere marked and says how many did not fit', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      // Only 09:00 to 10:00 is free.
+      const { user } = renderWithProviders(<Harness taken={[{ start: 600, minutes: 480 }]} />)
+      await user.click(screen.getByRole('checkbox', { name: 'Marcar Fix the widget bug' }))
+      await user.click(screen.getByRole('checkbox', { name: 'Marcar Send the weekly report' }))
+      await user.click(screen.getByRole('checkbox', { name: 'Marcar Review the PR' }))
+
+      await user.click(screen.getByRole('button', { name: 'Encaixar (3)' }))
+
+      expect(draftItems()).toEqual(['report@540'])
+      expect(screen.getByRole('status')).toHaveTextContent('2 tarefas não couberam')
+      expect(screen.getByRole('checkbox', { name: 'Marcar Fix the widget bug' })).toBeChecked()
+      expect(screen.getByRole('checkbox', { name: 'Marcar Review the PR' })).toBeChecked()
+      expect(screen.getByRole('checkbox', { name: 'Marcar Send the weekly report' })).not.toBeChecked()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('marking a task does not start a drag, and without onFit there is nothing to mark', async () => {
+    const { onDragStart, unmount } = show({ onFit: vi.fn(() => []) })
+    fireEvent.pointerDown(screen.getByRole('checkbox', { name: 'Mark Review the PR' }), { button: 0 })
+    expect(onDragStart).not.toHaveBeenCalled()
+    unmount()
+
+    show()
+    expect(screen.queryByRole('checkbox')).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Fit/ })).toBeNull()
+  })
+})
+

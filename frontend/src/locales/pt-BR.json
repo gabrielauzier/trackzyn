@@ -1007,7 +1007,11 @@
       },
       "planned": "no plano {{time}}",
       "noEstimate": "sem estimativa",
-      "empty": "Nenhuma tarefa encontrada"
+      "empty": "Nenhuma tarefa encontrada",
+      "mark": "Marcar {{title}}",
+      "fit": "Encaixar ({{count}})",
+      "notFit_one": "{{count}} tarefa não coube",
+      "notFit_other": "{{count}} tarefas não couberam"
     },
     "breakRange": "A pausa vai de 5 min a 2h",
     "breakDialog": {

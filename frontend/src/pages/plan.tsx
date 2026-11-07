@@ -21,13 +21,14 @@ import { agendaKey } from '@/lib/agenda/use-agenda'
 import { useScheduled } from '@/lib/agenda/use-scheduled'
 import { capacity, type FixedTimed } from '@/lib/plan/capacity'
 import { clockMinutes } from '@/lib/plan/clock'
-import { draftReducer, emptyDraft, isDirty } from '@/lib/plan/draft'
+import { clampTask, draftReducer, emptyDraft, isDirty } from '@/lib/plan/draft'
+import { fit } from '@/lib/plan/fit'
 import { useDraftGuard } from '@/lib/plan/draft-guard-context'
 import { usePlan } from '@/lib/plan/use-plan'
 import { tomorrowPath } from '@/lib/plan/tomorrow'
 import { usePlanDrag } from '@/lib/plan/use-plan-drag'
 import { cn } from '@/lib/utils'
-import type { ListCard, PlanListRef, PlanRead } from '@/types'
+import type { ListCard, PlanListRef, PlanRead, PlanTaskRef } from '@/types'
 
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
@@ -146,6 +147,18 @@ function PlanDay({ day, today, timezone, activeLists, initial, planned }: PlanDa
   const selected = draft.blocks.find((block) => block.key === selectedKey) ?? null
   const tasksCount = draft.blocks.filter((block) => block.kind === 'task').length
 
+  /**
+   * `Encaixar` (PLAN-32, PLAN-33): the marked tasks go into the draft, in order, at the first free time of the workday
+   * where each fits, around the draft, the sessions and the timed tasks; nothing is saved. Gives back the ones left.
+   */
+  const fitTasks = (tasks: PlanTaskRef[]) => {
+    const occupied = [...draft.blocks, ...fixed].map(({ start, minutes }) => ({ start, minutes }))
+    const sized = tasks.map((task) => ({ task, minutes: clampTask(scheduledMinutes(task.estimate_minutes)) }))
+    const { placed, left } = fit(sized, occupied, workday)
+    for (const { task, start } of placed) dispatch({ type: 'add', item: { kind: 'task', task: task.task }, start })
+    return left.map(({ task }) => task)
+  }
+
   const goTo = (next: string) => confirmLeave(() => navigate(`/planejar/${next}`))
   const showFooter = !readOnly && (dirty || saveState === 'conflict' || saveState === 'failed')
 
@@ -191,6 +204,7 @@ function PlanDay({ day, today, timezone, activeLists, initial, planned }: PlanDa
             breakList={breakList}
             onDragStart={readOnly ? undefined : drag.startDrop}
             onNewBreak={readOnly || !breakList ? undefined : () => setBreakOpen(true)}
+            onFit={readOnly ? undefined : fitTasks}
           />
         </div>
         <section className="flex h-[calc(100vh-16rem)] min-h-96 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card">

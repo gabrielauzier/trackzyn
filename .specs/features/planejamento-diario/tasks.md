@@ -744,9 +744,9 @@ T24 → T25
 
 **Done when**:
 
-- [ ] `Encaixar` cria os blocos no rascunho sem salvar; as que não couberam continuam marcadas com o aviso
-- [ ] Gate check passes: build gate
-- [ ] Test count: anteriores + os novos em `plan-sidebar.test.tsx`
+- [x] `Encaixar` cria os blocos no rascunho sem salvar; as que não couberam continuam marcadas com o aviso
+- [x] Gate check passes: build gate
+- [x] Test count: anteriores + os novos em `plan-sidebar.test.tsx`
 
 **Tests**: unit
 **Gate**: build

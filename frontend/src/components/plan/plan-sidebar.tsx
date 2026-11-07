@@ -1,6 +1,6 @@
 import { useMemo, useState, type PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Coffee, Plus, Search, Utensils } from 'lucide-react'
+import { Coffee, Plus, Search, Sparkles, Utensils } from 'lucide-react'
 
 import { formatDuration } from '@/components/board/format-duration'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,11 @@ interface PlanSidebarProps {
   onDragStart?: (event: PointerEvent, item: DropItem) => void
   /** Opens `Nova pausa` (PLAN-16). */
   onNewBreak?: () => void
+  /**
+   * `Encaixar` the marked tasks, in the order marked, into the draft (PLAN-32); gives back the ones that did not fit
+   * (PLAN-33). Absent, nothing is marked.
+   */
+  onFit?: (tasks: PlanTaskRef[]) => PlanTaskRef[]
 }
 
 /** Where a task goes: its day when it is scheduled for the plan's day, else its column. */
@@ -56,11 +61,32 @@ const taskRef = (task: PlanCandidate): PlanTaskRef => ({
  * `Agendadas para o dia`, `Hoje`, `Esta semana` and `Backlog`, with a search by title and a filter by list. A task
  * already in the draft shows `no plano HH:MM`, faded, and can still be dragged again.
  */
-export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, onNewBreak }: PlanSidebarProps) {
+export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, onNewBreak, onFit }: PlanSidebarProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const [query, setQuery] = useState('')
   const [listId, setListId] = useState<string>(ALL)
+  /** The marked tasks, in the order they were marked (PLAN-32). */
+  const [marked, setMarked] = useState<string[]>([])
+  /** How many of the last `Encaixar` did not fit (PLAN-33). */
+  const [notFit, setNotFit] = useState(0)
+
+  const toggle = (id: string) => {
+    setNotFit(0)
+    setMarked((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
+  }
+  /** `Encaixar`: the tasks that fit go into the draft and leave the marks; the rest stay marked with the notice. */
+  const fitMarked = () => {
+    if (!onFit) return
+    const byId = new Map(candidates.map((task) => [task.id, task]))
+    const tasks = marked.flatMap((id) => {
+      const task = byId.get(id)
+      return task ? [taskRef(task)] : []
+    })
+    const left = onFit(tasks)
+    setMarked(left.map((task) => task.id))
+    setNotFit(left.length)
+  }
 
   const lists = useMemo(() => {
     const byId = new Map<string, PlanListRef>()
@@ -142,6 +168,20 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
         </Select>
       </div>
 
+      {onFit && marked.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <Button type="button" size="sm" onClick={fitMarked}>
+            <Sparkles aria-hidden size={14} />
+            {t('plan.sidebar.fit', { count: marked.length })}
+          </Button>
+          {notFit > 0 && (
+            <p role="status" className="text-xs font-medium text-destructive">
+              {t('plan.sidebar.notFit', { count: notFit })}
+            </p>
+          )}
+        </div>
+      )}
+
       {groups.length === 0 && <p className="text-sm text-muted-foreground">{t('plan.sidebar.empty')}</p>}
       {groups.map(({ group, tasks }) => (
         <section key={group} aria-labelledby={`plan-group-${group}`} className="flex flex-col gap-1.5">
@@ -167,6 +207,17 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
                   )}
                   onPointerDown={onDragStart && ((event) => onDragStart(event, { kind: 'task', task: taskRef(task) }))}
                 >
+                  {onFit && (
+                    <input
+                      type="checkbox"
+                      aria-label={t('plan.sidebar.mark', { title: task.title })}
+                      checked={marked.includes(task.id)}
+                      className="size-4 shrink-0 cursor-pointer accent-(--primary)"
+                      // Marking is not a drag.
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onChange={() => toggle(task.id)}
+                    />
+                  )}
                   <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: `var(--chart-${task.list.color})` }} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="truncate text-sm font-medium">{task.title}</span>
