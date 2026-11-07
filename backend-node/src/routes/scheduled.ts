@@ -31,6 +31,7 @@ const projectedSchema = z.object({
   on: z.string(),
   time: z.string(),
   estimate_minutes: z.number().nullable(),
+  rule: seriesReadSchema.shape.rule,
 })
 
 const scheduledSchema = z.object({

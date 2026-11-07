@@ -1350,8 +1350,8 @@ T49 → T50 → T51
 
 **Done when**:
 
-- [ ] O teste da rota compara o item projetado inteiro, com `rule`, contra a resposta real
-- [ ] Gate check passes (full)
+- [x] O teste da rota compara o item projetado inteiro, com `rule`, contra a resposta real
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

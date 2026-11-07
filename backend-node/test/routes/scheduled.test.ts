@@ -77,10 +77,18 @@ describe('GET /api/agenda/scheduled (US-5, US-14)', () => {
       id: expect.any(String),
       rule: { freq: 'daily', interval: 1, weekdays: null, month_day: null, until: null, count: 3 },
     })
-    expect(reply.projected.map((found: { on: string; time: string; task_id: string }) => [found.on, found.time, found.task_id])).toEqual([
-      [date(2), '09:00', id],
-      [date(3), '09:00', id],
-    ])
+    const rule = { freq: 'daily', interval: 1, weekdays: null, month_day: null, until: null, count: 3 }
+    const projection = (on: string) => ({
+      series_id: reply.timed[0].series.id,
+      task_id: id,
+      title: 'Daily',
+      list: { id: listId, name: 'Work', color: 3 },
+      on,
+      time: '09:00',
+      estimate_minutes: 30,
+      rule,
+    })
+    expect(reply.projected).toEqual([projection(date(2)), projection(date(3))])
   })
 
   it('answers nothing of another workspace', async () => {
