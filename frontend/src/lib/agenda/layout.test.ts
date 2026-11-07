@@ -116,6 +116,7 @@ const projection = (on: string, time: string, estimate: number | null): Projecte
   on,
   time,
   estimate_minutes: estimate,
+  rule: { freq: 'weekly', interval: 1, weekdays: [5], month_day: null, until: null, count: null },
 })
 const span = (pieces: { start: number; end: number }[] | undefined) => pieces?.map(({ start, end }) => [start, end])
 

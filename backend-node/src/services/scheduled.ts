@@ -35,6 +35,10 @@ export interface ProjectedOccurrence {
   on: string
   time: string
   estimate_minutes: number | null
+  // SPEC_DEVIATION: the design leaves the rule out of a projection; it carries it.
+  // Reason: the tooltip of a projection says the rule (`Repete toda sexta`, US-11), and the open occurrence it
+  // comes from may sit outside the period, so the Agenda has no other place to read it.
+  rule: RuleView
 }
 
 export interface Scheduled {
@@ -101,6 +105,14 @@ export async function listScheduled(db: Database, workspaceId: string, from: str
     until: row.series_until,
     count: row.series_count,
   })
+  const ruleView = (row: Row): RuleView => ({
+    freq: row.series_freq!,
+    interval: row.series_interval!,
+    weekdays: row.series_weekdays,
+    month_day: row.series_month_day,
+    until: row.series_until,
+    count: row.series_count,
+  })
   const view = (row: Row): ScheduledTask => ({
     id: row.id,
     title: row.title,
@@ -111,19 +123,7 @@ export async function listScheduled(db: Database, workspaceId: string, from: str
     scheduled_on: row.scheduled_on,
     scheduled_time: row.scheduled_time,
     series:
-      row.series_id === null
-        ? null
-        : {
-            id: row.series_id,
-            rule: {
-              freq: row.series_freq!,
-              interval: row.series_interval!,
-              weekdays: row.series_weekdays,
-              month_day: row.series_month_day,
-              until: row.series_until,
-              count: row.series_count,
-            },
-          },
+      row.series_id === null ? null : { id: row.series_id, rule: ruleView(row) },
   })
 
   const inPeriod = found.filter((row) => row.scheduled_on >= from && row.scheduled_on <= to)
@@ -151,6 +151,7 @@ export async function listScheduled(db: Database, workspaceId: string, from: str
           on: day,
           time: row.series_time,
           estimate_minutes: row.estimate_minutes,
+          rule: ruleView(row),
         })
       }
       created += 1

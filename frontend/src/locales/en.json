@@ -837,7 +837,16 @@
     "goToToday": "Go to today",
     "days": "Days of the week",
     "emptyDay": "No sessions on this day. Tap + to record one.",
-    "futureDay": "This day has not come yet. Sessions show up here when you focus."
+    "futureDay": "This day has not come yet. Sessions show up here when you focus.",
+    "scheduled": {
+      "estimate": "Est. {{duration}}",
+      "noEstimate": "No estimate",
+      "range": "Scheduled · {{start}} – {{end}}",
+      "defaultHour": "(1h)",
+      "next": "Next occurrence · {{day}} · {{start}} – {{end}}",
+      "openOrDrag": "Click to open · drag to reschedule",
+      "open": "Click to open"
+    }
   },
   "schedule": {
     "dayMonthFormat": "MMM d",

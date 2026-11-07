@@ -29,6 +29,7 @@ const projection: ProjectedOccurrence = {
   on: '2026-11-06',
   time: '10:00',
   estimate_minutes: 60,
+  rule: { freq: 'weekly', interval: 1, weekdays: [5], month_day: null, until: null, count: null },
 }
 
 function setup() {

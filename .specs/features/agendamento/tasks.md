@@ -1009,8 +1009,8 @@ T37
 
 **Done when**:
 
-- [ ] Tooltip das variantes com estimativa, sem estimativa `(1h)`, projeção e `viewer`
-- [ ] Gate check passes (quick)
+- [x] Tooltip das variantes com estimativa, sem estimativa `(1h)`, projeção e `viewer`
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

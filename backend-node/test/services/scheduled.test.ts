@@ -168,7 +168,7 @@ describe('listScheduled: the scheduled tasks of a period (US-5, US-14, D9)', () 
 })
 
 describe('listScheduled: the projected occurrences of a series (US-11, D14)', () => {
-  it('projects the next days of the rule after the open occurrence, at the time of the series, with its title, list and estimate', async () => {
+  it('projects the next days of the rule after the open occurrence, at the time of the series, with its title, list, estimate and rule', async () => {
     const seriesId = await series()
     const id = await task('this_week', { on: '2026-11-13', time: '14:00', seriesId, estimate: 45, title: 'Weekly review' })
     const { projected, timed } = await read(['2026-11-09', '2026-11-29'])
@@ -182,6 +182,7 @@ describe('listScheduled: the projected occurrences of a series (US-11, D14)', ()
         on: '2026-11-20',
         time: '14:00',
         estimate_minutes: 45,
+        rule: { freq: 'weekly', interval: 1, weekdays: [5], month_day: null, until: null, count: null },
       },
       expect.objectContaining({ on: '2026-11-27', time: '14:00', task_id: id }),
     ])

@@ -419,6 +419,8 @@ export interface ProjectedOccurrence {
   on: string
   time: string
   estimate_minutes: number | null
+  /** The rule of the series, which the tooltip of the projection says (US-11). */
+  rule: RecurrenceRule
 }
 
 /** `GET /api/agenda/scheduled`: the scheduled tasks of the workspace in a period. */

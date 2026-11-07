@@ -837,7 +837,16 @@
     "goToToday": "Ir para hoje",
     "days": "Dias da semana",
     "emptyDay": "Nenhuma sessão neste dia. Toque em + para registrar uma.",
-    "futureDay": "Este dia ainda não chegou. As sessões aparecem aqui quando você focar."
+    "futureDay": "Este dia ainda não chegou. As sessões aparecem aqui quando você focar.",
+    "scheduled": {
+      "estimate": "Est. {{duration}}",
+      "noEstimate": "Sem estimativa",
+      "range": "Agendada · {{start}} – {{end}}",
+      "defaultHour": "(1h)",
+      "next": "Próxima ocorrência · {{day}} · {{start}} – {{end}}",
+      "openOrDrag": "Clique para abrir · arraste para reagendar",
+      "open": "Clique para abrir"
+    }
   },
   "schedule": {
     "dayMonthFormat": "d MMM",
