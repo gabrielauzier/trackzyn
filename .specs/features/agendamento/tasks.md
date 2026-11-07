@@ -909,8 +909,8 @@ T37
 
 **Done when**:
 
-- [ ] Cada variante devolve o `scope` escolhido; Cancelar não chama a API
-- [ ] Gate check passes (quick)
+- [x] Cada variante devolve o `scope` escolhido; Cancelar não chama a API
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

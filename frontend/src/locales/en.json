@@ -920,6 +920,22 @@
     "field": "Schedule",
     "notScheduled": "Not scheduled",
     "change": "Change",
-    "oneHourDefault": "(+1h)"
+    "oneHourDefault": "(+1h)",
+    "scope": {
+      "moveTitle": "Change a repeating task",
+      "moveDescription": "This task is an occurrence of a series. Where does the change go?",
+      "occurrence": "This occurrence only",
+      "occurrenceHint": "Changes this task only. The next ones follow the rule.",
+      "series": "This and the next ones",
+      "seriesHint": "From this one on, the rule takes the new day and the new time.",
+      "deleteTitle": "Delete a repeating task",
+      "deleteDescription": "{{title}} is an occurrence of a series.",
+      "deleteOne": "Delete this one only",
+      "deleteOneHint": "The next occurrence is created for {{day}}.",
+      "deleteOneLast": "This is the last occurrence of the series.",
+      "deleteSeries": "Delete this one and end the series",
+      "deleteSeriesHint": "No new occurrence is created.",
+      "skipHint": "Deleting erases the time recorded on this task. To only postpone it, use Skip this occurrence."
+    }
   }
 }
