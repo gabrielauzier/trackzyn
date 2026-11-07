@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { X } from 'lucide-react'
@@ -8,7 +8,8 @@ import { Calendar } from '@/components/ui/calendar'
 import { Label } from '@/components/ui/label'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import { todayInTimezone } from '@/lib/date-utils'
-import { type RepeatPreset, clockIn, dayDate, longDay, presetOf, presetRule, recurrenceSummary, repeatsLabel, TIMES, weekdayOf } from '@/lib/schedule'
+import { type RepeatPreset, clockIn, dayDate, defaultCustomRule, longDay, presetOf, presetRule, repeatsLabel, TIMES, weekdayOf } from '@/lib/schedule'
+import { CustomRecurrence } from '@/components/schedule/custom-recurrence'
 import { cn } from '@/lib/utils'
 import type { RecurrenceRule } from '@/types'
 
@@ -28,8 +29,6 @@ interface SchedulePickerProps {
   onCancel?: () => void
   /** Saving; the save button waits. */
   pending?: boolean
-  /** The editor of `Personalizado…`, given the day and the rule it starts from (T22). */
-  renderCustom?: (props: { day: string; rule: RecurrenceRule | null; onChange: (rule: RecurrenceRule | null) => void }) => ReactNode
   now?: Date
 }
 
@@ -38,7 +37,7 @@ interface SchedulePickerProps {
  * 15 minutes with `Limpar hora`, and `Repetir` with the options of the chosen day and its summary (US-1, US-2, US-9).
  * A time of today that has passed is refused, in the workspace's timezone.
  */
-export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = false, renderCustom, now = new Date() }: SchedulePickerProps) {
+export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = false, now = new Date() }: SchedulePickerProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const locale = resolveDateFnsLocale(language)
@@ -131,16 +130,23 @@ export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = 
                 name="schedule-repeat"
                 value={option.preset}
                 checked={preset === option.preset}
-                onChange={() => setPreset(option.preset)}
+                onChange={() => {
+                  setPreset(option.preset)
+                  // Personalizado starts from the rule the task has, or every week on the chosen day.
+                  if (option.preset === 'custom' && custom === null) setCustom(defaultCustomRule(day))
+                }}
                 className="accent-primary"
               />
               {option.label}
             </label>
           ))}
-          {preset === 'custom' && renderCustom?.({ day, rule: custom, onChange: setCustom })}
-          {rule !== null && (
+          {preset === 'custom' && (
+            // Keyed by the day: the editor starts again from a new day.
+            <CustomRecurrence key={day} day={day} rule={custom ?? defaultCustomRule(day)} onChange={setCustom} />
+          )}
+          {preset !== 'custom' && rule !== null && (
             <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
-              {preset === 'custom' ? recurrenceSummary(rule, t, language) : repeatsLabel(rule, t, language)}
+              {repeatsLabel(rule, t, language)}
             </p>
           )}
         </fieldset>

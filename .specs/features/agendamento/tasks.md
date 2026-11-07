@@ -834,8 +834,8 @@ T37
 
 **Done when**:
 
-- [ ] Intervalo de 1 a 99, de 1 a 999 vezes, ao menos um dia na semanal, fim não antes do início
-- [ ] Gate check passes (quick)
+- [x] Intervalo de 1 a 99, de 1 a 999 vezes, ao menos um dia na semanal, fim não antes do início
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

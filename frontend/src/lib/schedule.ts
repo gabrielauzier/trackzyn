@@ -169,3 +169,46 @@ export function presetOf(rule: RecurrenceRule | null, day: string | null): Repea
   }
   return 'custom'
 }
+
+const isoDay = (date: Date) => format(date, 'yyyy-MM-dd')
+const plusDays = (date: Date, days: number) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
+const isoWeekday = (date: Date) => date.getDay() || 7
+
+/**
+ * The first `count` days of a series that starts on `start`, as the server counts them (`nextOccurrence`):
+ * every `interval` days, weeks from Monday or months, a shorter month falling on its last day, up to
+ * `until` or `count`. The editor of a custom rule shows them under its summary.
+ */
+export function seriesDays(rule: RecurrenceRule, start: string, count: number): string[] {
+  const anchor = dayDate(start)
+  const found: string[] = [start]
+  const limit = Math.min(count, rule.count ?? count)
+  for (let period = 0; found.length < limit && period < 400; period += rule.interval) {
+    let days: Date[]
+    if (rule.freq === 'daily') days = [plusDays(anchor, period)]
+    else if (rule.freq === 'weekly') {
+      const monday = plusDays(anchor, 7 * period - (isoWeekday(anchor) - 1))
+      days = [...(rule.weekdays ?? [])].sort((a, b) => a - b).map((weekday) => plusDays(monday, weekday - 1))
+    } else {
+      const month = new Date(anchor.getFullYear(), anchor.getMonth() + period, 1)
+      const last = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()
+      days = [new Date(month.getFullYear(), month.getMonth(), Math.min(rule.month_day ?? anchor.getDate(), last))]
+    }
+    for (const day of days.map(isoDay)) {
+      if (day <= found.at(-1)!) continue
+      if (rule.until !== null && day > rule.until) return found
+      if (found.length < limit) found.push(day)
+    }
+  }
+  return found
+}
+
+/** The rule `Personalizado…` starts from on `day`: every week, on its weekday. */
+export const defaultCustomRule = (day: string): RecurrenceRule => ({
+  freq: 'weekly',
+  interval: 1,
+  weekdays: [weekdayOf(day)],
+  month_day: null,
+  until: null,
+  count: null,
+})
