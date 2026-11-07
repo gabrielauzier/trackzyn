@@ -959,8 +959,8 @@ T37
 
 **Done when**:
 
-- [ ] Agendar no quadro atualiza a Agenda sem recarregar
-- [ ] Gate check passes (quick)
+- [x] Agendar no quadro atualiza a Agenda sem recarregar
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick
