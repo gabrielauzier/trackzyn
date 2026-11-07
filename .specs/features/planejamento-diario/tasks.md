@@ -502,10 +502,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] `· <agendadas> agendadas` só aparece quando é maior que zero
-- [ ] Acima do livre, a barra fica vermelha e mostra o excesso
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `capacity-bar.test.tsx`
+- [x] `· <agendadas> agendadas` só aparece quando é maior que zero
+- [x] Acima do livre, a barra fica vermelha e mostra o excesso
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `capacity-bar.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

@@ -1029,6 +1029,14 @@
       "breakHint": "A break from 5 min to 2h. Once started, it becomes a Break in its list.",
       "remove": "Remove from plan",
       "done": "Done"
+    },
+    "capacity": {
+      "planned": "{{planned}} planned of {{free}} free",
+      "breaks": "{{duration}} in breaks",
+      "scheduled": "{{duration}} scheduled",
+      "over": "{{duration}} past the workday",
+      "workday": "Workday {{start}} – {{end}}",
+      "bar": "{{percent}}% of the free time planned"
     }
   }
 }

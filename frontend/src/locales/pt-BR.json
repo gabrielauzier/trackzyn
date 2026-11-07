@@ -1029,6 +1029,14 @@
       "breakHint": "Pausa de 5 min a 2h. Ao começar, vira um Intervalo na lista dela.",
       "remove": "Tirar do plano",
       "done": "Pronto"
+    },
+    "capacity": {
+      "planned": "{{planned}} planejadas de {{free}} livres",
+      "breaks": "{{duration}} em pausas",
+      "scheduled": "{{duration}} agendadas",
+      "over": "{{duration}} além do expediente",
+      "workday": "Expediente {{start}} – {{end}}",
+      "bar": "{{percent}}% do tempo livre planejado"
     }
   }
 }
