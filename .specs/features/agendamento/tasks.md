@@ -684,8 +684,8 @@ T37
 
 **Done when**:
 
-- [ ] 422 para período inválido ou maior que 42 dias; token recebe 403
-- [ ] Gate check passes (full)
+- [x] 422 para período inválido ou maior que 42 dias; token recebe 403
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

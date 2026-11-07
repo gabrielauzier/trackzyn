@@ -35,6 +35,7 @@ export const CLOSED_AGENDA_ROUTES: ReadonlyArray<{ method: string; url: string }
   { method: 'POST', url: '/api/sessions' },
   { method: 'PATCH', url: '/api/sessions/:id' },
   { method: 'DELETE', url: '/api/sessions/:id' },
+  { method: 'GET', url: '/api/agenda/scheduled' },
 ]
 
 export const routeKey = (route: { method: string; url: string }) => `${route.method} ${route.url}`
