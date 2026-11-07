@@ -80,7 +80,7 @@ O que o código já fixa:
 3. The system SHALL mostrar, à direita, a grade de um dia de 00:00 a 24:00, rolada até o início do expediente, com as tarefas agendadas com hora do workspace e as sessões do usuário daquele dia como blocos fixos, que não podem ser arrastados. (PLAN-03)
 4. WHEN o usuário solta uma tarefa da lista na grade THEN o sistema SHALL criar no rascunho um bloco no horário do ponto solto, no passo de 15 min, com a duração da estimativa da tarefa ou 1h sem estimativa. (PLAN-04)
 5. WHEN o usuário arrasta um bloco do rascunho THEN o sistema SHALL movê-lo no passo de 15 min, e WHEN puxa a borda de baixo THEN o sistema SHALL mudar a duração do bloco, de 5 min a 24 h, sem mudar a estimativa da tarefa. (PLAN-05)
-6. WHEN o usuário abre um bloco THEN o sistema SHALL permitir editar o início e a duração em campos HH:MM e remover o bloco do rascunho. (PLAN-06)
+6. WHEN o usuário abre um bloco THEN o sistema SHALL permitir editar o início e a duração em campos HH:MM e remover o bloco do rascunho; o campo de duração vai até `23:59`, e um bloco de 24 h só se alcança puxando a borda (PLAN-05). (PLAN-06)
 7. WHILE o rascunho tem mudanças não salvas, o sistema SHALL mostrar `Rascunho — ainda não salvo` e os botões `Descartar` e `Confirmar plano`, e nada SHALL ser gravado. (PLAN-07)
 8. WHEN o usuário clica em `Confirmar plano` THEN o sistema SHALL substituir o plano salvo do dia pelo rascunho, numa única gravação, e mostrar `Plano salvo`. (PLAN-08)
 9. WHEN o plano é salvo THEN cada tarefa planejada sem `scheduled_on` SHALL receber o dia do plano, sem hora, com as regras de salvar do agendamento (D3). (PLAN-09)
@@ -101,9 +101,9 @@ O que o código já fixa:
 
 **Acceptance Criteria**:
 
-1. The system SHALL mostrar, acima das tarefas, as pausas prontas `Café` (15 min) e `Almoço` (1h) e o botão `Nova pausa`. (PLAN-14)
+1. The system SHALL mostrar, acima das tarefas, as pausas prontas `Café` (`15min`) e `Almoço` (`1h`) e o botão `Nova pausa`, com as durações no formato do app (`formatDuration`: `15min`, `1h`, `1h 30min`), o mesmo em blocos, editor e barra de capacidade. (PLAN-14)
 2. WHEN o usuário solta uma pausa na grade THEN o sistema SHALL criar no rascunho um bloco de pausa com o nome e a duração dela, desenhado em cinza hachurado, diferente dos blocos de tarefa. (PLAN-15)
-3. WHEN o usuário cria uma `Nova pausa` THEN o sistema SHALL pedir o nome (1 a 40 caracteres) e a duração, e criar o bloco no rascunho. (PLAN-16)
+3. WHEN o usuário cria uma `Nova pausa` THEN o sistema SHALL pedir o nome (1 a 40 caracteres) e a duração, e criar o bloco no rascunho; IF o nome fica vazio ou passa de 40 caracteres THEN o sistema SHALL mostrar `O nome vai de 1 a 40 caracteres` e não criar. (PLAN-16)
 4. IF a duração de uma pausa fica fora de 5 a 120 min THEN o sistema SHALL recusar a mudança com `A pausa vai de 5 min a 2h` e manter a duração anterior. (PLAN-17)
 5. The system SHALL guardar em cada pausa a lista do Intervalo, com a primeira lista ativa já escolhida e editável no bloco. (PLAN-18)
 
