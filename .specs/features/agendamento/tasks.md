@@ -559,8 +559,8 @@ T37
 
 **Done when**:
 
-- [ ] Hora fora do passo recusada; séries existentes ficam com a hora da ocorrência aberta
-- [ ] Gate check passes (full)
+- [x] Hora fora do passo recusada; séries existentes ficam com a hora da ocorrência aberta
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

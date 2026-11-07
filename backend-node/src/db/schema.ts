@@ -191,8 +191,9 @@ export type SeriesFreq = (typeof SERIES_FREQS)[number]
 
 /**
  * A recurrence rule of a scheduled task (Recorrência, D15). At most one occurrence of a series is pending at a
- * time (D13): the rule starts from the open occurrence's `scheduled_on`, and its time is that task's
- * `scheduled_time`, so the series keeps neither a start day nor a time.
+ * time (D13): the rule starts from the open occurrence's `scheduled_on`, so the series keeps no start day. It
+ * keeps its own time, which the next occurrence takes, so moving one occurrence alone does not move the
+ * next ones (D27).
  */
 export const taskSeries = pgTable(
   'task_series',
@@ -214,6 +215,8 @@ export const taskSeries = pgTable(
     count: smallint('count'),
     /** Occurrences created so far, the first one included, for `count`. */
     createdCount: smallint('created_count').notNull().default(1),
+    /** The start time of the series, in the workspace's timezone and in steps of 15 minutes; null for none (D27). */
+    time: time('time'),
     /** When the series ended: stopped, or `until` or `count` reached. */
     endedAt: timestamp('ended_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
@@ -231,6 +234,10 @@ export const taskSeries = pgTable(
     check('ck_task_series_until_or_count', sql`${t.until} IS NULL OR ${t.count} IS NULL`),
     check('ck_task_series_weekly_weekdays', sql`(${t.freq} = 'weekly') = (${t.weekdays} IS NOT NULL)`),
     check('ck_task_series_monthly_month_day', sql`(${t.freq} = 'monthly') = (${t.monthDay} IS NOT NULL)`),
+    check(
+      'ck_task_series_time_step',
+      sql`${t.time} IS NULL OR (extract(minute FROM ${t.time})::int % 15 = 0 AND extract(second FROM ${t.time}) = 0)`,
+    ),
   ],
 )
 
