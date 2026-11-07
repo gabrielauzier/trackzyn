@@ -200,7 +200,7 @@ O que o código já fixa:
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | PLAN-01 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-02 | P1: Montar o plano de um dia | Tasks | In Tasks |
+| PLAN-02 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-03 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-04 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-05 | P1: Montar o plano de um dia | Tasks | In Tasks |
@@ -209,8 +209,8 @@ O que o código já fixa:
 | PLAN-08 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-09 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-10 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-11 | P1: Montar o plano de um dia | Tasks | In Tasks |
-| PLAN-12 | P1: Montar o plano de um dia | Tasks | In Tasks |
+| PLAN-11 | P1: Montar o plano de um dia | Tasks | Implementing |
+| PLAN-12 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-13 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-14 | P1: Planejar pausas | Tasks | In Tasks |
 | PLAN-15 | P1: Planejar pausas | Tasks | In Tasks |
@@ -232,12 +232,12 @@ O que o código já fixa:
 | PLAN-31 | P2: Abrir o plano rápido de vários lugares | Tasks | In Tasks |
 | PLAN-32 | P3: Encaixar o que sobrou | Tasks | In Tasks |
 | PLAN-33 | P3: Encaixar o que sobrou | Tasks | In Tasks |
-| PLAN-34 | Edge Cases | Tasks | In Tasks |
+| PLAN-34 | Edge Cases | Tasks | Implementing |
 | PLAN-35 | Edge Cases | Tasks | In Tasks |
 | PLAN-36 | Edge Cases | Tasks | In Tasks |
 | PLAN-37 | Edge Cases | Tasks | In Tasks |
 | PLAN-38 | Edge Cases | Tasks | In Tasks |
-| PLAN-39 | Edge Cases | Tasks | In Tasks |
+| PLAN-39 | Edge Cases | Tasks | Implementing |
 | PLAN-40 | Edge Cases | Tasks | Implementing |
 | PLAN-41 | Edge Cases | Tasks | In Tasks |
 | PLAN-42 | Edge Cases | Tasks | In Tasks |

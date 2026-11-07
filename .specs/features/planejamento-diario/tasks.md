@@ -119,11 +119,11 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Um usuário não lê o plano de outro, nem de outro workspace (PLAN-12)
-- [ ] Ontem volta com `editable = false`; hoje e amanhã com `true`
-- [ ] Tarefa concluída volta com `done = true`; tarefa de lista arquivada some do plano e das candidatas
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
-- [ ] Test count: anteriores + os novos de `services/plans-read.test.ts`
+- [x] Um usuário não lê o plano de outro, nem de outro workspace (PLAN-12)
+- [x] Ontem volta com `editable = false`; hoje e amanhã com `true`
+- [x] Tarefa concluída volta com `done = true`; tarefa de lista arquivada some do plano e das candidatas
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Test count: anteriores + os novos de `services/plans-read.test.ts`
 
 **Tests**: integration
 **Gate**: full
