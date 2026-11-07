@@ -137,11 +137,12 @@ export function AppLayout() {
           data-slot="desktop-titlebar"
           className={cn('print-hidden fixed inset-x-0 top-0 z-40 hidden h-11 items-center bg-sidebar lg:flex', drag)}
         >
-          {/* Back and forward start where the page card starts. */}
+          {/* Back and forward start where the page starts; collapsed on macOS, where the page starts
+              under the window buttons (16 to 68 px), they keep 16 px clear of them instead. */}
           <div
             className={cn(
               'absolute flex items-center gap-0.5 transition-[left] duration-300 ease-in-out motion-reduce:transition-none',
-              collapsed ? 'lg:left-16' : 'lg:left-60',
+              !collapsed ? 'lg:left-60' : dragHeader ? 'lg:left-21' : 'lg:left-16',
             )}
           >
             <button
@@ -412,7 +413,9 @@ export function AppLayout() {
             'flex-1 min-h-screen min-w-0 overflow-x-clip transition-[margin] duration-300 ease-in-out motion-reduce:transition-none',
             desktopFrame
               ? cn(
-                  'lg:fixed lg:top-11 lg:right-2 lg:bottom-2 lg:min-h-0 lg:overflow-y-auto lg:rounded-xl lg:border lg:border-border lg:bg-background',
+                  // To the window's right and bottom edges: only the top-left corner is rounded, with a
+                  // border on the top and the left alone.
+                  'lg:fixed lg:top-11 lg:right-0 lg:bottom-0 lg:min-h-0 lg:overflow-y-auto lg:rounded-tl-xl lg:border-t lg:border-l lg:border-border lg:bg-background',
                   'lg:transition-[left]',
                   collapsed ? 'lg:left-16' : 'lg:left-60',
                 )
