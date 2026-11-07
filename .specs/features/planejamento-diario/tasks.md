@@ -340,10 +340,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Um ponteiro solto em 10:37 cria o bloco em 10:30; arrastar 50 px move o bloco no passo certo para a escala
-- [ ] Soltar fora da grade não cria nada; Esc cancela o arraste
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `use-plan-drag.test.tsx`
+- [x] Um ponteiro solto em 10:37 cria o bloco em 10:30; arrastar 50 px move o bloco no passo certo para a escala
+- [x] Soltar fora da grade não cria nada; Esc cancela o arraste
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `use-plan-drag.test.tsx`
 
 **Tests**: unit
 **Gate**: quick
