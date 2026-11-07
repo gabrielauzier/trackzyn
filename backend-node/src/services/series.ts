@@ -5,7 +5,7 @@ import { type Task, type TaskSeries, taskSeries, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { type RecurrenceRule, nextOccurrence, weekdayOf } from './recurrence.ts'
 import { type Schedule, setSchedule, workspaceClock } from './schedule.ts'
-import { type TaskWithSubtasks, duplicateTask, findTask, getTask, lockList } from './tasks.ts'
+import { type TaskWithSubtasks, duplicateTask, findTask, getTask, lockList, moveTask } from './tasks.ts'
 
 const seriesError = (message: string, code: string) => new HttpError(422, message, {}, { code })
 
@@ -178,7 +178,8 @@ export async function deleteOccurrence(
 /**
  * Skips this occurrence (US-12, D18): the same task moves to the next day of the rule after its day and after
  * today, at the same time, by the rules of saving a schedule, and keeps its time spent; the series counts one
- * more occurrence. When the rule has no occurrence left, the series ends and the task stays as a plain one.
+ * more occurrence. A task in Today or This week goes to the end of the column of its new day, This week or
+ * Backlog, and can come to Today again on that day (D28). When the rule has no occurrence left, the series ends and the task stays as a plain one.
  * A task outside a live series answers 409 `not_in_series`.
  */
 export async function skipOccurrence(
@@ -196,7 +197,7 @@ export async function skipOccurrence(
     const series = current.seriesId === null ? null : await lockSeries(tx, current.seriesId)
     if (series === null || series.endedAt !== null) throw new HttpError(409, 'The task is not in a series', {}, { code: 'not_in_series' })
 
-    const { today } = await workspaceClock(tx, workspaceId, now)
+    const { today, weekStart, weekEnd } = await workspaceClock(tx, workspaceId, now)
     const next = nextOccurrence(ruleOf(series), current.scheduledOn ?? today, today, series.createdCount)
     if (next === null) {
       await tx.update(taskSeries).set({ endedAt: now }).where(eq(taskSeries.id, series.id))
@@ -204,6 +205,11 @@ export async function skipOccurrence(
       return getTask(tx, current.id, workspaceId)
     }
     await tx.update(taskSeries).set({ createdCount: series.createdCount + 1 }).where(eq(taskSeries.id, series.id))
+    // From Today or This week the task goes to the column of its new day (D28); the new day clears schedule_applied_at.
+    const target = next >= weekStart && next <= weekEnd ? 'this_week' : 'backlog'
+    if ((current.column === 'today' || current.column === 'this_week') && current.column !== target) {
+      await moveTask(tx, current.id, workspaceId, { column: target, beforeTaskId: null, byUserId }, now)
+    }
     return setSchedule(tx, current.id, workspaceId, { on: next, time: current.scheduledTime }, byUserId, now)
   })
 }

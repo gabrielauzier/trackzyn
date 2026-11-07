@@ -609,8 +609,8 @@ T37
 
 **Done when**:
 
-- [ ] Pular em Hoje com próxima data na semana vai para Esta semana; com data depois, para Backlog; o tempo registrado continua na tarefa
-- [ ] Gate check passes (full)
+- [x] Pular em Hoje com próxima data na semana vai para Esta semana; com data depois, para Backlog; o tempo registrado continua na tarefa
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

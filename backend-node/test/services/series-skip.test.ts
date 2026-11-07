@@ -41,15 +41,32 @@ describe('skipOccurrence (US-12, D18)', () => {
     const { id, seriesId } = await occurrence('this_week', '2026-11-13', '14:00')
     const skipped = await skip(id)
 
-    expect(skipped).toMatchObject({ id, scheduledOn: '2026-11-20', scheduledTime: '14:00:00', seriesId, column: 'this_week' })
+    // Friday 20 is after this week: the task leaves This week for Backlog (D28).
+    expect(skipped).toMatchObject({ id, scheduledOn: '2026-11-20', scheduledTime: '14:00:00', seriesId, column: 'backlog' })
     expect((await db.select().from(tasks)).map((task) => task.id)).toEqual([id])
     expect((await series(seriesId)).createdCount).toBe(2)
+  })
+
+  it('D28 skipped in Today with the next day in this week, the task goes to the end of This week and can come to Today again', async () => {
+    const already = await seed.addTask({ title: 'Already this week', column: 'this_week' })
+    const { id } = await occurrence('today', '2026-11-11', '15:00')
+    await db.update(tasks).set({ scheduleAppliedAt: NOW }).where(eq(tasks.id, id))
+
+    expect(await skip(id)).toMatchObject({ scheduledOn: '2026-11-13', scheduledTime: '15:00:00', column: 'this_week', scheduleAppliedAt: null })
+    const thisWeek = await db.select({ id: tasks.id, position: tasks.position }).from(tasks).where(eq(tasks.column, 'this_week'))
+    expect(thisWeek.sort((a, b) => a.position - b.position).map((task) => task.id)).toEqual([already, id])
+  })
+
+  it('D28 skipped in Today with the next day after this week, the task goes to Backlog', async () => {
+    const { id } = await occurrence('today', '2026-11-09', null, { ...FRIDAYS, weekdays: [1] })
+    await db.update(tasks).set({ scheduleAppliedAt: NOW }).where(eq(tasks.id, id))
+    expect(await skip(id)).toMatchObject({ scheduledOn: '2026-11-16', column: 'backlog', scheduleAppliedAt: null })
   })
 
   it('keeps the time spent on the task', async () => {
     const { id } = await occurrence('today', '2026-11-11', null)
     const session = await seed.addSession({ taskId: id, startedAt: new Date('2026-11-11T15:00:00Z'), endedAt: new Date('2026-11-11T15:25:00Z') })
-    await skip(id)
+    expect(await skip(id)).toMatchObject({ column: 'this_week' })
     expect((await db.select().from(focusSessions).where(eq(focusSessions.id, session)))[0]).toMatchObject({ taskId: id })
   })
 
