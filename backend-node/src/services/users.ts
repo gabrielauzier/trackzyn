@@ -124,6 +124,23 @@ export async function updateUser(
   return { ...user, ...changes }
 }
 
+/**
+ * Saves the user's workday in `preferences.workday` (PLAN-22), merged in SQL into the stored preferences so the
+ * other keys stay as they are, whatever copy of the user the caller holds. 422 when the end is not after the
+ * start (PLAN-23). The times are `HH:MM`.
+ */
+export async function setWorkday(db: Database, user: User, workday: { start: string; end: string }): Promise<{ start: string; end: string }> {
+  if (workday.end <= workday.start) {
+    throw new HttpError(422, 'The workday must end after it starts', {}, { code: 'workday_end_before_start' })
+  }
+  const value = JSON.stringify({ workday: { start: workday.start, end: workday.end } })
+  await db
+    .update(users)
+    .set({ preferences: sql`(coalesce(${users.preferences}::jsonb, '{}'::jsonb) || ${value}::jsonb)::json` })
+    .where(eq(users.id, user.id))
+  return { start: workday.start, end: workday.end }
+}
+
 export type Authenticated = { user: User; updatedHash: string | null }
 
 /** fastapi-users' `authenticate`: e-mail and password, upgrading the stored hash when it is stale. */

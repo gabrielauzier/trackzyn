@@ -203,10 +203,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] As outras chaves de `preferences` continuam iguais depois de gravar o expediente
-- [ ] `18:00`–`09:00` e `09:00`–`09:00` são recusados
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
-- [ ] Test count: anteriores + os novos de `services/workday.test.ts`
+- [x] As outras chaves de `preferences` continuam iguais depois de gravar o expediente
+- [x] `18:00`–`09:00` e `09:00`–`09:00` são recusados
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Test count: anteriores + os novos de `services/workday.test.ts`
 
 **Tests**: integration
 **Gate**: full
