@@ -248,6 +248,42 @@ describe('PlanPage', () => {
     expect(footer()).toBeNull()
   })
 
+  it('PLAN-32 Encaixar places a marked task after the sessions and the timed tasks of the day', async () => {
+    // A timed task 09:00 – 10:00 and a session 10:00 – 10:30 in São Paulo: the first free hour starts at 10:30.
+    vi.mocked(agenda.scheduled).mockResolvedValue({
+      timed: [
+        { id: 't', title: 'Standup', list, column: 'today', position: 1, estimate_minutes: 60, scheduled_on: DAY, scheduled_time: '09:00', series: null },
+      ],
+      untimed: [],
+      projected: [],
+    })
+    vi.mocked(sessions.list).mockResolvedValue({
+      sessions: [
+        {
+          id: 's',
+          kind: 'task',
+          origin: 'manual',
+          task_id: 'x',
+          task_title: 'Answer the mail',
+          list_id: list.id,
+          list_name: list.name,
+          list_color: list.color,
+          started_at: '2026-11-09T13:00:00.000Z',
+          ended_at: '2026-11-09T13:30:00.000Z',
+        },
+      ],
+    })
+    const { user } = show()
+    await waitFor(() => expect(document.querySelectorAll('[data-fixed]')).toHaveLength(2))
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Marcar Write the spec' }))
+    await user.click(screen.getByRole('button', { name: 'Encaixar (1)' }))
+
+    expect(blocks()).toHaveLength(1)
+    expect(blocks()[0]).toHaveAccessibleName(/^Write the spec, 10:30 – 11:30/)
+    expect(footer()).toHaveTextContent('Rascunho — ainda não salvo')
+  })
+
   it('PLAN-13 the arrows of the header open the plan of the next and the previous day', async () => {
     const { user } = show()
     await screen.findByRole('heading', { level: 1, name: 'Segunda-feira, 9 de novembro' })
