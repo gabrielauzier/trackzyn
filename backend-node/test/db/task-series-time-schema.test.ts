@@ -62,12 +62,12 @@ describe('0012_task_series_time: the time of a series (Recorrência; D27)', () =
     ])
   })
 
-  it('takes a time in steps of 15 minutes and refuses one off the step', async () => {
+  it('takes a time at any minute and refuses one with seconds (D34)', async () => {
     await applyMigrations(drizzle(client) as unknown as Database)
     await client.exec(SEED)
     await insertTime('00:00')
     await insertTime('23:45')
-    await expect(insertTime('14:10')).rejects.toThrow(/ck_task_series_time_step/)
-    await expect(insertTime('14:15:30')).rejects.toThrow(/ck_task_series_time_step/)
+    await insertTime('14:10')
+    await expect(insertTime('14:15:30')).rejects.toThrow(/ck_task_series_time_minute/)
   })
 })

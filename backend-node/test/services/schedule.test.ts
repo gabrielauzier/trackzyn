@@ -82,10 +82,10 @@ async function refusal(promise: Promise<unknown>) {
 }
 
 describe('setSchedule: the rules of saving a schedule (US-1, US-2, D3, D21)', () => {
-  it('saves the day and the time, in steps of 15 minutes, and reads them back', async () => {
+  it('saves the day and the time, at any minute, and reads them back (D34)', async () => {
     const id = await task('this_week')
-    const saved = await schedule(id, '2026-11-13', '14:00')
-    expect(saved).toMatchObject({ scheduledOn: '2026-11-13', scheduledTime: '14:00:00', column: 'this_week' })
+    const saved = await schedule(id, '2026-11-13', '14:07')
+    expect(saved).toMatchObject({ scheduledOn: '2026-11-13', scheduledTime: '14:07:00', column: 'this_week' })
   })
 
   it('clears schedule_applied_at when the day changes', async () => {

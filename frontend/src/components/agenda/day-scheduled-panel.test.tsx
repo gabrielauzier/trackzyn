@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { agenda, tasks } from '@/lib/api'
@@ -137,7 +137,7 @@ describe('DayScheduledPanel (US-14)', () => {
       return {} as Task
     })
     await user.click(await screen.findByRole('button', { name: 'Set time of Call the bank' }))
-    await user.selectOptions(screen.getByLabelText('Time'), '10:00')
+    fireEvent.change(screen.getByLabelText('Time'), { target: { value: '10:00' } })
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(tasks.update).toHaveBeenCalledWith('a', { scheduled_on: DAY, scheduled_time: '10:00' })
@@ -150,7 +150,7 @@ describe('DayScheduledPanel (US-14)', () => {
     vi.mocked(tasks.update).mockResolvedValue({} as Task)
     const { user } = show(one)
     await user.click(await screen.findByRole('button', { name: 'Set time of Review' }))
-    await user.selectOptions(screen.getByLabelText('Time'), '10:00')
+    fireEvent.change(screen.getByLabelText('Time'), { target: { value: '10:00' } })
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(tasks.update).not.toHaveBeenCalled()
 

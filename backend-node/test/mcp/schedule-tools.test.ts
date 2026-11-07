@@ -77,13 +77,13 @@ describe('create_task with a schedule (US-7)', () => {
     expect(await stored()).toEqual([])
   })
 
-  it('refuses an invalid date, a time off the step of 15 minutes and an invalid rule with the validation message', async () => {
+  it('refuses an invalid date, a time that is not HH:MM and an invalid rule with the validation message', async () => {
     const { create, stored } = await setup()
     const badDay = await create({ scheduled_on: '2026-02-30' })
     expect(badDay.isError).toBe(true)
     expect(JSON.parse(badDay.text)[0]).toMatchObject({ loc: ['body', 'scheduled_on'], msg: 'Input should be a valid date (YYYY-MM-DD)' })
-    const offStep = await create({ scheduled_on: date(20), scheduled_time: '10:10' })
-    expect(JSON.parse(offStep.text)[0]).toMatchObject({ loc: ['body', 'scheduled_time'], msg: 'Input should be a time in steps of 15 minutes (HH:MM)' })
+    const badTime = await create({ scheduled_on: date(20), scheduled_time: '10:60' })
+    expect(JSON.parse(badTime.text)[0]).toMatchObject({ loc: ['body', 'scheduled_time'], msg: 'Input should be a time (HH:MM)' })
     const noWeekdays = await create({ scheduled_on: date(20), recurrence: { freq: 'weekly', interval: 1 } })
     expect(noWeekdays.isError).toBe(true)
     expect(JSON.parse(noWeekdays.text)[0]).toMatchObject({ loc: ['body', 'recurrence', 'weekdays'] })

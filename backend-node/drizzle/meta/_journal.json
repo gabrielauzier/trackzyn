@@ -92,6 +92,13 @@
       "when": 1794031938303,
       "tag": "0012_task_series_time",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794067799958,
+      "tag": "0013_task_time_any_minute",
+      "breakpoints": true
     }
   ]
 }

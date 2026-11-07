@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import { todayInTimezone } from '@/lib/date-utils'
@@ -18,7 +19,6 @@ import {
   presetRule,
   recurrenceSummary,
   repeatsLabel,
-  TIMES,
   weekdayOf,
 } from '@/lib/schedule'
 import { CustomRecurrence } from '@/components/schedule/custom-recurrence'
@@ -45,8 +45,8 @@ interface SchedulePickerProps {
 }
 
 /**
- * The calendar from Monday with the days before today off and today marked, the optional start time in steps of
- * 15 minutes with `Limpar hora`, and `Repetir` with the options of the chosen day and its summary (US-1, US-2, US-9).
+ * The calendar from Monday with the days before today off and today marked, the optional start time as `HH:MM`, at
+ * any minute (D34), with `Limpar hora`, and `Repetir` with the options of the chosen day and its summary (US-1, US-2, US-9).
  * A time of today that has passed is refused, in the workspace's timezone. The rule the task has stays chosen
  * when the day changes, as its own option (`Toda quinta` on a Friday) when the options of the new day do not
  * say it; only picking another option changes the rule (US-12, D30).
@@ -66,8 +66,7 @@ export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = 
   const [preset, setPreset] = useState<RepeatPreset | 'series'>(series !== null && seriesPreset !== 'custom' ? 'series' : seriesPreset)
   const [custom, setCustom] = useState<RecurrenceRule | null>(seriesPreset === 'custom' ? series : null)
 
-  const passed = (candidate: string) => day === today && candidate < nowTime
-  const timePassed = time !== null && passed(time)
+  const timePassed = time !== null && day === today && time < nowTime
   const rule = day === null ? null : preset === 'series' ? series : preset === 'custom' ? custom : presetRule(preset, day)
   // The option of the chosen day that says the rule of the task, if any.
   const seriesOnDay = series !== null && seriesPreset !== 'custom' ? presetOf(series, day) : 'custom'
@@ -113,22 +112,16 @@ export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="schedule-time">{t('schedule.time')}</Label>
         <div className="flex items-center gap-2">
-          <select
+          <Input
             id="schedule-time"
+            type="time"
             value={time ?? ''}
             disabled={day === null}
             aria-invalid={timePassed || undefined}
             aria-describedby={timePassed ? 'schedule-time-error' : undefined}
-            onChange={(event) => setTime(event.target.value === '' ? null : event.target.value)}
-            className="h-9 flex-1 rounded-lg border border-input bg-card px-2 text-sm"
-          >
-            <option value="">{t('schedule.noTime')}</option>
-            {TIMES.map((option) => (
-              <option key={option} value={option} disabled={passed(option)}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={(event) => setTime(/^\d{2}:\d{2}$/.test(event.target.value) ? event.target.value : null)}
+            className="flex-1"
+          />
           {time !== null && (
             <Button type="button" variant="ghost" size="sm" onClick={() => setTime(null)}>
               <X size={14} /> {t('schedule.clearTime')}

@@ -215,7 +215,7 @@ export const taskSeries = pgTable(
     count: smallint('count'),
     /** Occurrences created so far, the first one included, for `count`. */
     createdCount: smallint('created_count').notNull().default(1),
-    /** The start time of the series, in the workspace's timezone and in steps of 15 minutes; null for none (D27). */
+    /** The start time of the series, in the workspace's timezone, to the minute; null for none (D27, D34). */
     time: time('time'),
     /** When the series ended: stopped, or `until` or `count` reached. */
     endedAt: timestamp('ended_at', { withTimezone: true }),
@@ -234,10 +234,7 @@ export const taskSeries = pgTable(
     check('ck_task_series_until_or_count', sql`${t.until} IS NULL OR ${t.count} IS NULL`),
     check('ck_task_series_weekly_weekdays', sql`(${t.freq} = 'weekly') = (${t.weekdays} IS NOT NULL)`),
     check('ck_task_series_monthly_month_day', sql`(${t.freq} = 'monthly') = (${t.monthDay} IS NOT NULL)`),
-    check(
-      'ck_task_series_time_step',
-      sql`${t.time} IS NULL OR (extract(minute FROM ${t.time})::int % 15 = 0 AND extract(second FROM ${t.time}) = 0)`,
-    ),
+    check('ck_task_series_time_minute', sql`${t.time} IS NULL OR extract(second FROM ${t.time}) = 0`),
   ],
 )
 
@@ -265,7 +262,7 @@ export const tasks = pgTable(
     createdFrom: varchar('created_from', { length: 16 }).$type<TaskOrigin>(),
     /** The day the task is scheduled for, in the workspace's timezone (`YYYY-MM-DD`). */
     scheduledOn: date('scheduled_on', { mode: 'string' }),
-    /** The start time on `scheduledOn`, in the workspace's timezone, in steps of 15 minutes (`HH:MM:SS`). */
+    /** The start time on `scheduledOn`, in the workspace's timezone, to the minute (`HH:MM:SS`, D34). */
     scheduledTime: time('scheduled_time'),
     /** When this schedule brought the task to Today (D21); cleared whenever the day or the time change. */
     scheduleAppliedAt: timestamp('schedule_applied_at', { withTimezone: true }),
@@ -282,10 +279,7 @@ export const tasks = pgTable(
     check('ck_tasks_done_completed_at', sql`(${t.column} = 'done') = (${t.completedAt} IS NOT NULL)`),
     check('ck_tasks_created_from', sql`${t.createdFrom} IN ('agenda')`),
     check('ck_tasks_schedule_time_needs_day', sql`${t.scheduledTime} IS NULL OR ${t.scheduledOn} IS NOT NULL`),
-    check(
-      'ck_tasks_schedule_time_step',
-      sql`${t.scheduledTime} IS NULL OR (extract(minute FROM ${t.scheduledTime})::int % 15 = 0 AND extract(second FROM ${t.scheduledTime}) = 0)`,
-    ),
+    check('ck_tasks_schedule_time_minute', sql`${t.scheduledTime} IS NULL OR extract(second FROM ${t.scheduledTime}) = 0`),
     // Only the candidates of the move to Today: the frequent reads (the focus polls every 15 s) touch a small index.
     index('ix_tasks_schedule_due')
       .on(t.listId, t.scheduledOn)

@@ -62,7 +62,7 @@ describe('PATCH /api/tasks/:id with a schedule (US-1, US-2, US-7)', () => {
     expect((await patch({ scheduled_on: null })).json()).toMatchObject({ scheduled_on: null, scheduled_time: null })
   })
 
-  it('answers 422 for a time without a day, an invalid date and a time out of the 15-minute step', async () => {
+  it('answers 422 for a time without a day, an invalid date and a time that is not HH:MM; any minute is a time (D34)', async () => {
     const { owner, workspaceId, taskId } = await setup()
     const on = await day(30)
     const patch = (body: object) => call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, body)
@@ -75,13 +75,18 @@ describe('PATCH /api/tasks/:id with a schedule (US-1, US-2, US-7)', () => {
     expect(await location({ scheduled_on: null, scheduled_time: '10:00' })).toEqual(['body', 'scheduled_time'])
     expect(await location({ scheduled_on: '2026-02-30' })).toEqual(['body', 'scheduled_on'])
     expect(await location({ scheduled_on: '13/11/2026' })).toEqual(['body', 'scheduled_on'])
-    expect(await location({ scheduled_on: on, scheduled_time: '14:10' })).toEqual(['body', 'scheduled_time'])
+    expect(await location({ scheduled_on: on, scheduled_time: '14:60' })).toEqual(['body', 'scheduled_time'])
+    expect(await location({ scheduled_on: on, scheduled_time: '9:05' })).toEqual(['body', 'scheduled_time'])
     expect(await location({ scheduled_on: on, scheduled_time: '24:00' })).toEqual(['body', 'scheduled_time'])
     // A time alone on a task without a day is a time without a day too.
     const alone = await patch({ scheduled_time: '10:00' })
     expect(alone.statusCode).toBe(422)
     expect(alone.json()).toMatchObject({ code: 'schedule_time_needs_day' })
     expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).json()).toMatchObject({ scheduled_on: null, scheduled_time: null })
+
+    const offStep = await patch({ scheduled_on: on, scheduled_time: '14:07' })
+    expect(offStep.statusCode).toBe(200)
+    expect(offStep.json()).toMatchObject({ scheduled_on: on, scheduled_time: '14:07' })
   })
 
   it('D31 accepts a day before today with 200, and the next read of the board shows the task in Today', async () => {

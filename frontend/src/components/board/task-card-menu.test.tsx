@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 
 import { TaskCardMenu } from '@/components/board/task-card-menu'
 import { renderWithProviders } from '@/test/utils'
@@ -126,7 +126,7 @@ describe('TaskCardMenu: Escolher data, hora e repetição… (US-1, US-9)', () =
     await user.click(screen.getByRole('menuitem', { name: 'Pick date, time and repeat…' }))
     const dialog = await screen.findByRole('dialog', { name: 'Schedule task' })
     await user.click(within(dialog).getByRole('button', { name: 'Fri, Nov 13' }))
-    await user.selectOptions(within(dialog).getByLabelText('Time'), '14:00')
+    fireEvent.change(within(dialog).getByLabelText('Time'), { target: { value: '14:00' } })
     await user.click(within(dialog).getByRole('radio', { name: 'Every Friday' }))
     await user.click(within(dialog).getByRole('button', { name: 'Save' }))
 
@@ -140,7 +140,7 @@ describe('TaskCardMenu: Escolher data, hora e repetição… (US-1, US-9)', () =
     await user.click(screen.getByRole('menuitem', { name: 'Pick date, time and repeat…' }))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByRole('radio', { name: 'Every Friday' })).toBeChecked()
-    await user.selectOptions(within(dialog).getByLabelText('Time'), '15:00')
+    fireEvent.change(within(dialog).getByLabelText('Time'), { target: { value: '15:00' } })
     await user.click(within(dialog).getByRole('button', { name: 'Save' }))
 
     expect(onChange).toHaveBeenCalledWith({ scheduled_on: '2026-11-13', scheduled_time: '15:00' })

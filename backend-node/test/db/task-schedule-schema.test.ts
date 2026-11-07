@@ -58,7 +58,7 @@ describe('the schedule columns of tasks (agendamento, data model)', () => {
     expect(await read()).toEqual({ scheduled_on: null, scheduled_time: null, schedule_applied_at: null })
   })
 
-  it('takes a day alone, and a day with a time in steps of 15 minutes', async () => {
+  it('takes a day alone, and a day with a time at any minute (D34)', async () => {
     await applyMigrations(drizzle(client) as unknown as Database)
     await client.exec(SEED)
 
@@ -66,6 +66,8 @@ describe('the schedule columns of tasks (agendamento, data model)', () => {
     expect(await read()).toMatchObject({ scheduled_on: '2026-11-13', scheduled_time: null })
     await schedule('2026-11-13', '14:45')
     expect(await read()).toMatchObject({ scheduled_on: '2026-11-13', scheduled_time: '14:45:00' })
+    await schedule('2026-11-13', '14:10')
+    expect(await read()).toMatchObject({ scheduled_on: '2026-11-13', scheduled_time: '14:10:00' })
     await client.query(`UPDATE tasks SET schedule_applied_at = '2026-11-13T03:00:00Z' WHERE id = '${TASK}'`)
     expect((await read()).schedule_applied_at?.toISOString()).toBe('2026-11-13T03:00:00.000Z')
   })
@@ -76,11 +78,10 @@ describe('the schedule columns of tasks (agendamento, data model)', () => {
     await expect(schedule(null, '14:00')).rejects.toThrow(/ck_tasks_schedule_time_needs_day/)
   })
 
-  it('refuses a time out of the 15-minute step, in minutes or in seconds', async () => {
+  it('refuses a time with seconds (D34)', async () => {
     await applyMigrations(drizzle(client) as unknown as Database)
     await client.exec(SEED)
-    await expect(schedule('2026-11-13', '14:10')).rejects.toThrow(/ck_tasks_schedule_time_step/)
-    await expect(schedule('2026-11-13', '14:15:30')).rejects.toThrow(/ck_tasks_schedule_time_step/)
+    await expect(schedule('2026-11-13', '14:15:30')).rejects.toThrow(/ck_tasks_schedule_time_minute/)
     expect(await read()).toMatchObject({ scheduled_on: null, scheduled_time: null })
   })
 

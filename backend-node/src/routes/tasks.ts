@@ -76,12 +76,12 @@ export const createTaskBody = z.object({
 
 export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: notes.optional() })
 
-/** The day (`YYYY-MM-DD`) and start time (`HH:MM`, in steps of 15 minutes) of a task, in the workspace's timezone (US-7). */
+/** The day (`YYYY-MM-DD`) and start time (`HH:MM`, any minute, D34) of a task, in the workspace's timezone (US-7). */
 export const scheduleFields = {
   scheduled_on: z.iso.date('Input should be a valid date (YYYY-MM-DD)').nullable().optional(),
   scheduled_time: z
     .string()
-    .regex(/^([01]\d|2[0-3]):(00|15|30|45)$/, 'Input should be a time in steps of 15 minutes (HH:MM)')
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Input should be a time (HH:MM)')
     .nullable()
     .optional(),
 }

@@ -49,7 +49,7 @@ O que o código e as decisões anteriores já fixam:
 | Coluna | Tipo | Regra |
 | --- | --- | --- |
 | `scheduled_on` | `date`, nulo | O dia agendado, no fuso do workspace. |
-| `scheduled_time` | `time`, nulo | A hora de início, no fuso do workspace, em passos de 15 min. Só existe com `scheduled_on` (`check`). |
+| `scheduled_time` | `time`, nulo | A hora de início, no fuso do workspace, em qualquer minuto (D34). Só existe com `scheduled_on` (`check`). |
 | `schedule_applied_at` | `timestamptz`, nulo | Quando a tarefa foi para Hoje por este agendamento. Volta a nulo quando o dia muda; mudar só a hora o mantém (D26). |
 
 Dia e hora ficam separados, e não num `timestamptz`, porque o dia sem hora é um caso de primeira classe e porque "hoje" é calculado no fuso do workspace. Se o fuso do workspace mudar, a tarefa continua no mesmo horário de parede, como no Google Agenda.
@@ -69,7 +69,7 @@ Tabela nova `task_series`, uma linha por série:
 | `until` | `date`, nulo | Último dia possível. |
 | `count` | `smallint`, nulo | Total de ocorrências, de 1 a 999. `until` e `count` não convivem (`check`). |
 | `created_count` | `smallint` | Ocorrências já criadas, para o `count`. |
-| `time` | `time`, nulo | A hora da série, no fuso do workspace, em passos de 15 min; a próxima ocorrência nasce com ela (D27). |
+| `time` | `time`, nulo | A hora da série, no fuso do workspace, em qualquer minuto (D34); a próxima ocorrência nasce com ela (D27). |
 | `ended_at` | `timestamptz`, nulo | Quando a série foi encerrada. |
 
 A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência aberta e as concluídas apontam para a série. A hora da série fica em `task_series.time`: "Só esta ocorrência" muda só a `scheduled_time` da tarefa, "Esta e as próximas" muda as duas (D27). Regras estruturadas, e não uma string RRULE, porque a validação fica no schema e o contrato da API fica explícito; o conjunto cabe num subconjunto de RRULE se um dia houver exportação para iCal.
@@ -81,7 +81,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 **Como** usuário no quadro, **quero** escolher o dia e, se quiser, a hora de uma tarefa pelo menu do card **para** planejar quando vou fazê-la sem abrir a tarefa.
 
 - WHEN o usuário abre `⋮ > Agendar` THEN o menu SHALL mostrar `Hoje`, `Amanhã`, `Próxima segunda` e `Escolher data, hora e repetição…`.
-- `Escolher data, hora e repetição…` SHALL abrir um calendário com um campo de hora opcional (passos de 15 min), e SHALL recusar dias anteriores a hoje e horários de hoje que já passaram, no fuso do workspace.
+- `Escolher data, hora e repetição…` SHALL abrir um calendário com um campo de hora opcional no formato `HH:MM`, em qualquer minuto (D34), e SHALL recusar dias anteriores a hoje e horários de hoje que já passaram, no fuso do workspace.
 - Os atalhos de dia SHALL manter a hora já agendada, se houver. WHEN o atalho é `Hoje` e essa hora já passou THEN a tarefa SHALL ficar agendada para hoje sem hora, sem erro (D24).
 - WHEN a tarefa já tem agendamento THEN o submenu SHALL marcar o dia atual e mostrar `Remover agendamento`.
 - WHEN o usuário salva THEN o card SHALL mostrar o selo sem recarregar a página.
@@ -165,7 +165,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 
 **Como** quem automatiza pelo token ou pelo MCP, **quero** ler e gravar o dia e a hora **para** agendar tarefas de fora do app.
 
-- `create_task` e `update_task` SHALL aceitar `scheduled_on` (`YYYY-MM-DD` ou `null`) e `scheduled_time` (`HH:MM`, múltiplo de 15 min, ou `null`); `get_board` e `get_task` SHALL devolvê-los.
+- `create_task` e `update_task` SHALL aceitar `scheduled_on` (`YYYY-MM-DD` ou `null`) e `scheduled_time` (`HH:MM`, em qualquer minuto, ou `null`; D34); `get_board` e `get_task` SHALL devolvê-los.
 - `scheduled_time` sem `scheduled_on`, data inválida ou hora fora do passo SHALL responder 422 com a mensagem de validação.
 - `create_task` e `update_task` SHALL aceitar `recurrence` (`null` ou `{freq, interval, weekdays?, month_day?, until?, count?}`), com as regras da tabela `task_series`; `get_board` e `get_task` SHALL devolver a regra e a próxima data projetada. `recurrence` sem `scheduled_on` SHALL responder 422.
 
@@ -274,6 +274,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - **D31 (2026-11-07):** a API aceita dia e hora no passado; só o seletor os bloqueia. Uma tarefa agendada para um dia passado vai para Hoje na leitura seguinte, e `Desfazer` na Agenda pode restaurar um dia que já passou.
 - **D32 (2026-11-07):** o painel `Novo agendamento` pergunta "só esta ou esta e as próximas" quando a tarefa escolhida é ocorrência de uma série.
 - **D33 (2026-11-07):** o `delete_task` do MCP numa ocorrência aberta segue o `DELETE` da API sem escopo: exclui só esta e cria a próxima.
+- **D34 (2026-11-07):** a hora do agendamento é um campo `HH:MM`, não uma lista de horários, e aceita qualquer minuto (10:10 vale). A API, o MCP e o banco deixam de exigir o passo de 15 min (migration 0013); os segundos continuam zerados. O arraste na grade continua encaixando em 15 min (D22).
 
 Não há decisões em aberto.
 

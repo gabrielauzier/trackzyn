@@ -128,12 +128,6 @@ export function repeatsLabel(rule: RecurrenceRule, t: TFunction, language: strin
 /** The options of `Repetir`, built from the chosen day (US-9). */
 export type RepeatPreset = 'none' | 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'custom'
 
-/** Every start time of a day, in steps of 15 minutes. */
-export const TIMES = Array.from({ length: 96 }, (_, step) => {
-  const minutes = step * 15
-  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
-})
-
 /** The wall-clock time of `now` in `timeZone`, `HH:MM`. */
 export function clockIn(timeZone: string | null | undefined, now: Date): string {
   return new Intl.DateTimeFormat('en-GB', { timeZone: timeZone ?? undefined, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now)

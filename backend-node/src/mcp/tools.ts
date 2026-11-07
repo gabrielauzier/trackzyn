@@ -59,7 +59,7 @@ const TASK_ID = 'The id of the task, as returned by get_board or create_task.'
 const scheduleInput = { ...scheduleFields, recurrence: recurrenceBody.nullable().optional() }
 const SCHEDULE_TEXTS = {
   scheduled_on: 'The day to do the task (YYYY-MM-DD) in the workspace timezone, or null for none. A day of this week takes a backlog task to this_week; today takes it to today; an earlier day takes it to today on the next read of the board.',
-  scheduled_time: 'The start time (HH:MM, in steps of 15 minutes) in the workspace timezone, or null for none. Needs scheduled_on.',
+  scheduled_time: 'The start time (HH:MM) in the workspace timezone, or null for none. Needs scheduled_on.',
   recurrence:
     'Makes the task repeat from scheduled_on, or null to stop. {freq: daily | weekly | monthly, interval: 1 to 99, weekdays: [1 (Monday) to 7 (Sunday)] for weekly, month_day: 1 to 31 for monthly, until: YYYY-MM-DD or count: 1 to 999 to end it}. The next occurrence is created when this one is completed. Needs scheduled_on.',
 }

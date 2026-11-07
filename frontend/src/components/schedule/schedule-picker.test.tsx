@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 
 import { SchedulePicker, type ScheduleValue } from '@/components/schedule/schedule-picker'
 import { i18n, renderWithProviders } from '@/test/utils'
@@ -14,6 +14,7 @@ function show(value: ScheduleValue = EMPTY, onSubmit = vi.fn()) {
 }
 
 const day = (name: string) => screen.getByRole('button', { name })
+const typeTime = (value: string) => fireEvent.change(screen.getByLabelText('Time'), { target: { value } })
 const repeatOptions = () => within(screen.getByRole('group', { name: /Repe/ })).getAllByRole('radio').map((radio) => radio.closest('label')!.textContent)
 
 describe('SchedulePicker: the calendar (US-1)', () => {
@@ -36,30 +37,32 @@ describe('SchedulePicker: the calendar (US-1)', () => {
 })
 
 describe('SchedulePicker: the time (US-1, US-2)', () => {
-  it('offers no time and every step of 15 minutes', async () => {
-    const { user } = show()
+  it('is an HH:MM field that starts empty and takes any minute (D34)', async () => {
+    const { user, onSubmit } = show()
+    const field = screen.getByLabelText('Time')
+    expect(field).toHaveAttribute('type', 'time')
+    expect(field).toHaveValue('')
     await user.click(day('Fri, Nov 13'))
-    const options = within(screen.getByLabelText('Time')).getAllByRole('option')
-    expect(options).toHaveLength(97)
-    expect(options[0]).toHaveTextContent('No time')
-    expect(options.slice(1, 4).map((option) => option.textContent)).toEqual(['00:00', '00:15', '00:30'])
-    expect(options.at(-1)).toHaveTextContent('23:45')
+    typeTime('09:07')
+    expect(field).toHaveValue('09:07')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(onSubmit).toHaveBeenCalledWith({ on: '2026-11-13', time: '09:07', recurrence: null })
   })
 
-  it('refuses a time of today that has passed: the earlier steps are off and a passed time cannot be saved', async () => {
+  it('refuses a time of today that has passed, to the minute: a passed time cannot be saved', async () => {
     const { user, onSubmit } = show({ on: '2026-11-13', time: '09:00', recurrence: null })
-    expect(screen.getByRole('option', { name: '09:00' })).toBeEnabled()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 
     await user.click(day('Wed, Nov 11'))
-    expect(screen.getByRole('option', { name: '14:00' })).toBeDisabled()
-    expect(screen.getByRole('option', { name: '14:15' })).toBeEnabled()
     expect(screen.getByRole('alert')).toHaveTextContent('This time of today has already passed')
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 
-    await user.selectOptions(screen.getByLabelText('Time'), '14:15')
+    typeTime('14:06')
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    typeTime('14:07')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Save' }))
-    expect(onSubmit).toHaveBeenCalledWith({ on: '2026-11-11', time: '14:15', recurrence: null })
+    expect(onSubmit).toHaveBeenCalledWith({ on: '2026-11-11', time: '14:07', recurrence: null })
   })
 
   it('Limpar hora keeps the day and saves no time', async () => {
@@ -109,7 +112,7 @@ describe('SchedulePicker: Repetir (US-9)', () => {
   it('saves the rule of the chosen option with the day and the time, and shows its summary', async () => {
     const { user, onSubmit } = show()
     await user.click(day('Fri, Nov 13'))
-    await user.selectOptions(screen.getByLabelText('Time'), '14:00')
+    typeTime('14:00')
     await user.click(screen.getByRole('radio', { name: 'Every Friday' }))
     expect(screen.getByText('Repeats every Friday')).toBeInTheDocument()
 
@@ -136,7 +139,7 @@ describe('SchedulePicker: Repetir (US-9)', () => {
   it('starts on the option of the rule the task has', () => {
     show({ on: '2026-11-13', time: '14:00', recurrence: { freq: 'weekly', interval: 1, weekdays: [5], month_day: null, until: null, count: null } })
     expect(screen.getByRole('radio', { name: 'Every Friday' })).toBeChecked()
-    expect(screen.getByRole('option', { name: '14:00' })).toHaveProperty('selected', true)
+    expect(screen.getByLabelText('Time')).toHaveValue('14:00')
   })
 
   it('a rule the options do not say starts on Personalizado', () => {
