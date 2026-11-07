@@ -8,7 +8,19 @@ import { Calendar } from '@/components/ui/calendar'
 import { Label } from '@/components/ui/label'
 import { resolveDateFnsLocale } from '@/lib/date-fns-locale'
 import { todayInTimezone } from '@/lib/date-utils'
-import { type RepeatPreset, clockIn, dayDate, defaultCustomRule, longDay, presetOf, presetRule, repeatsLabel, TIMES, weekdayOf } from '@/lib/schedule'
+import {
+  type RepeatPreset,
+  clockIn,
+  dayDate,
+  defaultCustomRule,
+  longDay,
+  presetOf,
+  presetRule,
+  recurrenceSummary,
+  repeatsLabel,
+  TIMES,
+  weekdayOf,
+} from '@/lib/schedule'
 import { CustomRecurrence } from '@/components/schedule/custom-recurrence'
 import { cn } from '@/lib/utils'
 import type { RecurrenceRule } from '@/types'
@@ -35,7 +47,9 @@ interface SchedulePickerProps {
 /**
  * The calendar from Monday with the days before today off and today marked, the optional start time in steps of
  * 15 minutes with `Limpar hora`, and `Repetir` with the options of the chosen day and its summary (US-1, US-2, US-9).
- * A time of today that has passed is refused, in the workspace's timezone.
+ * A time of today that has passed is refused, in the workspace's timezone. The rule the task has stays chosen
+ * when the day changes, as its own option (`Toda quinta` on a Friday) when the options of the new day do not
+ * say it; only picking another option changes the rule (US-12, D30).
  */
 export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = false, now = new Date() }: SchedulePickerProps) {
   const { t, i18n } = useTranslation()
@@ -46,20 +60,28 @@ export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = 
 
   const [day, setDay] = useState<string | null>(value.on)
   const [time, setTime] = useState<string | null>(value.time)
-  const [preset, setPreset] = useState<RepeatPreset>(presetOf(value.recurrence, value.on))
-  const [custom, setCustom] = useState<RecurrenceRule | null>(preset === 'custom' ? value.recurrence : null)
+  const series = value.recurrence
+  const seriesPreset = presetOf(series, value.on)
+  // `series` keeps the rule the task has, whatever the day; a custom rule is kept by `Personalizado…` itself.
+  const [preset, setPreset] = useState<RepeatPreset | 'series'>(series !== null && seriesPreset !== 'custom' ? 'series' : seriesPreset)
+  const [custom, setCustom] = useState<RecurrenceRule | null>(seriesPreset === 'custom' ? series : null)
 
   const passed = (candidate: string) => day === today && candidate < nowTime
   const timePassed = time !== null && passed(time)
-  const rule = day === null ? null : preset === 'custom' ? custom : presetRule(preset, day)
+  const rule = day === null ? null : preset === 'series' ? series : preset === 'custom' ? custom : presetRule(preset, day)
+  // The option of the chosen day that says the rule of the task, if any.
+  const seriesOnDay = series !== null && seriesPreset !== 'custom' ? presetOf(series, day) : 'custom'
+  const isChecked = (option: RepeatPreset | 'series') => preset === option || (preset === 'series' && option === seriesOnDay)
+  const showsSeries = series !== null && seriesPreset !== 'custom' && seriesOnDay === 'custom'
   const monthDay = day === null ? null : dayDate(day).getDate()
   const canSave = day !== null && !timePassed && (preset !== 'custom' || custom !== null)
 
-  const options: { preset: RepeatPreset; label: string }[] =
+  const options: { preset: RepeatPreset | 'series'; label: string }[] =
     day === null
       ? []
       : [
           { preset: 'none', label: t('schedule.noRepeat') },
+          ...(showsSeries && series !== null ? [{ preset: 'series' as const, label: recurrenceSummary(series, t, language) }] : []),
           { preset: 'daily', label: t('schedule.everyDay') },
           { preset: 'weekdays', label: t('schedule.weekdays') },
           { preset: 'weekly', label: t(`schedule.everyWeekday_${weekdayOf(day)}`) },
@@ -121,7 +143,8 @@ export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = 
       </div>
 
       {day !== null && (
-        <fieldset className="flex flex-col gap-1">
+        // Remounted when the option of the series comes or goes: a checked radio added to a group keeps the old one checked.
+        <fieldset key={showsSeries ? 'series' : 'day'} className="flex flex-col gap-1">
           <legend className="mb-1 text-sm font-medium">{t('schedule.repeat')}</legend>
           {options.map((option) => (
             <label key={option.preset} className={cn('flex cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-muted/60')}>
@@ -129,7 +152,7 @@ export function SchedulePicker({ value, timeZone, onSubmit, onCancel, pending = 
                 type="radio"
                 name="schedule-repeat"
                 value={option.preset}
-                checked={preset === option.preset}
+                checked={isChecked(option.preset)}
                 onChange={() => {
                   setPreset(option.preset)
                   // Personalizado starts from the rule the task has, or every week on the chosen day.

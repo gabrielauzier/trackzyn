@@ -145,3 +145,29 @@ describe('SchedulePicker: Repetir (US-9)', () => {
     expect(screen.getByText('Every 2 weeks, Tue and Thu, 5 times')).toBeInTheDocument()
   })
 })
+
+describe('SchedulePicker: a new day for an occurrence of a series (US-12, D30)', () => {
+  const THURSDAYS = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+  const OCCURRENCE: ScheduleValue = { on: '2026-11-12', time: '10:00', recurrence: THURSDAYS }
+
+  it('keeps Every Thursday chosen when the day moves to Friday, and saves the rule of the series as it is', async () => {
+    const { user, onSubmit } = show(OCCURRENCE)
+    await user.click(day('Fri, Nov 13'))
+    expect(repeatOptions()).toEqual(['Does not repeat', 'Every Thursday', 'Every day', 'Weekdays (Mon to Fri)', 'Every Friday', 'Every month on day 13', 'Custom…'])
+    expect(screen.getByRole('radio', { name: 'Every Thursday' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: 'Every Friday' })).not.toBeChecked()
+    expect(screen.getByText('Repeats every Thursday')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(onSubmit).toHaveBeenCalledWith({ on: '2026-11-13', time: '10:00', recurrence: THURSDAYS })
+  })
+
+  it('only picking another option of Repetir changes the rule', async () => {
+    const { user, onSubmit } = show(OCCURRENCE)
+    await user.click(day('Fri, Nov 13'))
+    await user.click(screen.getByRole('radio', { name: 'Every Friday' }))
+    expect(screen.getByRole('radio', { name: 'Every Thursday' })).not.toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(onSubmit).toHaveBeenLastCalledWith({ on: '2026-11-13', time: '10:00', recurrence: { ...THURSDAYS, weekdays: [5] } })
+  })
+})

@@ -296,6 +296,20 @@ describe('TaskDialog: Agendamento (US-2)', () => {
       )
     })
 
+    it('D30 an occurrence of Every Thursday moved to Friday keeps the rule, asks, and This and the next ones sends no new rule', async () => {
+      const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', series })
+      await user.click(screen.getByRole('button', { name: 'Change' }))
+      await user.click(screen.getByRole('button', { name: 'Fri, Nov 13' }))
+      expect(screen.getByRole('radio', { name: 'Every Thursday' })).toBeChecked()
+      await user.click(within(screen.getByRole('button', { name: 'Fri, Nov 13' }).closest('form')!).getByRole('button', { name: 'Save' }))
+      const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
+      expect(tasks.update).not.toHaveBeenCalled()
+      await user.click(within(question).getByRole('button', { name: /^This and the next ones/ }))
+      await waitFor(() =>
+        expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_on: '2026-11-13', scheduled_time: '10:00', scope: 'series' }),
+      )
+    })
+
     it('Cancel saves nothing', async () => {
       const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', series })
       await user.click(screen.getByRole('button', { name: 'Clear time' }))

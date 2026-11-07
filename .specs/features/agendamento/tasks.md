@@ -1292,8 +1292,8 @@ T45 → T46 → T47 → T48
 
 **Done when**:
 
-- [ ] Ocorrência de `Toda quinta` movida para sexta: a opção marcada continua `Toda quinta`, a pergunta aparece, `Esta e as próximas` envia `scope: series` sem nova regra
-- [ ] Gate check passes (`npm --prefix frontend test`)
+- [x] Ocorrência de `Toda quinta` movida para sexta: a opção marcada continua `Toda quinta`, a pergunta aparece, `Esta e as próximas` envia `scope: series` sem nova regra
+- [x] Gate check passes (`npm --prefix frontend test`)
 
 **Tests**: unit
 **Gate**: quick
