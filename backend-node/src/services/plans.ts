@@ -31,6 +31,9 @@ export type PlanBlockRead =
     }
   | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: ListRef }
 
+/** A saved block with its day (PLAN-24). */
+export type PlannedBlock = PlanBlockRead & { day: string }
+
 export interface PlanRead {
   day: string
   /** 0 while nothing is saved for the day. */
@@ -89,10 +92,11 @@ interface BlockRow {
 }
 
 /**
- * The saved blocks of the actor's plans in `from`..`to`, in order of day and start, with the day of each. The
- * list of a task block is the task's; blocks whose list is archived are left out (PLAN-40).
+ * The actor's saved blocks of `from`..`to` (`YYYY-MM-DD`, both included), as the Agenda draws them (PLAN-24): in
+ * order of day and start, each with its day; only the actor's own plans in the workspace (PLAN-12). The list of a
+ * task block is the task's; blocks whose list is archived are left out (PLAN-40).
  */
-export async function readBlocks(db: Database, actor: PlanActor, from: string, to: string): Promise<Array<PlanBlockRead & { day: string }>> {
+export async function listPlanned(db: Database, actor: PlanActor, from: string, to: string): Promise<PlannedBlock[]> {
   const found = await rows<BlockRow & { day: string }>(
     db,
     sql`SELECT b.id, b.kind, to_char(b.start_time, 'HH24:MI') AS start, b.minutes, b.name, p.day::text AS day,
@@ -136,7 +140,7 @@ export async function getPlan(db: Database, actor: PlanActor, day: string, now: 
   )
   const [user] = await db.select({ preferences: users.preferences }).from(users).where(eq(users.id, actor.userId))
   const { today } = await workspaceClock(db, actor.workspaceId, now)
-  const blocks = (await readBlocks(db, actor, day, day)).map(({ day: _day, ...block }) => block as PlanBlockRead)
+  const blocks = (await listPlanned(db, actor, day, day)).map(({ day: _day, ...block }) => block as PlanBlockRead)
   return { day, version: plan?.version ?? 0, editable: day >= today, workday: workdayOf(user?.preferences ?? null), blocks }
 }
 

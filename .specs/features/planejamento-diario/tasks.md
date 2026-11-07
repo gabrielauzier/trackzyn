@@ -177,9 +177,9 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Volta só os blocos do usuário no workspace, ordenados por dia e início, sem listas arquivadas
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
-- [ ] Test count: anteriores + os novos em `services/plans-read.test.ts`
+- [x] Volta só os blocos do usuário no workspace, ordenados por dia e início, sem listas arquivadas
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Test count: anteriores + os novos em `services/plans-read.test.ts`
 
 **Tests**: integration
 **Gate**: full

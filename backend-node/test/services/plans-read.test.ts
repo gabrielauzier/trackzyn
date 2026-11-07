@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
 import { type TaskColumn, dayPlanBlocks, dayPlans, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { createList, updateList } from '../../src/services/lists.ts'
-import { getPlan, listCandidates } from '../../src/services/plans.ts'
+import { getPlan, listCandidates, listPlanned } from '../../src/services/plans.ts'
 import { migratedDb } from '../support/db.ts'
 
 // Tuesday 2026-11-10, 22:30 in America/Sao_Paulo (UTC-3), already Wednesday 2026-11-11 in UTC: "today" is the
@@ -224,5 +224,57 @@ describe('listCandidates: the pending tasks to plan (PLAN-02, PLAN-40)', () => {
       })),
     )
     expect(await listCandidates(db, actor(), TOMORROW, NOW)).toHaveLength(500)
+  })
+})
+
+describe('listPlanned: the saved blocks of a period, for the Agenda (PLAN-24, PLAN-12)', () => {
+  it('answers the blocks of the user in the workspace, in order of day and start, each with its day', async () => {
+    const review = await task('today', { title: 'Review' })
+    await plan(TOMORROW, [
+      { kind: 'task', taskId: review, start: '14:00', minutes: 60 },
+      { kind: 'break', name: 'Café', listId: breakListId, start: '10:00', minutes: 15 },
+    ])
+    await plan(TODAY, [{ kind: 'task', taskId: review, start: '16:45', minutes: 30 }])
+    await plan('2026-11-12', [{ kind: 'break', name: 'Almoço', listId: breakListId, start: '12:00', minutes: 60 }])
+
+    const found = await listPlanned(db, actor(), TODAY, TOMORROW)
+    expect(found.map((block) => [block.day, block.start, block.kind])).toEqual([
+      [TODAY, '16:45', 'task'],
+      [TOMORROW, '10:00', 'break'],
+      [TOMORROW, '14:00', 'task'],
+    ])
+    expect(found[1]).toEqual({
+      id: expect.any(String),
+      day: TOMORROW,
+      kind: 'break',
+      start: '10:00',
+      minutes: 15,
+      name: 'Café',
+      list: { id: breakListId, name: 'Pausas', color: 5 },
+    })
+    expect(found[2]).toMatchObject({ day: TOMORROW, kind: 'task', minutes: 60, task: { id: review, title: 'Review', done: false } })
+  })
+
+  it('leaves out the plans of other users and other workspaces (PLAN-12)', async () => {
+    const shared = await task('today')
+    await plan(TOMORROW, [{ kind: 'task', taskId: shared, start: '10:00', minutes: 60 }], { userId: otherUserId, workspaceId })
+    await plan(TOMORROW, [{ kind: 'break', name: 'Café', listId: breakListId, start: '10:00', minutes: 15 }], {
+      userId,
+      workspaceId: otherWorkspaceId,
+    })
+    expect(await listPlanned(db, actor(), TODAY, TOMORROW)).toEqual([])
+  })
+
+  it('leaves out the blocks of an archived list (PLAN-40)', async () => {
+    const archived = (await createList(db, { workspaceId, userId, name: 'Old', color: 1 })).id
+    const gone = await task('backlog', { list: archived })
+    const kept = await task('backlog')
+    await plan(TOMORROW, [
+      { kind: 'task', taskId: gone, start: '09:00', minutes: 60 },
+      { kind: 'break', name: 'Café', listId: archived, start: '10:00', minutes: 15 },
+      { kind: 'task', taskId: kept, start: '11:00', minutes: 60 },
+    ])
+    await updateList(db, archived, workspaceId, { isArchived: true }, NOW)
+    expect((await listPlanned(db, actor(), TOMORROW, TOMORROW)).map((block) => block.start)).toEqual(['11:00'])
   })
 })
