@@ -101,7 +101,8 @@ export async function setSchedule(
  * Moves to the end of Today every pending task of the workspace, in Backlog or This week, whose scheduled day
  * is today or earlier in the workspace's timezone and whose schedule has not brought it to Today yet (US-4, D1).
  * They enter in order of day, time and position, keep their day and time, and get `schedule_applied_at = now`
- * (D21), so a task taken out of Today by hand does not come back. Runs at the start of each read of the task
+ * (D21), so a task taken out of Today by hand does not come back. Tasks of archived lists stay where they are
+ * until the list is restored (D25). Runs at the start of each read of the task
  * columns (AD-009); answers how many tasks it moved. Each list is locked and read again under the lock, so two
  * reads at once move a task only once, and its columns are renumbered in one statement each.
  */
@@ -116,7 +117,7 @@ export async function applyDueSchedules(db: Database, workspaceId: string, now: 
   const candidates = await rows<{ list_id: string }>(
     db,
     sql`SELECT DISTINCT t.list_id FROM tasks t JOIN ${lists} l ON l.id = t.list_id
-        WHERE l.workspace_id = ${workspaceId} AND ${due} ORDER BY t.list_id`,
+        WHERE l.workspace_id = ${workspaceId} AND NOT l.is_archived AND ${due} ORDER BY t.list_id`,
   )
   if (candidates.length === 0) return 0
 
@@ -133,7 +134,7 @@ export async function applyDueSchedules(db: Database, workspaceId: string, now: 
                 position = (SELECT coalesce(max(position) + 1, 0) FROM tasks WHERE list_id = ${listId} AND "column" = 'today') + ordered.n - 1
             FROM (
               SELECT t.id, row_number() OVER (ORDER BY t.scheduled_on, t.scheduled_time, t.position, t.created_at)::int AS n
-              FROM tasks t WHERE t.list_id = ${listId} AND ${due}
+              FROM tasks t JOIN ${lists} l ON l.id = t.list_id WHERE t.list_id = ${listId} AND NOT l.is_archived AND ${due}
             ) AS ordered
             WHERE target.id = ordered.id
             RETURNING target.id`,

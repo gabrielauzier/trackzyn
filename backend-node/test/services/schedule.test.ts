@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
 import { type TaskColumn, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
-import { createList } from '../../src/services/lists.ts'
+import { createList, updateList } from '../../src/services/lists.ts'
 import { applyDueSchedules, setSchedule } from '../../src/services/schedule.ts'
 import { moveTask } from '../../src/services/tasks.ts'
 import { migratedDb } from '../support/db.ts'
@@ -250,6 +250,18 @@ describe('applyDueSchedules: the task comes to Today on its day (US-4, D1, D21)'
     await db.insert(tasks).values({ id: theirs, listId: otherList, title: 'theirs', column: 'backlog', position: 0, createdAt: EARLIER, scheduledOn: '2026-11-11' })
     expect(await apply()).toBe(0)
     expect(await row(theirs)).toMatchObject({ column: 'backlog', scheduleAppliedAt: null })
+  })
+
+  it('D25 leaves the due tasks of an archived list where they are; after it is restored, the next read moves them', async () => {
+    const id = await task('backlog', { on: '2026-11-10' })
+    await updateList(db, listId, workspaceId, { isArchived: true }, NOW)
+    expect(await apply()).toBe(0)
+    expect(await row(id)).toMatchObject({ column: 'backlog', scheduleAppliedAt: null })
+
+    await updateList(db, listId, workspaceId, { isArchived: false }, NOW)
+    const later = new Date(NOW.getTime() + 60_000)
+    expect(await apply(later)).toBe(1)
+    expect(await row(id)).toMatchObject({ column: 'today', scheduledOn: '2026-11-10', scheduleAppliedAt: later })
   })
 
   it('moves a task once when two reads apply the schedules at the same time', async () => {

@@ -484,8 +484,8 @@ T37
 
 **Done when**:
 
-- [ ] Tarefa vencida em lista arquivada continua na coluna; depois de desarquivar, vai para Hoje na leitura seguinte
-- [ ] Gate check passes (full)
+- [x] Tarefa vencida em lista arquivada continua na coluna; depois de desarquivar, vai para Hoje na leitura seguinte
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
