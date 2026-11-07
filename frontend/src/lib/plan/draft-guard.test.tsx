@@ -157,9 +157,13 @@ describe('DraftGuardProvider and the browser Back (PLAN-36)', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Continuar planejando' }))
     expect(where()).toHaveTextContent('/planejar/2026-11-09')
 
-    // Still guarded: Back asks again, and `Descartar` leaves for the page before the plan.
+    // Still guarded: Back asks again and stays on the plan, and `Descartar` leaves for the page before the plan.
     back()
-    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar' }))
+    const again = await screen.findByRole('dialog')
+    expect(within(again).getByRole('heading', { name: 'Descartar o rascunho?' })).toBeInTheDocument()
+    expect(where()).toHaveTextContent('/planejar/2026-11-09')
+    expect(window.location.pathname).toBe('/planejar/2026-11-09')
+    await user.click(within(again).getByRole('button', { name: 'Descartar' }))
     await waitFor(() => expect(where()).toHaveTextContent(/^\/$/))
     expect(window.location.pathname).toBe('/')
     expect(screen.queryByRole('dialog')).toBeNull()
