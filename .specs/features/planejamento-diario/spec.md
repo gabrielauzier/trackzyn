@@ -217,8 +217,8 @@ O que o código já fixa:
 | PLAN-16 | P1: Planejar pausas | Tasks | In Tasks |
 | PLAN-17 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-18 | P1: Planejar pausas | Tasks | In Tasks |
-| PLAN-19 | P1: Ver se o dia cabe | Tasks | In Tasks |
-| PLAN-20 | P1: Ver se o dia cabe | Tasks | In Tasks |
+| PLAN-19 | P1: Ver se o dia cabe | Tasks | Implementing |
+| PLAN-20 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-21 | P1: Ver se o dia cabe | Tasks | In Tasks |
 | PLAN-22 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-23 | P1: Ver se o dia cabe | Tasks | Implementing |

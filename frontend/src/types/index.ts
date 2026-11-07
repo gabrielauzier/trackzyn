@@ -451,3 +451,9 @@ export interface PlanTaskRef {
 export type PlanBlock =
   | { id: string; kind: 'task'; start: string; minutes: number; task: PlanTaskRef }
   | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: PlanListRef }
+
+/** The user's working hours, `HH:MM`, with `end` after `start`; 09:00 to 18:00 when never set (PLAN-22). */
+export interface Workday {
+  start: string
+  end: string
+}

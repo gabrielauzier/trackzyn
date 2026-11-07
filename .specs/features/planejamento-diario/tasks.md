@@ -286,10 +286,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Os dois exemplos do teste independente da história dão os números do spec (8h/1h/9h e 7h/1h/1h/9h)
-- [ ] Pausa que começa antes do expediente conta só a parte de dentro
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `capacity.test.ts`
+- [x] Os dois exemplos do teste independente da história dão os números do spec (8h/1h/9h e 7h/1h/1h/9h)
+- [x] Pausa que começa antes do expediente conta só a parte de dentro
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `capacity.test.ts`
 
 **Tests**: unit
 **Gate**: quick
