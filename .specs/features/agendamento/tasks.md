@@ -226,8 +226,8 @@ T37
 
 **Done when**:
 
-- [ ] A prévia de 4 linhas (LIST-05) já conta a tarefa movida
-- [ ] Gate check passes (full)
+- [x] A prévia de 4 linhas (LIST-05) já conta a tarefa movida
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

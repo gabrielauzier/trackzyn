@@ -8,6 +8,7 @@ import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
 import { dayTimezone } from '../services/day.ts'
 import type { TokenPrincipal } from '../services/access-tokens.ts'
 import { type ListCard, createList, deleteList, getList, listLists, moveList, updateList } from '../services/lists.ts'
+import { applyDueSchedules } from '../services/schedule.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
 const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
@@ -67,6 +68,8 @@ function toListCard(card: ListCard) {
 
 /** What `GET /api/lists` answers, in REST and in MCP. */
 export async function listsView(ctx: AppContext, workspace: Workspace, principal: TokenPrincipal | null, archived: boolean) {
+  // The tasks scheduled for today come to Today first, so the preview of each card already shows them (US-4, AD-009).
+  await applyDueSchedules(ctx.db, workspace.id)
   const cards = await listLists(ctx.db, workspace.id, { archived })
   // The preview shows task titles, which `lists:read` alone does not reach (SCOPE-09).
   const visible = principal && !principal.scopes.includes('tasks:read') ? cards.map((card) => ({ ...card, preview: [] })) : cards
