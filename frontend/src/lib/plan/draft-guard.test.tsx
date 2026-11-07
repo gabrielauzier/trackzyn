@@ -3,7 +3,8 @@ import { screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { i18n, renderWithProviders } from '@/test/utils'
-import { DraftGuardProvider, useDraftGuard } from './draft-guard'
+import { DraftGuardProvider } from './draft-guard'
+import { useDraftGuard } from './draft-guard-context'
 
 /** A page that may hold a draft and a link that leaves it through the guard. */
 function Page() {

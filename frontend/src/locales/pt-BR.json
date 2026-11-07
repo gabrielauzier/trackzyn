@@ -1053,6 +1053,30 @@
       "description": "As mudanças no plano de {{day}} ainda não foram salvas.",
       "stay": "Continuar planejando",
       "discard": "Descartar"
+    },
+    "page": {
+      "eyebrow": "Planejar dia",
+      "previousDay": "Dia anterior",
+      "nextDay": "Próximo dia",
+      "pickDay": "Escolher dia",
+      "past": "Dia passado — só leitura",
+      "viewer": "Só leitura",
+      "draft": "Rascunho — ainda não salvo",
+      "summary": "{{tasks}} e {{breaks}} no plano",
+      "tasks_one": "{{count}} tarefa",
+      "tasks_other": "{{count}} tarefas",
+      "breaks_one": "{{count}} pausa",
+      "breaks_other": "{{count}} pausas",
+      "discard": "Descartar",
+      "confirm": "Confirmar plano",
+      "saved": "Plano salvo",
+      "conflict": "O plano mudou em outro lugar",
+      "reload": "Recarregar",
+      "failed": "Não foi possível salvar o plano.",
+      "retry": "Tentar de novo",
+      "loadError": "Não foi possível carregar o plano.",
+      "tasks_zero": "0 tarefas",
+      "breaks_zero": "0 pausas"
     }
   }
 }

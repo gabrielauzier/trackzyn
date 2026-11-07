@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search } from 'lucide-react'
@@ -12,6 +12,7 @@ import { APP_VERSION } from '@/lib/build-info'
 import { setThemeBasedOnSystem } from '@/lib/theme-utils'
 import { isDesktop, getDesktopApi } from '@/lib/platform'
 import { navItems, visibleNavItems, type NavItem } from '@/lib/nav-items'
+import { useDraftGuard } from '@/lib/plan/draft-guard-context'
 import { ShellLogo } from '@/components/shell-logo'
 import { UpdateAvailableBanner } from '@/components/update-available-banner'
 import { UpdateAvailableDialog } from '@/components/update-available-dialog'
@@ -74,6 +75,15 @@ export function AppLayout() {
   const isSuperuser = !!user?.is_superuser
   const { isEnabled, updateCheckRepo } = useFeatureFlags()
   const localAuthEnabled = useLocalAuthEnabled()
+  const navigate = useNavigate()
+  const { confirmLeave } = useDraftGuard()
+  /** A link of the shell leaves an unsaved plan only once the user discards it (PLAN-36); a new tab leaves nothing. */
+  const guarded = (path: string) => (event: React.MouseEvent) => {
+    setSidebarOpen(false)
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    confirmLeave(() => navigate(path))
+  }
 
   // React Router keeps the scroll offset across routes; start each page at
   // the top unless the URL targets an anchor.
@@ -123,6 +133,7 @@ export function AppLayout() {
         </button>
         <Link
           to="/"
+          onClick={guarded('/')}
           className={cn('flex items-center gap-2 -mx-1 px-1 py-1 rounded-md hover:bg-sidebar-accent transition-colors', noDrag)}
           aria-label={t('app.name')}
         >
@@ -172,7 +183,7 @@ export function AppLayout() {
             <Link
               to="/"
               className={cn('flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-md hover:bg-sidebar-accent transition-colors', noDrag)}
-              onClick={() => setSidebarOpen(false)}
+              onClick={guarded('/')}
               aria-label={t('app.name')}
             >
               <ShellLogo size={24} className="text-primary shrink-0" />
@@ -265,7 +276,7 @@ export function AppLayout() {
                   <Link
                     key={item.key}
                     to={item.path}
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={guarded(item.path)}
                     title={label}
                     aria-label={label}
                     aria-current={isActive ? 'page' : undefined}

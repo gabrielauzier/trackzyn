@@ -1,21 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { longDay } from '@/lib/schedule'
-
-interface DraftGuardValue {
-  /** The day whose plan holds an unsaved draft, or null when nothing is left unsaved. */
-  setDraftDay: (day: string | null) => void
-  /** Leaves at once without a draft; with one, asks `Descartar o rascunho?` first (PLAN-36). */
-  confirmLeave: (leave: () => void) => void
-}
-
-/** Outside the provider nothing guards: leaving goes at once. */
-const DraftGuardContext = createContext<DraftGuardValue>({
-  setDraftDay: () => undefined,
-  confirmLeave: (leave) => leave(),
-})
+import { DraftGuardContext } from './draft-guard-context'
 
 /**
  * Guards the way out of an unsaved plan (PLAN-36). The app runs on `BrowserRouter`, which has no `useBlocker`, so the
@@ -79,5 +67,3 @@ export function DraftGuardProvider({ children }: { children: ReactNode }) {
     </DraftGuardContext.Provider>
   )
 }
-
-export const useDraftGuard = () => useContext(DraftGuardContext)

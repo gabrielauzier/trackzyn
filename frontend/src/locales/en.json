@@ -1053,6 +1053,30 @@
       "description": "The changes to the plan of {{day}} are not saved yet.",
       "stay": "Keep planning",
       "discard": "Discard"
+    },
+    "page": {
+      "eyebrow": "Plan a day",
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "pickDay": "Pick a day",
+      "past": "Past day — read only",
+      "viewer": "Read only",
+      "draft": "Draft — not saved yet",
+      "summary": "{{tasks}} and {{breaks}} in the plan",
+      "tasks_one": "{{count}} task",
+      "tasks_other": "{{count}} tasks",
+      "breaks_one": "{{count}} break",
+      "breaks_other": "{{count}} breaks",
+      "discard": "Discard",
+      "confirm": "Confirm plan",
+      "saved": "Plan saved",
+      "conflict": "The plan changed somewhere else",
+      "reload": "Reload",
+      "failed": "Could not save the plan.",
+      "retry": "Try again",
+      "loadError": "Could not load the plan.",
+      "tasks_zero": "0 tasks",
+      "breaks_zero": "0 breaks"
     }
   }
 }

@@ -583,11 +583,11 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Soltar duas tarefas e confirmar envia um único `PUT`; depois, o rodapé some e aparece `Plano salvo`
-- [ ] 409 mostra `O plano mudou em outro lugar` com `Recarregar`; falha mostra `Não foi possível salvar o plano.` com `Tentar de novo`
-- [ ] Dia passado e viewer: sem arraste e sem rodapé
-- [ ] Gate check passes: build gate
-- [ ] Test count: anteriores + os novos de `plan.test.tsx`
+- [x] Soltar duas tarefas e confirmar envia um único `PUT`; depois, o rodapé some e aparece `Plano salvo`
+- [x] 409 mostra `O plano mudou em outro lugar` com `Recarregar`; falha mostra `Não foi possível salvar o plano.` com `Tentar de novo`
+- [x] Dia passado e viewer: sem arraste e sem rodapé
+- [x] Gate check passes: build gate
+- [x] Test count: anteriores + os novos de `plan.test.tsx`
 
 **Tests**: unit
 **Gate**: build

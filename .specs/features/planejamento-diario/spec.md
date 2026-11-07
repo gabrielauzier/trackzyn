@@ -199,7 +199,7 @@ O que o código já fixa:
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PLAN-01 | P1: Montar o plano de um dia | Tasks | In Tasks |
+| PLAN-01 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-02 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-03 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-04 | P1: Montar o plano de um dia | Tasks | Implementing |
@@ -211,7 +211,7 @@ O que o código já fixa:
 | PLAN-10 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-11 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-12 | P1: Montar o plano de um dia | Tasks | Implementing |
-| PLAN-13 | P1: Montar o plano de um dia | Tasks | In Tasks |
+| PLAN-13 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-14 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-15 | P1: Planejar pausas | Tasks | Implementing |
 | PLAN-16 | P1: Planejar pausas | Tasks | Implementing |
