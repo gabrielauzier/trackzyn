@@ -207,6 +207,22 @@ describe('PATCH /api/tasks/:id with recurrence and scope (US-9, US-12, D16)', ()
     const reply = await patch({ scheduled_on: sunday, scheduled_time: '10:30', scope: 'series' })
     expect(reply.statusCode).toBe(200)
     expect(reply.json()).toMatchObject({ scheduled_on: sunday, scheduled_time: '10:30', series: { rule: { weekdays: [7] }, next_on: await next(7, 15) } })
+    expect((await series(reply.json().series.id)).time).toBe('10:30:00')
+  })
+
+  it('D27 a new time for this occurrence only leaves the time of the series; for this and the next ones it moves both', async () => {
+    const saturday = await next(6)
+    const { patch, reply: created } = await repeating(saturday, { freq: 'weekly', weekdays: [6] })
+    const seriesId = created.json().series.id as string
+    expect((await series(seriesId)).time).toBe('09:00:00')
+
+    const only = await patch({ scheduled_time: '11:00', scope: 'occurrence' })
+    expect(only.json()).toMatchObject({ scheduled_on: saturday, scheduled_time: '11:00' })
+    expect((await series(seriesId)).time).toBe('09:00:00')
+
+    const both = await patch({ scheduled_time: '12:15', scope: 'series' })
+    expect(both.json()).toMatchObject({ scheduled_on: saturday, scheduled_time: '12:15', series: { rule: { weekdays: [6] } } })
+    expect((await series(seriesId)).time).toBe('12:15:00')
   })
 
   it('moved for this occurrence only, the rule stays as it was', async () => {

@@ -6,6 +6,7 @@ import type { Database } from '../../src/db/client.ts'
 import { type TaskColumn, focusSessions, subtasks, taskSeries, tasks } from '../../src/db/schema.ts'
 import * as focus from '../../src/services/focus.ts'
 import type { RecurrenceRule } from '../../src/services/recurrence.ts'
+import { setSchedule } from '../../src/services/schedule.ts'
 import { setRecurrence } from '../../src/services/series.ts'
 import { moveTask } from '../../src/services/tasks.ts'
 import { migratedDb } from '../support/db.ts'
@@ -93,6 +94,17 @@ describe('completing an occurrence creates the next one (US-10, D13, D17, D19)',
       { title: 'Inbox', done: true },
       { title: 'Calendar', done: false },
     ])
+  })
+
+  it('D27 an occurrence moved to another time for this one only: the next one is born at the time of the series', async () => {
+    const { id, seriesId } = await occurrence('today', '2026-11-11', '15:00', rule({ freq: 'daily' }))
+    await setSchedule(db, id, seed.workspaceId, { on: '2026-11-11', time: '16:30' }, seed.userId, NOW)
+    expect(await series(seriesId)).toMatchObject({ time: '15:00:00' })
+
+    await complete(id)
+    const [next] = await others(seriesId, id)
+    expect(next).toMatchObject({ scheduledOn: '2026-11-12', scheduledTime: '15:00:00' })
+    expect(await row(id)).toMatchObject({ scheduledTime: '16:30:00' })
   })
 
   it('a next day after this week goes to Backlog; completed early, the occurrence day is not repeated', async () => {

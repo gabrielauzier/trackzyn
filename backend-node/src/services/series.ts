@@ -61,7 +61,8 @@ function checkRule(rule: RecurrenceRule, scheduledOn: string): void {
  * becomes its open occurrence and counts 1 in `created_count`; a task of a live series changes the rule from
  * there on, keeping the count. Null ends the series (`ended_at`) and leaves the task as a plain one; the
  * completed occurrences keep pointing at it. The rule starts from the task's scheduled day, so a task without
- * one is refused with 422, as are a weekly rule without weekdays and an end before that day.
+ * one is refused with 422, as are a weekly rule without weekdays and an end before that day. A new series takes
+ * the task's time as its own (D27); a new rule keeps the time of the series.
  */
 export async function setRecurrence(
   db: Database,
@@ -93,7 +94,8 @@ export async function setRecurrence(
       await tx.update(taskSeries).set(columns).where(eq(taskSeries.id, live.id))
     } else {
       const id = randomUUID()
-      await tx.insert(taskSeries).values({ id, workspaceId, ...columns, createdCount: 1, endedAt: null, createdAt: now })
+      // The series starts with the time of its first occurrence (D27).
+      await tx.insert(taskSeries).values({ id, workspaceId, ...columns, time: current.scheduledTime, createdCount: 1, endedAt: null, createdAt: now })
       await tx.update(tasks).set({ seriesId: id, updatedAt: now }).where(eq(tasks.id, current.id))
     }
     return getTask(tx, current.id, workspaceId)
@@ -103,7 +105,8 @@ export async function setRecurrence(
 /**
  * Creates the next occurrence of the series of `occurrence`, which is leaving the pending columns (completed,
  * or deleted on its own): a copy with the same title, notes, estimate, list and subtasks, none of them done
- * (D19), on the first day of the rule after its day and after today (D17), at the same time. The time spent
+ * (D19), on the first day of the rule after its day and after today (D17), at the time of the series (D27), so
+ * an occurrence moved to another time on its own does not take the next one along. The time spent
  * and the sessions stay on `occurrence`. The column follows the rules of saving a schedule (D3), and the
  * series counts one more occurrence. When the rule has no occurrence left (`count` or `until`), the series
  * ends instead. Nothing happens for an ended series or while another occurrence is pending (D13), so two
@@ -136,7 +139,7 @@ export async function createNextOccurrence(
   const copy = await duplicateTask(tx, occurrence.id, workspaceId, now)
   await tx.update(tasks).set({ seriesId: series.id }).where(eq(tasks.id, copy.id))
   await tx.update(taskSeries).set({ createdCount: series.createdCount + 1 }).where(eq(taskSeries.id, series.id))
-  return setSchedule(tx, copy.id, workspaceId, { on: next, time: occurrence.scheduledTime }, byUserId, now)
+  return setSchedule(tx, copy.id, workspaceId, { on: next, time: series.time }, byUserId, now)
 }
 
 /** Which occurrences a delete or a schedule change covers (D16): this one, or this one and the next ones. */
@@ -209,7 +212,7 @@ export async function skipOccurrence(
  * Moves this occurrence and the next ones (US-12, D16): the task gets the new day and time by the rules of
  * saving a schedule (`setSchedule`), and the rule of its live series follows the new day from there on. A
  * weekly rule swaps the weekday of the old day for the one of the new day; a monthly rule takes the new day
- * of the month. The time of the series is the open occurrence's, so the new time carries on by itself.
+ * of the month. The new time becomes the time of the series, which the next occurrences take (D27).
  * A task outside a live series only gets the new schedule.
  */
 export async function applyScheduleToSeries(
@@ -224,10 +227,12 @@ export async function applyScheduleToSeries(
     const tx = transaction as Database
     const before = await findTask(tx, taskId, workspaceId)
     const saved = await setSchedule(tx, before.id, workspaceId, schedule, byUserId, now)
-    if (before.seriesId === null || before.scheduledOn === null || schedule.on === null || schedule.on === before.scheduledOn) return saved
+    if (before.seriesId === null || before.scheduledOn === null || schedule.on === null) return saved
     const series = await lockSeries(tx, before.seriesId)
     if (series === null || series.endedAt !== null) return saved
 
+    await tx.update(taskSeries).set({ time: saved.scheduledTime }).where(eq(taskSeries.id, series.id))
+    if (schedule.on === before.scheduledOn) return getTask(tx, before.id, workspaceId)
     if (series.freq === 'weekly') {
       const old = weekdayOf(before.scheduledOn)
       const kept = (series.weekdays ?? []).filter((weekday) => weekday !== old)

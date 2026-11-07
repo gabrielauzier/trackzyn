@@ -584,8 +584,8 @@ T37
 
 **Done when**:
 
-- [ ] Mudar a hora de uma ocorrência com "Só esta" e concluir: a próxima nasce com a hora da série
-- [ ] Gate check passes (full)
+- [x] Mudar a hora de uma ocorrência com "Só esta" e concluir: a próxima nasce com a hora da série
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

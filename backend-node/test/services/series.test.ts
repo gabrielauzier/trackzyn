@@ -82,20 +82,21 @@ describe('setRecurrence (US-9, D15)', () => {
       until: null,
       count: null,
       createdCount: 1,
+      time: '14:00:00',
       endedAt: null,
     })
-    // The task keeps its day and time: the series takes them from the open occurrence.
+    // The task keeps its day and time; the series keeps the time of the occurrence it starts from (D27).
     expect(await row(id)).toMatchObject({ scheduledOn: '2026-11-13', scheduledTime: '14:00:00' })
   })
 
-  it('changes the rule of the series from there on, keeping the count of created occurrences', async () => {
-    const id = await task('2026-11-13')
+  it('changes the rule of the series from there on, keeping the count of created occurrences and the time', async () => {
+    const id = await task('2026-11-13', '14:00')
     const seriesId = (await setRecurrence(db, id, workspaceId, FRIDAYS, NOW)).series!.id
     await db.update(taskSeries).set({ createdCount: 4 }).where(eq(taskSeries.id, seriesId))
 
     const read = await setRecurrence(db, id, workspaceId, rule({ freq: 'monthly', monthDay: 13, count: 10 }), NOW)
     expect(read.series?.id).toBe(seriesId)
-    expect(await series(seriesId)).toMatchObject({ freq: 'monthly', weekdays: null, monthDay: 13, count: 10, createdCount: 4, endedAt: null })
+    expect(await series(seriesId)).toMatchObject({ freq: 'monthly', weekdays: null, monthDay: 13, count: 10, createdCount: 4, time: '14:00:00', endedAt: null })
     expect((await db.select().from(taskSeries)).length).toBe(1)
   })
 
