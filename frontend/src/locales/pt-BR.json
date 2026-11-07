@@ -1018,6 +1018,17 @@
       "nameRange": "O nome vai de 1 a 40 caracteres",
       "cancel": "Cancelar",
       "create": "Criar pausa"
+    },
+    "editor": {
+      "start": "Início",
+      "duration": "Duração",
+      "estimate": "estimativa {{duration}}",
+      "noEstimate": "sem estimativa",
+      "keepsEstimate": "A duração vale só para este plano. A estimativa da tarefa continua {{duration}}.",
+      "keepsNoEstimate": "A duração vale só para este plano. A tarefa continua sem estimativa.",
+      "breakHint": "Pausa de 5 min a 2h. Ao começar, vira um Intervalo na lista dela.",
+      "remove": "Tirar do plano",
+      "done": "Pronto"
     }
   }
 }

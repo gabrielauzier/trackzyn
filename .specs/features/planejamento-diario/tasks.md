@@ -475,10 +475,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Mudar início e duração altera só o bloco; o texto diz que a estimativa continua a mesma
-- [ ] `Tirar do plano` remove o bloco do rascunho
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `block-editor.test.tsx`
+- [x] Mudar início e duração altera só o bloco; o texto diz que a estimativa continua a mesma
+- [x] `Tirar do plano` remove o bloco do rascunho
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `block-editor.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

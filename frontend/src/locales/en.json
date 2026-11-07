@@ -1018,6 +1018,17 @@
       "nameRange": "The name takes 1 to 40 characters",
       "cancel": "Cancel",
       "create": "Create break"
+    },
+    "editor": {
+      "start": "Start",
+      "duration": "Duration",
+      "estimate": "estimate {{duration}}",
+      "noEstimate": "no estimate",
+      "keepsEstimate": "The duration only applies to this plan. The task's estimate stays {{duration}}.",
+      "keepsNoEstimate": "The duration only applies to this plan. The task stays without an estimate.",
+      "breakHint": "A break from 5 min to 2h. Once started, it becomes a Break in its list.",
+      "remove": "Remove from plan",
+      "done": "Done"
     }
   }
 }
