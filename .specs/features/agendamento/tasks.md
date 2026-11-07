@@ -251,8 +251,8 @@ T37
 
 **Done when**:
 
-- [ ] A tarefa agendada para hoje entra nas próximas tarefas do foco
-- [ ] Gate check passes (full)
+- [x] A tarefa agendada para hoje entra nas próximas tarefas do foco
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
