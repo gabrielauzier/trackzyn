@@ -884,8 +884,8 @@ T37
 
 **Done when**:
 
-- [ ] Limpar a hora mantém o dia; remover limpa os dois
-- [ ] Gate check passes (Build da fase)
+- [x] Limpar a hora mantém o dia; remover limpa os dois
+- [x] Gate check passes (Build da fase)
 
 **Tests**: unit
 **Gate**: build

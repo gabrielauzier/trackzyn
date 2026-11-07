@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 
 import { TaskDialog } from '@/components/board/task-dialog'
@@ -191,5 +191,90 @@ describe('TaskDialog', () => {
     expect(screen.getByLabelText('Notes')).toHaveAttribute('contenteditable', 'false')
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Delete task' })).not.toBeInTheDocument()
+  })
+})
+
+describe('TaskDialog: Agendamento (US-2)', () => {
+  // Wednesday 2026-11-11, 14:07 in America/Sao_Paulo.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-11T17:07:00Z'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const THURSDAYS = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+  async function open(overrides: Partial<Task>, canWrite = true) {
+    vi.mocked(tasks.get).mockResolvedValue({ ...task, ...overrides })
+    const rendered = renderWithProviders(<TaskDialog taskId={TASK} canWrite={canWrite} timeZone="America/Sao_Paulo" onClose={vi.fn()} />)
+    await screen.findByDisplayValue('Write the report')
+    return rendered
+  }
+  const text = () => screen.getByTestId('schedule-text')
+
+  it('shows Sem agendamento for a task without a schedule', async () => {
+    await open({})
+    expect(text()).toHaveTextContent(/^Not scheduled$/)
+    expect(screen.queryByRole('button', { name: 'Clear time' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove schedule' })).not.toBeInTheDocument()
+  })
+
+  it('shows the day, and the start and the end from the estimate', async () => {
+    const { unmount } = await open({ scheduled_on: '2026-11-12' })
+    expect(text()).toHaveTextContent(/^Thu, Nov 12$/)
+    unmount()
+
+    await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', estimate_minutes: 120 })
+    expect(text()).toHaveTextContent(/^Thu, Nov 12 · 10:00 – 12:00$/)
+  })
+
+  it('D7 D23 without an estimate the end is one hour on, marked +1h', async () => {
+    await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', estimate_minutes: null })
+    expect(text()).toHaveTextContent(/^Thu, Nov 12 · 10:00 – 11:00 \(\+1h\)$/)
+  })
+
+  it('says the rule of a series, in Portuguese too: Qui, 12 nov · 10:00 – 12:00 · ↻ toda quinta', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', estimate_minutes: 120, series: { id: 's', rule: THURSDAYS, next_on: '2026-11-19' } })
+      expect(text()).toHaveTextContent(/^Qui, 12 nov · 10:00 – 12:00 · toda quinta$/)
+      expect(within(text()).getByRole('img', { name: 'Repete' })).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('Limpar hora clears only the time; Remover agendamento clears the day and the time', async () => {
+    const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00' })
+    await user.click(screen.getByRole('button', { name: 'Clear time' }))
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_time: null }))
+
+    await user.click(screen.getByRole('button', { name: 'Remove schedule' }))
+    await waitFor(() => expect(tasks.update).toHaveBeenLastCalledWith(TASK, { scheduled_on: null }))
+  })
+
+  it('changes the day with the picker, which starts from the schedule of the task', async () => {
+    const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00' })
+    await user.click(screen.getByRole('button', { name: 'Change' }))
+    expect(screen.getByRole('button', { name: 'Thu, Nov 12' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Fri, Nov 13' }))
+    await user.click(within(screen.getByRole('button', { name: 'Fri, Nov 13' }).closest('form')!).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_on: '2026-11-13', scheduled_time: '10:00' }))
+  })
+
+  it('a task without a schedule opens the picker from Agendar', async () => {
+    const { user } = await open({})
+    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    expect(screen.getByRole('button', { name: 'Wed, Nov 11' })).toHaveAttribute('aria-current', 'date')
+  })
+
+  it('shows the schedule to a viewer, with nothing to change it', async () => {
+    await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00' }, false)
+    expect(text()).toHaveTextContent('Thu, Nov 12 · 10:00 – 11:30')
+    expect(screen.queryByRole('button', { name: 'Change' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Clear time' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove schedule' })).not.toBeInTheDocument()
   })
 })

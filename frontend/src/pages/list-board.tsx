@@ -504,7 +504,7 @@ export default function ListBoardPage() {
         onClose={() => setDeleting(null)}
         onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
       />
-      <TaskDialog taskId={openTaskId} canWrite={canWrite} onClose={() => setOpenTaskId(null)} />
+      <TaskDialog taskId={openTaskId} canWrite={canWrite} timeZone={board.timezone} onClose={() => setOpenTaskId(null)} />
     </div>
   )
 }

@@ -916,6 +916,10 @@
     "stopRepeating": "Parar de repetir",
     "remove": "Remover agendamento",
     "skip": "Pular esta ocorrência",
-    "pickerTitle": "Agendar tarefa"
+    "pickerTitle": "Agendar tarefa",
+    "field": "Agendamento",
+    "notScheduled": "Sem agendamento",
+    "change": "Alterar",
+    "oneHourDefault": "(+1h)"
   }
 }

@@ -916,6 +916,10 @@
     "stopRepeating": "Stop repeating",
     "remove": "Remove schedule",
     "skip": "Skip this occurrence",
-    "pickerTitle": "Schedule task"
+    "pickerTitle": "Schedule task",
+    "field": "Schedule",
+    "notScheduled": "Not scheduled",
+    "change": "Change",
+    "oneHourDefault": "(+1h)"
   }
 }
