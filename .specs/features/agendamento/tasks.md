@@ -509,8 +509,8 @@ T37
 
 **Done when**:
 
-- [ ] Tarefa tirada de Hoje à mão com dia passado: mudar a hora não a traz de volta; mudar o dia traz
-- [ ] Gate check passes (full)
+- [x] Tarefa tirada de Hoje à mão com dia passado: mudar a hora não a traz de volta; mudar o dia traz
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

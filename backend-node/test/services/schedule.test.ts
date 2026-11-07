@@ -94,10 +94,24 @@ describe('setSchedule: the rules of saving a schedule (US-1, US-2, D3, D21)', ()
     expect(await row(id)).toMatchObject({ scheduledOn: '2026-11-14', scheduleAppliedAt: null })
   })
 
-  it('clears schedule_applied_at when only the time changes', async () => {
+  it('D26 keeps schedule_applied_at when only the time changes', async () => {
     const id = await task('this_week', { on: '2026-11-13', time: '09:00', appliedAt: EARLIER })
     await schedule(id, '2026-11-13', '10:30')
-    expect(await row(id)).toMatchObject({ scheduledOn: '2026-11-13', scheduledTime: '10:30:00', scheduleAppliedAt: null })
+    expect(await row(id)).toMatchObject({ scheduledOn: '2026-11-13', scheduledTime: '10:30:00', scheduleAppliedAt: EARLIER })
+  })
+
+  it('D26 a task taken out of Today by hand, with an earlier day, does not come back when its time changes; a new day brings it', async () => {
+    const id = await task('backlog', { on: '2026-11-10', time: '09:00', appliedAt: EARLIER })
+    expect(await schedule(id, '2026-11-10', '10:30')).toMatchObject({ column: 'backlog', scheduledTime: '10:30:00', scheduleAppliedAt: EARLIER })
+    expect(await applyDueSchedules(db, workspaceId, NOW)).toBe(0)
+    expect(await row(id)).toMatchObject({ column: 'backlog', scheduleAppliedAt: EARLIER })
+
+    expect(await schedule(id, '2026-11-11', '15:00')).toMatchObject({ column: 'today', scheduledOn: '2026-11-11', scheduleAppliedAt: NOW })
+  })
+
+  it('D26 a task taken out of Today by hand, with the day of today, stays out when only its time changes', async () => {
+    const id = await task('backlog', { on: '2026-11-11', time: '15:00', appliedAt: EARLIER })
+    expect(await schedule(id, '2026-11-11', '16:00')).toMatchObject({ column: 'backlog', scheduledTime: '16:00:00', scheduleAppliedAt: EARLIER })
   })
 
   it('D3 takes a Backlog task with a day of this week to the end of This week, keeping the day and the time', async () => {
