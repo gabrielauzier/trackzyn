@@ -122,10 +122,10 @@ T37
 
 **Done when**:
 
-- [ ] A migração roda no PGlite e no Postgres; tarefas existentes ficam com os três campos nulos
-- [ ] `scheduled_time` sem `scheduled_on` e hora fora do passo de 15 min são recusados pelo banco
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
-- [ ] Test count: os testes anteriores continuam passando, mais os novos de `task-schedule-schema.test.ts`
+- [x] A migração roda no PGlite e no Postgres; tarefas existentes ficam com os três campos nulos
+- [x] `scheduled_time` sem `scheduled_on` e hora fora do passo de 15 min são recusados pelo banco
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Test count: os testes anteriores continuam passando, mais os novos de `task-schedule-schema.test.ts`
 
 **Tests**: integration
 **Gate**: full

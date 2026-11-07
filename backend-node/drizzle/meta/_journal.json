@@ -71,6 +71,13 @@
       "when": 1793841849076,
       "tag": "0009_task_updated_and_origin",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794026705741,
+      "tag": "0010_task_schedule",
+      "breakpoints": true
     }
   ]
 }

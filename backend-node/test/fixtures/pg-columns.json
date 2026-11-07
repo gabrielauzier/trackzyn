@@ -435,6 +435,24 @@
       "type": "character varying",
       "nullable": true,
       "maxLength": 16
+    },
+    {
+      "column": "scheduled_on",
+      "type": "date",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "scheduled_time",
+      "type": "time without time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "schedule_applied_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
     }
   ],
   "user_passkeys": [

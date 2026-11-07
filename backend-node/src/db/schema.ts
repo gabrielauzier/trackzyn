@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   check,
+  date,
   index,
   integer,
   json,
@@ -10,6 +11,7 @@ import {
   primaryKey,
   smallint,
   text,
+  time,
   timestamp,
   unique,
   uniqueIndex,
@@ -206,6 +208,12 @@ export const tasks = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     /** Where the task came from when no token made it: `agenda` reads as `via Agenda` (PICK-17). */
     createdFrom: varchar('created_from', { length: 16 }).$type<TaskOrigin>(),
+    /** The day the task is scheduled for, in the workspace's timezone (`YYYY-MM-DD`). */
+    scheduledOn: date('scheduled_on', { mode: 'string' }),
+    /** The start time on `scheduledOn`, in the workspace's timezone, in steps of 15 minutes (`HH:MM:SS`). */
+    scheduledTime: time('scheduled_time'),
+    /** When this schedule brought the task to Today (D21); cleared whenever the day or the time change. */
+    scheduleAppliedAt: timestamp('schedule_applied_at', { withTimezone: true }),
   },
   (t) => [
     index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
@@ -216,6 +224,16 @@ export const tasks = pgTable(
     check('ck_tasks_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
     check('ck_tasks_done_completed_at', sql`(${t.column} = 'done') = (${t.completedAt} IS NOT NULL)`),
     check('ck_tasks_created_from', sql`${t.createdFrom} IN ('agenda')`),
+    check('ck_tasks_schedule_time_needs_day', sql`${t.scheduledTime} IS NULL OR ${t.scheduledOn} IS NOT NULL`),
+    check(
+      'ck_tasks_schedule_time_step',
+      sql`${t.scheduledTime} IS NULL OR (extract(minute FROM ${t.scheduledTime})::int % 15 = 0 AND extract(second FROM ${t.scheduledTime}) = 0)`,
+    ),
+    // Only the candidates of the move to Today: the frequent reads (the focus polls every 15 s) touch a small index.
+    index('ix_tasks_schedule_due')
+      .on(t.listId, t.scheduledOn)
+      .where(sql`${t.scheduledOn} IS NOT NULL AND ${t.scheduleAppliedAt} IS NULL AND ${t.column} IN ('backlog', 'this_week')`),
+    index('ix_tasks_scheduled_on').on(t.scheduledOn).where(sql`${t.scheduledOn} IS NOT NULL AND ${t.column} <> 'done'`),
   ],
 )
 

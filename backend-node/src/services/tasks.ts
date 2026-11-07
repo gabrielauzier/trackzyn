@@ -93,6 +93,9 @@ export async function createTask(
       createdViaTokenId: input.createdViaTokenId ?? null,
       updatedAt: now,
       createdFrom: input.createdFrom ?? null,
+      scheduledOn: null,
+      scheduledTime: null,
+      scheduleAppliedAt: null,
     }
     await tx.insert(tasks).values(task)
     const created: Subtask[] = (input.subtasks ?? []).map((title, position) => ({ id: randomUUID(), taskId: task.id, title, done: false, position }))
@@ -203,6 +206,9 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       createdViaTokenId: null,
       updatedAt: now,
       createdFrom: null,
+      scheduledOn: null,
+      scheduledTime: null,
+      scheduleAppliedAt: null,
     }
     await tx.insert(tasks).values(copy)
     const copies: Subtask[] = source.subtasks.map((subtask, position) => ({
