@@ -851,6 +851,16 @@
       "label": "Scheduled without a set time",
       "more": "+{{count}}",
       "showAll": "See all {{count}} tasks scheduled on {{day}}"
+    },
+    "dayPanel": {
+      "dateFormat": "EEEE, MMM d",
+      "summary_one": "{{count}} scheduled task · Est. {{estimate}}",
+      "summary_other": "{{count}} scheduled tasks · Est. {{estimate}}",
+      "untimed": "No time · {{count}}",
+      "timed": "With time · {{count}}",
+      "setTime": "Set time of {{title}}",
+      "setTimeShort": "Set time",
+      "next": "next occurrence"
     }
   },
   "schedule": {

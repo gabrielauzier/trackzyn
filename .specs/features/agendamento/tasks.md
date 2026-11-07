@@ -1084,8 +1084,8 @@ T37
 
 **Done when**:
 
-- [ ] `viewer` não vê `Definir hora`; definir a hora tira a tarefa de `Sem hora`
-- [ ] Gate check passes (quick)
+- [x] `viewer` não vê `Definir hora`; definir a hora tira a tarefa de `Sem hora`
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

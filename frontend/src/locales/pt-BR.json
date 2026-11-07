@@ -851,6 +851,16 @@
       "label": "Agendadas sem hora definida",
       "more": "+{{count}}",
       "showAll": "Ver todas as {{count}} tarefas agendadas do dia {{day}}"
+    },
+    "dayPanel": {
+      "dateFormat": "EEEE, d MMM",
+      "summary_one": "{{count}} tarefa agendada · Est. {{estimate}}",
+      "summary_other": "{{count}} tarefas agendadas · Est. {{estimate}}",
+      "untimed": "Sem hora · {{count}}",
+      "timed": "Com hora · {{count}}",
+      "setTime": "Definir hora de {{title}}",
+      "setTimeShort": "Definir hora",
+      "next": "próxima ocorrência"
     }
   },
   "schedule": {
