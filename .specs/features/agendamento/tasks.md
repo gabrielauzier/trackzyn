@@ -119,6 +119,14 @@ Decisões tomadas depois dos lotes 5 e 6 (2026-11-07).
 T45 → T46 → T47 → T48
 ```
 
+### Phase 9: Correções da validação
+
+Lacunas da primeira validação (2026-11-07).
+
+```
+T49 → T50 → T51
+```
+
 ---
 
 ## Task Breakdown
@@ -1327,10 +1335,85 @@ T45 → T46 → T47 → T48
 
 ---
 
+### T49: Regra nas ocorrências projetadas da rota da Agenda
+
+**What**: `projectedSchema` de `GET /api/agenda/scheduled` passa a incluir `rule`, para a resposta real não perder o campo que a Agenda usa no tooltip.
+**Where**: `backend-node/src/routes/scheduled.ts`
+**Depends on**: None (a fase anterior termina antes)
+**Reuses**: NONE
+**Requirement**: US-11 (gap 1 da validação)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste da rota compara o item projetado inteiro, com `rule`, contra a resposta real
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): return the rule of projected occurrences`
+
+---
+
+### T50: Ida para Hoje nas leituras do MCP e da tarefa
+
+**What**: `get_board` e `get_task` do MCP e `GET /api/tasks/:id` chamam `applyDueSchedules` antes de ler, como as outras leituras (AD-009).
+**Where**: `backend-node/src/mcp/tools.ts`
+**Depends on**: T49
+**Reuses**: NONE
+**Requirement**: US-4; AD-009 (gap 2 da validação)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Tarefa vencida ontem aparece em Hoje pelo `get_board` do MCP, sem leitura REST antes; o mesmo para `get_task` e `GET /api/tasks/:id`
+- [ ] Gate check passes (full)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): apply due schedules on the MCP and task reads`
+
+---
+
+### T51: Excluir pelo MCP segue o padrão da API
+
+**What**: `delete_task` do MCP numa ocorrência aberta faz o mesmo que o `DELETE` sem escopo da API: exclui só esta e cria a próxima.
+**Where**: `backend-node/src/mcp/tools.ts`
+**Depends on**: T50
+**Reuses**: NONE
+**Requirement**: US-12; D13 (gap 3 da validação)
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `delete_task` numa ocorrência cria a próxima e mantém a série; numa tarefa sem série, nada muda
+- [ ] Gate check passes (full + `npm --prefix backend-node run build`)
+
+**Tests**: integration
+**Gate**: build
+
+**Commit**: `fix(backend): delete one occurrence through the MCP tool`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 2b → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
+Phase 1 → Phase 2 → Phase 2b → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
 
 Phase 1:  T1 → T2 → T3 → T4 → T5 → T6 → T7
 Phase 2:  T8 → T9 → T10 → T11 → T12 → T13 → T14
@@ -1341,6 +1424,7 @@ Phase 5:  T25 → T26 → T27 → T28 → T29 → T30 → T31
 Phase 6:  T32 → T33 → T34 → T35 → T36
 Phase 7:  T37
 Phase 8:  T45 → T46 → T47 → T48
+Phase 9:  T49 → T50 → T51
 ```
 
 Cada tarefa que mostra texto novo acrescenta as chaves em `frontend/src/locales/pt-BR.json` e `en.json` no mesmo commit.
