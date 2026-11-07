@@ -6,7 +6,8 @@ import type { Database } from '../../src/db/client.ts'
 import { type TaskColumn, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
 import { createList } from '../../src/services/lists.ts'
-import { setSchedule } from '../../src/services/schedule.ts'
+import { applyDueSchedules, setSchedule } from '../../src/services/schedule.ts'
+import { moveTask } from '../../src/services/tasks.ts'
 import { migratedDb } from '../support/db.ts'
 
 // Wednesday 2026-11-11, 14:07 in America/Sao_Paulo (UTC-3). The week runs from Monday 2026-11-09 to Sunday 2026-11-15.
@@ -185,5 +186,78 @@ describe('setSchedule: the rules of saving a schedule (US-1, US-2, D3, D21)', ()
   it('US-2 clearing the schedule sets the day and the time to null and keeps the column', async () => {
     const id = await task('this_week', { on: '2026-11-13', time: '09:00' })
     expect(await schedule(id, null, null)).toMatchObject({ scheduledOn: null, scheduledTime: null, scheduleAppliedAt: null, column: 'this_week' })
+  })
+})
+
+describe('applyDueSchedules: the task comes to Today on its day (US-4, D1, D21)', () => {
+  const apply = (now = NOW) => applyDueSchedules(db, workspaceId, now)
+
+  it('moves the due tasks of Backlog and This week to the end of Today in order of day, time and position, keeping day and time', async () => {
+    const already = await task('today')
+    const lateTime = await task('backlog', { title: 'today 09:00', on: '2026-11-11', time: '09:00' })
+    const earlyTime = await task('this_week', { title: 'today 08:00', on: '2026-11-11', time: '08:00' })
+    const yesterday = await task('backlog', { title: 'yesterday', on: '2026-11-10' })
+    const sameTimeAfter = await task('backlog', { title: 'today 09:00, later position', on: '2026-11-11', time: '09:00' })
+    const future = await task('backlog', { title: 'tomorrow', on: '2026-11-12' })
+
+    expect(await apply()).toBe(4)
+
+    expect(await column('today')).toEqual([already, yesterday, earlyTime, lateTime, sameTimeAfter])
+    expect(await column('backlog')).toEqual([future])
+    expect((await row(future)).position).toBe(0)
+    expect(await row(lateTime)).toMatchObject({ column: 'today', scheduledOn: '2026-11-11', scheduledTime: '09:00:00', scheduleAppliedAt: NOW, updatedAt: NOW })
+    expect(await row(yesterday)).toMatchObject({ column: 'today', scheduledOn: '2026-11-10', scheduledTime: null, scheduleAppliedAt: NOW })
+    expect(await row(future)).toMatchObject({ column: 'backlog', scheduleAppliedAt: null })
+  })
+
+  it('does not bring back a task taken out of Today by hand', async () => {
+    const id = await task('backlog')
+    await schedule(id, '2026-11-11')
+    await moveTask(db, id, workspaceId, { column: 'backlog', beforeTaskId: null, byUserId: userId }, NOW)
+    expect(await apply(new Date(NOW.getTime() + 60_000))).toBe(0)
+    expect(await row(id)).toMatchObject({ column: 'backlog', scheduledOn: '2026-11-11', scheduleAppliedAt: NOW })
+  })
+
+  it('leaves the tasks of Today and Done where they are', async () => {
+    const inToday = [await task('today'), await task('today', { on: '2026-11-10' })]
+    const done = await task('done', { on: '2026-11-11', time: '10:00' })
+    expect(await apply()).toBe(0)
+    expect(await column('today')).toEqual(inToday)
+    expect(await row(inToday[1]!)).toMatchObject({ column: 'today', position: 1, scheduleAppliedAt: null })
+    expect(await row(done)).toMatchObject({ column: 'done', scheduleAppliedAt: null })
+  })
+
+  it('moves the task at the start of its day, whatever its scheduled time', async () => {
+    // 2026-11-12T03:05Z is Thursday 2026-11-12, 00:05 in Sao Paulo.
+    const startOfDay = new Date('2026-11-12T03:05:00Z')
+    const id = await task('this_week', { on: '2026-11-12', time: '23:00' })
+    expect(await apply(startOfDay)).toBe(1)
+    expect(await row(id)).toMatchObject({ column: 'today', scheduledTime: '23:00:00', scheduleAppliedAt: startOfDay })
+  })
+
+  it('decides today in the workspace timezone, not in UTC', async () => {
+    // 2026-11-12T02:30Z is Thursday in UTC but still Wednesday 2026-11-11, 23:30 in Sao Paulo.
+    const id = await task('this_week', { on: '2026-11-12' })
+    expect(await apply(new Date('2026-11-12T02:30:00Z'))).toBe(0)
+    expect(await row(id)).toMatchObject({ column: 'this_week', scheduleAppliedAt: null })
+  })
+
+  it('moves the tasks of the workspace only', async () => {
+    const otherWorkspace = randomUUID()
+    await db.insert(workspaces).values({ id: otherWorkspace, name: 'Theirs', timezone: TZ, createdAt: NOW })
+    const otherList = (await createList(db, { workspaceId: otherWorkspace, userId, name: 'Theirs', color: 2 })).id
+    const theirs = randomUUID()
+    await db.insert(tasks).values({ id: theirs, listId: otherList, title: 'theirs', column: 'backlog', position: 0, createdAt: EARLIER, scheduledOn: '2026-11-11' })
+    expect(await apply()).toBe(0)
+    expect(await row(theirs)).toMatchObject({ column: 'backlog', scheduleAppliedAt: null })
+  })
+
+  it('moves a task once when two reads apply the schedules at the same time', async () => {
+    const already = await task('today')
+    const id = await task('backlog', { on: '2026-11-11' })
+    const results = await Promise.all([apply(), apply()])
+    expect(results.reduce((sum, moved) => sum + moved, 0)).toBe(1)
+    expect(await column('today')).toEqual([already, id])
+    expect(await row(id)).toMatchObject({ column: 'today', position: 1, scheduleAppliedAt: NOW })
   })
 })

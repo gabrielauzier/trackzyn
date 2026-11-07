@@ -1,6 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type TaskColumn, tasks, workspaces } from '../db/schema.ts'
+import { type TaskColumn, lists, tasks, workspaces } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { daySql, dayTimezone } from './day.ts'
 import { type TaskWithSubtasks, findTask, getTask, lockList, moveTask } from './tasks.ts'
@@ -94,5 +94,61 @@ export async function setSchedule(
       .where(eq(tasks.id, current.id))
     if (target !== null) await moveTask(tx, current.id, workspaceId, { column: target, beforeTaskId: null, byUserId }, now)
     return getTask(tx, current.id, workspaceId)
+  })
+}
+
+/**
+ * Moves to the end of Today every pending task of the workspace, in Backlog or This week, whose scheduled day
+ * is today or earlier in the workspace's timezone and whose schedule has not brought it to Today yet (US-4, D1).
+ * They enter in order of day, time and position, keep their day and time, and get `schedule_applied_at = now`
+ * (D21), so a task taken out of Today by hand does not come back. Runs at the start of each read of the task
+ * columns (AD-009); answers how many tasks it moved. Each list is locked and read again under the lock, so two
+ * reads at once move a task only once, and its columns are renumbered in one statement each.
+ */
+export async function applyDueSchedules(db: Database, workspaceId: string, now: Date = new Date()): Promise<number> {
+  const [workspace] = await db.select({ timezone: workspaces.timezone }).from(workspaces).where(eq(workspaces.id, workspaceId))
+  if (!workspace) return 0
+  const today = daySql(await dayTimezone(db, workspace), now).today
+  const due = sql`t.scheduled_on IS NOT NULL AND t.schedule_applied_at IS NULL AND t."column" IN ('backlog', 'this_week')
+    AND t.scheduled_on <= ${today}`
+
+  // Most reads find nothing: one query on the partial index ix_tasks_schedule_due, and no transaction.
+  const candidates = await rows<{ list_id: string }>(
+    db,
+    sql`SELECT DISTINCT t.list_id FROM tasks t JOIN ${lists} l ON l.id = t.list_id
+        WHERE l.workspace_id = ${workspaceId} AND ${due} ORDER BY t.list_id`,
+  )
+  if (candidates.length === 0) return 0
+
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    let moved = 0
+    // Lists are locked in a fixed order, as moveTaskToList does, so two reads cannot wait on each other.
+    for (const { list_id: listId } of candidates) {
+      await lockList(tx, listId)
+      const entered = await rows<{ id: string }>(
+        tx,
+        sql`UPDATE tasks AS target
+            SET "column" = 'today', schedule_applied_at = ${now.toISOString()}::timestamptz, updated_at = ${now.toISOString()}::timestamptz,
+                position = (SELECT coalesce(max(position) + 1, 0) FROM tasks WHERE list_id = ${listId} AND "column" = 'today') + ordered.n - 1
+            FROM (
+              SELECT t.id, row_number() OVER (ORDER BY t.scheduled_on, t.scheduled_time, t.position, t.created_at)::int AS n
+              FROM tasks t WHERE t.list_id = ${listId} AND ${due}
+            ) AS ordered
+            WHERE target.id = ordered.id
+            RETURNING target.id`,
+      )
+      if (entered.length === 0) continue
+      moved += entered.length
+      for (const left of ['backlog', 'this_week'] as const) {
+        await tx.execute(sql`UPDATE tasks AS target SET position = ordered.n - 1
+          FROM (
+            SELECT id, row_number() OVER (ORDER BY position, created_at)::int AS n
+            FROM tasks WHERE list_id = ${listId} AND "column" = ${left}
+          ) AS ordered
+          WHERE target.id = ordered.id AND target.position <> ordered.n - 1`)
+      }
+    }
+    return moved
   })
 }

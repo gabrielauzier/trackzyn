@@ -175,9 +175,9 @@ T37
 
 **Done when**:
 
-- [ ] Tarefa tirada de Hoje à mão não volta; Hoje e Concluídas não mudam
-- [ ] Duas leituras concorrentes movem a tarefa uma vez só
-- [ ] Gate check passes (full)
+- [x] Tarefa tirada de Hoje à mão não volta; Hoje e Concluídas não mudam
+- [x] Duas leituras concorrentes movem a tarefa uma vez só
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
