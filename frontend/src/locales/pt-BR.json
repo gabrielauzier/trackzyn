@@ -862,6 +862,15 @@
       "setTime": "Definir hora de {{title}}",
       "setTimeShort": "Definir hora",
       "next": "próxima ocorrência"
+    },
+    "newSchedule": {
+      "title": "Novo agendamento",
+      "create": "Criar tarefa e agendar",
+      "createNamed": "Criar tarefa “{{title}}” e agendar",
+      "chooseTask": "Escolha uma tarefa ou crie uma.",
+      "replaces": "Agendada para {{day}}: este agendamento substitui o atual.",
+      "taskTitle": "Título da tarefa",
+      "backlogHint": "A tarefa é criada no Backlog desta lista."
     }
   },
   "schedule": {

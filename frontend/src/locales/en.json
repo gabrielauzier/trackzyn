@@ -862,6 +862,15 @@
       "setTime": "Set time of {{title}}",
       "setTimeShort": "Set time",
       "next": "next occurrence"
+    },
+    "newSchedule": {
+      "title": "New schedule",
+      "create": "Create task and schedule",
+      "createNamed": "Create task “{{title}}” and schedule",
+      "chooseTask": "Choose a task, or create one.",
+      "replaces": "Scheduled for {{day}}: this schedule replaces it.",
+      "taskTitle": "Task title",
+      "backlogHint": "The task is created in the Backlog of this list."
     }
   },
   "schedule": {

@@ -1159,8 +1159,8 @@ T37
 
 **Done when**:
 
-- [ ] Escolher tarefa já agendada substitui o agendamento
-- [ ] Gate check passes (quick)
+- [x] Escolher tarefa já agendada substitui o agendamento
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick
