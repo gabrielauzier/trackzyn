@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 49,
+  "next_id": 53,
   "lessons": [
     {
       "id": "L-001",
@@ -868,6 +868,78 @@
       ],
       "created": "2026-11-05T05:07:21Z",
       "last_seen": "2026-11-05T05:07:21Z"
+    },
+    {
+      "id": "L-049",
+      "key": "ac_gap::assert api payloads through the http route and its response schema not only the service so fields the serializer strips are caught",
+      "text": "Assert API payloads through the HTTP route and its response schema, not only the service, so fields the serializer strips are caught",
+      "signal": "ac_gap",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/routes/scheduled.ts:26 (US-11 projected[].rule stripped by response schema) (routes)"
+      ],
+      "created": "2026-11-07T08:41:46Z",
+      "last_seen": "2026-11-07T08:41:46Z"
+    },
+    {
+      "id": "L-050",
+      "key": "ac_gap::when a rule must run on every read list each read path including mcp tools and test the rule through each one",
+      "text": "When a rule must run on every read, list each read path including MCP tools and test the rule through each one",
+      "signal": "ac_gap",
+      "scope": "mcp",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/mcp/tools.ts:83 (AD-009 get_board without applyDueSchedules) (mcp)"
+      ],
+      "created": "2026-11-07T08:41:46Z",
+      "last_seen": "2026-11-07T08:41:46Z"
+    },
+    {
+      "id": "L-051",
+      "key": "spec_precision_gap::define the default scope of token and mcp writes wherever the app asks the user to choose a scope",
+      "text": "Define the default scope of token and MCP writes wherever the app asks the user to choose a scope",
+      "signal": "spec_precision_gap",
+      "scope": "mcp",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md US-12 MCP delete_task on an open occurrence (mcp)"
+      ],
+      "created": "2026-11-07T08:41:46Z",
+      "last_seen": "2026-11-07T08:41:46Z"
+    },
+    {
+      "id": "L-052",
+      "key": "spec_precision_gap::give rest and mcp create bodies the same fields or reject an unsupported field with 422 instead of stripping it silently",
+      "text": "Give REST and MCP create bodies the same fields, or reject an unsupported field with 422, instead of stripping it silently",
+      "signal": "spec_precision_gap",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/routes/tasks.ts:67 (REST POST /api/tasks strips recurrence, 201 series null) (routes)"
+      ],
+      "created": "2026-11-07T09:00:49Z",
+      "last_seen": "2026-11-07T09:00:49Z"
     }
   ]
 }

@@ -273,6 +273,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - **D30 (2026-11-07):** mudar o dia de uma ocorrência no seletor mantém a regra da série e pergunta "só esta ou esta e as próximas"; a regra só muda quando outra opção de `Repetir` é escolhida.
 - **D31 (2026-11-07):** a API aceita dia e hora no passado; só o seletor os bloqueia. Uma tarefa agendada para um dia passado vai para Hoje na leitura seguinte, e `Desfazer` na Agenda pode restaurar um dia que já passou.
 - **D32 (2026-11-07):** o painel `Novo agendamento` pergunta "só esta ou esta e as próximas" quando a tarefa escolhida é ocorrência de uma série.
+- **D33 (2026-11-07):** o `delete_task` do MCP numa ocorrência aberta segue o `DELETE` da API sem escopo: exclui só esta e cria a próxima.
 
 Não há decisões em aberto.
 

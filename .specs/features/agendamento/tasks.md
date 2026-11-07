@@ -10,7 +10,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 
 **Spec**: `.specs/features/agendamento/spec.md` (US-1 a US-14, D1 a D23)
 **Design**: `.specs/features/agendamento/design.md` (desenho lógico) e as decisões abaixo; o desenho visual aprovado é o canvas `Agendamento de tarefas`, https://claude.ai/artifact/3PBEaM4xuqa4e2iB74KGnX (aprovado em 2026-11-07)
-**Status**: Draft
+**Status**: Done
 **Pré-requisito**: a Agenda (#19) e os ajustes da Agenda (#29); o quadro de `listas-e-quadro`.
 
 ### Decisões técnicas
