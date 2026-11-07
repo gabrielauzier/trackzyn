@@ -201,7 +201,7 @@ O que o código já fixa:
 | --- | --- | --- | --- |
 | PLAN-01 | P1: Montar o plano de um dia | Tasks | In Tasks |
 | PLAN-02 | P1: Montar o plano de um dia | Tasks | Implementing |
-| PLAN-03 | P1: Montar o plano de um dia | Tasks | In Tasks |
+| PLAN-03 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-04 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-05 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-06 | P1: Montar o plano de um dia | Tasks | Implementing |
@@ -219,7 +219,7 @@ O que o código já fixa:
 | PLAN-18 | P1: Planejar pausas | Tasks | In Tasks |
 | PLAN-19 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-20 | P1: Ver se o dia cabe | Tasks | Implementing |
-| PLAN-21 | P1: Ver se o dia cabe | Tasks | In Tasks |
+| PLAN-21 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-22 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-23 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-24 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
@@ -242,7 +242,7 @@ O que o código já fixa:
 | PLAN-41 | Edge Cases | Tasks | Implementing |
 | PLAN-42 | Edge Cases | Tasks | Implementing |
 | PLAN-43 | Edge Cases | Tasks | Implementing |
-| PLAN-44 | Edge Cases | Tasks | In Tasks |
+| PLAN-44 | Edge Cases | Tasks | Implementing |
 | PLAN-45 | Edge Cases | Tasks | In Tasks |
 
 **Coverage:** 45 total, 45 mapped to tasks (T1 a T25), 0 unmapped.

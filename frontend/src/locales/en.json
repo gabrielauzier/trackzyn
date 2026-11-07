@@ -982,6 +982,12 @@
   "plan": {
     "block": {
       "range": "{{start}} – {{end}}"
+    },
+    "grid": {
+      "label": "Day grid",
+      "timed": "Scheduled with a time",
+      "workdayStart": "Workday starts",
+      "workdayEnd": "Workday ends"
     }
   }
 }

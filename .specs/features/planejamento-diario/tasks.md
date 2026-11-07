@@ -394,10 +394,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Blocos fixos não têm alça nem arraste; blocos do rascunho têm
-- [ ] Blocos sobrepostos dividem a largura; um bloco que passa de 24:00 termina na borda
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `plan-grid.test.tsx`
+- [x] Blocos fixos não têm alça nem arraste; blocos do rascunho têm
+- [x] Blocos sobrepostos dividem a largura; um bloco que passa de 24:00 termina na borda
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `plan-grid.test.tsx`
 
 **Tests**: unit
 **Gate**: quick
