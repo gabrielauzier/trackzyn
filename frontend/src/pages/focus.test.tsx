@@ -1085,6 +1085,30 @@ describe('FocusPage notes of the task in focus (#33)', () => {
     expect(within(card()).getByRole('button', { name: /^Notes/ })).toHaveAttribute('data-muted', 'true')
   })
 
+  it('a second click on Notes closes the open notes for good, and saves what was written', async () => {
+    const { user } = renderFocus()
+    const button = () => within(card()).getByRole('button', { name: /^Notes/ })
+
+    // Unchanged: the second click closes it, and it does not open again.
+    await openNotes(user)
+    await user.click(button())
+    await waitFor(() => expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument())
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument()
+    expect(button()).toHaveAttribute('aria-expanded', 'false')
+    expect(tasks.update).not.toHaveBeenCalled()
+
+    // Written: the second click saves it and closes it.
+    const field = await openNotes(user)
+    placeCaretAtEnd(field)
+    await user.paste(', then the chart')
+    await user.click(button())
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(taskA.id, { notes: '<p>Ask Ana, then the chart</p>' }))
+    await waitFor(() => expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument())
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(within(card()).queryByRole('textbox', { name: 'Task notes' })).not.toBeInTheDocument()
+  })
+
   it('without a change, a new task in focus sends no notes', async () => {
     const { user, queryClient } = renderFocus()
     await openNotes(user)

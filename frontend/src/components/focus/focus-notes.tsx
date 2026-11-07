@@ -57,6 +57,9 @@ export function FocusNotes({ taskId, canWrite }: FocusNotesProps) {
   const unsaved = useRef<string | null>(null)
   // The last text sent on leaving the editor: a task change right behind that blur sends it no second time.
   const sent = useRef<string | null>(null)
+  // The press on the button came while the editor was open: that press already left the editor (which saves
+  // and closes it), so its click must not open it again.
+  const openAtPress = useRef(false)
   const pending = open && task && text !== null && text !== task.notes && !save.isPending ? text : null
   useEffect(() => {
     unsaved.current = pending
@@ -107,7 +110,15 @@ export function FocusNotes({ taskId, canWrite }: FocusNotesProps) {
           data-muted={!hasNotes || undefined}
           title={hasNotes ? notesToText(task.notes) : undefined}
           className="flex w-full min-w-0 items-center gap-2 rounded-sm px-1 py-0.5 text-left outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/50"
+          onPointerDown={() => {
+            openAtPress.current = open
+          }}
           onClick={() => {
+            // A second click closes: leaving the editor already saved and closed it.
+            if (openAtPress.current) {
+              openAtPress.current = false
+              return
+            }
             setError(null)
             setOpen(true)
           }}

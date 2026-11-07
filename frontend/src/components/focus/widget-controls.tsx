@@ -31,6 +31,8 @@ interface WidgetControlsProps {
   subtasksOpen?: boolean
   /** The pointer went down on `Subtarefas`, before the notes field loses focus to it. */
   onSubtasksPointerDown?: () => void
+  /** The pointer went down on `Anotações`, before the notes field loses focus to it. */
+  onNotesPointerDown?: () => void
   onExpand: () => void
   /** Told when the break picker opens and closes, so the widget can grow for it. */
   onPanelChange: (open: boolean) => void
@@ -84,6 +86,7 @@ export function WidgetControls({
   onSubtasks,
   subtasksOpen = false,
   onSubtasksPointerDown,
+  onNotesPointerDown,
   onExpand,
   onPanelChange,
 }: WidgetControlsProps) {
@@ -150,7 +153,7 @@ export function WidgetControls({
           <ListChecks />
         </IconButton>
       )}
-      <IconButton label={t('focus.widget.notes')} onClick={onNotes}>
+      <IconButton label={t('focus.widget.notes')} onClick={onNotes} onPointerDown={onNotesPointerDown}>
         <NotebookPen />
       </IconButton>
     </>
