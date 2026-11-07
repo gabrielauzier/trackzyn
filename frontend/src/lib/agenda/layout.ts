@@ -41,18 +41,29 @@ export type LaidOutScheduled = ScheduledPiece & { lane: number; lanes: number }
 /** The length of a scheduled block: the estimate of the task, or 1h without one (D7, D23). */
 export const scheduledMinutes = (estimate: number | null) => estimate ?? 60
 
+/** One formatter per timezone: building an `Intl.DateTimeFormat` costs more than formatting with it. */
+const formatters = new Map<string, Intl.DateTimeFormat>()
+function formatterOf(timeZone: string): Intl.DateTimeFormat {
+  let formatter = formatters.get(timeZone)
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    formatters.set(timeZone, formatter)
+  }
+  return formatter
+}
+
 /** How far `timeZone` is ahead of UTC at `instant`, in milliseconds. */
 function offsetAt(instant: number, timeZone: string): number {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).formatToParts(new Date(instant))
+  const parts = formatterOf(timeZone).formatToParts(new Date(instant))
   const part = (type: string) => Number(parts.find((p) => p.type === type)?.value)
   const asUtc = Date.UTC(part('year'), part('month') - 1, part('day'), part('hour'), part('minute'), part('second'))
   return asUtc - Math.floor(instant / 1000) * 1000
@@ -99,13 +110,13 @@ export function weekDays(monday: string): string[] {
  */
 export function dayPieces(sessions: AgendaSession[], days: string[], timeZone: string, now: Date): Map<string, Piece[]> {
   const pieces = new Map<string, Piece[]>(days.map((day) => [day, []]))
+  // The bounds of each day once, not once per session: a drag lays the week out again on every step.
+  const bounds = days.map((day) => ({ day, dayStart: zonedInstant(day, 0, timeZone).getTime(), dayEnd: zonedInstant(addDays(day, 1), 0, timeZone).getTime() }))
   for (const session of sessions) {
     const running = session.ended_at === null
     const startMs = Date.parse(session.started_at)
     const endMs = running ? now.getTime() : Date.parse(session.ended_at!)
-    for (const day of days) {
-      const dayStart = zonedInstant(day, 0, timeZone).getTime()
-      const dayEnd = zonedInstant(addDays(day, 1), 0, timeZone).getTime()
+    for (const { day, dayStart, dayEnd } of bounds) {
       const from = Math.max(startMs, dayStart)
       const to = Math.min(endMs, dayEnd)
       if (to <= from) continue

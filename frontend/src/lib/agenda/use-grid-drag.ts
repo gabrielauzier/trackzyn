@@ -276,6 +276,9 @@ export function useGridDrag({
       }
       const next = place(current, event.clientX, event.clientY)
       if (next === null) return
+      // Most moves stay inside one 15-min step: the same draft draws nothing new.
+      const shown = latest.current
+      if (shown && shown.mode === next.mode && shown.day === next.day && shown.start === next.start && shown.end === next.end && shown.sessionId === next.sessionId) return
       show(next)
     }
     const up = () => {
