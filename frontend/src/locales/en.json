@@ -338,7 +338,8 @@
     "allLists": "All my lists",
     "archivedLists": "Archived lists",
     "reports": "Reports",
-    "agenda": "Agenda"
+    "agenda": "Agenda",
+    "plan": "Plan"
   },
   "privacy": {
     "hide": "Hide values",
@@ -1092,7 +1093,8 @@
         "planned": "Planned",
         "break": "Break",
         "scheduled": "Scheduled"
-      }
+      },
+      "planDay": "Plan day"
     }
   }
 }

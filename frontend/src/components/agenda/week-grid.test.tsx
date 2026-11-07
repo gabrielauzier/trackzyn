@@ -755,3 +755,18 @@ describe('WeekGrid: the saved plan (PLAN-24, PLAN-25)', () => {
     expect(within(column(container, '2026-11-05')).getByRole('button', { name: /^Scheduled a, Scheduled · 10:00/ })).toBeInTheDocument()
   })
 })
+
+describe('WeekGrid: Planejar dia (PLAN-31)', () => {
+  it('heads today and the days after it with Planejar dia, which opens the plan of that day', async () => {
+    const onPlanDay = vi.fn()
+    const { container, user } = renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} onPlanDay={onPlanDay} />)
+
+    // Today is Wednesday 4 November: the days before it have nothing to plan.
+    expect(within(header(container, '2026-11-03')).queryByRole('button', { name: 'Plan day' })).toBeNull()
+    expect(within(header(container, '2026-11-04')).getByRole('button', { name: 'Plan day' })).toBeInTheDocument()
+    await user.click(within(header(container, '2026-11-06')).getByRole('button', { name: 'Plan day' }))
+
+    expect(onPlanDay).toHaveBeenCalledExactlyOnceWith('2026-11-06')
+  })
+})
+

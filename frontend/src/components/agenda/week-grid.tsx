@@ -82,6 +82,8 @@ interface WeekGridProps {
   onOpenPlanned?: (block: Planned) => void
   /** `Começar` on a break of today's plan (PLAN-26, PLAN-28). */
   onStartPlanned?: (block: Planned) => void
+  /** `Planejar dia` in the header of today and the days after it: opens the plan of the day (PLAN-31). */
+  onPlanDay?: (day: string) => void
 }
 
 /** The planned blocks of each day, in minutes since its midnight and cut at 24:00 (PLAN-44). */
@@ -143,6 +145,7 @@ export function WeekGrid({
   planned = NONE,
   onOpenPlanned,
   onStartPlanned,
+  onPlanDay,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -211,6 +214,16 @@ export function WeekGrid({
               <span className="h-4 text-xs tabular-nums text-muted-foreground">
                 {total > 0 ? formatDuration(total, locale) : ''}
               </span>
+              {onPlanDay && day >= today && (
+                <button
+                  type="button"
+                  data-plan-day={day}
+                  className="text-[11px] font-medium text-primary underline-offset-4 hover:underline"
+                  onClick={() => onPlanDay(day)}
+                >
+                  {t('plan.agenda.planDay')}
+                </button>
+              )}
             </div>
           )
         })}

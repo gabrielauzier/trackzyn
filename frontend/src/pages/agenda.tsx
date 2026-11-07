@@ -225,6 +225,8 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     planned,
     onOpenPlanned: openPlanned,
     onStartPlanned: canWrite ? (block: PlannedBlock) => block.kind === 'break' && startBreak.mutate(block) : undefined,
+    // `Planejar dia` in the header of a day (PLAN-31).
+    onPlanDay: (shown: string) => navigate(`/planejar/${shown}`),
   }
   // An overlap is with any other session of the user, whatever the list filter (AGENDA-19).
   const everyList = useQuery({

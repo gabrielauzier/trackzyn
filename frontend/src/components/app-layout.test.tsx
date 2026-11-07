@@ -208,7 +208,16 @@ describe('app layout sidebar', () => {
     const links = within(screen.getByRole('navigation')).getAllByRole('link').map((link) => link.getAttribute('aria-label') ?? link.textContent)
     expect(within(screen.getByRole('navigation')).getByRole('link', { name: 'Agenda' })).toHaveAttribute('href', '/agenda')
     expect(links.indexOf('Agenda')).toBe(links.indexOf('Archived lists') + 1)
-    expect(links.indexOf('Reports')).toBe(links.indexOf('Agenda') + 1)
+    // `Planejar` sits between Agenda and Reports (PLAN-30).
+    expect(links.indexOf('Plan')).toBe(links.indexOf('Agenda') + 1)
+    expect(links.indexOf('Reports')).toBe(links.indexOf('Plan') + 1)
+  })
+
+  it('PLAN-30 offers Planejar, leading to the plan of tomorrow, for a viewer too', () => {
+    state.canWrite = false
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    expect(within(screen.getByRole('navigation')).getByRole('link', { name: 'Plan' })).toHaveAttribute('href', '/planejar')
   })
 
   it('selects Archived lists on its page', () => {

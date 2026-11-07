@@ -691,9 +691,9 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Os três atalhos levam ao dia certo
-- [ ] Gate check passes: build gate
-- [ ] Test count: anteriores + os novos em `app-layout.test.tsx`, `home.test.tsx` e `week-grid.test.tsx`
+- [x] Os três atalhos levam ao dia certo
+- [x] Gate check passes: build gate
+- [x] Test count: anteriores + os novos em `app-layout.test.tsx`, `home.test.tsx` e `week-grid.test.tsx`
 
 **Tests**: unit
 **Gate**: build

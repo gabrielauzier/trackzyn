@@ -52,6 +52,7 @@ interface DayTimelineProps {
   planned?: PlannedBlock[]
   onOpenPlanned?: (block: PlannedBlock) => void
   onStartPlanned?: (block: PlannedBlock) => void
+  onPlanDay?: (day: string) => void
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -88,6 +89,7 @@ export function DayTimeline({
   planned,
   onOpenPlanned,
   onStartPlanned,
+  onPlanDay,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -163,6 +165,7 @@ export function DayTimeline({
         planned={planned}
         onOpenPlanned={onOpenPlanned}
         onStartPlanned={onStartPlanned}
+        onPlanDay={onPlanDay}
       />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}
