@@ -4,14 +4,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { SessionTaskPicker } from '@/components/agenda/session-task-picker'
 import { SchedulePicker, type ScheduleValue } from '@/components/schedule/schedule-picker'
+import { SeriesScopeDialog } from '@/components/schedule/series-scope-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { minuteClock } from '@/lib/agenda/format'
-import { longDay } from '@/lib/schedule'
-import type { AgendaTask, ListCard } from '@/types'
+import { asksSeriesScope, longDay } from '@/lib/schedule'
+import type { AgendaTask, ListCard, SeriesScope } from '@/types'
+
+/** What the panel sends to an existing task. */
+type TaskChange = Parameters<typeof tasksApi.update>[1]
 
 /** What was scheduled: the task and where it went. */
 export interface NewSchedule {
@@ -40,7 +44,8 @@ interface NewSchedulePanelProps {
  * The `Novo agendamento` panel (US-8): the day and the window selected, the search of the pending tasks of the
  * workspace with `Criar tarefa "<busca>" e agendar`, which creates the task in the Backlog of the chosen list (D12),
  * and the picker of the day, the time and the repetition. A task without an estimate takes the length of the window
- * as its estimate; one with an estimate keeps it (D11). A task already scheduled has its schedule replaced.
+ * as its estimate; one with an estimate keeps it (D11). A task already scheduled has its schedule replaced. An
+ * occurrence of a series asks `Só esta ocorrência` or `Esta e as próximas` before saving (US-12, D32).
  */
 export function NewSchedulePanel({ day, window, timeZone, lists, defaultListId, onCancel, onSaved, now }: NewSchedulePanelProps) {
   const { t, i18n } = useTranslation()
@@ -53,6 +58,8 @@ export function NewSchedulePanel({ day, window, timeZone, lists, defaultListId, 
   const [listId, setListId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  /** The change of an occurrence of a series, waiting for its scope (D32). */
+  const [scoping, setScoping] = useState<{ taskId: string; change: TaskChange; saved: NewSchedule } | null>(null)
   const chosen = useQuery({ queryKey: ['task', picked?.id], queryFn: () => tasksApi.get(picked!.id), enabled: picked !== null })
   const fallbackList = lists.some((list) => list.id === defaultListId) ? defaultListId : (lists[0]?.id ?? null)
   const listOfNew = listId ?? fallbackList
@@ -60,14 +67,30 @@ export function NewSchedulePanel({ day, window, timeZone, lists, defaultListId, 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       // Esc closes the search first, not the panel under it.
-      if (event.key === 'Escape' && !pickerOpen) onCancel()
+      // Esc closes the search, or the question of the series, first, not the panel under it.
+      if (event.key === 'Escape' && !pickerOpen && scoping === null) onCancel()
     }
     globalThis.addEventListener('keydown', onKey)
     return () => globalThis.removeEventListener('keydown', onKey)
-  }, [onCancel, pickerOpen])
+  }, [onCancel, pickerOpen, scoping])
 
   const capitalize = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1)
   const windowMinutes = window ? window.end - window.start : null
+
+  /** Runs a save, with its error in the panel. */
+  const run = async (write: () => Promise<NewSchedule>) => {
+    setSaving(true)
+    setError(null)
+    try {
+      const saved = await write()
+      void queryClient.invalidateQueries({ queryKey: ['lists'] })
+      onSaved(saved)
+    } catch (failure) {
+      setError(extractApiError(failure, t('common.error')))
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const save = async (value: ScheduleValue) => {
     if (value.on === null) return
@@ -78,38 +101,52 @@ export function NewSchedulePanel({ day, window, timeZone, lists, defaultListId, 
     }
     // The window becomes the estimate only of a task without one, and only when the task keeps a time (D11).
     const estimate = value.time !== null ? windowMinutes : null
-    setSaving(true)
-    setError(null)
-    try {
-      let saved: NewSchedule
-      if (newTitle !== null) {
+    const on = value.on
+    if (newTitle !== null) {
+      return run(async () => {
         const created = await tasksApi.create({
           list_id: listOfNew!,
           title,
           estimate_minutes: estimate,
           column: 'backlog',
-          scheduled_on: value.on,
+          scheduled_on: on,
           scheduled_time: value.time,
         })
         if (value.recurrence !== null) await tasksApi.update(created.id, { recurrence: value.recurrence })
-        saved = { taskId: created.id, title: created.title, day: value.on, time: value.time }
-      } else {
-        const task = chosen.data ?? (await tasksApi.get(picked!.id))
-        await tasksApi.update(task.id, {
-          scheduled_on: value.on,
-          scheduled_time: value.time,
-          ...(task.estimate_minutes === null && estimate !== null ? { estimate_minutes: estimate } : {}),
-          ...(value.recurrence !== null ? { recurrence: value.recurrence } : {}),
-        })
-        saved = { taskId: task.id, title: task.title, day: value.on, time: value.time }
-      }
-      void queryClient.invalidateQueries({ queryKey: ['lists'] })
-      onSaved(saved)
-    } catch (failure) {
-      setError(extractApiError(failure, t('common.error')))
-    } finally {
-      setSaving(false)
+        return { taskId: created.id, title: created.title, day: on, time: value.time }
+      })
     }
+    let task = chosen.data
+    if (task === undefined) {
+      try {
+        task = await tasksApi.get(picked!.id)
+      } catch (failure) {
+        return setError(extractApiError(failure, t('common.error')))
+      }
+    }
+    const change: TaskChange = {
+      scheduled_on: on,
+      scheduled_time: value.time,
+      ...(task.estimate_minutes === null && estimate !== null ? { estimate_minutes: estimate } : {}),
+      ...(value.recurrence !== null ? { recurrence: value.recurrence } : {}),
+    }
+    const saved = { taskId: task.id, title: task.title, day: on, time: value.time }
+    // An occurrence of a series moved to another day or time asks first (D32).
+    if (asksSeriesScope(task, change)) return setScoping({ taskId: task.id, change, saved })
+    return run(async () => {
+      await tasksApi.update(saved.taskId, change)
+      return saved
+    })
+  }
+
+  const saveScoped = (scope: SeriesScope) => {
+    if (scoping === null) return
+    const { taskId, change, saved } = scoping
+    setScoping(null)
+    void run(async () => {
+      await tasksApi.update(taskId, { ...change, scope })
+      return saved
+    })
   }
 
   const scheduledOn = chosen.data?.scheduled_on ?? null
@@ -192,6 +229,7 @@ export function NewSchedulePanel({ day, window, timeZone, lists, defaultListId, 
         onCancel={onCancel}
         onSubmit={(value) => void save(value)}
       />
+      <SeriesScopeDialog open={scoping !== null} variant="move" onCancel={() => setScoping(null)} onChoose={saveScoped} />
     </aside>
   )
 }

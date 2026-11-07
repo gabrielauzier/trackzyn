@@ -1317,8 +1317,8 @@ T45 → T46 → T47 → T48
 
 **Done when**:
 
-- [ ] Tarefa sem série salva direto; ocorrência pergunta; Cancelar não chama a API
-- [ ] Gate check passes (Build da fase)
+- [x] Tarefa sem série salva direto; ocorrência pergunta; Cancelar não chama a API
+- [x] Gate check passes (Build da fase)
 
 **Tests**: unit
 **Gate**: build

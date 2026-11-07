@@ -188,6 +188,56 @@ describe('NewSchedulePanel (US-8)', () => {
     expect(tasks.create).not.toHaveBeenCalled()
   })
 
+  describe('D32 an occurrence of a series', () => {
+    const THURSDAYS = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+    const occurrence = () =>
+      fullTask('t2', { title: 'Plan the sprint', estimate_minutes: 60, scheduled_on: '2026-11-12', scheduled_time: '09:00', series: { id: 's', rule: THURSDAYS, next_on: '2026-11-19' } })
+
+    it('asks Só esta ocorrência or Esta e as próximas before saving, and sends the scope chosen', async () => {
+      vi.mocked(tasks.get).mockResolvedValue(occurrence())
+      const { user, onSaved } = show()
+      await pick(user, 'Plan the sprint')
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+      const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
+      expect(tasks.update).not.toHaveBeenCalled()
+
+      await user.click(within(question).getByRole('button', { name: /^This occurrence only/ }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t2', { scheduled_on: DAY, scheduled_time: '15:00', scope: 'occurrence' }))
+      expect(onSaved).toHaveBeenCalledWith({ taskId: 't2', title: 'Plan the sprint', day: DAY, time: '15:00' })
+    })
+
+    it('Esta e as próximas sends scope series', async () => {
+      vi.mocked(tasks.get).mockResolvedValue(occurrence())
+      const { user } = show()
+      await pick(user, 'Plan the sprint')
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+      await user.click(within(await screen.findByRole('dialog', { name: 'Change a repeating task' })).getByRole('button', { name: /^This and the next ones/ }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t2', { scheduled_on: DAY, scheduled_time: '15:00', scope: 'series' }))
+    })
+
+    it('Cancel in the question calls nothing and keeps the panel open', async () => {
+      vi.mocked(tasks.get).mockResolvedValue(occurrence())
+      const { user, onSaved, onCancel } = show()
+      await pick(user, 'Plan the sprint')
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+      const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
+      await user.click(within(question).getByRole('button', { name: 'Cancel' }))
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Change a repeating task' })).not.toBeInTheDocument())
+      expect(tasks.update).not.toHaveBeenCalled()
+      expect(onSaved).not.toHaveBeenCalled()
+      expect(onCancel).not.toHaveBeenCalled()
+    })
+
+    it('a task without a series saves without the question', async () => {
+      vi.mocked(tasks.get).mockResolvedValue(fullTask('t2', { title: 'Plan the sprint', estimate_minutes: 60, scheduled_on: '2026-11-12', scheduled_time: '09:00' }))
+      const { user } = show()
+      await pick(user, 'Plan the sprint')
+      await user.click(screen.getByRole('button', { name: 'Save' }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t2', { scheduled_on: DAY, scheduled_time: '15:00' }))
+      expect(screen.queryByRole('dialog', { name: 'Change a repeating task' })).not.toBeInTheDocument()
+    })
+  })
+
   it('cancels on Cancel and on Esc', async () => {
     const { user, onCancel } = show()
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
