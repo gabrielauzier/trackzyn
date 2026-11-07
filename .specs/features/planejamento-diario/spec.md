@@ -226,7 +226,7 @@ O que o código já fixa:
 | PLAN-25 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
 | PLAN-26 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
 | PLAN-27 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
-| PLAN-28 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
+| PLAN-28 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-29 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
 | PLAN-30 | P2: Abrir o plano rápido de vários lugares | Tasks | In Tasks |
 | PLAN-31 | P2: Abrir o plano rápido de vários lugares | Tasks | In Tasks |

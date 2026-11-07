@@ -1077,6 +1077,9 @@
       "loadError": "Could not load the plan.",
       "tasks_zero": "0 tasks",
       "breaks_zero": "0 breaks"
+    },
+    "agenda": {
+      "start": "Start"
     }
   }
 }
