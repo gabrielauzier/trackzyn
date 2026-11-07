@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
-import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search } from 'lucide-react'
+import { Menu, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, Eye, EyeOff, Sun, Moon, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useSidebarState } from '@/contexts/sidebar-state-context'
@@ -27,6 +27,7 @@ import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
 import { useLocalAuthEnabled } from '@/hooks/use-local-auth'
+import { useHistorySteps } from '@/hooks/use-history-steps'
 
 /** Placeholder rows shown while the workspace list is in flight. */
 function NavSkeleton() {
@@ -87,9 +88,14 @@ export function AppLayout() {
 
   // React Router keeps the scroll offset across routes; start each page at
   // the top unless the URL targets an anchor.
+  const page = useRef<HTMLElement>(null)
   useEffect(() => {
-    if (!location.hash) window.scrollTo(0, 0)
+    if (location.hash) return
+    window.scrollTo(0, 0)
+    // On the desktop the page scrolls inside its card.
+    page.current?.scrollTo?.(0, 0)
   }, [location.pathname, location.hash])
+  const history = useHistorySteps()
 
   // Admin-chosen brand colours override the primary token for everyone.
   useEffect(() => {
@@ -106,6 +112,10 @@ export function AppLayout() {
   const dragHeader = isDesktop() && getDesktopApi().platform === 'darwin'
   const drag = dragHeader ? DRAG_REGION : undefined
   const noDrag = dragHeader ? NO_DRAG_REGION : undefined
+  // The desktop app, from the large layout up: a bar of the sidebar's colour across the top, which drags
+  // the window on macOS, and the page in a card that scrolls by itself under it. Below that, and on the
+  // web, the layout stays as it was.
+  const desktopFrame = isDesktop()
   const isMac =
     typeof navigator !== 'undefined' &&
     /Mac|iPhone|iPad|iPod/.test(navigator.platform)
@@ -121,7 +131,42 @@ export function AppLayout() {
   const openUpdateDialog = updateCheckRepo ? () => setUpdateDialogOpen(true) : undefined
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn('min-h-screen bg-background', desktopFrame && 'lg:bg-sidebar')}>
+      {desktopFrame && (
+        <div
+          data-slot="desktop-titlebar"
+          className={cn('print-hidden fixed inset-x-0 top-0 z-40 hidden h-11 items-center bg-sidebar lg:flex', drag)}
+        >
+          {/* Back and forward start where the page card starts. */}
+          <div
+            className={cn(
+              'absolute flex items-center gap-0.5 transition-[left] duration-300 ease-in-out motion-reduce:transition-none',
+              collapsed ? 'lg:left-16' : 'lg:left-60',
+            )}
+          >
+            <button
+              type="button"
+              onClick={history.goBack}
+              disabled={!history.canGoBack}
+              className={cn(headerButton, 'disabled:pointer-events-none disabled:opacity-40', noDrag)}
+              title={t('nav.back')}
+              aria-label={t('nav.back')}
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={history.goForward}
+              disabled={!history.canGoForward}
+              className={cn(headerButton, 'disabled:pointer-events-none disabled:opacity-40', noDrag)}
+              title={t('nav.forward')}
+              aria-label={t('nav.forward')}
+            >
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
       {/* Mobile header */}
       <header className={cn('print-hidden sticky top-0 z-40 flex h-14 items-center gap-3 bg-sidebar border-b border-sidebar-border px-4 lg:hidden', drag, dragHeader && 'pl-20')}>
         <button
@@ -168,9 +213,11 @@ export function AppLayout() {
             'print-hidden group/sidebar fixed inset-y-0 left-0 z-50 w-60 bg-sidebar border-r border-sidebar-border flex flex-col transform transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none lg:translate-x-0 shrink-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
             collapsed ? 'lg:w-16' : 'lg:w-60',
+            // Under the title bar, and no line beside the card: one surface with the bar.
+            desktopFrame && 'lg:top-11 lg:border-r-0',
           )}
         >
-          {dragHeader && <div aria-hidden className={cn('h-7 shrink-0', drag)} />}
+          {dragHeader && <div aria-hidden className={cn('h-7 shrink-0', drag, desktopFrame && 'lg:hidden')} />}
 
           {/* Collapsed on desktop, the header becomes a column: logo on
               top, then the same buttons stacked, so nothing the expanded
@@ -358,10 +405,20 @@ export function AppLayout() {
           </div>
         </aside>
 
-        <main className={cn(
-          'flex-1 min-h-screen min-w-0 overflow-x-clip transition-[margin] duration-300 ease-in-out motion-reduce:transition-none',
-          collapsed ? 'lg:ml-16' : 'lg:ml-60',
-        )}>
+        <main
+          ref={page}
+          data-desktop-frame={desktopFrame || undefined}
+          className={cn(
+            'flex-1 min-h-screen min-w-0 overflow-x-clip transition-[margin] duration-300 ease-in-out motion-reduce:transition-none',
+            desktopFrame
+              ? cn(
+                  'lg:fixed lg:top-11 lg:right-2 lg:bottom-2 lg:min-h-0 lg:overflow-y-auto lg:rounded-xl lg:border lg:border-border lg:bg-background',
+                  'lg:transition-[left]',
+                  collapsed ? 'lg:left-16' : 'lg:left-60',
+                )
+              : collapsed ? 'lg:ml-16' : 'lg:ml-60',
+          )}
+        >
           {/* The agenda takes the whole width: its grid stretches across it (AGENDA-02). */}
           <div className={cn('p-4 sm:p-6 mx-auto', !location.pathname.startsWith('/agenda') && 'max-w-7xl')}>
             <Outlet />
