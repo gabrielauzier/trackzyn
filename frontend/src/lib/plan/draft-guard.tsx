@@ -15,7 +15,7 @@ const pushSentinel = () => window.history.pushState({ ...(window.history.state ?
 
 /**
  * Guards the way out of an unsaved plan (PLAN-36). The app runs on `BrowserRouter`, which has no `useBlocker`, so the
- * links of the sidebar, the command palette and the day arrows ask through `confirmLeave`, closing or reloading the tab
+ * links of the sidebar, the workspace menu, the command palette and the day arrows ask through `confirmLeave`, closing or reloading the tab
  * through `beforeunload`, and the browser's Back through an extra history entry of the plan that Back pops.
  * `Continuar planejando` stays; `Descartar` leaves and drops the draft.
  */

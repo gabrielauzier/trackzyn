@@ -8,6 +8,7 @@ import { useWorkspace } from '@/contexts/workspace-context'
 import { workspaces as workspacesApi } from '@/lib/api'
 import { resolveSupportedLang, SUPPORTED_LANGS } from '@/lib/i18n'
 import { isDesktop } from '@/lib/platform'
+import { useDraftGuard } from '@/lib/plan/draft-guard-context'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -105,6 +106,8 @@ export function WorkspaceSwitcher({
   const navigate = useNavigate()
   const { current, workspaces, switchWorkspace, refresh } = useWorkspace()
   const { user, logout } = useAuth()
+  // Every way out of the current page asks first when a day plan holds an unsaved draft (PLAN-36).
+  const { confirmLeave } = useDraftGuard()
   const [createOpen, setCreateOpen] = useState(false)
   const [newName, setNewName] = useState('')
 
@@ -120,10 +123,11 @@ export function WorkspaceSwitcher({
     onSuccess: async (ws) => {
       toast.success(t('workspace.createSuccess', 'Workspace created'))
       await refresh()
-      await switchWorkspace(ws.id)
       setCreateOpen(false)
       setNewName('')
-      navigate('/workspace/settings')
+      confirmLeave(() => {
+        void switchWorkspace(ws.id).then(() => navigate('/workspace/settings'))
+      })
     },
     onError: (e: unknown) => {
       const detail =
@@ -182,7 +186,8 @@ export function WorkspaceSwitcher({
                 return (
                   <DropdownMenuItem
                     key={w.id}
-                    onClick={() => void switchWorkspace(w.id)}
+                    // The active workspace is no way out: nothing to ask.
+                    onClick={() => !isActive && confirmLeave(() => void switchWorkspace(w.id))}
                     className="flex items-center gap-2"
                   >
                     <IconBadge
@@ -205,7 +210,7 @@ export function WorkspaceSwitcher({
 
           {/* Workspace actions */}
           <DropdownMenuItem
-            onClick={() => navigate('/workspace/settings')}
+            onClick={() => confirmLeave(() => navigate('/workspace/settings'))}
             className="flex items-center gap-2"
           >
             <Settings size={14} />
@@ -224,7 +229,7 @@ export function WorkspaceSwitcher({
           {/* Admin */}
           {user.is_superuser && (
             <DropdownMenuItem
-              onClick={() => navigate('/admin')}
+              onClick={() => confirmLeave(() => navigate('/admin'))}
               className="flex items-center gap-2"
             >
               <Shield size={14} />
@@ -311,7 +316,7 @@ export function WorkspaceSwitcher({
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
-            onClick={logout}
+            onClick={() => confirmLeave(logout)}
             className="flex items-center gap-2 text-rose-600 focus:text-rose-600"
           >
             <LogOut size={14} />
