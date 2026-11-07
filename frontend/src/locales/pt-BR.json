@@ -325,6 +325,8 @@
     "uploading": "Enviando"
   },
   "nav": {
+    "back": "Voltar",
+    "forward": "Avançar",
     "adminBadge": "admin",
     "adminLink": "{{name}} (admin)",
     "collapseSidebar": "Recolher barra lateral",

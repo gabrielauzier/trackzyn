@@ -187,6 +187,101 @@ describe('app layout title bar', () => {
   })
 })
 
+describe('app layout desktop frame', () => {
+  const routed = () =>
+    renderWithProviders(
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<p>Home page</p>} />
+          <Route path="/agenda" element={<p>Agenda page</p>} />
+        </Route>
+      </Routes>,
+      { route: '/' },
+    )
+  const titleBar = () => document.querySelector<HTMLElement>('[data-slot="desktop-titlebar"]')
+
+  it('on macOS, a white bar across the top drags the window, and the page sits in a card under it', () => {
+    installDesktopApi('darwin')
+    routed()
+
+    const bar = titleBar()!
+    expect(bar).not.toBeNull()
+    // The sidebar's colour, from the large layout up (below it the narrow header stays).
+    expect(bar).toHaveClass('bg-sidebar', 'hidden', 'lg:flex', 'fixed', 'top-0', 'h-11', DRAG)
+    for (const button of within(bar).getAllByRole('button')) expect(button).toHaveClass(NO_DRAG)
+
+    // The page scrolls by itself to the window's right and bottom edges: only its top-left corner is
+    // rounded, with a border on the top and the left alone.
+    const page = screen.getByRole('main')
+    expect(page).toHaveAttribute('data-desktop-frame')
+    expect(page).toHaveClass('lg:fixed', 'lg:top-11', 'lg:right-0', 'lg:bottom-0', 'lg:overflow-y-auto', 'lg:rounded-tl-xl', 'lg:border-t', 'lg:border-l', 'lg:bg-background')
+    expect(page.className).not.toMatch(/lg:(right|bottom)-2|lg:rounded-xl|lg:border(\s|$)|lg:border-[rb]\b/)
+    // The sidebar starts under the bar, with no line beside the card.
+    expect(screen.getByRole('complementary')).toHaveClass('lg:top-11', 'lg:border-r-0')
+  })
+
+  it('on Windows and Linux, the same frame without a drag region (the system title bar stays)', () => {
+    for (const platform of ['win32', 'linux']) {
+      installDesktopApi(platform)
+      const { unmount } = routed()
+      expect(titleBar(), platform).not.toBeNull()
+      expect(screen.getByRole('main'), platform).toHaveAttribute('data-desktop-frame')
+      expect(document.body.innerHTML, platform).not.toContain('-webkit-app-region')
+      unmount()
+      Reflect.deleteProperty(window, 'trackzyn')
+    }
+  })
+
+  it('on the web, no bar and no card: the page scrolls with the window as before', () => {
+    routed()
+    expect(titleBar()).toBeNull()
+    expect(screen.getByRole('main')).not.toHaveAttribute('data-desktop-frame')
+    expect(screen.getByRole('main').className).not.toMatch(/lg:rounded/)
+  })
+
+  it('goes back and forward through the pages seen, each button off at its end', async () => {
+    installDesktopApi('darwin')
+    const { user } = routed()
+    const back = () => within(titleBar()!).getByRole('button', { name: 'Back' })
+    const forward = () => within(titleBar()!).getByRole('button', { name: 'Forward' })
+    expect(back()).toBeDisabled()
+    expect(forward()).toBeDisabled()
+
+    await user.click(screen.getByRole('link', { name: 'Agenda' }))
+    expect(await screen.findByText('Agenda page')).toBeInTheDocument()
+    expect(back()).toBeEnabled()
+    expect(forward()).toBeDisabled()
+
+    await user.click(back())
+    expect(await screen.findByText('Home page')).toBeInTheDocument()
+    expect(back()).toBeDisabled()
+    expect(forward()).toBeEnabled()
+
+    await user.click(forward())
+    expect(await screen.findByText('Agenda page')).toBeInTheDocument()
+    expect(forward()).toBeDisabled()
+  })
+
+  it('lines the back and forward buttons up with the start of the page, clear of the macOS window buttons', async () => {
+    installDesktopApi('darwin')
+    const { user } = routed()
+    const group = () => within(titleBar()!).getByRole('button', { name: 'Back' }).parentElement!
+    expect(group()).toHaveClass('lg:left-60')
+    // Collapsed, the page starts at 64 px, under the window buttons (16 to 68 px): the arrows keep to
+    // 84 px, 16 px past them.
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+    expect(group()).toHaveClass('lg:left-21')
+    expect(group().className).not.toMatch(/lg:left-16/)
+  })
+
+  it('on Windows and Linux, with no window buttons in the bar, the collapsed arrows start with the page', async () => {
+    installDesktopApi('win32')
+    const { user } = routed()
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+    expect(within(titleBar()!).getByRole('button', { name: 'Back' }).parentElement!).toHaveClass('lg:left-16')
+  })
+})
+
 describe('app layout sidebar', () => {
   it('offers the list entries, with All my lists selected on the home', () => {
     state.canWrite = true
