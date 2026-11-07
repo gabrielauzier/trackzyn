@@ -659,8 +659,8 @@ T37
 
 **Done when**:
 
-- [ ] Concluídas não entram; projeções respeitam `until` e `count`; séries sem hora não são projetadas
-- [ ] Gate check passes (full)
+- [x] Concluídas não entram; projeções respeitam `until` e `count`; séries sem hora não são projetadas
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
