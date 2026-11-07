@@ -6,6 +6,8 @@ import { ScheduledBlock } from '@/components/agenda/scheduled-block'
 import { SessionBlock } from '@/components/agenda/session-block'
 import { UntimedRow } from '@/components/agenda/untimed-row'
 import { minuteClock } from '@/lib/agenda/format'
+import { scheduledColors } from '@/lib/agenda/scheduled-colors'
+import { longDay } from '@/lib/schedule'
 import { joinPieces } from '@/lib/agenda/join'
 import {
   DAY_MINUTES,
@@ -14,6 +16,7 @@ import {
   dayPieces,
   dayTotal,
   minuteOf,
+  scheduledMinutes,
   scheduledPieces,
   zonedInstant,
   type Piece,
@@ -128,8 +131,9 @@ export function WeekGrid({
   const draft = drag?.draft ?? null
   const newDraft = draft !== null && draft.sessionId === null ? draft : null
   const adjusting = draft !== null && draft.sessionId !== null ? draft : null
+  const scheduledDraft = drag?.scheduledDraft ?? null
   // While a block moves, the closed hand shows wherever the pointer goes (ADJ-14).
-  const grabbing = Boolean(drag?.dragging) && draft?.mode === 'move'
+  const grabbing = (Boolean(drag?.dragging) && draft?.mode === 'move') || scheduledDraft !== null
   // The session being adjusted follows the pointer until it is released.
   const shown = useMemo(
     () =>
@@ -223,6 +227,8 @@ export function WeekGrid({
                     if ('scheduled' in laidPiece) {
                       const entry = laidPiece.scheduled
                       const id = entry.kind === 'task' ? entry.task.id : `${entry.occurrence.series_id}:${entry.occurrence.on}`
+                      // Only the open occurrence moves, never a projection (US-6, D14).
+                      const task = entry.kind === 'task' && drag?.schedulable ? entry.task : null
                       return (
                         <ScheduledBlock
                           key={`scheduled:${id}`}
@@ -230,6 +236,20 @@ export function WeekGrid({
                           pxPerMinute={pxPerMinute}
                           canWrite={drag !== undefined}
                           onOpen={onOpenTask}
+                          dragging={task !== null && scheduledDraft?.taskId === task.id}
+                          onDragStart={
+                            task
+                              ? (event) =>
+                                  drag!.startMoveScheduled(event, {
+                                    taskId: task.id,
+                                    title: task.title,
+                                    color: task.list.color,
+                                    day: task.scheduled_on,
+                                    time: task.scheduled_time!,
+                                    length: scheduledMinutes(task.estimate_minutes),
+                                  })
+                              : undefined
+                          }
                         />
                       )
                     }
@@ -274,6 +294,21 @@ export function WeekGrid({
                       </SessionBlock>
                     )
                   })}
+                  {scheduledDraft && scheduledDraft.start !== null && scheduledDraft.day === day && (
+                    <div
+                      data-scheduled-draft
+                      aria-hidden
+                      className="pointer-events-none absolute inset-x-0 z-20 rounded-md border-2 border-dashed border-primary bg-primary/15"
+                      style={{ top: scheduledDraft.start * pxPerMinute, height: scheduledDraft.length * pxPerMinute }}
+                    >
+                      <span className="absolute top-1 left-1 rounded bg-foreground px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-background tabular-nums">
+                        {`${longDay(day, t, locale)} · ${t('agenda.range', {
+                          start: minuteClock(scheduledDraft.start),
+                          end: minuteClock((scheduledDraft.start + scheduledDraft.length) % DAY_MINUTES),
+                        })}`}
+                      </span>
+                    </div>
+                  )}
                   {newDraft && newDraft.day === day && (
                     <div
                       data-draft
@@ -311,6 +346,17 @@ export function WeekGrid({
           })}
         </div>
       </div>
+      {scheduledDraft && (
+        // The copy of the task that follows the pointer while it is dragged (US-14).
+        <div
+          data-drag-ghost
+          aria-hidden
+          className="pointer-events-none fixed z-50 max-w-48 truncate rounded-md border-2 border-dotted px-1.5 py-0.5 text-xs shadow-lg"
+          style={{ left: scheduledDraft.x + 8, top: scheduledDraft.y + 8, ...scheduledColors(scheduledDraft.color) }}
+        >
+          {scheduledDraft.title}
+        </div>
+      )}
     </div>
   )
 }

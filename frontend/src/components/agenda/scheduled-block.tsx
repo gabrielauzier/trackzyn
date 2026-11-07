@@ -1,4 +1,4 @@
-import type { CSSProperties, KeyboardEvent } from 'react'
+import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Clock, Repeat } from 'lucide-react'
 
@@ -17,6 +17,10 @@ interface ScheduledBlockProps {
   canWrite: boolean
   /** A click opens the task: the task itself, or the open occurrence of a projection (US-5, US-11). */
   onOpen?: (taskId: string) => void
+  /** Starts dragging the block to another day or time; absent, the block does not move (US-6, D14). */
+  onDragStart?: (event: PointerEvent) => void
+  /** The block is being dragged: its place fades while a copy follows the pointer (US-14). */
+  dragging?: boolean
 }
 
 /**
@@ -26,7 +30,7 @@ interface ScheduledBlockProps {
  * and the estimate, `Agendada · HH:MM – HH:MM` (`(1h)` without an estimate), the list and the column, and what a
  * click and a drag do; for a projection, `Próxima ocorrência · <dia> · HH:MM – HH:MM` and the rule.
  */
-export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen }: ScheduledBlockProps) {
+export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen, onDragStart, dragging = false }: ScheduledBlockProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const { scheduled } = piece
@@ -72,16 +76,21 @@ export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen }: Schedul
             aria-label={`${source.title}, ${when}`}
             data-scheduled-id={taskId}
             data-projected={projection || undefined}
+            data-draggable={onDragStart ? true : undefined}
+            data-dragging={dragging || undefined}
             className={cn(
               'absolute overflow-hidden rounded-md border-2 border-dotted select-none',
               'outline-2 outline-transparent hover:z-20 focus-visible:outline-(--ring)',
+              // Hover: a solid edge and the open hand of a block that moves.
+              onDragStart && 'cursor-grab hover:border-solid',
               projection && 'opacity-50',
+              dragging && 'opacity-30',
             )}
             style={style}
             onClick={open}
             onKeyDown={onKeyDown}
             // The block is not empty time: a press on it starts no draft on the column under it.
-            onPointerDown={(event) => event.stopPropagation()}
+            onPointerDown={(event) => (onDragStart ? onDragStart(event) : event.stopPropagation())}
           >
             <span
               aria-hidden

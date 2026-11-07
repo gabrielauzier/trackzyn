@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { useGridDrag, type Draft, type DragTarget } from './use-grid-drag'
+import { useGridDrag, type Draft, type DragTarget, type ScheduledDrop, type ScheduledTarget } from './use-grid-drag'
 
 const DAY = '2026-11-03'
 const at = (hours: number, minutes: number) => hours * 60 + minutes
@@ -225,6 +225,74 @@ describe('useGridDrag', () => {
       drag(screen.getByTestId('block'), at(14, 10), at(14, 10))
       expect(onCommit).not.toHaveBeenCalled()
       expect(screen.queryByTestId('draft')).toBeNull()
+    })
+  })
+
+  describe('moveScheduled (US-6)', () => {
+    const plan: ScheduledTarget = { taskId: 't1', title: 'Plan', color: 3, day: DAY, time: '14:00', length: 90 }
+
+    /** A column with a scheduled block of 14:00 – 15:30 and the session of 14:00 – 15:00; nothing has begun on it yet. */
+    function Scheduled({ onDrop, onCommit = vi.fn(), dayAt }: { onDrop?: (drop: ScheduledDrop) => void; onCommit?: (draft: Draft) => void; dayAt?: (clientX: number) => string | null }) {
+      // A future day: no session may be on it (AGENDA-23).
+      const drag = useGridDrag({ pxPerMinute: 1, limit: () => 0, dayAt, onCommit, onScheduledDrop: onDrop })
+      return (
+        <div data-agenda-column data-testid="column" onPointerDown={(event) => drag.startCreate(event, DAY)}>
+          <div data-testid="scheduled" onPointerDown={(event) => drag.startMoveScheduled(event, plan)} />
+          <div data-testid="block" onPointerDown={(event) => drag.startMove(event, oneHour)} />
+          {drag.scheduledDraft && (
+            <output data-testid="scheduled-draft">{`${drag.scheduledDraft.day} ${drag.scheduledDraft.start} ${drag.scheduledDraft.x},${drag.scheduledDraft.y}`}</output>
+          )}
+        </div>
+      )
+    }
+
+    it('moves the block to another day and time in steps of 15 min, in the future, keeping its length', () => {
+      const onDrop = vi.fn()
+      render(<Scheduled onDrop={onDrop} dayAt={(clientX) => (clientX >= 200 ? '2026-11-06' : DAY)} />)
+      const block = screen.getByTestId('scheduled')
+      fireEvent.pointerDown(block, { clientX: 0, clientY: at(14, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientX: 300, clientY: at(9, 17) })
+      // While it moves, the draft keeps the 90 min from the new start and follows the pointer.
+      expect(screen.getByTestId('scheduled-draft')).toHaveTextContent(`2026-11-06 ${at(9, 0)} 300,${at(9, 17)}`)
+      fireEvent.pointerUp(window, { clientX: 300, clientY: at(9, 17) })
+      expect(onDrop).toHaveBeenCalledExactlyOnceWith({ taskId: 't1', day: '2026-11-06', time: '09:00', from: { day: DAY, time: '14:00' } })
+      expect(screen.queryByTestId('scheduled-draft')).toBeNull()
+    })
+
+    it('snaps 16:22 to 16:15 on the same day', () => {
+      const onDrop = vi.fn()
+      render(<Scheduled onDrop={onDrop} />)
+      drag(screen.getByTestId('scheduled'), at(14, 0), at(16, 22))
+      expect(onDrop).toHaveBeenCalledWith(expect.objectContaining({ day: DAY, time: '16:15' }))
+    })
+
+    it('keeps the start within the day: dragged past midnight, it starts at 23:45', () => {
+      const onDrop = vi.fn()
+      render(<Scheduled onDrop={onDrop} />)
+      drag(screen.getByTestId('scheduled'), at(14, 0), at(23, 59) + 300)
+      expect(onDrop).toHaveBeenCalledWith(expect.objectContaining({ time: '23:45' }))
+    })
+
+    it('saves nothing for a press released in place: the click opens the task', () => {
+      const onDrop = vi.fn()
+      render(<Scheduled onDrop={onDrop} />)
+      drag(screen.getByTestId('scheduled'), at(14, 10), at(14, 10))
+      expect(onDrop).not.toHaveBeenCalled()
+    })
+
+    it('does not move a scheduled block where the page saves nothing, as for a viewer', () => {
+      render(<Scheduled />)
+      drag(screen.getByTestId('scheduled'), at(14, 0), at(16, 0))
+      expect(screen.queryByTestId('scheduled-draft')).toBeNull()
+    })
+
+    it('AGENDA-23 still keeps a session out of a day that has not begun', () => {
+      const onCommit = vi.fn()
+      const onDrop = vi.fn()
+      render(<Scheduled onDrop={onDrop} onCommit={onCommit} />)
+      drag(screen.getByTestId('block'), at(14, 10), at(16, 10))
+      expect(onCommit).not.toHaveBeenCalled()
+      expect(onDrop).not.toHaveBeenCalled()
     })
   })
 })

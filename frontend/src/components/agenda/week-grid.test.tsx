@@ -528,4 +528,45 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
     fireEvent.pointerUp(window, { clientY: y(11) })
     expect(container.querySelector('[data-draft]')).toBeNull()
   })
+
+  describe('dragging a scheduled block (US-6)', () => {
+    function Draggable({ onDrop = vi.fn(), timed, projected }: { onDrop?: () => void; timed: ScheduledTask[]; projected?: ProjectedOccurrence[] }) {
+      const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit: vi.fn(), onScheduledDrop: onDrop })
+      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={timed} projected={projected} />
+    }
+
+    it('lets the open occurrence be dragged, with the open hand on hover, but never a projection', () => {
+      renderWithProviders(<Draggable timed={[scheduled('a', '2026-11-05', '10:00')]} projected={[projection]} />)
+      const block = screen.getByRole('button', { name: /^Scheduled a/ })
+      expect(block).toHaveAttribute('data-draggable', 'true')
+      expect(block).toHaveClass('cursor-grab', 'hover:border-solid')
+      expect(screen.getByRole('button', { name: /^Weekly review/ })).not.toHaveAttribute('data-draggable')
+    })
+
+    it('does not let a viewer drag a block', () => {
+      grid({ timed: [scheduled('a', '2026-11-05', '10:00')] })
+      expect(screen.getByRole('button', { name: /^Scheduled a/ })).not.toHaveAttribute('data-draggable')
+    })
+
+    it('fades the block, draws the draft with its day and times and a copy that follows the pointer, and saves on release', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Draggable onDrop={onDrop} timed={[scheduled('a', '2026-11-05', '10:00')]} />)
+      const block = screen.getByRole('button', { name: /^Scheduled a/ })
+      fireEvent.pointerDown(block, { clientX: 10, clientY: y(10, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientX: 40, clientY: y(16, 10) })
+      expect(block).toHaveAttribute('data-dragging', 'true')
+      expect(block).toHaveClass('opacity-30')
+      const draft = column(container, '2026-11-05').querySelector<HTMLElement>('[data-scheduled-draft]')!
+      expect(draft).toHaveTextContent('Thu, Nov 5 · 16:00 – 17:30')
+      expect([draft.style.top, draft.style.height]).toEqual([`${y(16)}px`, `${90 * PX_PER_MINUTE}px`])
+      const ghost = container.querySelector<HTMLElement>('[data-drag-ghost]')!
+      expect(ghost).toHaveTextContent('Scheduled a')
+      expect([ghost.style.left, ghost.style.top]).toEqual(['48px', `${y(16, 10) + 8}px`])
+
+      fireEvent.pointerUp(window, { clientX: 40, clientY: y(16, 10) })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'a', day: '2026-11-05', time: '16:00', from: { day: '2026-11-05', time: '10:00' } })
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+    })
+  })
 })

@@ -25,6 +25,46 @@ export interface DragTarget {
   sessionId: string | null
 }
 
+/** A scheduled task to drag (US-6): its day, its start time and its length on the grid. */
+export interface ScheduledTarget {
+  taskId: string
+  title: string
+  /** The colour of its list, for the copy that follows the pointer. */
+  color: number
+  day: string
+  /** `HH:MM`. */
+  time: string
+  /** The estimate, or 1h without one (D23). */
+  length: number
+}
+
+/** A scheduled task while it is dragged: where it would go, and the pointer the copy follows (US-6, US-14). */
+export interface ScheduledDraft {
+  taskId: string
+  title: string
+  color: number
+  /** Its schedule before the drag. */
+  from: { day: string; time: string | null }
+  length: number
+  day: string
+  /** The start over the grid, in minutes since the local midnight of `day`, in steps of 15 min. */
+  start: number | null
+  x: number
+  y: number
+}
+
+/** A scheduled task released at a new day or time (US-6, US-14). */
+export interface ScheduledDrop {
+  taskId: string
+  day: string
+  /** `HH:MM`, or null when released over the `Sem hora` row. */
+  time: string | null
+  from: { day: string; time: string | null }
+}
+
+/** What is under the pointer: a column of the grid, with the top of the column on the screen. */
+export type DropZone = { day: string; untimed: false; top: number } | { day: string; untimed: true }
+
 export interface GridDragOptions {
   pxPerMinute: number
   snapMinutes?: number
@@ -34,9 +74,31 @@ export interface GridDragOptions {
   dayAt?: (clientX: number) => string | null
   /** Called when the pointer is released with the final draft. */
   onCommit: (draft: Draft) => void
+  /** A scheduled task released at a new place; absent, scheduled tasks do not move (US-6). */
+  onScheduledDrop?: (drop: ScheduledDrop) => void
+  /** The zone under the pointer; absent, the column the gesture began on, on the day of `dayAt`. */
+  zoneAt?: (clientX: number, clientY: number) => DropZone | null
 }
 
 const MAX_MINUTES = DAY_MINUTES
+
+/** `HH:MM` of a minute of the day. */
+const clockOf = (minute: number) => `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`
+const minuteOfClock = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours! * 60 + minutes!
+}
+
+interface ScheduledGesture {
+  target: { taskId: string; title: string; color: number; from: { day: string; time: string | null }; length: number }
+  /** Top of the column the gesture began on. */
+  columnTop: number
+  /** Minutes between the start of the block and the pointer. */
+  grab: number
+  startX: number
+  startY: number
+  moved: boolean
+}
 
 interface Gesture {
   mode: DragMode
@@ -78,14 +140,22 @@ const columnTopOf = (event: ReactPointerEvent) => {
  * (ADJ-10), pull the top or the bottom edge (AGENDA-18, AGENDA-29) and move a whole block, saved or new
  * (AGENDA-30, ADJ-12). Everything snaps to 15 min, never ends after now and lasts from 1 min to 24 h.
  */
-export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCommit }: GridDragOptions) {
+export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCommit, onScheduledDrop, zoneAt }: GridDragOptions) {
   const [draft, setDraft] = useState<Draft | null>(null)
   const gesture = useRef<Gesture | null>(null)
   const latest = useRef<Draft | null>(null)
-  const options = useRef({ pxPerMinute, snapMinutes, limit, dayAt, onCommit })
+  const options = useRef({ pxPerMinute, snapMinutes, limit, dayAt, onCommit, onScheduledDrop, zoneAt })
   useEffect(() => {
-    options.current = { pxPerMinute, snapMinutes, limit, dayAt, onCommit }
+    options.current = { pxPerMinute, snapMinutes, limit, dayAt, onCommit, onScheduledDrop, zoneAt }
   })
+  const [scheduledDraft, setScheduledDraft] = useState<ScheduledDraft | null>(null)
+  const scheduledGesture = useRef<ScheduledGesture | null>(null)
+  const latestScheduled = useRef<ScheduledDraft | null>(null)
+  const [movingScheduled, setMovingScheduled] = useState(false)
+  const showScheduled = useCallback((next: ScheduledDraft | null) => {
+    latestScheduled.current = next
+    setScheduledDraft(next)
+  }, [])
   const [dragging, setDragging] = useState(false)
 
   const show = useCallback((next: Draft | null) => {
@@ -201,9 +271,85 @@ export function useGridDrag({ pxPerMinute, snapMinutes = 15, limit, dayAt, onCom
     }
   }, [dragging, place, show])
 
+  /**
+   * Where a scheduled task goes with the pointer at `clientX`/`clientY`: the column under it, at the pointer less the
+   * grab, in steps of 15 min within the day, in the past or the future alike (US-6); null where it cannot go.
+   */
+  const placeScheduled = useCallback((current: ScheduledGesture, clientX: number, clientY: number): ScheduledDraft | null => {
+    const { pxPerMinute: px, snapMinutes: step, dayAt: dayOf, zoneAt: zoneOf } = options.current
+    const zone: DropZone | null = zoneOf
+      ? zoneOf(clientX, clientY)
+      : { day: dayOf?.(clientX) ?? current.target.from.day, untimed: false, top: current.columnTop }
+    if (zone === null || zone.untimed) return null
+    const pointer = (clientY - zone.top) / px
+    const start = Math.min(DAY_MINUTES - step, Math.max(0, Math.round((pointer - current.grab) / step) * step))
+    return { ...current.target, day: zone.day, start, x: clientX, y: clientY }
+  }, [])
+
+  const beginScheduled = useCallback(
+    (event: ReactPointerEvent, target: ScheduledTarget) => {
+      if (event.button !== 0 || !options.current.onScheduledDrop) return
+      event.stopPropagation()
+      const columnTop = columnTopOf(event)
+      const start = minuteOfClock(target.time)
+      const { taskId, title, color, length } = target
+      scheduledGesture.current = {
+        target: { taskId, title, color, length, from: { day: target.day, time: target.time } },
+        columnTop,
+        grab: (event.clientY - columnTop) / options.current.pxPerMinute - start,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+      }
+      showScheduled({ taskId, title, color, length, from: { day: target.day, time: target.time }, day: target.day, start, x: event.clientX, y: event.clientY })
+      setMovingScheduled(true)
+    },
+    [showScheduled],
+  )
+
+  useEffect(() => {
+    if (!movingScheduled) return
+    const move = (event: PointerEvent) => {
+      const current = scheduledGesture.current
+      if (!current) return
+      if (Math.abs(event.clientX - current.startX) >= CLICK_TOLERANCE || Math.abs(event.clientY - current.startY) >= CLICK_TOLERANCE) {
+        current.moved = true
+      }
+      const next = placeScheduled(current, event.clientX, event.clientY)
+      showScheduled(next ?? { ...latestScheduled.current!, x: event.clientX, y: event.clientY })
+    }
+    const up = () => {
+      const current = scheduledGesture.current
+      const final = latestScheduled.current
+      scheduledGesture.current = null
+      setMovingScheduled(false)
+      showScheduled(null)
+      // A press without a move is a click on the block: it opens the task.
+      if (!current?.moved || !final) return
+      swallowNextClick()
+      const time = final.start === null ? null : clockOf(final.start)
+      if (final.day === final.from.day && time === final.from.time) return
+      options.current.onScheduledDrop?.({ taskId: final.taskId, day: final.day, time, from: final.from })
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [movingScheduled, placeScheduled, showScheduled])
+
   return {
     draft,
     dragging,
+    /** The scheduled task being dragged, or null (US-6, US-14). */
+    scheduledDraft,
+    /** Whether scheduled tasks can be dragged: the page saves where they are released. */
+    schedulable: onScheduledDrop !== undefined,
+    /** Drags a scheduled block to another day or time, in the future too; sessions keep AGENDA-23 (US-6). */
+    startMoveScheduled: beginScheduled,
     /**
      * Sets the draft from the panel fields (AGENDA-17), or clears it with null (AGENDA-26). A saved session released at
      * a new time keeps its draft until this clears it (ADJ-01).

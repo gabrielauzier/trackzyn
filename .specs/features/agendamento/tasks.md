@@ -1109,8 +1109,8 @@ T37
 
 **Done when**:
 
-- [ ] Sessão continua sem arraste no futuro (AGENDA-23); `viewer` não arrasta
-- [ ] Gate check passes (quick)
+- [x] Sessão continua sem arraste no futuro (AGENDA-23); `viewer` não arrasta
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick
