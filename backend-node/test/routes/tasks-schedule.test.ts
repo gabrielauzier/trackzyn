@@ -84,11 +84,15 @@ describe('PATCH /api/tasks/:id with a schedule (US-1, US-2, US-7)', () => {
     expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).json()).toMatchObject({ scheduled_on: null, scheduled_time: null })
   })
 
-  it('answers 422 schedule_in_past for a day before today', async () => {
-    const { owner, workspaceId, taskId } = await setup()
-    const reply = await call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, { scheduled_on: await day(-1) })
-    expect(reply.statusCode).toBe(422)
-    expect(reply.json()).toMatchObject({ code: 'schedule_in_past' })
+  it('D31 accepts a day before today with 200, and the next read of the board shows the task in Today', async () => {
+    const { owner, workspaceId, listId, taskId } = await setup()
+    const yesterday = await day(-1)
+    const reply = await call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, { scheduled_on: yesterday })
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json()).toMatchObject({ id: taskId, scheduled_on: yesterday, scheduled_time: null })
+    const board = (await call('GET', `/api/lists/${listId}/board`, owner.token, workspaceId)).json()
+    expect(board.columns.today.tasks).toEqual([expect.objectContaining({ id: taskId, scheduled_on: yesterday })])
+    expect(board.columns.backlog.tasks).toEqual([])
   })
 
   it('answers 403 Read-only role to a viewer and 404 to another workspace, and changes nothing', async () => {
@@ -122,15 +126,18 @@ describe('POST /api/tasks with a schedule (US-7)', () => {
     expect(due.json()).toMatchObject({ column: 'today', scheduled_on: today, scheduled_time: null })
   })
 
-  it('answers 422 for a time without a day and creates nothing for a refused day', async () => {
+  it('answers 422 for a time without a day and creates nothing; D31 creates a task with a day before today', async () => {
     const { owner, workspaceId, listId } = await setup()
     const timeOnly = await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Orphan time', scheduled_time: '10:00' })
     expect(timeOnly.statusCode).toBe(422)
     expect(timeOnly.json().detail[0].loc).toEqual(['body', 'scheduled_time'])
-    const past = await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Past', scheduled_on: await day(-1) })
-    expect(past.statusCode).toBe(422)
+    const yesterday = await day(-1)
+    const past = await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Past', scheduled_on: yesterday })
+    expect(past.statusCode).toBe(201)
+    expect(past.json()).toMatchObject({ title: 'Past', scheduled_on: yesterday })
     const board = (await call('GET', `/api/lists/${listId}/board`, owner.token, workspaceId)).json()
     expect(board.columns.backlog.tasks.map((task: { title: string }) => task.title)).toEqual(['Plan'])
+    expect(board.columns.today.tasks.map((task: { title: string }) => task.title)).toEqual(['Past'])
   })
 
   it('a token with tasks:create creates a scheduled task; a viewer gets 403', async () => {

@@ -1242,8 +1242,8 @@ T45 → T46 → T47 → T48
 
 **Done when**:
 
-- [ ] `PATCH` com dia de ontem responde 200 e a próxima leitura do quadro mostra a tarefa em Hoje; os testes que esperavam `schedule_in_past` passam a esperar o novo comportamento
-- [ ] Gate check passes (full)
+- [x] `PATCH` com dia de ontem responde 200 e a próxima leitura do quadro mostra a tarefa em Hoje; os testes que esperavam `schedule_in_past` passam a esperar o novo comportamento
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

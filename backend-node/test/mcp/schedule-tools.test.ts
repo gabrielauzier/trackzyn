@@ -31,7 +31,7 @@ async function setup() {
   const client = await connect(url, (await mintToken(t, roles.owner.token, roles.workspaceId)).value)
   const create = (args: Record<string, unknown>) => callTool(client, 'create_task', { list_id: listId, title: 'Review', ...args })
   const stored = () => t.ctx.db.select().from(tasks).where(eq(tasks.listId, listId))
-  return { client, listId, create, stored }
+  return { ...roles, client, listId, create, stored }
 }
 
 const WEEKLY = (weekday: number) => ({ freq: 'weekly', interval: 1, weekdays: [weekday] })
@@ -90,10 +90,13 @@ describe('create_task with a schedule (US-7)', () => {
     expect(await stored()).toEqual([])
   })
 
-  it('a day before today is refused with 422 schedule_in_past', async () => {
-    const { create, stored } = await setup()
-    expect(await create({ scheduled_on: date(-2) })).toMatchObject({ isError: true, text: 'The scheduled day is before today' })
-    expect(await stored()).toEqual([])
+  it('D31 takes a day before today, and the next read of the board shows the task in Today', async () => {
+    const { create, listId, owner, workspaceId } = await setup()
+    const result = await create({ scheduled_on: date(-2) })
+    expect(result.isError).toBe(false)
+    expect(result.json()).toMatchObject({ scheduled_on: date(-2), scheduled_time: null })
+    const board = (await call('GET', `/api/lists/${listId}/board`, owner.token, workspaceId)).json()
+    expect(board.columns.today.tasks).toEqual([expect.objectContaining({ id: result.json().id, scheduled_on: date(-2) })])
   })
 })
 

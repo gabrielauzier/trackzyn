@@ -45,8 +45,9 @@ const scheduleError = (message: string, code: string) => new HttpError(422, mess
  * (D3, D21): a new day clears `schedule_applied_at`, a new time alone keeps it and leaves the column of a task
  * that already came to Today (D26); today takes the task to the end of Today and
  * marks it applied; a day of this week (Monday to Sunday) takes a Backlog task to the end of This week; This
- * week and Today keep a task given a later day. A day before today, or a time of today that has passed,
- * is refused with 422. Clearing the day of an open occurrence ends its series and leaves a plain task (D29).
+ * week and Today keep a task given a later day. A day before today, or a time of today that has passed, is
+ * accepted (D31): only the picker blocks them, and a past day takes the task to Today on the next read
+ * (applyDueSchedules). Clearing the day of an open occurrence ends its series and leaves a plain task (D29).
  * An unchanged day and time change nothing, so clearing only the time of a task that
  * came to Today from an earlier day keeps that day.
  */
@@ -78,10 +79,6 @@ export async function setSchedule(
     let appliedAt: Date | null = applied ? current.scheduleAppliedAt : null
     if (on !== null) {
       const clock = await workspaceClock(tx, workspaceId, now)
-      if (dayChanged && on < clock.today) throw scheduleError('The scheduled day is before today', 'schedule_in_past')
-      if (on === clock.today && time !== null && `${time}:00` < clock.time) {
-        throw scheduleError('The scheduled time of today has passed', 'schedule_in_past')
-      }
       if (current.column !== 'done' && !applied) {
         if (on === clock.today) {
           appliedAt = now

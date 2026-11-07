@@ -171,19 +171,23 @@ describe('setSchedule: the rules of saving a schedule (US-1, US-2, D3, D21)', ()
     expect(await schedule(id, '2026-11-16', null, sundayNight)).toMatchObject({ column: 'backlog', scheduledOn: '2026-11-16', scheduleAppliedAt: null })
   })
 
-  it('refuses a day before today with 422 schedule_in_past and keeps the task as it was', async () => {
+  it('D31 accepts a day before today, and the next read takes the task to Today keeping that day', async () => {
     const id = await task('backlog', { on: '2026-11-20' })
-    const error = await refusal(schedule(id, '2026-11-10'))
-    expect(error).toMatchObject({ statusCode: 422, extra: { code: 'schedule_in_past' } })
-    expect(await row(id)).toMatchObject({ scheduledOn: '2026-11-20', column: 'backlog' })
+    expect(await schedule(id, '2026-11-02', '09:00')).toMatchObject({ scheduledOn: '2026-11-02', scheduledTime: '09:00:00', scheduleAppliedAt: null })
+    expect(await applyDueSchedules(db, workspaceId, NOW)).toBe(1)
+    expect(await row(id)).toMatchObject({ column: 'today', scheduledOn: '2026-11-02', scheduledTime: '09:00:00', scheduleAppliedAt: NOW })
   })
 
-  it('refuses a time of today that has passed, in the workspace timezone, and takes one still ahead', async () => {
+  it('D31 accepts a time of today that has passed, in the workspace timezone, and takes the task to Today', async () => {
     const id = await task('backlog')
-    const error = await refusal(schedule(id, '2026-11-11', '14:00'))
-    expect(error).toMatchObject({ statusCode: 422, extra: { code: 'schedule_in_past' } })
-    expect(await row(id)).toMatchObject({ scheduledOn: null, scheduledTime: null, column: 'backlog' })
-    expect(await schedule(id, '2026-11-11', '14:15')).toMatchObject({ scheduledTime: '14:15:00', column: 'today' })
+    expect(await schedule(id, '2026-11-11', '14:00')).toMatchObject({ scheduledOn: '2026-11-11', scheduledTime: '14:00:00', column: 'today', scheduleAppliedAt: NOW })
+  })
+
+  it('D31 restores an earlier day on a task already in Today (undo in the Agenda) and keeps it in Today', async () => {
+    const id = await task('today', { on: '2026-11-11', time: '10:00', appliedAt: EARLIER })
+    expect(await schedule(id, '2026-11-09', '10:00')).toMatchObject({ column: 'today', scheduledOn: '2026-11-09', scheduledTime: '10:00:00' })
+    await applyDueSchedules(db, workspaceId, NOW)
+    expect(await row(id)).toMatchObject({ column: 'today', scheduledOn: '2026-11-09' })
   })
 
   it('refuses a time without a day with 422', async () => {
