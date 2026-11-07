@@ -978,5 +978,10 @@
       "deleteSeriesHint": "No new occurrence is created.",
       "skipHint": "Deleting erases the time recorded on this task. To only postpone it, use Skip this occurrence."
     }
+  },
+  "plan": {
+    "block": {
+      "range": "{{start}} – {{end}}"
+    }
   }
 }

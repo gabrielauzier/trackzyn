@@ -367,10 +367,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Título, horário e duração aparecem; pausa e tarefa têm aparência diferente
-- [ ] Tarefa concluída aparece riscada; tarefa de outro dia mostra o selo
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `plan-block.test.tsx`
+- [x] Título, horário e duração aparecem; pausa e tarefa têm aparência diferente
+- [x] Tarefa concluída aparece riscada; tarefa de outro dia mostra o selo
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `plan-block.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

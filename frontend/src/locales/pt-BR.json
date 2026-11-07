@@ -978,5 +978,10 @@
       "deleteSeriesHint": "Nenhuma ocorrência nova é criada.",
       "skipHint": "Excluir apaga o tempo registrado nesta tarefa. Para só adiar, use Pular esta ocorrência."
     }
+  },
+  "plan": {
+    "block": {
+      "range": "{{start}} – {{end}}"
+    }
   }
 }
