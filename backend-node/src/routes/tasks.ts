@@ -10,8 +10,8 @@ import { withoutNul } from './schemas.ts'
 import { createSubtask, deleteSubtask, moveSubtask, updateSubtask } from '../services/subtasks.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { type Schedule, setSchedule } from '../services/schedule.ts'
-import { seriesView } from '../services/series.ts'
-import { type TaskWithSubtasks, createTask, deleteTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
+import { deleteOccurrence, seriesView } from '../services/series.ts'
+import { type TaskWithSubtasks, createTask, duplicateTask, getTask, moveTask, moveTaskToList, updateTask } from '../services/tasks.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
 const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
@@ -92,6 +92,8 @@ const createTaskRouteBody = createTaskBody
 const updateTaskRouteBody = updateTaskBody
   .extend(scheduleFields)
   .refine((body) => body.scheduled_time == null || body.scheduled_on !== null, timeNeedsDay)
+/** This occurrence of a series, or this one and the next ones (D16). */
+const seriesScope = z.enum(['occurrence', 'series'])
 export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
 export const addSubtaskBody = z.object({ title })
 
@@ -258,9 +260,20 @@ export function taskRoutes(ctx: AppContext) {
 
     typed.delete(
       '/api/tasks/:task_id',
-      { schema: { params: taskParams }, config: { tokenScope: 'tasks:delete' }, preValidation: writing },
+      {
+        schema: { params: taskParams, querystring: z.object({ scope: seriesScope.optional() }) },
+        config: { tokenScope: 'tasks:delete' },
+        preValidation: writing,
+      },
       async (request, reply) => {
-        await deleteTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id)
+        // An occurrence of a series is deleted alone by default; `series` also ends the series (US-12).
+        await deleteOccurrence(
+          ctx.db,
+          request.params.task_id.toLowerCase(),
+          request.workspace.workspace.id,
+          request.query.scope ?? 'occurrence',
+          request.workspace.user.id,
+        )
         return reply.code(204).send()
       },
     )

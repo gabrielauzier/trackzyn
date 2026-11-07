@@ -401,8 +401,8 @@ T37
 
 **Done when**:
 
-- [ ] As ocorrências concluídas continuam nos relatórios depois de encerrar a série
-- [ ] Gate check passes (full)
+- [x] As ocorrências concluídas continuam nos relatórios depois de encerrar a série
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full

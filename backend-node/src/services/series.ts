@@ -138,3 +138,36 @@ export async function createNextOccurrence(
   await tx.update(taskSeries).set({ createdCount: series.createdCount + 1 }).where(eq(taskSeries.id, series.id))
   return setSchedule(tx, copy.id, workspaceId, { on: next, time: occurrence.scheduledTime }, byUserId, now)
 }
+
+/** Which occurrences a delete or a schedule change covers (D16): this one, or this one and the next ones. */
+export type SeriesScope = 'occurrence' | 'series'
+
+/**
+ * Deletes the task (US-12). For an occurrence of a series, `occurrence` deletes only this one and creates
+ * the next, as completing it would (`createNextOccurrence`); `series` deletes it and ends the series. The
+ * completed occurrences stay, with their time, in both cases. Without a series the scope changes nothing.
+ */
+export async function deleteOccurrence(
+  db: Database,
+  taskId: string,
+  workspaceId: string,
+  scope: SeriesScope,
+  byUserId: string,
+  now: Date = new Date(),
+): Promise<void> {
+  const task = await findTask(db, taskId, workspaceId)
+  await db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    await lockList(tx, task.listId)
+    const current = await findTask(tx, task.id, workspaceId)
+    if (current.seriesId !== null) {
+      if (scope === 'series') {
+        const series = await lockSeries(tx, current.seriesId)
+        if (series !== null && series.endedAt === null) await tx.update(taskSeries).set({ endedAt: now }).where(eq(taskSeries.id, series.id))
+      } else if (current.column !== 'done') {
+        await createNextOccurrence(tx, current, workspaceId, byUserId, now)
+      }
+    }
+    await tx.delete(tasks).where(eq(tasks.id, current.id))
+  })
+}

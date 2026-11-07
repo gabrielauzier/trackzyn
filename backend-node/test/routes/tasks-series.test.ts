@@ -32,14 +32,14 @@ async function day(offset: number): Promise<string> {
   return result.rows[0]!.day
 }
 
-/** The roles, a workspace in Sao Paulo time, one list and one task scheduled `offset` days on, repeating by `rule`. */
-async function setup(rule: RecurrenceRule = DAILY, offset = 30) {
+/** The roles, a workspace in Sao Paulo time, one list and one task scheduled `offset` days on at `time`, repeating by `rule`. */
+async function setup(rule: RecurrenceRule = DAILY, offset = 30, time: string | null = '09:00') {
   const roles = await ownerViewerStranger(t)
   await call('PATCH', `/api/workspaces/${roles.workspaceId}`, roles.owner.token, roles.workspaceId, { timezone: TZ })
   const listId = (await call('POST', '/api/lists', roles.owner.token, roles.workspaceId, { name: 'Work', color: 1 })).json().id as string
   const on = await day(offset)
   const taskId = (
-    await call('POST', '/api/tasks', roles.owner.token, roles.workspaceId, { list_id: listId, title: 'Review', scheduled_on: on, scheduled_time: '09:00' })
+    await call('POST', '/api/tasks', roles.owner.token, roles.workspaceId, { list_id: listId, title: 'Review', scheduled_on: on, scheduled_time: time })
   ).json().id as string
   const seriesId = (await setRecurrence(t.ctx.db, taskId, roles.workspaceId, rule)).series!.id
   return { ...roles, listId, taskId, seriesId, on }
@@ -73,5 +73,58 @@ describe('completing an occurrence through the API and MCP creates the next one 
 
     expect((await others(seriesId, taskId)).map((task) => task.scheduledOn)).toEqual([await day(31)])
     expect((await series(seriesId)).createdCount).toBe(2)
+  })
+})
+
+describe('DELETE /api/tasks/:id with a scope (US-12)', () => {
+  it('scope=occurrence deletes only this one and creates the next, as completing it would', async () => {
+    const { owner, workspaceId, taskId, seriesId } = await setup()
+    const reply = await call('DELETE', `/api/tasks/${taskId}?scope=occurrence`, owner.token, workspaceId)
+    expect(reply.statusCode).toBe(204)
+
+    expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).statusCode).toBe(404)
+    expect((await others(seriesId, taskId)).map((task) => [task.scheduledOn, task.scheduledTime])).toEqual([[await day(31), '09:00:00']])
+    expect(await series(seriesId)).toMatchObject({ createdCount: 2, endedAt: null })
+  })
+
+  it('without a scope, deletes only this occurrence', async () => {
+    const { owner, workspaceId, taskId, seriesId } = await setup()
+    expect((await call('DELETE', `/api/tasks/${taskId}`, owner.token, workspaceId)).statusCode).toBe(204)
+    expect(await others(seriesId, taskId)).toHaveLength(1)
+  })
+
+  it('scope=series deletes it and ends the series; the completed occurrences stay in the reports', async () => {
+    const { owner, workspaceId, taskId, seriesId } = await setup(DAILY, 0, null)
+    await call('POST', `/api/tasks/${taskId}/move`, owner.token, workspaceId, { column: 'done', before_task_id: null })
+    const [next] = await others(seriesId, taskId)
+
+    const reply = await call('DELETE', `/api/tasks/${next!.id}?scope=series`, owner.token, workspaceId)
+    expect(reply.statusCode).toBe(204)
+    expect(await others(seriesId, taskId)).toEqual([])
+    expect((await series(seriesId)).endedAt).not.toBeNull()
+
+    const today = await day(0)
+    expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).json()).toMatchObject({ column: 'done', series: { id: seriesId, next_on: null } })
+    const report = (await call('GET', `/api/reports/overview?from=${today}&to=${today}`, owner.token, workspaceId)).json()
+    expect(report.tiles.tasks_done).toBe(1)
+    expect(report.done.days[0].tasks.map((task: { id: string }) => task.id)).toEqual([taskId])
+  })
+
+  it('a task without a series is deleted alone, whatever the scope', async () => {
+    const { owner, workspaceId, listId } = await setup()
+    const plain = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Plain' })).json().id as string
+    const before = (await t.ctx.db.select().from(tasks)).length
+    expect((await call('DELETE', `/api/tasks/${plain}?scope=series`, owner.token, workspaceId)).statusCode).toBe(204)
+    expect((await t.ctx.db.select().from(tasks)).length).toBe(before - 1)
+  })
+
+  it('answers 422 for another scope and 403 to a viewer, and deletes nothing', async () => {
+    const { owner, viewer, workspaceId, taskId, seriesId } = await setup()
+    const bad = await call('DELETE', `/api/tasks/${taskId}?scope=all`, owner.token, workspaceId)
+    expect(bad.statusCode).toBe(422)
+    expect(bad.json().detail[0].loc).toEqual(['query', 'scope'])
+    expect((await call('DELETE', `/api/tasks/${taskId}?scope=series`, viewer.token, workspaceId)).statusCode).toBe(403)
+    expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).statusCode).toBe(200)
+    expect((await series(seriesId)).endedAt).toBeNull()
   })
 })
