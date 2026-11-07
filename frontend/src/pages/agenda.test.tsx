@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
-import { agenda, lists, sessions, tasks } from '@/lib/api'
+import { agenda, focus, lists, plans, sessions, tasks } from '@/lib/api'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession, ListCard, ScheduledTask, Task } from '@/types'
+import { useLocation } from 'react-router-dom'
+import type { AgendaSession, ListCard, PlannedBlock, ScheduledTask, Task } from '@/types'
 import AgendaPage from './agenda'
 
 vi.mock('@/lib/api', () => ({
@@ -14,6 +15,8 @@ vi.mock('@/lib/api', () => ({
   agenda: { scheduled: vi.fn() },
   tasks: { get: vi.fn(), update: vi.fn(), remove: vi.fn(), create: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  plans: { planned: vi.fn() },
+  focus: { send: vi.fn() },
 }))
 
 vi.mock('sonner', async (importOriginal) => ({
@@ -75,6 +78,7 @@ beforeEach(() => {
   vi.mocked(lists.list).mockResolvedValue({ timezone: SP, lists: [card] })
   vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday] })
   vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [], projected: [] })
+  vi.mocked(plans.planned).mockResolvedValue({ blocks: [] })
   vi.mocked(sessions.tasks).mockResolvedValue({
     tasks: [{ id: 't1', title: 'Write the report', list_id: WORK, list_name: 'Work', list_color: 3, column: 'today' }],
   })
@@ -1662,3 +1666,92 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
   })
 })
 
+describe('AgendaPage: the saved plan (PLAN-24 to PLAN-29)', () => {
+  const list = { id: WORK, name: 'Work', color: 3 }
+  const coffee: PlannedBlock = { id: 'p-coffee', day: '2026-11-04', kind: 'break', start: '15:00', minutes: 15, name: 'Coffee', list }
+  const planned: PlannedBlock = {
+    id: 'p-task',
+    day: '2026-11-05',
+    kind: 'task',
+    start: '09:00',
+    minutes: 60,
+    task: { id: 't2', title: 'Fix the widget', list, done: false, scheduled_on: '2026-11-05', estimate_minutes: 60 },
+  }
+
+  function Where() {
+    return <span data-testid="where">{useLocation().pathname}</span>
+  }
+  const show = () =>
+    renderWithProviders(
+      <>
+        <AgendaPage />
+        <Where />
+      </>,
+      { route: '/agenda' },
+    )
+
+  beforeEach(() => {
+    vi.mocked(plans.planned).mockResolvedValue({ blocks: [coffee, planned] })
+  })
+
+  it('reads the plans of the week shown and draws their blocks', async () => {
+    show()
+    expect(await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ })).toBeInTheDocument()
+    expect(plans.planned).toHaveBeenCalledWith('2026-11-02', '2026-11-08')
+  })
+
+  it('PLAN-26 Começar opens an Intervalo of the break length in its list through the focus break', async () => {
+    vi.mocked(focus.send).mockResolvedValue({} as Awaited<ReturnType<typeof focus.send>>)
+    const { user } = show()
+    await user.click(await screen.findByRole('button', { name: 'Start' }))
+
+    await waitFor(() => expect(focus.send).toHaveBeenCalledOnce())
+    const { action } = vi.mocked(focus.send).mock.calls[0]![0]
+    expect(action).toMatchObject({ type: 'break', minutes: 15, list_id: WORK, occurred_at: '2026-11-04T17:07:00.000Z' })
+    expect(action.device_id).toEqual(expect.any(String))
+    expect(toast.error).not.toHaveBeenCalled()
+  })
+
+  it('PLAN-26 the panel of a planned break of today offers Começar and the plan of the day', async () => {
+    vi.mocked(focus.send).mockResolvedValue({} as Awaited<ReturnType<typeof focus.send>>)
+    const { user } = show()
+    await user.click(await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ }))
+
+    const panel = screen.getByRole('complementary', { name: 'Coffee' })
+    expect(within(panel).getByText('Planned break · today')).toBeInTheDocument()
+    expect(within(panel).getByRole('link', { name: 'Open the plan of the day' })).toHaveAttribute('href', '/planejar/2026-11-04')
+    await user.click(within(panel).getByRole('button', { name: 'Start' }))
+
+    await waitFor(() => expect(focus.send).toHaveBeenCalledOnce())
+    expect(vi.mocked(focus.send).mock.calls[0]![0].action).toMatchObject({ type: 'break', minutes: 15, list_id: WORK })
+  })
+
+  it('PLAN-45 a refused break shows the error of the focus in a toast', async () => {
+    vi.mocked(focus.send).mockRejectedValue({ response: { status: 409, data: { detail: 'A break is already open', code: 'invalid_transition' } } })
+    const { user } = show()
+    await user.click(await screen.findByRole('button', { name: 'Start' }))
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('A break is already open'))
+    expect(focus.send).toHaveBeenCalledOnce()
+  })
+
+  it('PLAN-28 a viewer gets no Começar', async () => {
+    workspace.canWrite = false
+    show()
+    await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ })
+    expect(screen.queryByRole('button', { name: 'Start' })).toBeNull()
+  })
+
+  it('PLAN-29 a click on a planned task opens the plan of its day', async () => {
+    const { user } = show()
+    await user.click(await screen.findByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ }))
+    expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-05')
+  })
+
+  it('PLAN-01 Planejar amanhã opens the plan of tomorrow in the workspace timezone', async () => {
+    const { user } = show()
+    await user.click(await screen.findByRole('button', { name: 'Plan tomorrow' }))
+    expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-05')
+  })
+})

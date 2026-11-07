@@ -1079,7 +1079,20 @@
       "breaks_zero": "0 pausas"
     },
     "agenda": {
-      "start": "Começar"
+      "start": "Começar",
+      "planTomorrow": "Planejar amanhã",
+      "breakOf": "Pausa planejada · {{day}}",
+      "today": "hoje",
+      "breakList": "Intervalo em {{list}}",
+      "startHint": "Começar encerra a sessão de tarefa aberta e abre um Intervalo de {{duration}}.",
+      "openPlan": "Abrir o plano do dia",
+      "legend": "Legenda",
+      "legendItems": {
+        "session": "Sessão",
+        "planned": "Planejado",
+        "break": "Pausa",
+        "scheduled": "Agendada"
+      }
     }
   }
 }

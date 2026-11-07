@@ -224,10 +224,10 @@ O que o código já fixa:
 | PLAN-23 | P1: Ver se o dia cabe | Tasks | Implementing |
 | PLAN-24 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-25 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
-| PLAN-26 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
-| PLAN-27 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
+| PLAN-26 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
+| PLAN-27 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-28 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
-| PLAN-29 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | In Tasks |
+| PLAN-29 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-30 | P2: Abrir o plano rápido de vários lugares | Tasks | In Tasks |
 | PLAN-31 | P2: Abrir o plano rápido de vários lugares | Tasks | In Tasks |
 | PLAN-32 | P3: Encaixar o que sobrou | Tasks | In Tasks |
@@ -243,7 +243,7 @@ O que o código já fixa:
 | PLAN-42 | Edge Cases | Tasks | Implementing |
 | PLAN-43 | Edge Cases | Tasks | Implementing |
 | PLAN-44 | Edge Cases | Tasks | Implementing |
-| PLAN-45 | Edge Cases | Tasks | In Tasks |
+| PLAN-45 | Edge Cases | Tasks | Implementing |
 
 **Coverage:** 45 total, 45 mapped to tasks (T1 a T25), 0 unmapped.
 

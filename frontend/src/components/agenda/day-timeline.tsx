@@ -6,7 +6,7 @@ import { WeekGrid, type GridDrag } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { dayOf, dayPieces, mondayOf, weekDays } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
+import type { AgendaSession, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 interface DayTimelineProps {
   /** The day shown, YYYY-MM-DD in the workspace timezone. */
@@ -48,6 +48,10 @@ interface DayTimelineProps {
   /** The tasks scheduled without a time, for the `Sem hora` row (US-14). */
   untimed?: ScheduledTask[]
   onShowDay?: (day: string) => void
+  /** The blocks of the user's saved plans, as in the week view (PLAN-24). */
+  planned?: PlannedBlock[]
+  onOpenPlanned?: (block: PlannedBlock) => void
+  onStartPlanned?: (block: PlannedBlock) => void
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -81,6 +85,9 @@ export function DayTimeline({
   onOpenTask,
   untimed,
   onShowDay,
+  planned,
+  onOpenPlanned,
+  onStartPlanned,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -153,6 +160,9 @@ export function DayTimeline({
         onOpenTask={onOpenTask}
         untimed={untimed}
         onShowDay={onShowDay}
+        planned={planned}
+        onOpenPlanned={onOpenPlanned}
+        onStartPlanned={onStartPlanned}
       />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}

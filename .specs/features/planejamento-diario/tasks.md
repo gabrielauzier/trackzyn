@@ -664,10 +664,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] `Começar` envia `minutes` e `list_id` da pausa; erro do foco aparece no toast e não abre outro Intervalo
-- [ ] Clicar num bloco de tarefa navega para `/planejar/<dia>`
-- [ ] Gate check passes: build gate
-- [ ] Test count: anteriores + os novos em `agenda.test.tsx`
+- [x] `Começar` envia `minutes` e `list_id` da pausa; erro do foco aparece no toast e não abre outro Intervalo
+- [x] Clicar num bloco de tarefa navega para `/planejar/<dia>`
+- [x] Gate check passes: build gate
+- [x] Test count: anteriores + os novos em `agenda.test.tsx`
 
 **Tests**: unit
 **Gate**: build

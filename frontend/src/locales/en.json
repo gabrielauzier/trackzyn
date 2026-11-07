@@ -1079,7 +1079,20 @@
       "breaks_zero": "0 breaks"
     },
     "agenda": {
-      "start": "Start"
+      "start": "Start",
+      "planTomorrow": "Plan tomorrow",
+      "breakOf": "Planned break · {{day}}",
+      "today": "today",
+      "breakList": "Break in {{list}}",
+      "startHint": "Start ends the open task session and opens a {{duration}} break.",
+      "openPlan": "Open the plan of the day",
+      "legend": "Legend",
+      "legendItems": {
+        "session": "Session",
+        "planned": "Planned",
+        "break": "Break",
+        "scheduled": "Scheduled"
+      }
     }
   }
 }
