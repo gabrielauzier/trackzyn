@@ -1047,6 +1047,12 @@
       "failed": "Não foi possível salvar o expediente.",
       "cancel": "Cancelar",
       "save": "Salvar"
+    },
+    "leave": {
+      "title": "Descartar o rascunho?",
+      "description": "As mudanças no plano de {{day}} ainda não foram salvas.",
+      "stay": "Continuar planejando",
+      "discard": "Descartar"
     }
   }
 }

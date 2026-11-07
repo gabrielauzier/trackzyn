@@ -1047,6 +1047,12 @@
       "failed": "Could not save the workday.",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "leave": {
+      "title": "Discard the draft?",
+      "description": "The changes to the plan of {{day}} are not saved yet.",
+      "stay": "Keep planning",
+      "discard": "Discard"
     }
   }
 }

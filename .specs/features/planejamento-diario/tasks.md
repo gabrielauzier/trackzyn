@@ -556,10 +556,10 @@ T24 → T25
 
 **Done when**:
 
-- [ ] Com rascunho sujo, sair pergunta; `Continuar planejando` fica, `Descartar` sai
-- [ ] Sem rascunho, sair não pergunta
-- [ ] Gate check passes: `npm --prefix frontend test`
-- [ ] Test count: anteriores + os novos de `draft-guard.test.tsx`
+- [x] Com rascunho sujo, sair pergunta; `Continuar planejando` fica, `Descartar` sai
+- [x] Sem rascunho, sair não pergunta
+- [x] Gate check passes: `npm --prefix frontend test`
+- [x] Test count: anteriores + os novos de `draft-guard.test.tsx`
 
 **Tests**: unit
 **Gate**: quick

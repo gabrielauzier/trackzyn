@@ -234,7 +234,7 @@ O que o código já fixa:
 | PLAN-33 | P3: Encaixar o que sobrou | Tasks | In Tasks |
 | PLAN-34 | Edge Cases | Tasks | Implementing |
 | PLAN-35 | Edge Cases | Tasks | Implementing |
-| PLAN-36 | Edge Cases | Tasks | In Tasks |
+| PLAN-36 | Edge Cases | Tasks | Implementing |
 | PLAN-37 | Edge Cases | Tasks | Implementing |
 | PLAN-38 | Edge Cases | Tasks | Implementing |
 | PLAN-39 | Edge Cases | Tasks | Implementing |
