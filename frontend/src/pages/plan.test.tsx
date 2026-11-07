@@ -297,6 +297,30 @@ describe('PlanPage', () => {
     expect(screen.getByTestId('where')).toHaveTextContent(`/planejar/${DAY}`)
   })
 
+  it('PLAN-13 a day chosen in the header calendar opens its plan; with a draft it asks first', async () => {
+    const { user } = show()
+    await screen.findByRole('heading', { level: 1, name: 'Segunda-feira, 9 de novembro' })
+
+    await user.click(screen.getByRole('button', { name: 'Escolher dia' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: '12' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quinta-feira, 12 de novembro' })).toBeInTheDocument()
+    expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-12')
+    expect(plans.get).toHaveBeenCalledWith('2026-11-12')
+
+    // An unsaved draft on the 12th: choosing the 20th asks `Descartar o rascunho?` before it goes (PLAN-36).
+    await dropTask('Write the spec', 600)
+    await user.click(screen.getByRole('button', { name: 'Escolher dia' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: '20' }))
+    const guard = await screen.findByRole('dialog', { name: 'Descartar o rascunho?' })
+    expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-12')
+    expect(plans.get).not.toHaveBeenCalledWith('2026-11-20')
+
+    await user.click(within(guard).getByRole('button', { name: 'Descartar' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sexta-feira, 20 de novembro' })).toBeInTheDocument()
+    expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-20')
+    expect(plans.get).toHaveBeenCalledWith('2026-11-20')
+  })
+
   it('PLAN-36 another day with an unsaved draft asks Descartar o rascunho? first', async () => {
     const { user } = show()
     await dropTask('Write the spec', 600)
