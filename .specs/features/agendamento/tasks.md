@@ -326,8 +326,8 @@ T37
 
 **Done when**:
 
-- [ ] Diária, dias úteis, semanal com vários dias e intervalo 2, mensal no dia 31 em fevereiro, concluída atrasada (pula as perdidas) e adiantada (não duplica)
-- [ ] Gate check passes (full)
+- [x] Diária, dias úteis, semanal com vários dias e intervalo 2, mensal no dia 31 em fevereiro, concluída atrasada (pula as perdidas) e adiantada (não duplica)
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
