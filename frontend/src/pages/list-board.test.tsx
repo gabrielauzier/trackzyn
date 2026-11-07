@@ -542,7 +542,7 @@ describe('ListBoardPage', () => {
         await user.click(inToday().getByRole('button', { name: 'More actions' }))
         ;(await screen.findByRole('menuitem', { name: 'Schedule' })).focus()
         await user.keyboard('{ArrowRight}')
-        await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Tomorrow' }))
+        await user.click(await screen.findByRole('menuitemcheckbox', { name: /^Tomorrow/ }))
 
         await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TODAY_TASK, { scheduled_on: '2026-11-12' }))
         expect(await inToday().findByTitle('Thu, Nov 12')).toHaveTextContent('Tomorrow')
@@ -595,7 +595,7 @@ describe('ListBoardPage', () => {
         withCard({ id: 'series-1', rule, next_on: '2026-11-20' })
         const { user } = renderBoard()
         await openSchedule(user)
-        await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Tomorrow' }))
+        await user.click(await screen.findByRole('menuitemcheckbox', { name: /^Tomorrow/ }))
 
         const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
         expect(tasks.update).not.toHaveBeenCalled()
@@ -608,7 +608,7 @@ describe('ListBoardPage', () => {
         withCard({ id: 'series-1', rule, next_on: '2026-11-20' })
         const { user } = renderBoard()
         await openSchedule(user)
-        await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Tomorrow' }))
+        await user.click(await screen.findByRole('menuitemcheckbox', { name: /^Tomorrow/ }))
         const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
         await user.click(within(question).getByRole('button', { name: 'Cancel' }))
 
@@ -620,7 +620,7 @@ describe('ListBoardPage', () => {
         withCard(null)
         const { user } = renderBoard()
         await openSchedule(user)
-        await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Tomorrow' }))
+        await user.click(await screen.findByRole('menuitemcheckbox', { name: /^Tomorrow/ }))
 
         await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TODAY_TASK, { scheduled_on: '2026-11-12' }))
         expect(screen.queryByRole('dialog', { name: 'Change a repeating task' })).not.toBeInTheDocument()

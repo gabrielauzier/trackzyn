@@ -37,16 +37,18 @@ async function openSchedule(user: ReturnType<typeof show>['user']) {
   await user.click(screen.getByRole('button', { name: 'More actions' }))
   ;(await screen.findByRole('menuitem', { name: 'Schedule' })).focus()
   await user.keyboard('{ArrowRight}')
-  return screen.findByRole('menuitemcheckbox', { name: 'Today' })
+  return screen.findByRole('menuitemcheckbox', { name: /^Today/ })
 }
-const submenu = () => screen.getByRole('menuitemcheckbox', { name: 'Today' }).closest<HTMLElement>('[role="menu"]')!
+const submenu = () => screen.getByRole('menuitemcheckbox', { name: /^Today/ }).closest<HTMLElement>('[role="menu"]')!
 
 describe('TaskCardMenu: Agendar (US-1)', () => {
   it('offers Hoje, Amanhã, Próxima segunda and the picker, and nothing to remove on a task without a schedule', async () => {
     const { user } = show()
     await openSchedule(user)
     const items = [...submenu().querySelectorAll('[role^="menuitem"]')].map((item) => item.textContent?.trim())
-    expect(items).toEqual(['Today', 'Tomorrow', 'Next Monday', 'Pick date, time and repeat…'])
+    // Each shortcut shows its day on the right, with no checkbox; the picker comes after a separator.
+    expect(items).toEqual(['TodayWed, Nov 11', 'TomorrowThu, Nov 12', 'Next MondayMon, Nov 16', 'Pick date, time and repeat…'])
+    expect(submenu().querySelectorAll('[role="separator"]')).toHaveLength(1)
   })
 
   it.each([
@@ -56,29 +58,30 @@ describe('TaskCardMenu: Agendar (US-1)', () => {
   ])('%s schedules %s, keeping the time and the rule', async (name, day) => {
     const { user, onChange } = show()
     await openSchedule(user)
-    await user.click(screen.getByRole('menuitemcheckbox', { name }))
+    await user.click(screen.getByRole('menuitemcheckbox', { name: new RegExp(`^${name}`) }))
     expect(onChange).toHaveBeenCalledWith({ scheduled_on: day })
   })
 
   it('a shortcut keeps a time that is still ahead; Hoje with a time that has passed schedules today without a time (D24)', async () => {
     const ahead = show({ scheduled_on: '2026-11-13', scheduled_time: '16:00' })
     await openSchedule(ahead.user)
-    await ahead.user.click(screen.getByRole('menuitemcheckbox', { name: 'Today' }))
+    await ahead.user.click(screen.getByRole('menuitemcheckbox', { name: /^Today/ }))
     expect(ahead.onChange).toHaveBeenCalledWith({ scheduled_on: '2026-11-11' })
     ahead.unmount()
 
     const passed = show({ scheduled_on: '2026-11-13', scheduled_time: '09:00' })
     await openSchedule(passed.user)
-    await passed.user.click(screen.getByRole('menuitemcheckbox', { name: 'Today' }))
+    await passed.user.click(screen.getByRole('menuitemcheckbox', { name: /^Today/ }))
     expect(passed.onChange).toHaveBeenCalledWith({ scheduled_on: '2026-11-11', scheduled_time: null })
   })
 
   it('a scheduled task shows its schedule, marks its day and offers Remover agendamento, which clears the day', async () => {
     const { user, onChange } = show({ scheduled_on: '2026-11-12', scheduled_time: '10:00' })
     await openSchedule(user)
-    expect(within(submenu()).getByText('Thu, Nov 12 · 10:00')).toBeInTheDocument()
-    expect(screen.getByRole('menuitemcheckbox', { name: 'Tomorrow' })).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByRole('menuitemcheckbox', { name: 'Today' })).toHaveAttribute('aria-checked', 'false')
+    expect(within(submenu()).getByText('Scheduled for')).toBeInTheDocument()
+    expect(within(submenu()).getByText('Thu, Nov 12 · 10:00').tagName).toBe('STRONG')
+    expect(screen.getByRole('menuitemcheckbox', { name: /^Tomorrow/ })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('menuitemcheckbox', { name: /^Today/ })).toHaveAttribute('aria-checked', 'false')
     expect(screen.queryByRole('menuitem', { name: 'Stop repeating' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('menuitem', { name: 'Remove schedule' }))

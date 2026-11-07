@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, ArrowRight, CalendarClock, CalendarX, Copy, MoreVertical, Repeat, Replace, SkipForward, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Calendar, CalendarClock, CalendarX, Clock, Copy, MoreVertical, Repeat, Replace, SkipForward, Trash2 } from 'lucide-react'
 import { SchedulePicker, type ScheduleValue } from '@/components/schedule/schedule-picker'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -18,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { todayInTimezone } from '@/lib/date-utils'
 import { addDays, clockIn, longDay, repeatsLabel, weekdayOf } from '@/lib/schedule'
+import { cn } from '@/lib/utils'
 import type { RecurrenceRule, TaskSchedule } from '@/types'
 
 /** What a schedule item of the menu changes; a field left out keeps its value. */
@@ -157,19 +157,42 @@ function ScheduleSubmenu({ schedule, onPick }: { schedule: NonNullable<TaskCardM
       <DropdownMenuSubContent>
         {when && (
           <>
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-              <span className="block first-letter:uppercase">{when}</span>
-              {task.series && <span className="block">{repeatsLabel(task.series.rule, t, language)}</span>}
+            <DropdownMenuLabel className="flex items-start gap-2 text-xs font-normal text-muted-foreground">
+              <Calendar size={12} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
+              <span className="flex flex-col gap-0.5">
+                <span>
+                  {t('schedule.scheduledForPrefix')} <strong className="font-semibold text-foreground first-letter:uppercase inline-block">{when}</strong>
+                </span>
+                {task.series && (
+                  <span className="flex items-center gap-1 text-primary">
+                    <Repeat size={11} aria-hidden="true" /> {repeatsLabel(task.series.rule, t, language)}
+                  </span>
+                )}
+              </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
           </>
         )}
-        {shortcuts.map(({ day, label }) => (
-          <DropdownMenuCheckboxItem key={label} checked={task.scheduled_on === day} onSelect={() => shortcut(day)}>
-            {label}
-          </DropdownMenuCheckboxItem>
-        ))}
-        <DropdownMenuItem onSelect={onPick}>{t('schedule.pick')}</DropdownMenuItem>
+        {shortcuts.map(({ day, label }) => {
+          const current = task.scheduled_on === day
+          return (
+            // The day of the task is marked by the background, as in the design; the role keeps it checked for assistive tech.
+            <DropdownMenuItem
+              key={label}
+              role="menuitemcheckbox"
+              aria-checked={current}
+              className={cn(current && 'bg-muted')}
+              onSelect={() => shortcut(day)}
+            >
+              <span className="flex-1">{label}</span>
+              <span className="text-xs text-muted-foreground first-letter:uppercase">{longDay(day, t, language)}</span>
+            </DropdownMenuItem>
+          )
+        })}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={onPick}>
+          <Clock size={14} /> {t('schedule.pick')}
+        </DropdownMenuItem>
         {(task.series || task.scheduled_on) && <DropdownMenuSeparator />}
         {task.series && (
           <DropdownMenuItem onSelect={() => onChange({ recurrence: null })}>

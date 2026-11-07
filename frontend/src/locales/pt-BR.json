@@ -885,6 +885,7 @@
     "tomorrow": "Amanhã",
     "scheduled": "Agendada",
     "scheduledFor": "Agendada para {{day}}",
+    "scheduledForPrefix": "Agendada para",
     "everyDay": "Todo dia",
     "everyWeekday_1": "Toda segunda",
     "everyWeekday_2": "Toda terça",
