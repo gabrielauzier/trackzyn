@@ -181,8 +181,8 @@ export function taskRoutes(ctx: AppContext) {
       async (request, reply) => {
         const workspaceId = request.workspace.workspace.id
         const userId = request.workspace.user.id
-        const { scheduled_on: on, scheduled_time: time, ...body } = request.body
-        const input = toTaskIntake(body)
+        const input = toTaskIntake(request.body)
+        const { scheduledOn: on, scheduledTime: time } = input
         const principal = request.tokenPrincipal
         const create = async (db: typeof ctx.db) =>
           principal

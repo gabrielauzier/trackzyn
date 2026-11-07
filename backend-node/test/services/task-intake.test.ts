@@ -98,12 +98,23 @@ describe('createTaskFromToken', () => {
     ['subtask title', () => ({ subtasks: ['one', 'other'] })],
     ['subtask order', () => ({ subtasks: ['two', 'one'] })],
     ['no subtasks', () => ({ subtasks: [] })],
+    ['scheduled day', () => ({ scheduledOn: '2026-11-13' })],
   ])('IDEM-03 the same key with a different %s answers 409 and creates nothing', async (_field, changes) => {
     await send({}, 'retry-1')
 
     const error = await refusal(send(changes(), 'retry-1'))
 
     expect(error).toBeInstanceOf(HttpError)
+    expect(error).toMatchObject({ statusCode: 409, detail: 'Idempotency key reused with a different payload' })
+    expect(await storedTasks()).toHaveLength(1)
+  })
+
+  it('IDEM-03 the same key with the same day and another time answers 409; with the same time it replays', async () => {
+    const first = await send({ scheduledOn: '2026-11-13', scheduledTime: '14:00' }, 'retry-1')
+    expect((await send({ scheduledOn: '2026-11-13', scheduledTime: '14:00' }, 'retry-1')).task.id).toBe(first.task.id)
+
+    const error = await refusal(send({ scheduledOn: '2026-11-13', scheduledTime: '14:15' }, 'retry-1'))
+
     expect(error).toMatchObject({ statusCode: 409, detail: 'Idempotency key reused with a different payload' })
     expect(await storedTasks()).toHaveLength(1)
   })

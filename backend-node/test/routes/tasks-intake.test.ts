@@ -240,6 +240,26 @@ describe('Idempotency-Key', () => {
     expect(await stored()).toHaveLength(1)
   })
 
+  it('US-7 IDEM-03 the same key with the same schedule replays; with another day or time it answers 409', async () => {
+    const { listId, post, stored } = await setup()
+    const key = { 'idempotency-key': 'retry-1' }
+    const body = { list_id: listId, title: 'Planned', scheduled_on: '2099-01-05', scheduled_time: '14:00' }
+    const first = await post(body, key)
+    expect(first.statusCode).toBe(201)
+
+    const same = await post(body, key)
+    expect(same.statusCode).toBe(201)
+    expect(same.headers['idempotency-replayed']).toBe('true')
+    expect(same.json()).toMatchObject({ id: first.json().id, scheduled_on: '2099-01-05', scheduled_time: '14:00' })
+
+    for (const other of [{ scheduled_on: '2099-01-06' }, { scheduled_time: '15:00' }, { scheduled_time: null }, { scheduled_on: null, scheduled_time: null }]) {
+      const different = await post({ ...body, ...other }, key)
+      expect(different.statusCode).toBe(409)
+      expect(different.json()).toEqual({ detail: 'Idempotency key reused with a different payload' })
+    }
+    expect(await stored()).toHaveLength(1)
+  })
+
   it('IDEM-04 the key of a deleted task answers 410', async () => {
     const { token, listId, post, stored } = await setup()
     const body = { list_id: listId, title: 'Gone' }

@@ -534,8 +534,8 @@ T37
 
 **Done when**:
 
-- [ ] Mesma chave e mesmo agendamento repete a resposta; mesma chave e agendamento diferente responde 409
-- [ ] Gate check passes (full)
+- [x] Mesma chave e mesmo agendamento repete a resposta; mesma chave e agendamento diferente responde 409
+- [x] Gate check passes (full)
 
 **Tests**: integration
 **Gate**: full
