@@ -859,8 +859,8 @@ T37
 
 **Done when**:
 
-- [ ] Cada item chama a API certa; o card mostra o selo novo sem recarregar
-- [ ] Gate check passes (quick)
+- [x] Cada item chama a API certa; o card mostra o selo novo sem recarregar
+- [x] Gate check passes (quick)
 
 **Tests**: unit
 **Gate**: quick

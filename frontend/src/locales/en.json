@@ -909,6 +909,13 @@
     "weekdaysRequired": "Pick at least one day of the week",
     "monthDayRange": "Use a day from 1 to 31",
     "countRange": "Use 1 to 999 times",
-    "untilBeforeStart": "The end cannot be before the start"
+    "untilBeforeStart": "The end cannot be before the start",
+    "menu": "Schedule",
+    "nextMonday": "Next Monday",
+    "pick": "Pick date, time and repeat…",
+    "stopRepeating": "Stop repeating",
+    "remove": "Remove schedule",
+    "skip": "Skip this occurrence",
+    "pickerTitle": "Schedule task"
   }
 }

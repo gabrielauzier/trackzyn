@@ -88,6 +88,13 @@ describe('scheduleBadge: Agendada in Today (D21)', () => {
   })
 })
 
+describe('scheduleBadge: a later day kept in Today (D3)', () => {
+  it('shows the day, not Agendada, and the day with the time', () => {
+    expect(label('pt-BR', schedule('2026-11-12'), 'today')).toBe('Amanhã')
+    expect(label('pt-BR', schedule('2026-11-13', '14:00'), 'today')).toBe('Sex 14:00')
+  })
+})
+
 describe('scheduleBadge: no badge', () => {
   it('D5 Done shows none, even with a schedule', () => {
     expect(badge('pt-BR', schedule('2026-11-13', '14:00'), 'done')).toBeNull()

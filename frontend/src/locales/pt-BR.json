@@ -909,6 +909,13 @@
     "weekdaysRequired": "Escolha ao menos um dia da semana",
     "monthDayRange": "Use um dia de 1 a 31",
     "countRange": "Use de 1 a 999 vezes",
-    "untilBeforeStart": "O fim não pode ser antes do início"
+    "untilBeforeStart": "O fim não pode ser antes do início",
+    "menu": "Agendar",
+    "nextMonday": "Próxima segunda",
+    "pick": "Escolher data, hora e repetição…",
+    "stopRepeating": "Parar de repetir",
+    "remove": "Remover agendamento",
+    "skip": "Pular esta ocorrência",
+    "pickerTitle": "Agendar tarefa"
   }
 }

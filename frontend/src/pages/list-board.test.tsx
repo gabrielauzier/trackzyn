@@ -15,7 +15,7 @@ const state = vi.hoisted(() => ({ canWrite: true }))
 
 vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), board: vi.fn() },
-  tasks: { move: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), remove: vi.fn(), duplicate: vi.fn(), moveToList: vi.fn() },
+  tasks: { move: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), remove: vi.fn(), duplicate: vi.fn(), moveToList: vi.fn(), skip: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   authHeaders: () => ({}),
@@ -524,6 +524,48 @@ describe('ListBoardPage', () => {
       expect(await screen.findByRole('textbox', { name: 'Notes' })).toHaveTextContent('Ask Ana')
       await user.click(screen.getByRole('button', { name: 'Close notes' }))
       expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
+    })
+
+    it('US-1 schedules the card from Agendar and shows the new badge without reloading the page', async () => {
+      // Wednesday 2026-11-11, 14:07 in Sao Paulo, the board's timezone.
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date('2026-11-11T17:07:00Z'))
+      try {
+        vi.mocked(tasks.update).mockResolvedValue({ ...fullTask, scheduled_on: '2026-11-12' })
+        const { user } = renderBoard()
+        await screen.findByText('DEV-1725')
+        expect(inToday().queryByTitle('Thu, Nov 12')).not.toBeInTheDocument()
+        const scheduled = boardOf(WEEK, 'Week')
+        scheduled.columns.today.tasks = [{ ...card(TODAY_TASK, 'DEV-1725'), scheduled_on: '2026-11-12' }]
+        vi.mocked(lists.board).mockResolvedValue(scheduled)
+
+        await user.click(inToday().getByRole('button', { name: 'More actions' }))
+        ;(await screen.findByRole('menuitem', { name: 'Schedule' })).focus()
+        await user.keyboard('{ArrowRight}')
+        await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Tomorrow' }))
+
+        await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TODAY_TASK, { scheduled_on: '2026-11-12' }))
+        expect(await inToday().findByTitle('Thu, Nov 12')).toHaveTextContent('Tomorrow')
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('US-12 skips an occurrence of a series from the menu', async () => {
+      const rule = { freq: 'weekly' as const, interval: 1, weekdays: [5], month_day: null, until: null, count: null }
+      const repeating = boardOf(WEEK, 'Week')
+      repeating.columns.today.tasks = [
+        { ...card(TODAY_TASK, 'DEV-1725'), scheduled_on: '2026-11-13', series: { id: 'series-1', rule, next_on: '2026-11-20' } },
+      ]
+      vi.mocked(lists.board).mockResolvedValue(repeating)
+      vi.mocked(tasks.skip).mockResolvedValue(fullTask)
+      const { user } = renderBoard()
+      await screen.findByText('DEV-1725')
+
+      await user.click(inToday().getByRole('button', { name: 'More actions' }))
+      await user.click(await screen.findByRole('menuitem', { name: 'Skip this occurrence' }))
+
+      await waitFor(() => expect(tasks.skip).toHaveBeenCalledWith(TODAY_TASK))
     })
 
     it('duplicates the card from the more actions menu', async () => {

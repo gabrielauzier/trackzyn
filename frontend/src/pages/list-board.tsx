@@ -35,7 +35,7 @@ import { formatDuration } from '@/components/board/format-duration'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { QuickNote } from '@/components/board/quick-note'
 import { TaskCard } from '@/components/board/task-card'
-import { TaskCardMenu } from '@/components/board/task-card-menu'
+import { TaskCardMenu, type ScheduleChange } from '@/components/board/task-card-menu'
 import { TaskDialog } from '@/components/board/task-dialog'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
 import { ListBadge } from '@/components/lists/list-badge'
@@ -186,6 +186,17 @@ export default function ListBoardPage() {
   })
   const changeListMutation = useMutation({
     mutationFn: ({ id, listId: target }: { id: string; listId: string }) => tasksApi.moveToList(id, target),
+    onError: onActionError,
+    onSettled: () => void refresh(),
+  })
+  // The badge follows from the board read again after the save (US-1).
+  const scheduleMutation = useMutation({
+    mutationFn: ({ id, change }: { id: string; change: ScheduleChange }) => tasksApi.update(id, change),
+    onError: onActionError,
+    onSettled: () => void refresh(),
+  })
+  const skipMutation = useMutation({
+    mutationFn: (id: string) => tasksApi.skip(id),
     onError: onActionError,
     onSettled: () => void refresh(),
   })
@@ -360,6 +371,13 @@ export default function ListBoardPage() {
               onDuplicate={() => duplicateMutation.mutate(task.id)}
               onChangeList={(target) => changeListMutation.mutate({ id: task.id, listId: target })}
               onDelete={() => setDeleting(task)}
+              schedule={{
+                task,
+                done: column === 'done',
+                timeZone: shown.timezone,
+                onChange: (change) => scheduleMutation.mutate({ id: task.id, change }),
+                onSkip: () => skipMutation.mutate(task.id),
+              }}
             />
           ),
         }}

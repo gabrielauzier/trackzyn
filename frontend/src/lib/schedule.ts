@@ -24,6 +24,13 @@ export function shortDay(day: string, t: TFunction, language: string) {
   return format(dayDate(day), t('schedule.dayMonthFormat'), { locale: resolveDateFnsLocale(language) })
 }
 
+/** The calendar day `days` after `day`, both `YYYY-MM-DD`. */
+export function addDays(day: string, days: number): string {
+  const date = dayDate(day)
+  date.setDate(date.getDate() + days)
+  return format(date, 'yyyy-MM-dd')
+}
+
 /** The ISO weekday of a calendar day, 1 (Monday) to 7 (Sunday). */
 export const weekdayOf = (day: string) => dayDate(day).getDay() || 7
 
@@ -48,8 +55,8 @@ export interface ScheduleBadge {
 
 /**
  * The text of the schedule badge of a card, in the workspace's timezone (US-3): `Hoje`, `Amanhã`, the weekday up to
- * 6 days ahead or `13 nov` after that, joined by the start time when there is one; in Today only the time, or
- * `Agendada` without one (D21). No badge in Done (D5) or for a task that is not scheduled.
+ * 6 days ahead or `13 nov` after that, joined by the start time when there is one; on the day, and in Today for a
+ * day that came from earlier, only the time, or `Agendada` without one (D21). No badge in Done (D5) or for a task that is not scheduled.
  */
 export function scheduleBadge(
   task: TaskSchedule,
@@ -66,7 +73,8 @@ export function scheduleBadge(
   const rule = task.series ? `\n${repeatsLabel(task.series.rule, t, language)}` : ''
   const when = time === null ? longDay(day, t, language) : `${longDay(day, t, language)} · ${time}`
 
-  if (column === 'today' && time === null) {
+  // Brought to Today by its day (D21); a later day kept in Today shows that day.
+  if (column === 'today' && time === null && ahead <= 0) {
     return { label: t('schedule.scheduled'), tooltip: t('schedule.scheduledFor', { day: longDay(day, t, language) }) + rule, icon: 'check', repeats }
   }
   let dayLabel: string
@@ -76,8 +84,8 @@ export function scheduleBadge(
   else dayLabel = shortDay(day, t, language)
 
   if (time === null) return { label: dayLabel, tooltip: capitalize(when) + rule, icon: 'calendar', repeats }
-  // In Today, and on the day itself, the time says it all.
-  const label = column === 'today' || ahead === 0 ? time : `${dayLabel} ${time}`
+  // On the day itself, and in Today for a day that came from earlier, the time says it all.
+  const label = ahead === 0 || (column === 'today' && ahead < 0) ? time : `${dayLabel} ${time}`
   return { label, tooltip: capitalize(when) + rule, icon: 'clock', repeats }
 }
 
