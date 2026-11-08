@@ -264,6 +264,53 @@ describe('app layout sidebar', () => {
     }
   })
 
+  it.each([
+    ['the mobile header', 'header'],
+    ['the sidebar', 'aside'],
+  ])('PLAN-36 the logo of %s, out of an unsaved plan, asks Descartar o rascunho? and leaves for the home only on Descartar', async (_where, container) => {
+    state.canWrite = true
+    await i18n.changeLanguage('pt-BR')
+    try {
+      /** The plan of a day holding an unsaved draft. */
+      function PlanWithDraft() {
+        const { setDraftDay } = useDraftGuard()
+        useEffect(() => setDraftDay('2026-11-09'), [setDraftDay])
+        return null
+      }
+      function Where() {
+        return <span data-testid="where">{useLocation().pathname}</span>
+      }
+      const { user } = renderWithProviders(
+        <DraftGuardProvider>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={null} />
+              <Route path="/planejar/:day" element={<PlanWithDraft />} />
+            </Route>
+          </Routes>
+          <Where />
+        </DraftGuardProvider>,
+        { route: '/planejar/2026-11-09' },
+      )
+      const logos = screen.getAllByRole('link', { name: t('app.name') })
+      expect(logos).toHaveLength(2)
+      const logo = logos.find((link) => link.closest(container) !== null)!
+      expect(logo).toHaveAttribute('href', '/')
+
+      await user.click(logo)
+      const dialog = await screen.findByRole('dialog', { name: 'Descartar o rascunho?' })
+      expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-09')
+      await user.click(within(dialog).getByRole('button', { name: 'Continuar planejando' }))
+      expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-09')
+
+      await user.click(logo)
+      await user.click(within(await screen.findByRole('dialog', { name: 'Descartar o rascunho?' })).getByRole('button', { name: 'Descartar' }))
+      await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/))
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
   it('selects Archived lists on its page', () => {
     state.canWrite = true
     renderWithProviders(<AppLayout />, { route: '/lists/archived' })
