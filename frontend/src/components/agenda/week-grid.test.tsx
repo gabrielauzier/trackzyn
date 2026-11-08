@@ -749,6 +749,19 @@ describe('WeekGrid: the saved plan (PLAN-24, PLAN-25)', () => {
     expect(thursday.getByRole('button', { name: /^Scheduled b, Scheduled · 16:00/ })).toBeInTheDocument()
   })
 
+  it('leaves a task with a planned block out of the Sem hora row of that day, and keeps it on another day', () => {
+    const untimedTask = (id: string, day: string): ScheduledTask => ({ ...timedTask(id, day, '00:00'), scheduled_time: null })
+    const { container } = grid({
+      untimed: [untimedTask('a', '2026-11-05'), untimedTask('b', '2026-11-05'), untimedTask('c', '2026-11-06')],
+      planned: [plannedTask('p-a', '2026-11-05', '14:00', 'a'), plannedTask('p-c', '2026-11-05', '16:00', 'c')],
+    })
+    const row = (day: string) => container.querySelector(`[data-untimed-day="${day}"]`) as HTMLElement
+    expect([...row('2026-11-05').querySelectorAll('[data-untimed-task]')].map((el) => el.getAttribute('data-untimed-task'))).toEqual(['b'])
+    // A block planned on another day leaves the task in the row of its own day.
+    expect(row('2026-11-06').querySelector('[data-untimed-task="c"]')).not.toBeNull()
+    expect(within(column(container, '2026-11-05')).getAllByRole('button', { name: /^Scheduled a,/ })).toHaveLength(1)
+  })
+
   it('without planned blocks, draws the scheduled task as before', () => {
     const { container } = grid({ timed: [timedTask('a', '2026-11-05', '10:00')] })
     expect(container.querySelector('[data-plan-block]')).toBeNull()

@@ -176,12 +176,20 @@ export function WeekGrid({
   )
   const pieces = useMemo(() => dayPieces(shown, days, timezone, now), [shown, days, timezone, now])
   const laidPlanned = useMemo(() => plannedPieces(planned, days), [planned, days])
-  // A task with a block in the user's plan of its scheduled day shows only as the planned block (PLAN-25).
-  const shownTimed = useMemo(() => {
-    if (planned.length === 0) return timed
-    const plannedOn = new Set(planned.flatMap((block) => (block.kind === 'task' ? [`${block.day}:${block.task.id}`] : [])))
-    return timed.filter((task) => !plannedOn.has(`${task.scheduled_on}:${task.id}`))
-  }, [timed, planned])
+  // A task with a block in the user's plan of its scheduled day shows only as the planned block, with a time or
+  // without one in the `Sem hora` row (PLAN-25).
+  const plannedOn = useMemo(
+    () => new Set(planned.flatMap((block) => (block.kind === 'task' ? [`${block.day}:${block.task.id}`] : []))),
+    [planned],
+  )
+  const shownTimed = useMemo(
+    () => (plannedOn.size === 0 ? timed : timed.filter((task) => !plannedOn.has(`${task.scheduled_on}:${task.id}`))),
+    [timed, plannedOn],
+  )
+  const shownUntimed = useMemo(
+    () => (untimed && plannedOn.size > 0 ? untimed.filter((task) => !plannedOn.has(`${task.scheduled_on}:${task.id}`)) : untimed),
+    [untimed, plannedOn],
+  )
   const scheduled = useMemo(() => scheduledPieces(shownTimed, projected, days), [shownTimed, projected, days])
   // Decided on the saved sessions, so a block dragged shorter than the minimum stays until it is saved.
   const hiddenIds = useMemo(() => new Set(hidden ? sessions.filter(hidden).map((session) => session.id) : []), [sessions, hidden])
@@ -228,7 +236,7 @@ export function WeekGrid({
           )
         })}
       </div>
-      {untimed && <UntimedRow days={days} untimed={untimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />}
+      {shownUntimed && <UntimedRow days={days} untimed={shownUntimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />}
       <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-14rem)] min-h-80 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-14 shrink-0" aria-hidden>
