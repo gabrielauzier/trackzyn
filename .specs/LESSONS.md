@@ -326,6 +326,54 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: backend-node/src/routes/tasks.ts:67 (REST POST /api/tasks strips recurrence, 201 series null) (routes)
 - last seen: 2026-11-07T09:00:49Z
 
+### L-053 - When a component test drives a callback through a harness that re-implements the page wiring, also test the page's own wiring of that callback.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: planejamento-diario
+- evidence: M13 frontend/src/pages/plan.tsx:155 (frontend-pages)
+- last seen: 2026-11-07T23:01:44Z
+
+### L-054 - Test every exit route a navigation guard intercepts at its call site, not only the guard provider.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-shell` · harmful: 0
+- features: planejamento-diario
+- evidence: M14 frontend/src/components/app-layout.tsx:85 (frontend-shell) (+1 more)
+- last seen: 2026-11-07T23:40:33Z
+
+### L-055 - A leave-with-unsaved-changes guard must cover browser back and every in-app navigation entry point, or the spec must say which exits are excluded.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-routing` · harmful: 0
+- features: planejamento-diario
+- evidence: PLAN-36 validation.md deviation (c) (frontend-routing) (+1 more)
+- last seen: 2026-11-07T23:21:34Z
+
+### L-056 - When an AC lists alternative triggers (A or B), test each trigger, not just one.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: planejamento-diario
+- evidence: PLAN-13 frontend/src/pages/plan.tsx:180 (frontend-pages)
+- last seen: 2026-11-07T23:01:45Z
+
+### L-057 - Specify the display format of compound and sub-hour durations when an AC quotes duration text.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: planejamento-diario
+- evidence: PLAN-14/PLAN-19 validation.md precision gap 1 (spec)
+- last seen: 2026-11-07T23:01:45Z
+
+### L-058 - Specify the user-facing message for every validation rule an AC states.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: planejamento-diario
+- evidence: PLAN-16 break-dialog.test.tsx:44 (spec)
+- last seen: 2026-11-07T23:01:45Z
+
+### L-059 - When a range limit equals a day boundary (24:00), state whether HH:MM fields must accept it.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `frontend-forms` · harmful: 0
+- features: planejamento-diario
+- evidence: frontend/src/components/plan/block-editor.tsx:86 (frontend-forms)
+- last seen: 2026-11-07T23:01:45Z
+
+### L-060 - When a guard must keep blocking after the user chooses to stay, repeat the attempt and assert it is still blocked before testing the discard.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-routing` · harmful: 0
+- features: planejamento-diario
+- evidence: M15 frontend/src/lib/plan/draft-guard.tsx:48 (frontend-routing)
+- last seen: 2026-11-07T23:21:34Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

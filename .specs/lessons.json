@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 53,
+  "next_id": 61,
   "lessons": [
     {
       "id": "L-001",
@@ -940,6 +940,152 @@
       ],
       "created": "2026-11-07T09:00:49Z",
       "last_seen": "2026-11-07T09:00:49Z"
+    },
+    {
+      "id": "L-053",
+      "key": "surviving_mutant::when a component test drives a callback through a harness that re implements the page wiring also test the page s own wiring of that callback",
+      "text": "When a component test drives a callback through a harness that re-implements the page wiring, also test the page's own wiring of that callback.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13 frontend/src/pages/plan.tsx:155 (frontend-pages)"
+      ],
+      "created": "2026-11-07T23:01:44Z",
+      "last_seen": "2026-11-07T23:01:44Z"
+    },
+    {
+      "id": "L-054",
+      "key": "surviving_mutant::test every exit route a navigation guard intercepts at its call site not only the guard provider",
+      "text": "Test every exit route a navigation guard intercepts at its call site, not only the guard provider.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-shell",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M14 frontend/src/components/app-layout.tsx:85 (frontend-shell)",
+        "E1 frontend/src/components/app-layout.tsx:186; E2 app-layout.tsx:136 (logo links) (frontend-shell)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:40:33Z"
+    },
+    {
+      "id": "L-055",
+      "key": "ac_gap::a leave with unsaved changes guard must cover browser back and every in app navigation entry point or the spec must say which exits are excluded",
+      "text": "A leave-with-unsaved-changes guard must cover browser back and every in-app navigation entry point, or the spec must say which exits are excluded.",
+      "signal": "ac_gap",
+      "scope": "frontend-routing",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-36 validation.md deviation (c) (frontend-routing)",
+        "PLAN-36 frontend/src/components/workspace-switcher.tsx:208 (frontend-routing)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:21:34Z"
+    },
+    {
+      "id": "L-056",
+      "key": "ac_gap::when an ac lists alternative triggers a or b test each trigger not just one",
+      "text": "When an AC lists alternative triggers (A or B), test each trigger, not just one.",
+      "signal": "ac_gap",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-13 frontend/src/pages/plan.tsx:180 (frontend-pages)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-057",
+      "key": "spec_precision_gap::specify the display format of compound and sub hour durations when an ac quotes duration text",
+      "text": "Specify the display format of compound and sub-hour durations when an AC quotes duration text.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-14/PLAN-19 validation.md precision gap 1 (spec)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-058",
+      "key": "spec_precision_gap::specify the user facing message for every validation rule an ac states",
+      "text": "Specify the user-facing message for every validation rule an AC states.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-16 break-dialog.test.tsx:44 (spec)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-059",
+      "key": "spec_deviation::when a range limit equals a day boundary 24 00 state whether hh mm fields must accept it",
+      "text": "When a range limit equals a day boundary (24:00), state whether HH:MM fields must accept it.",
+      "signal": "spec_deviation",
+      "scope": "frontend-forms",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/components/plan/block-editor.tsx:86 (frontend-forms)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-060",
+      "key": "surviving_mutant::when a guard must keep blocking after the user chooses to stay repeat the attempt and assert it is still blocked before testing the discard",
+      "text": "When a guard must keep blocking after the user chooses to stay, repeat the attempt and assert it is still blocked before testing the discard.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-routing",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M15 frontend/src/lib/plan/draft-guard.tsx:48 (frontend-routing)"
+      ],
+      "created": "2026-11-07T23:21:34Z",
+      "last_seen": "2026-11-07T23:21:34Z"
     }
   ]
 }
