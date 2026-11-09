@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Play, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 import { formatDuration } from '@/components/board/format-duration'
 import { Button } from '@/components/ui/button'
+import type { FocusRouteState } from '@/lib/desktop/focus-window'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES } from '@/lib/agenda/layout'
 import { clockMinutes } from '@/lib/plan/clock'
@@ -15,20 +16,19 @@ type PlannedBreak = Extract<PlannedBlock, { kind: 'break' }>
 
 interface PlannedBreakPanelProps {
   block: PlannedBreak
-  /** Today in the workspace timezone: only a break of today's plan starts (PLAN-28). */
+  /** Today in the workspace timezone: a break of today's plan leads to the focus of its list (PLAN-28). */
   today: string
-  /** `Começar`; absent for a viewer, and the button does not show (PLAN-26). */
-  onStart?: () => void
-  /** The Intervalo is on its way. */
-  starting?: boolean
   onClose: () => void
 }
 
+/** The focus of the break's list, opened without starting a task: `Começar` waits there (PLAN-28). */
+const OPEN_ONLY: FocusRouteState = { start: false }
+
 /**
- * The panel of a planned break on the Agenda (PLAN-26, PLAN-28): its name, time and the list of its Intervalo, the way
- * to the plan of its day and, on today's plan, `Começar`, which opens the Intervalo for the break's length.
+ * The panel of a planned break on the Agenda (PLAN-28): its name, time and the list of its Intervalo, the way to the
+ * plan of its day and, on today's plan, the way to the focus of its list, where `Começar` opens the Intervalo.
  */
-export function PlannedBreakPanel({ block, today, onStart, starting = false, onClose }: PlannedBreakPanelProps) {
+export function PlannedBreakPanel({ block, today, onClose }: PlannedBreakPanelProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const start = clockMinutes(block.start) ?? 0
@@ -65,15 +65,16 @@ export function PlannedBreakPanel({ block, today, onStart, starting = false, onC
         <span aria-hidden className="size-2 rounded-full" style={{ backgroundColor: `var(--chart-${block.list.color})` }} />
         {t('plan.agenda.breakList', { list: block.list.name })}
       </p>
-      {isToday && onStart && <p className="text-xs text-muted-foreground">{t('plan.agenda.startHint', { duration })}</p>}
+      {isToday && <p className="text-xs text-muted-foreground">{t('plan.agenda.startInFocus', { list: block.list.name })}</p>}
       <div className="flex items-center justify-between gap-2">
         <Link to={`/planejar/${block.day}`} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
           {t('plan.agenda.openPlan')}
         </Link>
-        {isToday && onStart && (
-          <Button type="button" disabled={starting} onClick={onStart}>
-            <Play aria-hidden size={13} fill="currentColor" />
-            {t('plan.agenda.start')}
+        {isToday && (
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/focus/${block.list.id}`} state={OPEN_ONLY}>
+              {t('plan.agenda.openFocus')}
+            </Link>
           </Button>
         )}
       </div>

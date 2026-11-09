@@ -5,14 +5,14 @@ import { Route, Routes } from 'react-router-dom'
 
 import FocusPage from '@/pages/focus'
 import HomePage from '@/pages/home'
-import { focus, lists, subtasks, tasks } from '@/lib/api'
+import { focus, lists, plans, subtasks, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import { play } from '@/lib/sounds/synth'
 import * as queue from '@/lib/focus/queue'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
 import { placeCaretAtEnd, renderWithProviders } from '@/test/utils'
-import type { FocusState, ListCard, Subtask, Task } from '@/types'
+import type { FocusState, ListCard, PlannedBlock, Subtask, Task } from '@/types'
 
 const role = vi.hoisted(() => ({ canWrite: true }))
 
@@ -21,6 +21,7 @@ vi.mock('@/lib/api', () => ({
   lists: { list: vi.fn(), move: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   tasks: { create: vi.fn(), move: vi.fn(), get: vi.fn(), update: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn(), move: vi.fn() },
+  plans: { planned: vi.fn() },
   authHeaders: () => ({}),
 }))
 vi.mock('@/contexts/workspace-context', () => ({
@@ -133,6 +134,7 @@ beforeEach(() => {
   vi.mocked(focus.send).mockImplementation(async () => counting(deviceId()))
   vi.mocked(focus.heartbeat).mockResolvedValue(counting(deviceId()))
   vi.mocked(tasks.get).mockImplementation(async (id: string) => taskWith(id, []))
+  vi.mocked(plans.planned).mockResolvedValue({ blocks: [] })
 })
 
 afterEach(() => {
@@ -1120,5 +1122,101 @@ describe('FocusPage notes of the task in focus (#33)', () => {
 
     await waitFor(() => expect(within(card()).getByText(taskB.title)).toBeInTheDocument())
     expect(tasks.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('FocusPage breaks of today\'s plan (PLAN-26, PLAN-27, PLAN-28)', () => {
+  const TODAY = '2026-11-09'
+  const here = { id: LIST, name: 'Week', color: 3 }
+  const brk = (id: string, name: string, start: string, minutes: number, day = TODAY, list = here): PlannedBlock => ({ id, day, kind: 'break', start, minutes, name, list })
+  const lunch = brk('p-lunch', 'Almoço', '12:00', 60)
+  const coffee = brk('p-coffee', 'Café', '10:30', 15)
+  const blocks: PlannedBlock[] = [
+    lunch,
+    coffee,
+    brk('p-early', 'Café da manhã', '08:00', 15),
+    brk('p-other', 'Alongar', '11:00', 10, TODAY, { id: 'other-list', name: 'Home', color: 1 }),
+    brk('p-tomorrow', 'Café de amanhã', '10:30', 15, '2026-11-10'),
+    {
+      id: 'p-task',
+      day: TODAY,
+      kind: 'task',
+      start: '09:00',
+      minutes: 60,
+      task: { id: taskA.id, title: taskA.title, list: here, done: false, scheduled_on: TODAY, estimate_minutes: 60 },
+    },
+  ]
+  const section = () => screen.findByRole('region', { name: "Today's planned breaks" })
+
+  beforeEach(() => {
+    // 10:00 in São Paulo: the morning coffee at 08:00 is over, the 10:30 coffee and the lunch are ahead.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-09T13:00:00Z'))
+    // The server answers on the same clock, so the page reads 10:00 too.
+    vi.mocked(focus.get).mockResolvedValue(paused())
+    vi.mocked(plans.planned).mockResolvedValue({ blocks })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('PLAN-28 lists the breaks of today in this list that have not ended, in order, each with Start', async () => {
+    renderFocus({ pathname: `/focus/${LIST}`, state: { start: false } })
+
+    const items = within(await section()).getAllByRole('listitem')
+    expect(items.map((item) => item.textContent)).toEqual(['Café10:30 – 10:45 · 15minStart', 'Almoço12:00 – 13:00 · 1hrStart'])
+    expect(plans.planned).toHaveBeenCalledWith(TODAY, TODAY)
+  })
+
+  it('PLAN-26 Start opens an Intervalo of the break length in this list, the list of the break', async () => {
+    const { user } = renderFocus({ pathname: `/focus/${LIST}`, state: { start: false } })
+
+    await user.click(within(await section()).getByRole('button', { name: 'Start Café' }))
+
+    await waitFor(() => expect(sent()).toHaveLength(1))
+    expect(sent()[0]).toMatchObject({ type: 'break', minutes: 15, list_id: LIST })
+  })
+
+  it('PLAN-27 with a task counting here, Start still sends the break, which closes the task session on the server', async () => {
+    vi.mocked(focus.get).mockResolvedValue(counting(deviceId()))
+    const { user } = renderFocus()
+
+    await user.click(within(await section()).getByRole('button', { name: 'Start Almoço' }))
+
+    await waitFor(() => expect(sent()).toHaveLength(1))
+    expect(sent()[0]).toMatchObject({ type: 'break', minutes: 60, list_id: LIST })
+  })
+
+  it('PLAN-28 hides the breaks during an Intervalo', async () => {
+    const base = counting(deviceId())
+    vi.mocked(focus.get).mockResolvedValue({
+      ...base,
+      session: { ...base.session!, kind: 'break', task_id: null, deadline_at: new Date(Date.now() + 300_000).toISOString(), planned_seconds: 300 },
+    })
+    renderFocus()
+
+    expect(await screen.findByRole('button', { name: 'End break' })).toBeInTheDocument()
+    await waitFor(() => expect(plans.planned).toHaveBeenCalled())
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.queryByRole('region', { name: "Today's planned breaks" })).toBeNull()
+  })
+
+  it('PLAN-28 shows nothing when no break of today is left in this list', async () => {
+    vi.mocked(plans.planned).mockResolvedValue({ blocks: blocks.filter((block) => block !== coffee && block !== lunch) })
+    renderFocus({ pathname: `/focus/${LIST}`, state: { start: false } })
+
+    await screen.findByText('DEV-1725')
+    await waitFor(() => expect(plans.planned).toHaveBeenCalled())
+    expect(screen.queryByRole('region', { name: "Today's planned breaks" })).toBeNull()
+  })
+
+  it('PLAN-28 a viewer gets no Start and no plan read', async () => {
+    role.canWrite = false
+    renderFocus()
+
+    await screen.findByText('DEV-1725')
+    expect(screen.queryByRole('region', { name: "Today's planned breaks" })).toBeNull()
+    expect(plans.planned).not.toHaveBeenCalled()
   })
 })

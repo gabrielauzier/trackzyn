@@ -2,6 +2,7 @@ import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from 'reac
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES } from '@/lib/agenda/layout'
 import type { DraftBlock } from '@/lib/plan/draft'
@@ -30,6 +31,11 @@ interface PlanBlockProps {
   onPointerDown?: (event: PointerEvent) => void
   /** The handle of the bottom edge, drawn by the grid. */
   children?: ReactNode
+  /**
+   * Shown on hover and focus, as the Agenda does for its other blocks (PLAN-46); given, the dashed edge also turns solid
+   * on hover and the block rises above its neighbours (PLAN-47).
+   */
+  tooltip?: ReactNode
 }
 
 /** A task block in the colour of its list: a faint fill, a dashed edge and a solid left edge. */
@@ -52,7 +58,7 @@ const breakFill: CSSProperties = {
  * takes the colour of its list with a dashed edge, crossed out once done; a task scheduled for another day carries
  * `Agendada para <dia>`. A break is gray and hatched.
  */
-export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children }: PlanBlockProps) {
+export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children, tooltip }: PlanBlockProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const { block } = piece
@@ -80,7 +86,7 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
     onOpen()
   }
 
-  return (
+  const drawn = (
     <div
       role="button"
       tabIndex={0}
@@ -96,6 +102,7 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
         onPointerDown && 'cursor-grab',
         selected && 'z-10 ring-2 ring-primary ring-offset-1 ring-offset-background',
         'outline-2 outline-transparent focus-visible:outline-(--ring)',
+        tooltip !== undefined && 'hover:z-20 hover:border-solid',
       )}
       style={style}
       onClick={onOpen}
@@ -120,5 +127,16 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       </span>
       {children}
     </div>
+  )
+  if (tooltip === undefined) return drawn
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>{drawn}</TooltipTrigger>
+        <TooltipContent side="right" className="flex flex-col gap-0.5">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

@@ -80,8 +80,6 @@ interface WeekGridProps {
   planned?: Planned[]
   /** A click on a planned block: a task opens the plan of its day, a break its panel (PLAN-29). */
   onOpenPlanned?: (block: Planned) => void
-  /** `Começar` on a break of today's plan (PLAN-26, PLAN-28). */
-  onStartPlanned?: (block: Planned) => void
   /** `Planejar dia` in the header of today and the days after it: opens the plan of the day (PLAN-31). */
   onPlanDay?: (day: string) => void
 }
@@ -144,7 +142,6 @@ export function WeekGrid({
   onShowDay,
   planned = NONE,
   onOpenPlanned,
-  onStartPlanned,
   onPlanDay,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
@@ -285,9 +282,7 @@ export function WeekGrid({
                           key={`planned:${laidPiece.planned.id}`}
                           piece={laidPiece}
                           pxPerMinute={pxPerMinute}
-                          today={today}
                           onOpen={onOpenPlanned}
-                          onStart={onStartPlanned}
                         />
                       )
                     }

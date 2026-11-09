@@ -1701,46 +1701,43 @@ describe('AgendaPage: the saved plan (PLAN-24 to PLAN-29)', () => {
     expect(plans.planned).toHaveBeenCalledWith('2026-11-02', '2026-11-08')
   })
 
-  it('PLAN-26 Começar opens an Intervalo of the break length in its list through the focus break', async () => {
-    vi.mocked(focus.send).mockResolvedValue({} as Awaited<ReturnType<typeof focus.send>>)
-    const { user } = show()
-    await user.click(await screen.findByRole('button', { name: 'Start' }))
-
-    await waitFor(() => expect(focus.send).toHaveBeenCalledOnce())
-    const { action } = vi.mocked(focus.send).mock.calls[0]![0]
-    expect(action).toMatchObject({ type: 'break', minutes: 15, list_id: WORK, occurred_at: '2026-11-04T17:07:00.000Z' })
-    expect(action.device_id).toEqual(expect.any(String))
-    expect(toast.error).not.toHaveBeenCalled()
-  })
-
-  it('PLAN-26 the panel of a planned break of today offers Começar and the plan of the day', async () => {
-    vi.mocked(focus.send).mockResolvedValue({} as Awaited<ReturnType<typeof focus.send>>)
+  it('PLAN-28 the Agenda starts no break: neither the block nor its panel has Começar', async () => {
     const { user } = show()
     await user.click(await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ }))
 
     const panel = screen.getByRole('complementary', { name: 'Coffee' })
     expect(within(panel).getByText('Planned break · today')).toBeInTheDocument()
     expect(within(panel).getByRole('link', { name: 'Open the plan of the day' })).toHaveAttribute('href', '/planejar/2026-11-04')
-    await user.click(within(panel).getByRole('button', { name: 'Start' }))
-
-    await waitFor(() => expect(focus.send).toHaveBeenCalledOnce())
-    expect(vi.mocked(focus.send).mock.calls[0]![0].action).toMatchObject({ type: 'break', minutes: 15, list_id: WORK })
-  })
-
-  it('PLAN-45 a refused break shows the error of the focus in a toast', async () => {
-    vi.mocked(focus.send).mockRejectedValue({ response: { status: 409, data: { detail: 'A break is already open', code: 'invalid_transition' } } })
-    const { user } = show()
-    await user.click(await screen.findByRole('button', { name: 'Start' }))
-
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('A break is already open'))
-    expect(focus.send).toHaveBeenCalledOnce()
-  })
-
-  it('PLAN-28 a viewer gets no Começar', async () => {
-    workspace.canWrite = false
-    show()
-    await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ })
     expect(screen.queryByRole('button', { name: 'Start' })).toBeNull()
+    expect(focus.send).not.toHaveBeenCalled()
+  })
+
+  it('PLAN-28 the panel of a break of today leads to the focus of its list, where it starts', async () => {
+    const { user } = show()
+    await user.click(await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ }))
+
+    const panel = screen.getByRole('complementary', { name: 'Coffee' })
+    expect(within(panel).getByText('Start this break from the focus of Work.')).toBeInTheDocument()
+    await user.click(within(panel).getByRole('link', { name: 'Open the focus' }))
+    expect(screen.getByTestId('where')).toHaveTextContent(`/focus/${WORK}`)
+    expect(focus.send).not.toHaveBeenCalled()
+  })
+
+  it('PLAN-28 the panel of a break of another day does not lead to the focus', async () => {
+    vi.mocked(plans.planned).mockResolvedValue({ blocks: [{ ...coffee, id: 'p-later', day: '2026-11-06' }] })
+    const { user } = show()
+    await user.click(await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ }))
+
+    const panel = screen.getByRole('complementary', { name: 'Coffee' })
+    expect(within(panel).getByRole('link', { name: 'Open the plan of the day' })).toHaveAttribute('href', '/planejar/2026-11-06')
+    expect(within(panel).queryByRole('link', { name: 'Open the focus' })).toBeNull()
+  })
+
+  it('PLAN-46 hovering a planned task shows its tooltip, as a scheduled task does', async () => {
+    const { user } = show()
+    await user.hover(await screen.findByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ }))
+
+    expect((await screen.findByRole('tooltip')).textContent).toBe('Fix the widgetEst. 1hrPlanned · 09:00 – 10:00 · 1hrWorkClick to open the plan of the day')
   })
 
   it('PLAN-29 a click on a planned task opens the plan of its day', async () => {

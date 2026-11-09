@@ -1084,12 +1084,10 @@
       "breaks_zero": "0 breaks"
     },
     "agenda": {
-      "start": "Start",
       "planTomorrow": "Plan tomorrow",
       "breakOf": "Planned break · {{day}}",
       "today": "today",
       "breakList": "Break in {{list}}",
-      "startHint": "Start ends the open task session and opens a {{duration}} break.",
       "openPlan": "Open the plan of the day",
       "legend": "Legend",
       "legendItems": {
@@ -1098,7 +1096,16 @@
         "break": "Break",
         "scheduled": "Scheduled"
       },
-      "planDay": "Plan day"
+      "planDay": "Plan day",
+      "plannedRange": "Planned · {{start}} – {{end}} · {{duration}}",
+      "openPlanHint": "Click to open the plan of the day",
+      "startInFocus": "Start this break from the focus of {{list}}.",
+      "openFocus": "Open the focus"
+    },
+    "focus": {
+      "title": "Today's planned breaks",
+      "start": "Start",
+      "startAria": "Start {{name}}"
     }
   }
 }

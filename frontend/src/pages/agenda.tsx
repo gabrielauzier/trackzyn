@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { focus as focusApi, lists, plans as plansApi, sessions as sessionsApi, tasks as tasksApi } from '@/lib/api'
+import { lists, plans as plansApi, sessions as sessionsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { dropZoneAt } from '@/lib/agenda/drop-zone'
 import { isHiddenSession } from '@/lib/agenda/hide'
@@ -35,9 +35,6 @@ import { useScheduled } from '@/lib/agenda/use-scheduled'
 import { useGridDrag, type Draft, type ScheduledDrop } from '@/lib/agenda/use-grid-drag'
 import { type WeekDay, readShownDays, saveShownDays } from '@/lib/agenda/week-days'
 import { type Zoom, pxPerMinuteAt, readZoom, saveZoom } from '@/lib/agenda/zoom'
-import { serverNow } from '@/lib/focus/clock'
-import { deviceId } from '@/lib/focus/device-id'
-import { uuid } from '@/lib/focus/uuid'
 import { tomorrowPath } from '@/lib/plan/tomorrow'
 import { asksSeriesScope, longDay, type ScheduleChangeFields } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
@@ -205,26 +202,9 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
     setScheduling(null)
     setPlannedBreak(block)
   }
-  /**
-   * `Começar`: the break opens an Intervalo of its length in its list, by the same `POST /api/focus/break` as the focus
-   * (PLAN-26), which closes an open task session first (PLAN-27) and refuses a second Intervalo (PLAN-45).
-   */
-  const startBreak = useMutation({
-    mutationFn: (block: PlannedBreak) =>
-      focusApi.send({
-        action_id: uuid(),
-        action: { type: 'break', minutes: block.minutes, list_id: block.list.id, occurred_at: new Date(serverNow()).toISOString(), device_id: deviceId() },
-      }),
-    onSuccess: () => {
-      setPlannedBreak(null)
-      for (const key of ['focus', 'agenda', 'reports']) void queryClient.invalidateQueries({ queryKey: [key] })
-    },
-    onError: (error) => toast.error(extractApiError(error, t('common.error'))),
-  })
   const plannedProps = {
     planned,
     onOpenPlanned: openPlanned,
-    onStartPlanned: canWrite ? (block: PlannedBlock) => block.kind === 'break' && startBreak.mutate(block) : undefined,
     // `Planejar dia` in the header of a day (PLAN-31).
     onPlanDay: (shown: string) => navigate(`/planejar/${shown}`),
   }
@@ -248,7 +228,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   /** The session hovered in the list of a joined block, drawn out of it while the list shows. */
   const [previewId, setPreviewId] = useState<string | null>(null)
   const previewing = !selected && group.some((session) => session.id === previewId) ? previewId : null
-  /** The planned break whose panel shows, with `Começar` on today's plan (PLAN-26). */
+  /** The planned break whose panel shows; on today's plan it leads to the focus of its list (PLAN-28). */
   const [plannedBreak, setPlannedBreak] = useState<PlannedBreak | null>(null)
 
   const closeSelected = () => {
@@ -575,8 +555,6 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               key={plannedBreak.id}
               block={plannedBreak}
               today={today}
-              onStart={canWrite ? () => startBreak.mutate(plannedBreak) : undefined}
-              starting={startBreak.isPending}
               onClose={() => setPlannedBreak(null)}
             />
           )}

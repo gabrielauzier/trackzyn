@@ -131,7 +131,7 @@ O que o código já fixa:
 
 ### P1: Ver o plano na Agenda e começar uma pausa ⭐ MVP
 
-**User Story**: Como usuário, quero ver o plano salvo na Agenda e começar a pausa por ela, para que a pausa vire um Intervalo registrado.
+**User Story**: Como usuário, quero ver o plano salvo na Agenda e começar as pausas de hoje pela tela de foco, para que a pausa vire um Intervalo registrado.
 
 **Why P1**: É onde o plano é usado no dia; a pausa só vale se virar Intervalo.
 
@@ -139,12 +139,14 @@ O que o código já fixa:
 
 1. The system SHALL mostrar na Agenda os blocos do plano salvo do usuário: os de tarefa com a cor da lista e borda tracejada, e as pausas em cinza hachurado, sem cobrir as sessões. (PLAN-24)
 2. WHEN uma tarefa tem bloco no plano do dia e também está agendada naquele dia, com `scheduled_time` ou na faixa `Sem hora`, THEN a Agenda do dono do plano SHALL mostrar só o bloco do plano. (PLAN-25)
-3. WHEN o usuário clica em `Começar` numa pausa do plano de hoje THEN o sistema SHALL abrir um Intervalo de `planned_seconds` igual à duração da pausa, na lista da pausa, pelo mesmo caminho de `POST /api/focus/break`. (PLAN-26)
+3. WHEN o usuário clica em `Começar` numa pausa do plano de hoje, na tela de foco da lista da pausa, THEN o sistema SHALL abrir um Intervalo de `planned_seconds` igual à duração da pausa, na lista da pausa, pelo mesmo caminho de `POST /api/focus/break`. (PLAN-26)
 4. WHEN há uma sessão de tarefa aberta e o usuário começa a pausa THEN o sistema SHALL encerrar a sessão com o mesmo motivo do Intervalo do foco (`break`) antes de abrir o Intervalo. (PLAN-27)
-5. The system SHALL mostrar `Começar` só nas pausas do plano de hoje. (PLAN-28)
+5. The system SHALL mostrar `Começar` só na tela de foco, na seção `Pausas do plano de hoje`, para as pausas do plano de hoje daquela lista que ainda não terminaram, e não durante um Intervalo. A Agenda não mostra `Começar`: o painel de uma pausa de hoje leva ao foco da lista dela. (PLAN-28)
 6. WHEN o usuário clica num bloco de tarefa do plano na Agenda THEN o sistema SHALL abrir o plano daquele dia. (PLAN-29)
+7. WHEN o usuário passa o mouse ou foca um bloco de tarefa do plano na Agenda THEN o sistema SHALL mostrar um tooltip com o título, a estimativa (`Sem estimativa` sem ela), `Planejada · HH:MM – HH:MM · <duração>`, a lista e `Clique para abrir o plano do dia`, como os tooltips das sessões e das tarefas agendadas. (PLAN-46)
+8. WHEN o usuário passa o mouse sobre um bloco de tarefa do plano na Agenda THEN a borda tracejada SHALL ficar sólida e o bloco SHALL ficar por cima dos vizinhos, como num bloco de tarefa agendada. (PLAN-47)
 
-**Independent Test**: Planejar um café às 10:00 hoje, abrir a Agenda, clicar em `Começar` e ver o Intervalo de 15 min aberto no foco.
+**Independent Test**: Planejar um café às 10:00 hoje, abrir o foco da lista do café, clicar em `Começar` em `Pausas do plano de hoje` e ver o Intervalo de 15 min aberto. Na Agenda, passar o mouse sobre uma tarefa planejada e ver o tooltip e a borda sólida.
 
 ---
 
@@ -244,6 +246,8 @@ O que o código já fixa:
 | PLAN-43 | Edge Cases | Tasks | Implementing |
 | PLAN-44 | Edge Cases | Tasks | Implementing |
 | PLAN-45 | Edge Cases | Tasks | Implementing |
+| PLAN-46 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
+| PLAN-47 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 
 **Coverage:** 45 total, 45 mapped to tasks (T1 a T25), 0 unmapped.
 

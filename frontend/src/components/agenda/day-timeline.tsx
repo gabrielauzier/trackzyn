@@ -51,7 +51,6 @@ interface DayTimelineProps {
   /** The blocks of the user's saved plans, as in the week view (PLAN-24). */
   planned?: PlannedBlock[]
   onOpenPlanned?: (block: PlannedBlock) => void
-  onStartPlanned?: (block: PlannedBlock) => void
   onPlanDay?: (day: string) => void
 }
 
@@ -88,7 +87,6 @@ export function DayTimeline({
   onShowDay,
   planned,
   onOpenPlanned,
-  onStartPlanned,
   onPlanDay,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
@@ -164,7 +162,6 @@ export function DayTimeline({
         onShowDay={onShowDay}
         planned={planned}
         onOpenPlanned={onOpenPlanned}
-        onStartPlanned={onStartPlanned}
         onPlanDay={onPlanDay}
       />
 

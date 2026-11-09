@@ -1084,12 +1084,10 @@
       "breaks_zero": "0 pausas"
     },
     "agenda": {
-      "start": "Começar",
       "planTomorrow": "Planejar amanhã",
       "breakOf": "Pausa planejada · {{day}}",
       "today": "hoje",
       "breakList": "Intervalo em {{list}}",
-      "startHint": "Começar encerra a sessão de tarefa aberta e abre um Intervalo de {{duration}}.",
       "openPlan": "Abrir o plano do dia",
       "legend": "Legenda",
       "legendItems": {
@@ -1098,7 +1096,16 @@
         "break": "Pausa",
         "scheduled": "Agendada"
       },
-      "planDay": "Planejar dia"
+      "planDay": "Planejar dia",
+      "plannedRange": "Planejada · {{start}} – {{end}} · {{duration}}",
+      "openPlanHint": "Clique para abrir o plano do dia",
+      "startInFocus": "Comece esta pausa pelo foco de {{list}}.",
+      "openFocus": "Abrir o foco"
+    },
+    "focus": {
+      "title": "Pausas do plano de hoje",
+      "start": "Começar",
+      "startAria": "Começar {{name}}"
     }
   }
 }
