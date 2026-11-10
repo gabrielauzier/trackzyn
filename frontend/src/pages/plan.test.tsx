@@ -235,6 +235,8 @@ describe('PlanPage', () => {
     await dropTask('Write the spec', 600)
     expect(blocks()).toHaveLength(1)
     expect(footer()).toBeNull()
+    // Nor the new task card (PLAN-48).
+    expect(screen.queryByRole('button', { name: 'Arrastar nova tarefa para a grade' })).toBeNull()
   })
 
   it('PLAN-41 a viewer reads the plan without drag and without footer', async () => {

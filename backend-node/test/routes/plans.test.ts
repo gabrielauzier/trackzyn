@@ -299,7 +299,7 @@ describe('a planned break started on the focus (PLAN-49)', () => {
     expect(await names()).toEqual(['Almoço'])
   })
 
-  it('answers 422 plan_break_unknown for a break of another user or a task block, and opens no Intervalo', async () => {
+  it('answers 422 plan_break_unknown for a task block, and opens no Intervalo', async () => {
     const { owner, workspaceId, listId, taskId } = await setup()
     const today = await day(0)
     const saved = (
@@ -312,6 +312,28 @@ describe('a planned break started on the focus (PLAN-49)', () => {
     expect(reply.statusCode).toBe(422)
     expect(reply.json()).toMatchObject({ code: 'plan_break_unknown' })
     expect((await send('GET', '/api/focus', owner.token, workspaceId)).json().session).toBeNull()
+  })
+
+  it('answers 422 plan_break_unknown for the break of another member, opens no Intervalo and leaves that break pending', async () => {
+    const { owner, workspaceId, listId } = await setup()
+    const editor = await invite(t, owner.token, workspaceId, 'editor')
+    const today = await day(0)
+    const theirs = (
+      await send('PUT', `/api/plans/${today}`, editor.token, workspaceId, {
+        base_version: 0,
+        blocks: [{ kind: 'break', name: 'Café', list_id: listId, start: '10:00', minutes: 15 }],
+      })
+    ).json()
+    expect(theirs.blocks[0].started_at).toBeNull()
+
+    const reply = await send('POST', '/api/focus/break', owner.token, workspaceId, breakAction({ list_id: listId, plan_block_id: theirs.blocks[0].id }))
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json()).toMatchObject({ code: 'plan_break_unknown' })
+    expect((await send('GET', '/api/focus', owner.token, workspaceId)).json().session).toBeNull()
+    const still = (await send('GET', `/api/plans/${today}`, editor.token, workspaceId)).json()
+    expect(still.blocks[0]).toMatchObject({ id: theirs.blocks[0].id, started_at: null })
+    const shown = (await send('GET', `/api/plans?from=${today}&to=${today}`, editor.token, workspaceId)).json().blocks as Array<{ name: string }>
+    expect(shown.map((block) => block.name)).toEqual(['Café'])
   })
 })
 

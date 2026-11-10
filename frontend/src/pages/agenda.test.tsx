@@ -1770,16 +1770,28 @@ describe('AgendaPage: the saved plan (PLAN-24 to PLAN-29)', () => {
     expect(screen.getByRole('button', { name: /^Coffee, 15:00 – 15:15/ })).toBeInTheDocument()
   })
 
-  it('Show schedules off takes the scheduled and planned tasks off the grid and the Sem hora row, keeps the planned breaks, and is remembered', async () => {
+  it('ADJ-26 Show schedules off takes the scheduled tasks, their projected occurrences and the planned tasks off the grid and the Sem hora row, keeps the planned breaks, and is remembered', async () => {
     const task = { id: 's1', title: 'Weekly sync', list, column: 'this_week' as const, position: 0, estimate_minutes: 60, series: null }
     vi.mocked(agenda.scheduled).mockResolvedValue({
       timed: [{ ...task, scheduled_on: '2026-11-03', scheduled_time: '14:00' }],
       untimed: [{ ...task, id: 's2', title: 'Call the bank', scheduled_on: '2026-11-03', scheduled_time: null }],
-      projected: [],
+      projected: [
+        {
+          series_id: 'series-1',
+          task_id: 's3',
+          title: 'Weekly review',
+          list,
+          on: '2026-11-05',
+          time: '11:00',
+          estimate_minutes: 30,
+          rule: { freq: 'weekly', interval: 1, weekdays: [4], month_day: null, until: null, count: null },
+        },
+      ],
     })
     const { user, container, unmount } = show()
     await screen.findByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ })
     expect(await screen.findByRole('button', { name: /^Weekly sync/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Weekly review/ })).toBeInTheDocument()
     expect(container.querySelector('[data-untimed-row]')).not.toBeNull()
 
     await user.click(screen.getByRole('button', { name: /^View options/ }))
@@ -1789,6 +1801,7 @@ describe('AgendaPage: the saved plan (PLAN-24 to PLAN-29)', () => {
 
     expect(screen.queryByRole('button', { name: /^Fix the widget/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /^Weekly sync/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Weekly review/ })).toBeNull()
     expect(container.querySelector('[data-untimed-row]')).toBeNull()
     expect(screen.getByRole('button', { name: /^Coffee, 15:00 – 15:15/ })).toBeInTheDocument()
     expect(container.querySelector('[data-filter-dot]')).not.toBeNull()
