@@ -202,9 +202,11 @@ T4 → T8
 
 **Done when**:
 
-- [ ] Encostados, contido, cadeia, desordenados, vazios (`end <= start`) ignorados
-- [ ] `within` corta nas duas pontas; `exclude` tira só a parte coberta
-- [ ] Gate check passes: Quick
+- [x] Encostados, contido, cadeia, desordenados, vazios (`end <= start`) ignorados
+- [x] `within` corta nas duas pontas; `exclude` tira só a parte coberta
+- [x] Gate check passes: Quick
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick
