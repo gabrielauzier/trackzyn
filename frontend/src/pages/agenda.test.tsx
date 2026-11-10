@@ -1641,6 +1641,30 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       expect(tasks.update).not.toHaveBeenCalled()
     })
 
+    it('D35 a pending block dragged again still moves from its saved place: the struck-through time, the save and Desfazer', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],
+        untimed: [],
+        projected: [],
+      })
+      const { container } = renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 550, y: px(8, 10) })
+      await screen.findByRole('button', { name: 'Save time' })
+      const pendingBlock = within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-07"]')!).getByRole('button', { name: /^Plan the sprint/ })
+      dragTo(pendingBlock, { x: 550, y: px(8, 10) }, { x: 450, y: px(12, 10) })
+
+      const panel = (await screen.findByRole('heading', { name: 'Plan the sprint' })).closest('aside')!
+      expect(within(panel).getByText('Thu, Nov 5 · 10:00 – 11:30').tagName).toBe('DEL')
+      expect(within(panel).getByText('Fri, Nov 6 · 12:00 – 13:30')).toBeInTheDocument()
+      await saveTime()
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-06', scheduled_time: '12:00' }))
+      await waitFor(() => expect(toast.success).toHaveBeenCalled())
+      const [, options] = lastToast()
+      ;(options as { action: { label: string; onClick: () => void } }).action.onClick()
+      await waitFor(() => expect(tasks.update).toHaveBeenLastCalledWith('t', { scheduled_on: '2026-11-05', scheduled_time: '10:00' }))
+    })
+
     it.each(['Cancel', 'Escape'])('D35 %s puts the block back and saves nothing', async (how) => {
       vi.mocked(agenda.scheduled).mockResolvedValue({
         timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],
