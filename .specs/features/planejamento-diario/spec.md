@@ -145,6 +145,7 @@ O que o código já fixa:
 5. The system SHALL mostrar `Começar` só na tela de foco, na seção `Pausas do plano de hoje`, para as pausas do plano de hoje daquela lista que ainda não terminaram, e não durante um Intervalo. A Agenda não mostra `Começar`: o painel de uma pausa de hoje leva ao foco da lista dela. (PLAN-28)
 6. WHEN o usuário clica num bloco de tarefa do plano na Agenda THEN o sistema SHALL abrir o plano daquele dia. (PLAN-29)
 7. WHEN o usuário passa o mouse ou foca um bloco de tarefa do plano na Agenda THEN o sistema SHALL mostrar um tooltip com o título, a estimativa (`Sem estimativa` sem ela), `Planejada · HH:MM – HH:MM · <duração>`, a lista, `Agendada para <dia>` quando a tarefa está agendada para outro dia, e `Clique para abrir o plano do dia`, como os tooltips das sessões e das tarefas agendadas. Uma pausa planejada SHALL mostrar o nome, `Pausa planejada · HH:MM – HH:MM · <duração>`, `Intervalo em <lista>` e `Clique para ver a pausa`. (PLAN-46)
+9. WHEN o usuário clica em `Começar` numa pausa do plano na tela de foco THEN o sistema SHALL marcar a pausa como iniciada na mesma gravação do Intervalo, e a pausa SHALL sair da Agenda e de `Pausas do plano de hoje`, porque o Intervalo registrado já mostra a pausa. No plano do dia ela continua; salvar o plano de novo SHALL manter a marca enquanto a pausa existir nele. Uma pausa que não é do usuário SHALL ser recusada com `plan_break_unknown`, sem abrir Intervalo. (PLAN-49)
 8. WHEN o usuário passa o mouse sobre um bloco que se abre ou se move — tarefa agendada, tarefa planejada ou pausa planejada, na Agenda e no rascunho do plano — THEN a borda tracejada SHALL ficar sólida e o bloco SHALL ficar por cima dos vizinhos; uma tarefa agendada só muda quando pode ser arrastada. (PLAN-47)
 
 **Independent Test**: Planejar um café às 10:00 hoje, abrir o foco da lista do café, clicar em `Começar` em `Pausas do plano de hoje` e ver o Intervalo de 15 min aberto. Na Agenda, passar o mouse sobre uma tarefa planejada e ver o tooltip e a borda sólida.
@@ -250,6 +251,7 @@ O que o código já fixa:
 | PLAN-46 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-47 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-48 | P1: Montar o plano de um dia | Tasks | Implementing |
+| PLAN-49 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 
 **Coverage:** 45 total, 45 mapped to tasks (T1 a T25), 0 unmapped.
 

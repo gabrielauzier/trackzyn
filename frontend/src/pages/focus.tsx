@@ -31,7 +31,7 @@ import { FocusSubtasks } from '@/components/focus/focus-subtasks'
 import { FocusTaskCard } from '@/components/focus/focus-task-card'
 import { FocusDrop, NextTaskItem, NextTaskOverlay } from '@/components/focus/next-tasks'
 import { OfflineConflicts } from '@/components/focus/offline-conflicts'
-import { PlannedBreaks } from '@/components/focus/planned-breaks'
+import { PlannedBreaks, type PlannedBreak } from '@/components/focus/planned-breaks'
 import { SoundSettings } from '@/components/focus/sound-settings'
 import { ListBadge } from '@/components/lists/list-badge'
 import { Button } from '@/components/ui/button'
@@ -99,7 +99,7 @@ export default function FocusPage() {
       skip: (taskId: string) => tell(focusActions.skip(taskId)),
       complete: (taskId: string) => tell(focusActions.complete(taskId)),
       extend: (taskId: string) => tell(focusActions.extend(taskId)),
-      takeBreak: (minutes: number) => tell(focusActions.takeBreak(minutes)),
+      takeBreak: (minutes: number, planBlockId?: string) => tell(focusActions.takeBreak(minutes, planBlockId)),
       endBreak: () => tell(focusActions.endBreak()),
       retry: (actionId: string) => tell(focusActions.retry(actionId)),
     }
@@ -131,9 +131,19 @@ export default function FocusPage() {
     enabled: planDay !== null && canWrite,
     retry: false,
   })
+  /** The breaks of the plan started here: they leave the list at once, before the plan is read again (PLAN-49). */
+  const [startedBreaks, setStartedBreaks] = useState<string[]>([])
   const plannedBreaks = (todayPlan?.blocks ?? []).flatMap((block) =>
-    block.kind === 'break' && block.day === planDay && block.list.id === listId ? [block] : [],
+    block.kind === 'break' && block.day === planDay && block.list.id === listId && !startedBreaks.includes(block.id) ? [block] : [],
   )
+  /** `Começar`: an Intervalo of the break's length, which marks the break started; the Agenda and this list drop it. */
+  const startPlannedBreak = (block: PlannedBreak) => {
+    setStartedBreaks((ids) => [...ids, block.id])
+    void actions.takeBreak(block.minutes, block.id).finally(() => {
+      void queryClient.invalidateQueries({ queryKey: ['plans'] })
+      void queryClient.invalidateQueries({ queryKey: ['lists'] })
+    })
+  }
 
   // Start once per list, on the first state the server answers. Coming from `Focar agora` on the
   // desktop, the focus then goes to the widget (WIDGET-01): once the start was answered, or at once when
@@ -381,7 +391,7 @@ export default function FocusPage() {
             )}
 
             {canWrite && timezone !== null && display.mode !== 'break' && (
-              <PlannedBreaks breaks={plannedBreaks} nowMinute={minuteOf(nowInstant, timezone)} onStart={(block) => void actions.takeBreak(block.minutes)} />
+              <PlannedBreaks breaks={plannedBreaks} nowMinute={minuteOf(nowInstant, timezone)} onStart={startPlannedBreak} />
             )}
 
             {queue.length > 0 && (

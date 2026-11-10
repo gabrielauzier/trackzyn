@@ -139,7 +139,8 @@ export function focusRoutes(ctx: AppContext) {
     typed.post(
       '/api/focus/break',
       {
-        schema: { body: actionBody.extend({ minutes: z.number().int().min(1).max(120), list_id: uuid }), response },
+        // `plan_block_id`: the break of the user's plan this Intervalo starts (PLAN-49).
+        schema: { body: actionBody.extend({ minutes: z.number().int().min(1).max(120), list_id: uuid, plan_block_id: uuid.optional() }), response },
         preValidation: writing,
       },
       async (request) =>
@@ -147,7 +148,7 @@ export function focusRoutes(ctx: AppContext) {
           ctx.db,
           actor(request),
           toInput(request.body),
-          { minutes: request.body.minutes, listId: request.body.list_id.toLowerCase() },
+          { minutes: request.body.minutes, listId: request.body.list_id.toLowerCase(), planBlockId: request.body.plan_block_id?.toLowerCase() },
           new Date(),
         ),
     )

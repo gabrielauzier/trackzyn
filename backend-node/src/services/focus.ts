@@ -6,6 +6,7 @@ import {
   type FocusSession,
   type Task,
   type Workspace,
+  dayPlanBlocks,
   focusActions,
   focusSessions,
   lists,
@@ -300,7 +301,7 @@ export function breakFocus(
   db: Database,
   actor: FocusActor,
   input: FocusActionInput,
-  payload: { minutes: number; listId: string },
+  payload: { minutes: number; listId: string; planBlockId?: string },
   now: Date,
 ): Promise<FocusState> {
   if (!Number.isInteger(payload.minutes) || payload.minutes < 1 || payload.minutes > 120) {
@@ -327,6 +328,21 @@ export function breakFocus(
       lastSeenAt: context.at,
       endReason: null,
     })
+    // Started from a break of the user's plan: it is done, and leaves the Agenda and the focus (PLAN-49).
+    if (payload.planBlockId) {
+      const marked = await tx
+        .update(dayPlanBlocks)
+        .set({ startedAt: context.at })
+        .where(
+          and(
+            eq(dayPlanBlocks.id, payload.planBlockId),
+            eq(dayPlanBlocks.kind, 'break'),
+            sql`${dayPlanBlocks.planId} IN (SELECT id FROM day_plans WHERE user_id = ${context.userId} AND workspace_id = ${context.workspaceId})`,
+          ),
+        )
+        .returning({ id: dayPlanBlocks.id })
+      if (marked.length === 0) throw new HttpError(422, 'Unknown planned break', {}, { code: 'plan_break_unknown' })
+    }
     return list.id
   })
 }

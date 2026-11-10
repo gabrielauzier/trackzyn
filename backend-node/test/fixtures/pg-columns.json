@@ -61,6 +61,12 @@
       "type": "smallint",
       "nullable": false,
       "maxLength": null
+    },
+    {
+      "column": "started_at",
+      "maxLength": null,
+      "nullable": true,
+      "type": "timestamp with time zone"
     }
   ],
   "day_plans": [

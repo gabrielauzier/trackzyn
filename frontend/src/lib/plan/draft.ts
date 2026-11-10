@@ -139,7 +139,15 @@ export function toInput(blocks: DraftBlock[]): BlockInput[] {
   return blocks.map((block) =>
     block.kind === 'task'
       ? { kind: 'task', task_id: block.task.id, start: clockOf(block.start), minutes: block.minutes }
-      : { kind: 'break', name: block.name, list_id: block.list.id, start: clockOf(block.start), minutes: block.minutes },
+      : {
+          kind: 'break',
+          // A saved break goes back with its id, so the server keeps it started if its Intervalo began (PLAN-49).
+          ...(block.key.startsWith('new-') ? {} : { id: block.key }),
+          name: block.name,
+          list_id: block.list.id,
+          start: clockOf(block.start),
+          minutes: block.minutes,
+        },
   )
 }
 

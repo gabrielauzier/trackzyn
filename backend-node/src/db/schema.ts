@@ -432,6 +432,8 @@ export const dayPlanBlocks = pgTable(
     startTime: time('start_time').notNull(),
     /** A task lasts 5 to 1440 minutes; a break 5 to 120, the limit of a break session. */
     minutes: smallint('minutes').notNull(),
+    /** Only for a break: when `Começar` on the focus opened its Intervalo; then it leaves the Agenda (PLAN-49). */
+    startedAt: timestamp('started_at', { withTimezone: true }),
   },
   (t) => [
     index('ix_day_plan_blocks_plan_start').on(t.planId, t.startTime),

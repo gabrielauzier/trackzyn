@@ -1,0 +1,1 @@
+ALTER TABLE "day_plan_blocks" ADD COLUMN "started_at" timestamp with time zone;

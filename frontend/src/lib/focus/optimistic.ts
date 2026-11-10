@@ -8,7 +8,7 @@ export type FocusActionPayload =
   | { type: 'skip'; task_id: string }
   | { type: 'complete'; task_id: string }
   | { type: 'extend'; task_id: string }
-  | { type: 'break'; minutes: number; list_id: string }
+  | { type: 'break'; minutes: number; list_id: string; plan_block_id?: string }
   | { type: 'break/end' }
   | { type: 'heartbeat' }
   | { type: 'recover'; decision: 'keep' | 'cut' }

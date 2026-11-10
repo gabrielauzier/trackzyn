@@ -17,6 +17,8 @@ const blockBody = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('task'), task_id: uuid, start: time, minutes: z.number().int().min(5).max(1440) }),
   z.object({
     kind: z.literal('break'),
+    /** The saved break this one is, so a break already started stays started (PLAN-49). */
+    id: uuid.optional(),
     name: z.string().trim().min(1).max(40),
     list_id: uuid,
     start: time,
@@ -41,7 +43,15 @@ const taskBlockSchema = z.object({
     estimate_minutes: z.number().nullable(),
   }),
 })
-const breakBlockSchema = z.object({ id: z.string(), kind: z.literal('break'), start: z.string(), minutes: z.number(), name: z.string(), list: listSchema })
+const breakBlockSchema = z.object({
+  id: z.string(),
+  kind: z.literal('break'),
+  start: z.string(),
+  minutes: z.number(),
+  name: z.string(),
+  list: listSchema,
+  started_at: z.string().nullable(),
+})
 const blockSchema = z.discriminatedUnion('kind', [taskBlockSchema, breakBlockSchema])
 const plannedSchema = z.discriminatedUnion('kind', [taskBlockSchema.extend({ day: z.string() }), breakBlockSchema.extend({ day: z.string() })])
 const workdaySchema = z.object({ start: z.string(), end: z.string() })
@@ -60,7 +70,7 @@ const candidateSchema = z.object({
 const toBlock = (block: z.infer<typeof blockBody>): BlockInput =>
   block.kind === 'task'
     ? { kind: 'task', taskId: block.task_id.toLowerCase(), start: block.start, minutes: block.minutes }
-    : { kind: 'break', name: block.name, listId: block.list_id.toLowerCase(), start: block.start, minutes: block.minutes }
+    : { kind: 'break', name: block.name, listId: block.list_id.toLowerCase(), start: block.start, minutes: block.minutes, id: block.id?.toLowerCase() }
 
 /** The logged-in user's day plans and workday (planejamento-diario); closed to access tokens (AD-007, PLAN-42). */
 export function planRoutes(ctx: AppContext) {

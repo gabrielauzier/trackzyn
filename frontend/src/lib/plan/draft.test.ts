@@ -134,11 +134,16 @@ describe('isDirty (PLAN-07, PLAN-11)', () => {
 })
 
 describe('toInput', () => {
-  it('gives the body of PUT /api/plans/:day, with HH:MM starts', () => {
+  it('gives the body of PUT /api/plans/:day, with HH:MM starts and the id of a saved break (PLAN-49)', () => {
     expect(toInput(reset().blocks)).toEqual([
       { kind: 'task', task_id: 't1', start: '09:00', minutes: 90 },
-      { kind: 'break', name: 'Almoço', list_id: 'l1', start: '12:00', minutes: 60 },
+      { kind: 'break', id: 'b2', name: 'Almoço', list_id: 'l1', start: '12:00', minutes: 60 },
     ])
+  })
+
+  it('PLAN-49 sends a new break without an id', () => {
+    const added = draftReducer(emptyDraft, { type: 'add', item: { kind: 'break', name: 'Café', minutes: 15, list: { id: 'l1', name: 'Work', color: 3 } }, start: 600 })
+    expect(toInput(added.blocks)).toEqual([{ kind: 'break', name: 'Café', list_id: 'l1', start: '10:00', minutes: 15 }])
   })
 })
 

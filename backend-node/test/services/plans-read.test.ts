@@ -136,7 +136,7 @@ describe('getPlan: the plan of one day (PLAN-11, PLAN-12, PLAN-34)', () => {
           estimate_minutes: 90,
         },
       },
-      { id: expect.any(String), kind: 'break', start: '12:00', minutes: 60, name: 'Almoço', list: { id: breakListId, name: 'Pausas', color: 5 } },
+      { id: expect.any(String), kind: 'break', start: '12:00', minutes: 60, name: 'Almoço', list: { id: breakListId, name: 'Pausas', color: 5 }, started_at: null },
     ])
   })
 
@@ -251,6 +251,7 @@ describe('listPlanned: the saved blocks of a period, for the Agenda (PLAN-24, PL
       minutes: 15,
       name: 'Café',
       list: { id: breakListId, name: 'Pausas', color: 5 },
+      started_at: null,
     })
     expect(found[2]).toMatchObject({ day: TOMORROW, kind: 'task', minutes: 60, task: { id: review, title: 'Review', done: false } })
   })

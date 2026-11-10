@@ -29,7 +29,7 @@ export type PlanBlockRead =
       minutes: number
       task: { id: string; title: string; list: ListRef; done: boolean; scheduled_on: string | null; estimate_minutes: number | null }
     }
-  | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: ListRef }
+  | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: ListRef; started_at: string | null }
 
 /** A saved block with its day (PLAN-24). */
 export type PlannedBlock = PlanBlockRead & { day: string }
@@ -89,6 +89,7 @@ interface BlockRow {
   list_id: string
   list_name: string
   list_color: number
+  started_at: string | null
 }
 
 /**
@@ -106,7 +107,7 @@ export async function listPlanned(
 ): Promise<PlannedBlock[]> {
   const found = await rows<BlockRow & { day: string }>(
     db,
-    sql`SELECT b.id, b.kind, to_char(b.start_time, 'HH24:MI') AS start, b.minutes, b.name, p.day::text AS day,
+    sql`SELECT b.id, b.kind, to_char(b.start_time, 'HH24:MI') AS start, b.minutes, b.name, p.day::text AS day, b.started_at,
                t.id AS task_id, t.title AS task_title, t."column" AS task_column, t.scheduled_on::text AS task_scheduled_on,
                t.estimate_minutes AS task_estimate, l.id AS list_id, l.name AS list_name, l.color AS list_color
         FROM day_plans p
@@ -116,12 +117,16 @@ export async function listPlanned(
         WHERE p.user_id = ${actor.userId} AND p.workspace_id = ${actor.workspaceId}
           AND p.day BETWEEN ${from}::date AND ${to}::date AND NOT l.is_archived
           AND (${!pendingOnly} OR t.id IS NULL OR t."column" <> 'done')
+          AND (${!pendingOnly} OR b.started_at IS NULL)
         ORDER BY p.day, b.start_time, b.kind DESC, b.id`,
   )
   return found.map((row) => {
     const list = { id: row.list_id, name: row.list_name, color: row.list_color }
     const base = { id: row.id, start: row.start, minutes: row.minutes, day: row.day }
-    if (row.kind === 'break') return { ...base, kind: 'break', name: row.name!, list }
+    if (row.kind === 'break') {
+      const startedAt = row.started_at === null ? null : new Date(row.started_at).toISOString()
+      return { ...base, kind: 'break', name: row.name!, list, started_at: startedAt }
+    }
     return {
       ...base,
       kind: 'task',
@@ -199,7 +204,7 @@ export async function listCandidates(db: Database, actor: PlanActor, day: string
 /** A block of the plan as the client sends it (`start` is `HH:MM`). */
 export type BlockInput =
   | { kind: 'task'; taskId: string; start: string; minutes: number }
-  | { kind: 'break'; name: string; listId: string; start: string; minutes: number }
+  | { kind: 'break'; name: string; listId: string; start: string; minutes: number; id?: string }
 
 const planError = (status: number, message: string, code: string) => new HttpError(status, message, {}, { code })
 
@@ -254,11 +259,21 @@ export async function savePlan(
             .where(and(inArray(lists.id, listIds), eq(lists.workspaceId, actor.workspaceId)))
     if (breakLists.length !== listIds.length) throw planError(422, 'Every break list must be of the workspace', 'plan_list_unknown')
 
+    // A break already started keeps its id and its start when the plan is saved again (PLAN-49).
+    const started = new Map(
+      (
+        await tx
+          .select({ id: dayPlanBlocks.id, startedAt: dayPlanBlocks.startedAt })
+          .from(dayPlanBlocks)
+          .where(and(eq(dayPlanBlocks.planId, plan!.id), sql`${dayPlanBlocks.startedAt} IS NOT NULL`))
+      ).map((row) => [row.id, row.startedAt]),
+    )
     await tx.delete(dayPlanBlocks).where(eq(dayPlanBlocks.planId, plan!.id))
     if (input.blocks.length > 0) {
       await tx.insert(dayPlanBlocks).values(
         input.blocks.map((block) => ({
-          id: randomUUID(),
+          id: block.kind === 'break' && block.id && started.has(block.id) ? block.id : randomUUID(),
+          startedAt: block.kind === 'break' && block.id ? (started.get(block.id) ?? null) : null,
           planId: plan!.id,
           kind: block.kind,
           taskId: block.kind === 'task' ? block.taskId : null,

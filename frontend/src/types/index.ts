@@ -450,7 +450,7 @@ export interface PlanTaskRef {
 /** A saved block of a day plan; `start` is `HH:MM` (planejamento-diario). */
 export type PlanBlock =
   | { id: string; kind: 'task'; start: string; minutes: number; task: PlanTaskRef }
-  | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: PlanListRef }
+  | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: PlanListRef; started_at?: string | null }
 
 /** The user's working hours, `HH:MM`, with `end` after `start`; 09:00 to 18:00 when never set (PLAN-22). */
 export interface Workday {
@@ -487,4 +487,4 @@ export type PlannedBlock = PlanBlock & { day: string }
 /** The body of a block for `PUT /api/plans/:day`; `start` is `HH:MM`. */
 export type PlanBlockInput =
   | { kind: 'task'; task_id: string; start: string; minutes: number }
-  | { kind: 'break'; name: string; list_id: string; start: string; minutes: number }
+  | { kind: 'break'; id?: string; name: string; list_id: string; start: string; minutes: number }

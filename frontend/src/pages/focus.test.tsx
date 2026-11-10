@@ -1175,7 +1175,18 @@ describe('FocusPage breaks of today\'s plan (PLAN-26, PLAN-27, PLAN-28)', () => 
     await user.click(within(await section()).getByRole('button', { name: 'Start Café' }))
 
     await waitFor(() => expect(sent()).toHaveLength(1))
-    expect(sent()[0]).toMatchObject({ type: 'break', minutes: 15, list_id: LIST })
+    // The Intervalo carries the break of the plan, which the server marks started (PLAN-49).
+    expect(sent()[0]).toMatchObject({ type: 'break', minutes: 15, list_id: LIST, plan_block_id: 'p-coffee' })
+  })
+
+  it('PLAN-49 a break started here leaves the list at once and the plan is read again', async () => {
+    const { user } = renderFocus({ pathname: `/focus/${LIST}`, state: { start: false } })
+    await user.click(within(await section()).getByRole('button', { name: 'Start Café' }))
+
+    // The server answers the Intervalo: the focus shows it, and the started break is gone from the plan it reads.
+    vi.mocked(plans.planned).mockResolvedValue({ blocks: blocks.filter((block) => block !== coffee) })
+    await waitFor(() => expect(plans.planned).toHaveBeenCalledTimes(2))
+    expect(screen.queryByRole('button', { name: 'Start Café' })).toBeNull()
   })
 
   it('PLAN-27 with a task counting here, Start still sends the break, which closes the task session on the server', async () => {

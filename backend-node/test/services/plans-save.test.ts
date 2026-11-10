@@ -98,7 +98,7 @@ describe('savePlan: replaces the plan of the day (PLAN-08, PLAN-35)', () => {
     expect(saved.version).toBe(1)
     expect(shape(saved.blocks)).toEqual([
       { kind: 'task', start: '09:00', minutes: 45, task: expect.objectContaining({ id: review }) },
-      { kind: 'break', start: '12:00', minutes: 60, name: 'Almoço', list: { id: listId, name: 'Work', color: 3 } },
+      { kind: 'break', start: '12:00', minutes: 60, name: 'Almoço', list: { id: listId, name: 'Work', color: 3 }, started_at: null },
     ])
     expect(await getPlan(db, actor(), TOMORROW, NOW)).toEqual(saved)
   })

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { invite, ownerViewerStranger } from '../support/roles.ts'
@@ -217,7 +218,7 @@ describe('GET /api/plans?from&to (PLAN-24)', () => {
     expect(reply.statusCode).toBe(200)
     expect(reply.json()).toEqual({
       blocks: [
-        { id: expect.any(String), day: tomorrow, kind: 'break', start: '10:00', minutes: 15, name: 'Café', list: { id: listId, name: 'Work', color: 1 } },
+        { id: expect.any(String), day: tomorrow, kind: 'break', start: '10:00', minutes: 15, name: 'Café', list: { id: listId, name: 'Work', color: 1 }, started_at: null },
       ],
     })
   })
@@ -252,6 +253,65 @@ describe('GET /api/plans?from&to (PLAN-24)', () => {
     const reply = await send('GET', `/api/plans?from=${await day(0)}&to=${await day(42)}`, owner.token, workspaceId)
     expect(reply.statusCode).toBe(422)
     expect(reply.json().detail[0].loc).toEqual(['query', 'to'])
+  })
+})
+
+describe('a planned break started on the focus (PLAN-49)', () => {
+  const breakAction = (extra: Record<string, unknown>) => ({ action_id: randomUUID(), occurred_at: new Date().toISOString(), device_id: 'A', minutes: 15, ...extra })
+
+  it('starting its Intervalo marks it: it leaves the Agenda, stays on the plan as started, and stays so when the plan is saved again', async () => {
+    const { owner, workspaceId, listId } = await setup()
+    const today = await day(0)
+    const saved = (
+      await send('PUT', `/api/plans/${today}`, owner.token, workspaceId, {
+        base_version: 0,
+        blocks: [
+          { kind: 'break', name: 'Café', list_id: listId, start: '10:00', minutes: 15 },
+          { kind: 'break', name: 'Almoço', list_id: listId, start: '12:00', minutes: 60 },
+        ],
+      })
+    ).json()
+    const coffee = saved.blocks.find((block: { name: string }) => block.name === 'Café')
+    expect(coffee.started_at).toBeNull()
+
+    const reply = await send('POST', '/api/focus/break', owner.token, workspaceId, breakAction({ list_id: listId, plan_block_id: coffee.id }))
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json().session).toMatchObject({ kind: 'break', list_id: listId })
+
+    const names = async () =>
+      ((await send('GET', `/api/plans?from=${today}&to=${today}`, owner.token, workspaceId)).json().blocks as Array<{ name: string }>).map((block) => block.name)
+    expect(await names()).toEqual(['Almoço'])
+    const plan = (await send('GET', `/api/plans/${today}`, owner.token, workspaceId)).json()
+    const read = plan.blocks.find((block: { name: string }) => block.name === 'Café')
+    expect(read.started_at).toEqual(expect.any(String))
+
+    // Saved again with its id, moved to 10:15, it is still started; a break sent without an id is a new one.
+    const again = await send('PUT', `/api/plans/${today}`, owner.token, workspaceId, {
+      base_version: plan.version,
+      blocks: [
+        { kind: 'break', id: coffee.id, name: 'Café', list_id: listId, start: '10:15', minutes: 15 },
+        { kind: 'break', name: 'Almoço', list_id: listId, start: '12:00', minutes: 60 },
+      ],
+    })
+    expect(again.statusCode).toBe(200)
+    const kept = again.json().blocks.find((block: { name: string }) => block.name === 'Café')
+    expect(kept).toMatchObject({ id: coffee.id, start: '10:15', started_at: read.started_at })
+    expect(await names()).toEqual(['Almoço'])
+  })
+
+  it('answers 422 plan_break_unknown for a break of another user or a task block, and opens no Intervalo', async () => {
+    const { owner, workspaceId, listId, taskId } = await setup()
+    const today = await day(0)
+    const saved = (
+      await send('PUT', `/api/plans/${today}`, owner.token, workspaceId, {
+        base_version: 0,
+        blocks: [{ kind: 'task', task_id: taskId, start: '09:00', minutes: 45 }],
+      })
+    ).json()
+    const reply = await send('POST', '/api/focus/break', owner.token, workspaceId, breakAction({ list_id: listId, plan_block_id: saved.blocks[0].id }))
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json()).toMatchObject({ code: 'plan_break_unknown' })
+    expect((await send('GET', '/api/focus', owner.token, workspaceId)).json().session).toBeNull()
   })
 })
 
