@@ -27,7 +27,6 @@ O que o código já fixa:
 | Feature | Reason |
 | --- | --- |
 | Pausas fixas (almoço todo dia às 12:00) | Segunda versão; a primeira usa pausas avulsas (PLAN-D6). |
-| `Encaixar` automático das tarefas nos buracos | P3; fora da primeira entrega. |
 | Planejado × realizado no fim do dia | Próxima feature; o modelo guarda o plano por dia para permitir a comparação depois. |
 | Iniciar a pausa sozinho ou avisar no horário | Decisão de 2026-11-07: o usuário inicia (PLAN-D4). Sem worker no modo local. |
 | Planejar ocorrências projetadas de uma série | Só a ocorrência aberta é uma tarefa real (agendamento D14). |
@@ -45,7 +44,7 @@ O que o código já fixa:
 | Rascunho ou salvar a cada arraste | Rascunho na tela; `Confirmar plano` salva o dia inteiro de uma vez | Decisão do usuário (2026-11-07), mesma lógica da D35 do agendamento | y |
 | Pausa | Entidade nova, um bloco do plano do tipo pausa; ao começar, vira uma sessão de Intervalo | Decisão do usuário (2026-11-07) | y |
 | De quem é o plano | Do usuário, por workspace e por dia | Decisão do usuário (2026-11-07) | y |
-| Qual dia | Qualquer dia de hoje em diante, abrindo em amanhã | Decisão do usuário (2026-11-07) | y |
+| Qual dia | Qualquer dia de hoje em diante, abrindo em hoje | Decisão do usuário (2026-11-07, revista em 2026-11-10) | y |
 | Plano × agendamento da tarefa | O bloco é só do usuário (tarefa, dia, início, duração). Confirmar só dá à tarefa sem dia o dia do plano, sem hora, para ela ir para Hoje. A hora e a duração não mudam a tarefa | Decisão do usuário (2026-11-07) | y |
 | Pausa → Intervalo | O usuário clica em `Começar` na pausa; abre um Intervalo com a duração planejada | Decisão do usuário (2026-11-07) | y |
 | Tarefa já agendada para outro dia | O bloco mostra `Agendada para <dia>`; confirmar não muda o dia da tarefa | O agendamento é compartilhado; o plano não move a tarefa de outras pessoas | y |
@@ -145,8 +144,8 @@ O que o código já fixa:
 5. The system SHALL mostrar `Começar` só na tela de foco, na seção `Pausas do plano de hoje`, para as pausas do plano de hoje daquela lista que ainda não terminaram, e não durante um Intervalo. A Agenda não mostra `Começar`: o painel de uma pausa de hoje leva ao foco da lista dela. (PLAN-28)
 6. WHEN o usuário clica num bloco de tarefa do plano na Agenda THEN o sistema SHALL abrir o plano daquele dia. (PLAN-29)
 7. WHEN o usuário passa o mouse ou foca um bloco de tarefa do plano na Agenda THEN o sistema SHALL mostrar um tooltip com o título, a estimativa (`Sem estimativa` sem ela), `Planejada · HH:MM – HH:MM · <duração>`, a lista, `Agendada para <dia>` quando a tarefa está agendada para outro dia, e `Clique para abrir o plano do dia`, como os tooltips das sessões e das tarefas agendadas. Uma pausa planejada SHALL mostrar o nome, `Pausa planejada · HH:MM – HH:MM · <duração>`, `Intervalo em <lista>` e `Clique para ver a pausa`. (PLAN-46)
-9. WHEN o usuário clica em `Começar` numa pausa do plano na tela de foco THEN o sistema SHALL marcar a pausa como iniciada na mesma gravação do Intervalo, e a pausa SHALL sair da Agenda e de `Pausas do plano de hoje`, porque o Intervalo registrado já mostra a pausa. No plano do dia ela continua; salvar o plano de novo SHALL manter a marca enquanto a pausa existir nele. Uma pausa que não é do usuário SHALL ser recusada com `plan_break_unknown`, sem abrir Intervalo. (PLAN-49)
 8. WHEN o usuário passa o mouse sobre um bloco que se abre ou se move — tarefa agendada, tarefa planejada ou pausa planejada, na Agenda e no rascunho do plano — THEN a borda tracejada SHALL ficar sólida e o bloco SHALL ficar por cima dos vizinhos; uma tarefa agendada só muda quando pode ser arrastada. (PLAN-47)
+9. WHEN o usuário clica em `Começar` numa pausa do plano na tela de foco THEN o sistema SHALL marcar a pausa como iniciada na mesma gravação do Intervalo, e a pausa SHALL sair da Agenda e de `Pausas do plano de hoje`, porque o Intervalo registrado já mostra a pausa. No plano do dia ela continua; salvar o plano de novo SHALL manter a marca enquanto a pausa existir nele. Uma pausa que não é do usuário SHALL ser recusada com `plan_break_unknown`, sem abrir Intervalo. (PLAN-49)
 
 **Independent Test**: Planejar um café às 10:00 hoje, abrir o foco da lista do café, clicar em `Começar` em `Pausas do plano de hoje` e ver o Intervalo de 15 min aberto. Na Agenda, passar o mouse sobre uma tarefa planejada e ver o tooltip e a borda sólida.
 
@@ -163,7 +162,7 @@ O que o código já fixa:
 1. The system SHALL mostrar `Planejar` na barra lateral, abrindo o plano de hoje no fuso do workspace; `/planejar` sem dia SHALL abrir o de hoje. (PLAN-30)
 2. WHEN o usuário escolhe `Planejar dia` no cabeçalho de um dia da Agenda THEN o sistema SHALL abrir o plano daquele dia. (PLAN-31)
 
-**Independent Test**: Clicar em `Planejar` na barra lateral e chegar ao plano de amanhã.
+**Independent Test**: Clicar em `Planejar` na barra lateral e chegar ao plano de hoje; `Planejar amanhã` chega ao de amanhã.
 
 ---
 
@@ -255,7 +254,7 @@ O que o código já fixa:
 | PLAN-49 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-50 | P3: Encaixar o que sobrou | Tasks | Implementing |
 
-**Coverage:** 45 total, 45 mapped to tasks (T1 a T25), 0 unmapped.
+**Coverage:** 50 total. PLAN-01 a PLAN-45 mapped to tasks (T1 a T25); PLAN-46 a PLAN-50 came from the changes after verification round 4, without a task of their own, and are checked in rounds 5 and 6 of `validation.md`. 0 unmapped.
 
 ---
 
@@ -283,7 +282,7 @@ O que o código já fixa:
 - **PLAN-D4 (2026-11-07):** a pausa é uma entidade nova e vira uma sessão de Intervalo quando o usuário clica em `Começar`.
 - **PLAN-D5 (2026-11-07, revisada em 2026-11-10):** qualquer dia de hoje em diante pode ser planejado; a tela abre em hoje. `Planejar amanhã`, na Agenda e em Hoje, continua abrindo amanhã.
 - **PLAN-D7 (2026-11-07):** as tarefas agendadas com hora para o dia, sem bloco no plano, ocupam o expediente na conta da capacidade, pela estimativa ou 1h; uma tarefa que tem bloco conta só pelo bloco.
-- **PLAN-D6 (2026-11-07):** a primeira entrega tem a tela de um dia, pausas avulsas, a barra de capacidade, o rascunho e o plano na Agenda; pausas fixas e `Encaixar` vêm depois, e o modelo guarda o plano por dia para o planejado × realizado.
+- **PLAN-D6 (2026-11-07, revisada em 2026-11-10):** a primeira entrega tem a tela de um dia, pausas avulsas, a barra de capacidade, o rascunho, o plano na Agenda e o `Encaixar`, que entrou já nesta entrega; pausas fixas vêm depois, e o modelo guarda o plano por dia para o planejado × realizado.
 
 ---
 

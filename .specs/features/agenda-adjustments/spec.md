@@ -171,7 +171,7 @@ A issue #29 junta sete ajustes da Agenda:
 | ADJ-25 | P2: Menu | T1, T2 | Verified |
 | ADJ-26 | P2: Menu | — | Implementing |
 
-**Coverage:** 25 total, 25 mapped to tasks, 25 verified (Verifier round 3 PASS)
+**Coverage:** 26 total. ADJ-01 a ADJ-25 mapped to tasks and verified (Verifier round 3 PASS); ADJ-26 came with the planejamento-diario changes, without a task, and is checked in that feature's `validation.md` (rounds 5 and 6)
 
 ---
 
