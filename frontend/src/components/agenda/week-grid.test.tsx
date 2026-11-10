@@ -131,11 +131,15 @@ describe('WeekGrid', () => {
 
     const pinned = renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} stickyTop={140} />)
     const sticky = pinned.container.querySelector<HTMLElement>('[data-agenda-sticky]')!
-    expect(sticky).toHaveClass('lg:sticky', 'bg-card')
+    expect(sticky).toHaveClass('lg:sticky')
     expect(sticky.style.top).toBe('140px')
     expect(sticky).toContainElement(pinned.container.querySelector('[data-agenda-header]'))
-    expect(pinned.container.querySelector('[data-agenda-body]')!.parentElement).toHaveClass('overflow-clip')
-    expect(pinned.container.querySelector('[data-agenda-body]')!.parentElement).not.toHaveClass('overflow-hidden')
+    // The pinned part draws the grid's rounded top on the page's ground; the body, its sides and rounded bottom.
+    expect(sticky).toHaveClass('bg-background')
+    expect(pinned.container.querySelector('[data-agenda-top]')).toHaveClass('rounded-t-xl', 'border', 'bg-card', 'overflow-clip')
+    expect(pinned.container.querySelector('[data-agenda-body]')).toHaveClass('rounded-b-xl', 'border', 'border-t-0', 'overflow-clip')
+    // No box around them clips, which would keep the header from pinning to the window.
+    expect(sticky.parentElement!.className).not.toMatch(/overflow-(hidden|clip|auto)/)
   })
 
   it('has a line per hour from 00:00 to 24:00 and, wide, scrolls the page to 07:00 under the pinned headers (AGENDA-01, AGENDA-02)', () => {
@@ -522,12 +526,20 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent(/Work · This weekClick to open$/)
   })
 
+  it('US-14 shows no Sem hora row while no day shown has a task without a time', () => {
+    const { container } = grid({ untimed: [] })
+    expect(container.querySelector('[data-untimed-row]')).toBeNull()
+  })
+
   it('US-14 puts the Sem hora row between the day headers and the timeline, with the untimed tasks of each day', () => {
     const { container } = grid({ untimed: [{ ...scheduled('u', '2026-11-05', '10:00'), scheduled_time: null }] })
     const row = container.querySelector<HTMLElement>('[data-untimed-row]')!
+    // No scrollbar room of its own: its cells line up with the day headers.
+    expect(row.className).not.toMatch(/scrollbar-gutter/)
     expect(container.querySelector('[data-agenda-header]')!.nextElementSibling).toBe(row)
     // Both pin together, over the timeline.
-    expect(row.parentElement!.nextElementSibling).toBe(container.querySelector('[data-agenda-body]'))
+    expect(container.querySelector('[data-agenda-sticky]')).toContainElement(row)
+    expect(container.querySelector('[data-agenda-sticky]')!.nextElementSibling).toBe(container.querySelector('[data-agenda-body]'))
     expect(within(row.querySelector<HTMLElement>('[data-untimed-day="2026-11-05"]')!).getByRole('button', { name: /^Scheduled u/ })).toBeInTheDocument()
     // Without a time it is not a block on the grid.
     expect(within(column(container, '2026-11-05')).queryByRole('button', { name: /^Scheduled u/ })).toBeNull()

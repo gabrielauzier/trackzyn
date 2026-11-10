@@ -46,14 +46,6 @@ const NO_PLAN: PlannedBlock[] = []
 
 type PlannedBreak = Extract<PlannedBlock, { kind: 'break' }>
 
-/** The look of each kind of block, under the toolbar: a session, a planned task, a break and a scheduled task. */
-const LEGEND = [
-  { key: 'session', style: { backgroundColor: 'var(--chart-1)' } },
-  { key: 'planned', style: { backgroundColor: 'var(--card)', border: '1.5px dashed var(--chart-2)' } },
-  { key: 'break', style: { backgroundImage: 'repeating-linear-gradient(135deg, var(--muted) 0 4px, var(--border) 4px 6px)', border: '1.5px dashed var(--muted-foreground)' } },
-  { key: 'scheduled', style: { backgroundColor: 'var(--card)', border: '1.5px dashed var(--chart-2)' } },
-] as const
-
 /** A change of the schedule of a task from the agenda, with the estimate a drop from `Sem hora` gives (D22). */
 type ScheduleChange = ScheduleChangeFields & { estimate_minutes?: number | null }
 
@@ -422,15 +414,15 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
 
   return (
     <div className="flex flex-col gap-4" style={{ '--agenda-header': `${headerHeight}px` } as CSSProperties}>
-      {/* Wide, the page title, the toolbar and the legend stay at the top of the window, over the page's padding, while
-          the page scrolls the grid under them (AGENDA-02). */}
+      {/* One line: the page title, then the toolbar. Wide, it stays at the top of the window, over the page's padding,
+          while the page scrolls the grid under it (AGENDA-02). */}
       <div
         ref={header}
         data-slot="agenda-header"
-        className="flex flex-col gap-4 bg-background lg:sticky lg:top-0 lg:z-30 lg:-mx-6 lg:-mt-6 lg:px-6 lg:pt-6 lg:pb-3"
+        className="flex flex-wrap items-center gap-x-6 gap-y-3 bg-background lg:sticky lg:top-0 lg:z-30 lg:-mx-6 lg:-mt-6 lg:px-6 lg:pt-6 lg:pb-3"
       >
         {title}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {/* The week opens on the chosen day's week, the day view on the day itself (AGENDA-40, AGENDA-41). */}
           <DatePickerChip today={today} shown={day} onPick={goTo} />
           {view === 'week' && (
@@ -481,14 +473,30 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
               </div>
             )}
             {/* The plan of tomorrow in the workspace timezone (PLAN-01). */}
-            <Button type="button" variant="outline" size="sm" onClick={() => navigate(tomorrowPath(timezone, now))}>
+            {/* Below 1536 px only the icon, so the title and the toolbar fit one line (AGENDA-02). */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label={t('plan.agenda.planTomorrow')}
+              title={t('plan.agenda.planTomorrow')}
+              onClick={() => navigate(tomorrowPath(timezone, now))}
+            >
               <CalendarCheck size={14} />
-              {t('plan.agenda.planTomorrow')}
+              <span className="hidden 2xl:inline">{t('plan.agenda.planTomorrow')}</span>
             </Button>
             {/* Secondary, before `Nova sessão`; off for a viewer (US-8). */}
-            <Button type="button" variant="secondary" size="sm" disabled={!canWrite} onClick={openSchedule}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!canWrite}
+              aria-label={t('agenda.schedule')}
+              title={t('agenda.schedule')}
+              onClick={openSchedule}
+            >
               <Clock size={14} />
-              {t('agenda.schedule')}
+              <span className="hidden 2xl:inline">{t('agenda.schedule')}</span>
             </Button>
             {/* From 768 px in both views; below, the day view has its round + button (ADJ-19). */}
             {canWrite && !narrow && (
@@ -500,16 +508,6 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
           </div>
         </div>
 
-        {!narrow && (
-          <ul aria-label={t('plan.agenda.legend')} className="-mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            {LEGEND.map(({ key, style }) => (
-              <li key={key} className="flex items-center gap-1.5">
-                <span aria-hidden className="h-2.5 w-4.5 rounded-[3px]" style={style} />
-                {t(`plan.agenda.legendItems.${key}`)}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
       {query.isError ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border py-16 text-center">
@@ -748,7 +746,12 @@ export default function AgendaPage() {
         <Agenda
           timezone={active.data.timezone}
           activeLists={active.data.lists}
-          title={<PageHeader section={current?.name ?? ''} title={t('nav.agenda')} />}
+          title={
+            <div className="shrink-0">
+              <p className="mb-0.5 text-xs font-medium text-muted-foreground">{current?.name ?? ''}</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t('nav.agenda')}</h1>
+            </div>
+          }
         />
       ) : (
         <>

@@ -101,13 +101,16 @@ const dayHeader = async (day?: string) => {
 }
 
 describe('AgendaPage', () => {
-  it('AGENDA-02 pins the title, the toolbar and the legend, and pins the grid headers and the open panel under them', async () => {
+  it('AGENDA-02 pins the title and the toolbar on one line, with no legend, and pins the grid headers and the open panel under them', async () => {
     const { container } = renderWithProviders(<AgendaPage />)
     await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
     const header = container.querySelector<HTMLElement>('[data-slot="agenda-header"]')!
     expect(header).toHaveClass('lg:sticky', 'lg:top-0', 'lg:z-30', 'bg-background')
     expect(within(header).getByRole('heading', { level: 1, name: 'Agenda' })).toBeInTheDocument()
     expect(within(header).getByRole('button', { name: 'Next week' })).toBeInTheDocument()
+    expect(header).toHaveClass('flex-wrap', 'items-center')
+    expect(header).not.toHaveClass('flex-col')
+    expect(screen.queryByRole('list', { name: 'Legend' })).toBeNull()
     // The grid's headers pin right under it (jsdom gives it no height).
     expect(container.querySelector<HTMLElement>('[data-agenda-sticky]')).toHaveClass('lg:sticky')
     expect(container.querySelector<HTMLElement>('[data-agenda-sticky]')!.style.top).toBe('0px')

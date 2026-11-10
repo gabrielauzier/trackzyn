@@ -219,7 +219,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 
 **Como** usuário, **quero** ver na Agenda as tarefas agendadas para um dia sem hora definida **para** enxergar tudo o que está planejado para aquele dia, não só o que tem horário.
 
-- A grade SHALL ter uma linha `Sem hora` entre o cabeçalho dos dias e a linha do tempo, com uma célula por dia, alinhada às colunas (D20). Na coluna das horas, a linha SHALL mostrar um ícone de relógio cortado, com o tooltip e o rótulo acessível `Agendadas sem hora definida`, no lugar de um texto.
+- A grade SHALL ter uma linha `Sem hora` entre o cabeçalho dos dias e a linha do tempo, com uma célula por dia, alinhada às colunas (D20), só quando algum dia mostrado tem tarefa agendada sem hora ou enquanto uma tarefa agendada é arrastada (para poder soltá-la ali e limpar a hora). Na coluna das horas, a linha SHALL mostrar um ícone de relógio cortado, com o tooltip e o rótulo acessível `Agendadas sem hora definida`, no lugar de um texto.
 - Cada célula SHALL listar até 3 tarefas pendentes agendadas para o dia sem hora, com o visual do bloco agendado da grade na cor da lista (fundo em tom fraco e contorno tracejado): título numa linha (cortado com reticências) e a estimativa à direita, quando houver; sem subtarefas.
 - A ordem SHALL ser a do quadro: coluna (Hoje, Esta semana, Backlog) e depois `position`.
 - WHEN o dia tem mais de 3 tarefas sem hora THEN a célula SHALL mostrar o botão `+X`, com X = as que não couberam, e o rótulo acessível `Ver todas as N tarefas agendadas do dia <dia>`.

@@ -1093,13 +1093,6 @@
       "today": "today",
       "breakList": "Break in {{list}}",
       "openPlan": "Open the plan of the day",
-      "legend": "Legend",
-      "legendItems": {
-        "session": "Session",
-        "planned": "Planned",
-        "break": "Break",
-        "scheduled": "Scheduled"
-      },
       "planDay": "Plan day",
       "plannedRange": "Planned · {{start}} – {{end}} · {{duration}}",
       "openPlanHint": "Click to open the plan of the day",

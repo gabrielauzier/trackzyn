@@ -206,16 +206,17 @@ export function WeekGrid({
   return (
     <div
       data-grabbing={grabbing || undefined}
-      // `overflow-clip` rounds the corners without making a scroll box, so the header can pin to the window.
-      className={cn('flex min-h-0 flex-col overflow-clip rounded-xl border bg-card', grabbing && 'cursor-grabbing [&_*]:cursor-grabbing')}
+      className={cn('flex min-h-0 flex-col', grabbing && 'cursor-grabbing [&_*]:cursor-grabbing')}
     >
-      {/* The day headers and the `Sem hora` row pin under the page's header while the page scrolls the hours. */}
+      {/* The day headers and the `Sem hora` row pin under the page's header while the page scrolls the hours. They draw
+          the grid's rounded top themselves, on the page's ground, so pinned they still look like the top of the grid. */}
       <div
         ref={sticky}
         data-agenda-sticky
-        className={cn('bg-card', stickyTop !== undefined && 'lg:sticky lg:z-20 lg:shadow-sm')}
+        className={cn('bg-background', stickyTop !== undefined && 'lg:sticky lg:z-20')}
         style={stickyTop !== undefined ? { top: stickyTop } : undefined}
       >
+      <div data-agenda-top className="overflow-clip rounded-t-xl border bg-card">
       <div data-agenda-header className="flex border-b">
         <div className="flex w-14 shrink-0 items-center justify-center">{corner}</div>
         {days.map((day) => {
@@ -251,10 +252,16 @@ export function WeekGrid({
           )
         })}
       </div>
-      {shownUntimed && <UntimedRow days={days} untimed={shownUntimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />}
+      {/* Only when a day shown has a task scheduled without a time, or while a scheduled task is dragged, so it can be
+          dropped there to lose its time (US-14). */}
+      {shownUntimed && (scheduledDraft !== null || shownUntimed.some((task) => days.includes(task.scheduled_on))) && (
+        <UntimedRow days={days} untimed={shownUntimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />
+      )}
       </div>
-      {/* Its own stacking layer: the now line and a block risen on hover stay under the pinned headers. */}
-      <div ref={body} data-agenda-body className="relative isolate">
+      </div>
+      {/* Its own stacking layer: the now line and a block risen on hover stay under the pinned headers. The rest of the
+          grid's box: its sides and its rounded bottom. */}
+      <div ref={body} data-agenda-body className="relative isolate overflow-clip rounded-b-xl border border-t-0 bg-card">
         <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-14 shrink-0" aria-hidden>
             {HOURS.map((hour) => (
