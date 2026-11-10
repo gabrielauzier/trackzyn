@@ -74,13 +74,20 @@
 - **Date**: 2026-11-07
 - **Status**: active
 
+### AD-010
+- **Decision**: Todo total de tempo que soma trechos com início e fim segue `workspaces.hours_count_mode` (`gross` soma cada trecho; `net` mede a união, e o trecho de pausa coberto por tarefa conta só como tarefa). No backend a união é `range_agg(tstzrange)` com `unnest` e diferença de multiranges; no frontend, `measure` de `lib/time/intervals.ts`. Somas de estimativas sem horário não seguem o modo.
+- **Reason**: Issue #42: sessões e blocos podem se sobrepor (AD-008, plano), e o workspace escolhe se a hora repetida conta. Multirange funciona igual no Postgres 16 e no PGlite (conferido em 2026-11-10). Abordagem escolhida pelo usuário em 2026-11-10.
+- **Trade-off**: Toda tela nova com total de tempo precisa ler o modo e ter teste nos dois; o tempo por lista dos Relatórios continua bruto e não soma o total líquido.
+- **Scope**: `contagem-de-horas`, `agenda`, `relatorios`, `planejamento-diario`, `foco-e-sons`; backend `services/focus-settle.ts`, `services/reports.ts`; frontend `lib/agenda`, `lib/plan`, `lib/time`.
+- **Date**: 2026-11-10
+- **Status**: active
+
 ## Handoff
 
-- **Feature**: `.specs/features/agenda-adjustments` (#29)
-- **Phase / Task**: Execute concluído (T1–T11); Verifier PASS na rodada 3 (`cd5cde3`)
-- **Completed**: as 11 features com Verifier PASS (listas-e-quadro, foco-e-sons, widget-desktop, relatorios, tokens-de-acesso, agenda, hide-short-sessions, merge-near-sessions, agenda-view-menu, session-task-picker, agenda-adjustments)
+- **Feature**: `.specs/features/contagem-de-horas` (#42)
+- **Phase / Task**: Execute em andamento, a partir de T1
+- **Completed**: spec, context, design e tasks aprovados (2026-11-10); AD-010 registrada
 - **In-progress** (file:line): none
-- **Next step**: testar no navegador (arrastar e confirmar, a sessão nova de 1h que se move, a visão Dia, `Ocultar intervalos`) e conferir que nenhum clique solto abre outro painel depois de um arraste (M4, `swallowNextClick`); enviar os commits para o PR #24
+- **Next step**: T1 (coluna e API do modo)
 - **Blockers**: none
 - **Uncommitted files**: none
-- **Branch**: feat/agenda
