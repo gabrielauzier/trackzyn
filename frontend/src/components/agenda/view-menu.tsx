@@ -2,7 +2,6 @@ import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal, ZoomIn } from 'lucide-react'
 
-import { Checkbox } from '@/components/ui/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { ALL_DAYS, WORK_DAYS, type WeekDay, toggleDay } from '@/lib/agenda/week-days'
@@ -28,8 +27,8 @@ interface AgendaViewMenuProps {
 /** A Monday, to name the week days in the reader's language. */
 const MONDAY = Date.UTC(2026, 10, 2)
 
-function dayName(day: WeekDay, locale: string): string {
-  const name = new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(new Date(MONDAY + day * 86_400_000))
+function dayName(day: WeekDay, locale: string, weekday: 'long' | 'short' = 'long'): string {
+  const name = new Intl.DateTimeFormat(locale, { weekday, timeZone: 'UTC' }).format(new Date(MONDAY + day * 86_400_000)).replace(/\.$/, '')
   return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1)
 }
 
@@ -109,25 +108,28 @@ export function AgendaViewMenu({
                 {shortcut(WORK_DAYS, t('agenda.viewMenu.workDays'))}
               </span>
             </div>
-            <div role="group" aria-labelledby={`${id}-days`} className="flex flex-col">
+            {/* One line of pills, short names shown and full names read, like the shortcuts above (DAYS-07). */}
+            <div role="group" aria-labelledby={`${id}-days`} className="flex gap-1 px-2">
               {ALL_DAYS.map((day) => {
-                const name = dayName(day, i18n.language)
-                const checked = days.includes(day)
+                const shown = days.includes(day)
                 // The last shown day stays: the week always shows one (DAYS-13).
-                const onlyOne = checked && days.length === 1
+                const onlyOne = shown && days.length === 1
                 return (
-                  <label
+                  <button
                     key={day}
-                    className={cn('flex min-h-9 items-center gap-2.5 rounded-lg px-2 text-sm', onlyOne ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-muted')}
+                    type="button"
+                    data-day={day}
+                    aria-label={dayName(day, i18n.language)}
+                    aria-pressed={shown}
+                    disabled={onlyOne}
+                    className={cn(
+                      'h-8 min-w-0 flex-1 rounded-full border-[1.5px] text-xs font-medium transition-colors disabled:cursor-not-allowed',
+                      shown ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground',
+                    )}
+                    onClick={() => onDaysChange(toggleDay(days, day))}
                   >
-                    <Checkbox
-                      aria-label={name}
-                      checked={checked}
-                      disabled={onlyOne}
-                      onCheckedChange={() => onDaysChange(toggleDay(days, day))}
-                    />
-                    <span aria-hidden>{name}</span>
-                  </label>
+                    <span aria-hidden>{dayName(day, i18n.language, 'short')}</span>
+                  </button>
                 )
               })}
             </div>

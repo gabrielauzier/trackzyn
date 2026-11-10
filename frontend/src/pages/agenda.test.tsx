@@ -209,9 +209,9 @@ describe('AgendaPage', () => {
       const { user, container } = renderWithProviders(<AgendaPage />)
       await user.click(await screen.findByRole('button', { name: 'View options' }))
       const panel = await screen.findByRole('dialog')
-      await user.click(within(panel).getByRole('checkbox', { name: 'Wednesday' }))
+      await user.click(within(panel).getByRole('button', { name: 'Wednesday' }))
       expect(headers(container)).not.toContain('2026-11-04')
-      await user.click(within(panel).getByRole('checkbox', { name: 'Wednesday' }))
+      await user.click(within(panel).getByRole('button', { name: 'Wednesday' }))
       expect(headers(container)).toEqual(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'])
     })
 
