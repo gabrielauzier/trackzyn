@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -106,7 +106,19 @@ function sessionTimes(session: AgendaSession, timezone: string): PanelTimes {
   return { day: dayOf(start, timezone), start: minute, end: minute + length }
 }
 
-function Agenda({ timezone, activeLists }: { timezone: string; activeLists: ListCard[] }) {
+function Agenda({ timezone, activeLists, title }: { timezone: string; activeLists: ListCard[]; title: ReactNode }) {
+  /** The pinned header: the grid's day headers and the side panels pin under it (AGENDA-02). */
+  const header = useRef<HTMLDivElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
+  useLayoutEffect(() => {
+    const node = header.current
+    if (!node) return
+    const measure = () => setHeaderHeight(node.offsetHeight)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
   const { t, i18n } = useTranslation()
   const { canWrite, current } = useWorkspace()
   // The workspace minimum hides short sessions from the grid and the panel, not from the totals (HIDE-11, HIDE-14).
@@ -409,87 +421,96 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {/* The week opens on the chosen day's week, the day view on the day itself (AGENDA-40, AGENDA-41). */}
-        <DatePickerChip today={today} shown={day} onPick={goTo} />
-        {view === 'week' && (
-          <>
-            <div className="flex items-center">
-              <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.previousWeek')} onClick={() => goTo(addDays(monday, -7))}>
-                <ChevronLeft size={16} />
-              </Button>
-              <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.nextWeek')} onClick={() => goTo(addDays(monday, 7))}>
-                <ChevronRight size={16} />
-              </Button>
-            </div>
-            <h2 className="text-base font-semibold" aria-live="polite">
-              {weekLabel(monday, i18n.language)}
-            </h2>
-          </>
-        )}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Select value={listId ?? ALL_LISTS} onValueChange={(value) => setListId(value === ALL_LISTS ? null : value)}>
-            <SelectTrigger size="sm" aria-label={t('agenda.list')} className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_LISTS}>{t('agenda.allLists')}</SelectItem>
-              {activeLists.map((list) => (
-                <SelectItem key={list.id} value={list.id}>
-                  {list.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {!narrow && (
-            <div role="group" aria-label={t('agenda.view')} className="flex rounded-lg bg-muted p-0.5">
-              {(['day', 'week'] as const).map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  aria-pressed={view === option}
-                  className={cn(
-                    'rounded-md px-3 py-1 text-sm font-medium',
-                    view === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
-                  )}
-                  onClick={() => setView(option)}
-                >
-                  {t(`agenda.${option}`)}
-                </button>
-              ))}
-            </div>
+    <div className="flex flex-col gap-4" style={{ '--agenda-header': `${headerHeight}px` } as CSSProperties}>
+      {/* Wide, the page title, the toolbar and the legend stay at the top of the window, over the page's padding, while
+          the page scrolls the grid under them (AGENDA-02). */}
+      <div
+        ref={header}
+        data-slot="agenda-header"
+        className="flex flex-col gap-4 bg-background lg:sticky lg:top-0 lg:z-30 lg:-mx-6 lg:-mt-6 lg:px-6 lg:pt-6 lg:pb-3"
+      >
+        {title}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* The week opens on the chosen day's week, the day view on the day itself (AGENDA-40, AGENDA-41). */}
+          <DatePickerChip today={today} shown={day} onPick={goTo} />
+          {view === 'week' && (
+            <>
+              <div className="flex items-center">
+                <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.previousWeek')} onClick={() => goTo(addDays(monday, -7))}>
+                  <ChevronLeft size={16} />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" aria-label={t('agenda.nextWeek')} onClick={() => goTo(addDays(monday, 7))}>
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+              <h2 className="text-base font-semibold" aria-live="polite">
+                {weekLabel(monday, i18n.language)}
+              </h2>
+            </>
           )}
-          {/* The plan of tomorrow in the workspace timezone (PLAN-01). */}
-          <Button type="button" variant="outline" size="sm" onClick={() => navigate(tomorrowPath(timezone, now))}>
-            <CalendarCheck size={14} />
-            {t('plan.agenda.planTomorrow')}
-          </Button>
-          {/* Secondary, before `Nova sessão`; off for a viewer (US-8). */}
-          <Button type="button" variant="secondary" size="sm" disabled={!canWrite} onClick={openSchedule}>
-            <Clock size={14} />
-            {t('agenda.schedule')}
-          </Button>
-          {/* From 768 px in both views; below, the day view has its round + button (ADJ-19). */}
-          {canWrite && !narrow && (
-            <Button type="button" size="sm" onClick={() => openNew()}>
-              <Plus size={14} />
-              {t('agenda.newSession')}
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Select value={listId ?? ALL_LISTS} onValueChange={(value) => setListId(value === ALL_LISTS ? null : value)}>
+              <SelectTrigger size="sm" aria-label={t('agenda.list')} className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_LISTS}>{t('agenda.allLists')}</SelectItem>
+                {activeLists.map((list) => (
+                  <SelectItem key={list.id} value={list.id}>
+                    {list.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!narrow && (
+              <div role="group" aria-label={t('agenda.view')} className="flex rounded-lg bg-muted p-0.5">
+                {(['day', 'week'] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    aria-pressed={view === option}
+                    className={cn(
+                      'rounded-md px-3 py-1 text-sm font-medium',
+                      view === option ? 'bg-background shadow-sm' : 'text-muted-foreground',
+                    )}
+                    onClick={() => setView(option)}
+                  >
+                    {t(`agenda.${option}`)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* The plan of tomorrow in the workspace timezone (PLAN-01). */}
+            <Button type="button" variant="outline" size="sm" onClick={() => navigate(tomorrowPath(timezone, now))}>
+              <CalendarCheck size={14} />
+              {t('plan.agenda.planTomorrow')}
             </Button>
-          )}
+            {/* Secondary, before `Nova sessão`; off for a viewer (US-8). */}
+            <Button type="button" variant="secondary" size="sm" disabled={!canWrite} onClick={openSchedule}>
+              <Clock size={14} />
+              {t('agenda.schedule')}
+            </Button>
+            {/* From 768 px in both views; below, the day view has its round + button (ADJ-19). */}
+            {canWrite && !narrow && (
+              <Button type="button" size="sm" onClick={() => openNew()}>
+                <Plus size={14} />
+                {t('agenda.newSession')}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {!narrow && (
-        <ul aria-label={t('plan.agenda.legend')} className="-mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          {LEGEND.map(({ key, style }) => (
-            <li key={key} className="flex items-center gap-1.5">
-              <span aria-hidden className="h-2.5 w-4.5 rounded-[3px]" style={style} />
-              {t(`plan.agenda.legendItems.${key}`)}
-            </li>
-          ))}
-        </ul>
-      )}
+        {!narrow && (
+          <ul aria-label={t('plan.agenda.legend')} className="-mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {LEGEND.map(({ key, style }) => (
+              <li key={key} className="flex items-center gap-1.5">
+                <span aria-hidden className="h-2.5 w-4.5 rounded-[3px]" style={style} />
+                {t(`plan.agenda.legendItems.${key}`)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       {query.isError ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border py-16 text-center">
           <p className="text-sm text-destructive">{t('agenda.loadError')}</p>
@@ -504,6 +525,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
           <div className="min-w-0 flex-1">
             {view === 'week' ? (
               <WeekGrid
+                stickyTop={headerHeight}
                 days={visibleDays}
                 corner={viewMenu}
                 sessions={sessions}
@@ -520,6 +542,7 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               />
             ) : (
               <DayTimeline
+                stickyTop={headerHeight}
                 corner={viewMenu}
                 day={day}
                 sessions={sessions}
@@ -541,155 +564,161 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
               />
             )}
           </div>
-          {confirming && (
-            <ScheduledMoveConfirm
-              key={confirming.id}
-              task={confirming.task}
-              to={{ day: confirming.change.scheduled_on!, time: confirming.change.scheduled_time ?? null }}
-              minutes={(confirming.change.estimate_minutes ?? confirming.task.estimate_minutes) ?? 60}
-              onCancel={() => setConfirming(null)}
-              onSave={confirmMove}
-            />
-          )}
-          {!confirming && plannedBreak && (
-            <PlannedBreakPanel
-              key={plannedBreak.id}
-              block={plannedBreak}
-              today={today}
-              onClose={() => setPlannedBreak(null)}
-            />
-          )}
-          {!confirming && !plannedBreak && dayPanel && (
-            <DayScheduledPanel
-              key={dayPanel}
-              day={dayPanel}
-              timeZone={timezone}
-              canWrite={canWrite}
-              now={now}
-              onOpenTask={setOpenTaskId}
-              onClose={() => setDayPanel(null)}
-            />
-          )}
-          {!confirming && !plannedBreak && !dayPanel && canWrite && scheduling && (
-            <NewSchedulePanel
-              key={`${scheduling.day}:${scheduling.window?.start ?? ''}:${scheduling.window?.end ?? ''}`}
-              day={scheduling.day}
-              window={scheduling.window}
-              timeZone={timezone}
-              now={now}
-              lists={activeLists}
-              defaultListId={listId ?? activeLists[0]?.id ?? null}
-              onCancel={() => {
-                setScheduling(null)
-                drag.setDraft(null)
-              }}
-              onSaved={() => {
-                setScheduling(null)
-                drag.setDraft(null)
-              }}
-            />
-          )}
-          {!confirming && !plannedBreak && !dayPanel && !scheduling && canWrite && draft && (
-            <SessionPanel
-              times={{ day: draft.day, start: draft.start, end: draft.end }}
-              onTimesChange={changeTimes}
-              timezone={timezone}
-              now={now}
-              sessions={overlapping}
-              defaultListId={listId ?? activeLists[0]?.id ?? null}
-              onCancel={() => drag.setDraft(null)}
-              onSave={async (input, preview) => {
-                await create.mutateAsync({ input, preview })
-                drag.setDraft(null)
-              }}
-            />
-          )}
-          {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && editTimes && canWrite && (
-            <SessionPanel
-              key={selected.id}
-              editing={selected}
-              times={editTimes}
-              // The block follows the fields until the form is saved or cancelled (ADJ-08).
-              onTimesChange={(times) => {
-                setEditTimes(times)
-                drag.setDraft({ mode: 'move', ...times, sessionId: selected.id })
-              }}
-              timezone={timezone}
-              now={now}
-              sessions={overlapping}
-              defaultListId={selected.list_id}
-              onCancel={() => {
-                setEditTimes(null)
-                drag.setDraft(null)
-              }}
-              onSave={async (input) => {
-                const { started_at, ended_at } = input
-                const changes: AgendaSessionChanges =
-                  input.kind === 'task' ? { started_at, ended_at, task_id: input.task_id } : { started_at, ended_at, list_id: input.list_id }
-                // The panel shows a refusal itself (AGENDA-31).
-                await update.mutateAsync({ id: selected.id, changes, quiet: true })
-                drag.setDraft(null)
-                // A session chosen from a joined block goes back into it once saved (MERGE-31).
-                if (groupIds) closeSelected()
-                else setEditTimes(null)
-              }}
-            />
-          )}
-          {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && pending && !editTimes && canWrite && (
-            <SessionMoveConfirm
-              key={selected.id}
-              session={selected}
-              times={{ day: pending.day, start: pending.start, end: pending.end }}
-              timezone={timezone}
-              now={now}
-              sessions={overlapping}
-              onCancel={() => drag.setDraft(null)}
-              onSave={async () => {
-                const at = (minute: number) => zonedInstant(pending.day, minute, timezone).toISOString()
-                const changes: AgendaSessionChanges =
-                  pending.mode === 'top'
-                    ? { started_at: at(pending.start) }
-                    : pending.mode === 'bottom'
-                      ? { ended_at: at(pending.end) }
-                      : { started_at: at(pending.start), ended_at: at(pending.end) }
-                // The panel shows a refusal itself (ADJ-04); the block stays at the new time until the cache has it (ADJ-02).
-                await update.mutateAsync({ id: selected.id, changes, quiet: true })
-                drag.setDraft(null)
-                // A session chosen from a joined block goes back into it once saved (ADJ-09).
-                if (groupIds) closeSelected()
-              }}
-            />
-          )}
-          {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && !editTimes && !pending && (
-            <SessionDetails
-              key={selected.id}
-              session={selected}
-              timezone={timezone}
-              now={now}
-              onClose={closeSelected}
-              onEdit={canWrite ? () => setEditTimes(sessionTimes(selected, timezone)) : undefined}
-              onDelete={
-                canWrite
-                  ? () =>
-                      // The panel closes with the session, not back to its block (MERGE-31); a failed delete
-                      // brings the session back still chosen from its block (MERGE-33).
-                      remove.mutate(selected.id, { onSuccess: () => setGroupIds(null) })
-                  : undefined
-              }
-              onBack={groupIds ? () => setSelectedId(null) : undefined}
-              groupCount={group.length}
-            />
-          )}
-          {/* While a delete is on its way the chosen session is gone from the list: no flash of the block's list. */}
-          {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && !selected && group.length > 0 && !remove.isPending && (
-            <SessionGroupList
-              sessions={group}
-              timezone={timezone}
-              onPick={pickFromGroup}
-              onPreview={(session) => setPreviewId(session?.id ?? null)}
-              onClose={closeSelected}
-            />
-          )}
+          {/* Wide, the open panel stays under the pinned headers while the page scrolls, and scrolls inside when taller. */}
+          <div
+            data-slot="agenda-panels"
+            className="empty:hidden lg:sticky lg:top-[calc(var(--agenda-header)+0.5rem)] lg:max-h-[calc(100vh-var(--agenda-header)-1.5rem)] lg:overflow-y-auto"
+          >
+            {confirming && (
+              <ScheduledMoveConfirm
+                key={confirming.id}
+                task={confirming.task}
+                to={{ day: confirming.change.scheduled_on!, time: confirming.change.scheduled_time ?? null }}
+                minutes={(confirming.change.estimate_minutes ?? confirming.task.estimate_minutes) ?? 60}
+                onCancel={() => setConfirming(null)}
+                onSave={confirmMove}
+              />
+            )}
+            {!confirming && plannedBreak && (
+              <PlannedBreakPanel
+                key={plannedBreak.id}
+                block={plannedBreak}
+                today={today}
+                onClose={() => setPlannedBreak(null)}
+              />
+            )}
+            {!confirming && !plannedBreak && dayPanel && (
+              <DayScheduledPanel
+                key={dayPanel}
+                day={dayPanel}
+                timeZone={timezone}
+                canWrite={canWrite}
+                now={now}
+                onOpenTask={setOpenTaskId}
+                onClose={() => setDayPanel(null)}
+              />
+            )}
+            {!confirming && !plannedBreak && !dayPanel && canWrite && scheduling && (
+              <NewSchedulePanel
+                key={`${scheduling.day}:${scheduling.window?.start ?? ''}:${scheduling.window?.end ?? ''}`}
+                day={scheduling.day}
+                window={scheduling.window}
+                timeZone={timezone}
+                now={now}
+                lists={activeLists}
+                defaultListId={listId ?? activeLists[0]?.id ?? null}
+                onCancel={() => {
+                  setScheduling(null)
+                  drag.setDraft(null)
+                }}
+                onSaved={() => {
+                  setScheduling(null)
+                  drag.setDraft(null)
+                }}
+              />
+            )}
+            {!confirming && !plannedBreak && !dayPanel && !scheduling && canWrite && draft && (
+              <SessionPanel
+                times={{ day: draft.day, start: draft.start, end: draft.end }}
+                onTimesChange={changeTimes}
+                timezone={timezone}
+                now={now}
+                sessions={overlapping}
+                defaultListId={listId ?? activeLists[0]?.id ?? null}
+                onCancel={() => drag.setDraft(null)}
+                onSave={async (input, preview) => {
+                  await create.mutateAsync({ input, preview })
+                  drag.setDraft(null)
+                }}
+              />
+            )}
+            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && editTimes && canWrite && (
+              <SessionPanel
+                key={selected.id}
+                editing={selected}
+                times={editTimes}
+                // The block follows the fields until the form is saved or cancelled (ADJ-08).
+                onTimesChange={(times) => {
+                  setEditTimes(times)
+                  drag.setDraft({ mode: 'move', ...times, sessionId: selected.id })
+                }}
+                timezone={timezone}
+                now={now}
+                sessions={overlapping}
+                defaultListId={selected.list_id}
+                onCancel={() => {
+                  setEditTimes(null)
+                  drag.setDraft(null)
+                }}
+                onSave={async (input) => {
+                  const { started_at, ended_at } = input
+                  const changes: AgendaSessionChanges =
+                    input.kind === 'task' ? { started_at, ended_at, task_id: input.task_id } : { started_at, ended_at, list_id: input.list_id }
+                  // The panel shows a refusal itself (AGENDA-31).
+                  await update.mutateAsync({ id: selected.id, changes, quiet: true })
+                  drag.setDraft(null)
+                  // A session chosen from a joined block goes back into it once saved (MERGE-31).
+                  if (groupIds) closeSelected()
+                  else setEditTimes(null)
+                }}
+              />
+            )}
+            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && pending && !editTimes && canWrite && (
+              <SessionMoveConfirm
+                key={selected.id}
+                session={selected}
+                times={{ day: pending.day, start: pending.start, end: pending.end }}
+                timezone={timezone}
+                now={now}
+                sessions={overlapping}
+                onCancel={() => drag.setDraft(null)}
+                onSave={async () => {
+                  const at = (minute: number) => zonedInstant(pending.day, minute, timezone).toISOString()
+                  const changes: AgendaSessionChanges =
+                    pending.mode === 'top'
+                      ? { started_at: at(pending.start) }
+                      : pending.mode === 'bottom'
+                        ? { ended_at: at(pending.end) }
+                        : { started_at: at(pending.start), ended_at: at(pending.end) }
+                  // The panel shows a refusal itself (ADJ-04); the block stays at the new time until the cache has it (ADJ-02).
+                  await update.mutateAsync({ id: selected.id, changes, quiet: true })
+                  drag.setDraft(null)
+                  // A session chosen from a joined block goes back into it once saved (ADJ-09).
+                  if (groupIds) closeSelected()
+                }}
+              />
+            )}
+            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && !editTimes && !pending && (
+              <SessionDetails
+                key={selected.id}
+                session={selected}
+                timezone={timezone}
+                now={now}
+                onClose={closeSelected}
+                onEdit={canWrite ? () => setEditTimes(sessionTimes(selected, timezone)) : undefined}
+                onDelete={
+                  canWrite
+                    ? () =>
+                        // The panel closes with the session, not back to its block (MERGE-31); a failed delete
+                        // brings the session back still chosen from its block (MERGE-33).
+                        remove.mutate(selected.id, { onSuccess: () => setGroupIds(null) })
+                    : undefined
+                }
+                onBack={groupIds ? () => setSelectedId(null) : undefined}
+                groupCount={group.length}
+              />
+            )}
+            {/* While a delete is on its way the chosen session is gone from the list: no flash of the block's list. */}
+            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && !selected && group.length > 0 && !remove.isPending && (
+              <SessionGroupList
+                sessions={group}
+                timezone={timezone}
+                onPick={pickFromGroup}
+                onPreview={(session) => setPreviewId(session?.id ?? null)}
+                onClose={closeSelected}
+              />
+            )}
+          </div>
         </div>
       )}
       <SeriesScopeDialog
@@ -715,13 +744,21 @@ export default function AgendaPage() {
 
   return (
     <div>
-      <PageHeader section={current?.name ?? ''} title={t('nav.agenda')} />
       {active.data ? (
-        <Agenda timezone={active.data.timezone} activeLists={active.data.lists} />
-      ) : active.isError ? (
-        <p className="py-12 text-center text-sm text-destructive">{t('agenda.loadError')}</p>
+        <Agenda
+          timezone={active.data.timezone}
+          activeLists={active.data.lists}
+          title={<PageHeader section={current?.name ?? ''} title={t('nav.agenda')} />}
+        />
       ) : (
-        <Skeleton className="h-96 w-full rounded-xl" />
+        <>
+          <PageHeader section={current?.name ?? ''} title={t('nav.agenda')} />
+          {active.isError ? (
+            <p className="py-12 text-center text-sm text-destructive">{t('agenda.loadError')}</p>
+          ) : (
+            <Skeleton className="h-96 w-full rounded-xl" />
+          )}
+        </>
       )}
     </div>
   )

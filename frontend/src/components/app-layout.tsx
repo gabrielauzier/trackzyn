@@ -362,7 +362,8 @@ export function AppLayout() {
           'flex-1 min-h-screen min-w-0 overflow-x-clip transition-[margin] duration-300 ease-in-out motion-reduce:transition-none',
           collapsed ? 'lg:ml-16' : 'lg:ml-60',
         )}>
-          <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          {/* The agenda takes the whole width: its grid stretches across it (AGENDA-02). */}
+          <div className={cn('p-4 sm:p-6 mx-auto', !location.pathname.startsWith('/agenda') && 'max-w-7xl')}>
             <Outlet />
           </div>
         </main>

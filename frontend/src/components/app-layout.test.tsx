@@ -216,6 +216,14 @@ describe('app layout sidebar', () => {
     expect(links.indexOf('Reports')).toBe(links.indexOf('Plan') + 1)
   })
 
+  it('AGENDA-02 lets the agenda take the whole width, and keeps the other pages to the reading width', () => {
+    const { unmount } = renderWithProviders(<AppLayout />, { route: '/agenda' })
+    expect(document.querySelector('main > div')).not.toHaveClass('max-w-7xl')
+    unmount()
+    renderWithProviders(<AppLayout />, { route: '/' })
+    expect(document.querySelector('main > div')).toHaveClass('max-w-7xl')
+  })
+
   it('PLAN-30 offers Planejar, leading to the plan of today, for a viewer too', () => {
     state.canWrite = false
     renderWithProviders(<AppLayout />, { route: '/' })

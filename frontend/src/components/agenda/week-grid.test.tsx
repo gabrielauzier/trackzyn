@@ -118,22 +118,37 @@ describe('WeekGrid', () => {
     expect(container.querySelectorAll('[data-agenda-column]')).toHaveLength(5)
   })
 
-  it('reserves the scrollbar width in the day header as in the scrolling grid, so their columns line up', () => {
-    const { container } = renderWithProviders(<Grid sessions={[]} />)
-    const headerRow = container.querySelector('[data-agenda-header]')!
-    const grid = container.querySelector('[data-agenda-scroll]')!
-    for (const element of [headerRow, grid]) expect(element).toHaveClass('[scrollbar-gutter:stable]')
-    expect(headerRow).toHaveClass('overflow-y-hidden')
-    expect(grid).toHaveClass('overflow-y-auto')
+  it('AGENDA-02 has no scroll of its own and, given where to pin, pins the day headers there; the box clips without scrolling', () => {
+    const { container, unmount } = renderWithProviders(<Grid sessions={[]} />)
+    const body = container.querySelector('[data-agenda-body]')!
+    expect(body).not.toHaveClass('overflow-y-auto')
+    // Its now line and risen blocks never paint over the pinned headers.
+    expect(body).toHaveClass('isolate')
+    expect(body.className).not.toMatch(/max-h-/)
+    // Without a place to pin, nothing pins.
+    expect(container.querySelector('[data-agenda-sticky]')).not.toHaveClass('lg:sticky')
+    unmount()
+
+    const pinned = renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} stickyTop={140} />)
+    const sticky = pinned.container.querySelector<HTMLElement>('[data-agenda-sticky]')!
+    expect(sticky).toHaveClass('lg:sticky', 'bg-card')
+    expect(sticky.style.top).toBe('140px')
+    expect(sticky).toContainElement(pinned.container.querySelector('[data-agenda-header]'))
+    expect(pinned.container.querySelector('[data-agenda-body]')!.parentElement).toHaveClass('overflow-clip')
+    expect(pinned.container.querySelector('[data-agenda-body]')!.parentElement).not.toHaveClass('overflow-hidden')
   })
 
-  it('has a line per hour from 00:00 to 24:00 and opens scrolled to 07:00 (AGENDA-01, AGENDA-02)', () => {
-    const { container } = renderWithProviders(<Grid sessions={[]} />)
-    const scroller = container.querySelector<HTMLElement>('[data-agenda-scroll]')!
-    expect(scroller.scrollTop).toBe(y(7))
-    expect(within(scroller).getByText('07:00')).toBeInTheDocument()
-    expect(within(scroller).getByText('23:00')).toBeInTheDocument()
-    expect((scroller.firstElementChild as HTMLElement).style.height).toBe(`${y(24)}px`)
+  it('has a line per hour from 00:00 to 24:00 and, wide, scrolls the page to 07:00 under the pinned headers (AGENDA-01, AGENDA-02)', () => {
+    const wide = vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: query === '(min-width: 1024px)' }) as MediaQueryList)
+    vi.mocked(window.scrollTo).mockClear()
+    const { container } = renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} stickyTop={140} />)
+    const body = container.querySelector<HTMLElement>('[data-agenda-body]')!
+    // jsdom lays nothing out: the grid's own header is 0 tall, so the page's 140 px and a 12 px breath are under the top.
+    expect(window.scrollTo).toHaveBeenLastCalledWith({ top: y(7) - 152 })
+    expect(within(body).getByText('07:00')).toBeInTheDocument()
+    expect(within(body).getByText('23:00')).toBeInTheDocument()
+    expect((body.firstElementChild as HTMLElement).style.height).toBe(`${y(24)}px`)
+    wide.mockRestore()
   })
 
   describe('hidden sessions (#22)', () => {
@@ -511,7 +526,8 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
     const { container } = grid({ untimed: [{ ...scheduled('u', '2026-11-05', '10:00'), scheduled_time: null }] })
     const row = container.querySelector<HTMLElement>('[data-untimed-row]')!
     expect(container.querySelector('[data-agenda-header]')!.nextElementSibling).toBe(row)
-    expect(row.nextElementSibling).toBe(container.querySelector('[data-agenda-scroll]'))
+    // Both pin together, over the timeline.
+    expect(row.parentElement!.nextElementSibling).toBe(container.querySelector('[data-agenda-body]'))
     expect(within(row.querySelector<HTMLElement>('[data-untimed-day="2026-11-05"]')!).getByRole('button', { name: /^Scheduled u/ })).toBeInTheDocument()
     // Without a time it is not a block on the grid.
     expect(within(column(container, '2026-11-05')).queryByRole('button', { name: /^Scheduled u/ })).toBeNull()
@@ -584,7 +600,7 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
         const left = (day: string) => (Number(day.slice(8)) - 2) * 100
         if (untimedDay) return DOMRect.fromRect({ x: left(untimedDay), y: -120, width: 100, height: 112 })
         if (agendaColumn) return DOMRect.fromRect({ x: left(agendaColumn), y: 0, width: 100, height: 24 * 60 * PX_PER_MINUTE })
-        if (this.hasAttribute('data-agenda-scroll')) return DOMRect.fromRect({ x: 0, y: 0, width: 700, height: 24 * 60 * PX_PER_MINUTE })
+        if (this.hasAttribute('data-agenda-body')) return DOMRect.fromRect({ x: 0, y: 0, width: 700, height: 24 * 60 * PX_PER_MINUTE })
         return real.call(this)
       })
     })

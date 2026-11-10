@@ -1,4 +1,4 @@
-import { useMemo, type PointerEvent, type ReactNode } from 'react'
+import { useMemo, useRef, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
@@ -82,6 +82,11 @@ interface WeekGridProps {
   onOpenPlanned?: (block: Planned) => void
   /** `Planejar dia` in the header of today and the days after it: opens the plan of the day (PLAN-31). */
   onPlanDay?: (day: string) => void
+  /**
+   * Where the day headers and the `Sem hora` row pin, in px from the window's top: under the page's pinned header.
+   * Absent, they do not pin.
+   */
+  stickyTop?: number
 }
 
 /** The planned blocks of each day, in minutes since its midnight and cut at 24:00 (PLAN-44). */
@@ -143,10 +148,16 @@ export function WeekGrid({
   planned = NONE,
   onOpenPlanned,
   onPlanDay,
+  stickyTop,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute)
+  const sticky = useRef<HTMLDivElement>(null)
+  // The page scrolls the grid; 07:00 opens under the page's header and the grid's own, with a breath so its label shows
+  // (AGENDA-02).
+  const body = useZoomScroll<HTMLDivElement>(pxPerMinute, () =>
+    stickyTop === undefined ? 0 : stickyTop + (sticky.current?.offsetHeight ?? 0) + 12,
+  )
   const today = dayOf(now, timezone)
   const nowMinute = minuteOf(now, timezone)
   const draft = drag?.draft ?? null
@@ -195,10 +206,17 @@ export function WeekGrid({
   return (
     <div
       data-grabbing={grabbing || undefined}
-      className={cn('flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card', grabbing && 'cursor-grabbing [&_*]:cursor-grabbing')}
+      // `overflow-clip` rounds the corners without making a scroll box, so the header can pin to the window.
+      className={cn('flex min-h-0 flex-col overflow-clip rounded-xl border bg-card', grabbing && 'cursor-grabbing [&_*]:cursor-grabbing')}
     >
-      {/* Both reserve the scrollbar's width, so the day headers line up with the columns under them. */}
-      <div data-agenda-header className="flex overflow-y-hidden border-b [scrollbar-gutter:stable]">
+      {/* The day headers and the `Sem hora` row pin under the page's header while the page scrolls the hours. */}
+      <div
+        ref={sticky}
+        data-agenda-sticky
+        className={cn('bg-card', stickyTop !== undefined && 'lg:sticky lg:z-20 lg:shadow-sm')}
+        style={stickyTop !== undefined ? { top: stickyTop } : undefined}
+      >
+      <div data-agenda-header className="flex border-b">
         <div className="flex w-14 shrink-0 items-center justify-center">{corner}</div>
         {days.map((day) => {
           const total = dayTotal(pieces.get(day) ?? [])
@@ -234,7 +252,9 @@ export function WeekGrid({
         })}
       </div>
       {shownUntimed && <UntimedRow days={days} untimed={shownUntimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />}
-      <div ref={scroller} data-agenda-scroll className="relative max-h-[calc(100vh-14rem)] min-h-80 overflow-y-auto [scrollbar-gutter:stable]">
+      </div>
+      {/* Its own stacking layer: the now line and a block risen on hover stay under the pinned headers. */}
+      <div ref={body} data-agenda-body className="relative isolate">
         <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-14 shrink-0" aria-hidden>
             {HOURS.map((hour) => (
