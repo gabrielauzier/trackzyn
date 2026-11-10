@@ -763,6 +763,7 @@
     }
   },
   "agenda": {
+    "netTotal": "Horas líquidas · bruto: {{gross}}",
     "errors": {
       "future": "A sessão não pode terminar no futuro.",
       "duration": "Use de 1 minuto a 24 horas."
@@ -805,6 +806,7 @@
       "end": "Fim",
       "duration": "Duração",
       "overlap": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta nas duas.",
+      "overlapNet": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta uma vez no total.",
       "editTitle": "Editar sessão",
       "edit": "Editar",
       "origin": {

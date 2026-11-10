@@ -6,7 +6,7 @@ import { WeekGrid, type GridDrag } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { dayOf, dayPieces, mondayOf, weekDays } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
+import type { AgendaSession, HoursCountMode, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 interface DayTimelineProps {
   /** The day shown, YYYY-MM-DD in the workspace timezone. */
@@ -30,6 +30,8 @@ interface DayTimelineProps {
   hidden?: (session: AgendaSession) => boolean
   /** Sessions of one list and kind this many minutes apart or less are drawn as one block (MERGE-11); null keeps them apart. */
   joinGap?: number | null
+  /** How the day total and a joined block count sessions that overlap (HOURS-09, HOURS-13). */
+  hoursCountMode?: HoursCountMode
   /** The session chosen from a joined block, drawn on its own (MERGE-29). */
   apartId?: string | null
   /** A click on a joined block, with its sessions in start order (MERGE-27). */
@@ -75,6 +77,7 @@ export function DayTimeline({
   pxPerMinute,
   hidden,
   joinGap = null,
+  hoursCountMode = 'gross',
   apartId = null,
   onSelectGroup,
   selectedGroup = null,
@@ -151,6 +154,7 @@ export function DayTimeline({
         pxPerMinute={pxPerMinute}
         hidden={hidden}
         joinGap={joinGap}
+        hoursCountMode={hoursCountMode}
         apartId={apartId}
         onSelectGroup={onSelectGroup}
         selectedGroup={selectedGroup}

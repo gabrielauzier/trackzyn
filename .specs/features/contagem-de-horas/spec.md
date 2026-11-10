@@ -178,12 +178,12 @@ O que o código já fixa:
 | HOURS-06 | P1: Escolher o modo | T2 | Implementing |
 | HOURS-07 | P1: Escolher o modo | T2 | Implementing |
 | HOURS-08 | P1: Escolher o modo | T2 | Implementing |
-| HOURS-09 | P1: Agenda | T6 | In Tasks |
-| HOURS-10 | P1: Agenda | T6 | In Tasks |
-| HOURS-11 | P1: Agenda | T6 | In Tasks |
-| HOURS-12 | P1: Agenda | T6 | In Tasks |
-| HOURS-13 | P1: Agenda | T6 | In Tasks |
-| HOURS-14 | P1: Agenda | T6 | In Tasks |
+| HOURS-09 | P1: Agenda | T6 | Implementing |
+| HOURS-10 | P1: Agenda | T6 | Implementing |
+| HOURS-11 | P1: Agenda | T6 | Implementing |
+| HOURS-12 | P1: Agenda | T6 | Implementing |
+| HOURS-13 | P1: Agenda | T6 | Implementing |
+| HOURS-14 | P1: Agenda | T6 | Implementing |
 | HOURS-15 | P1: Relatórios | T4 | Implementing |
 | HOURS-16 | P1: Relatórios | T4 | Implementing |
 | HOURS-17 | P1: Relatórios | T4 | Implementing |

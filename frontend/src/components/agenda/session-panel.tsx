@@ -24,7 +24,7 @@ import { clockTime, minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES, dayOf, findOverlap, zonedInstant } from '@/lib/agenda/layout'
 import { sessionErrorMessage, type SessionPreview } from '@/lib/agenda/use-agenda'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, AgendaSessionInput, AgendaTask } from '@/types'
+import type { AgendaSession, AgendaSessionInput, AgendaTask, HoursCountMode } from '@/types'
 
 /** The day and the start and end of the session, in minutes since that day's local midnight. */
 export interface PanelTimes {
@@ -48,6 +48,8 @@ interface SessionPanelProps {
   onSave: (input: AgendaSessionInput, preview: SessionPreview) => Promise<unknown>
   /** The session being edited (AGENDA-31); absent for a new one. Its kind stays, as the API keeps it. */
   editing?: AgendaSession
+  /** Names how the overlap counts in the warning (HOURS-14); gross when absent. */
+  hoursCountMode?: HoursCountMode
 }
 
 type Kind = 'task' | 'break'
@@ -71,6 +73,7 @@ export function SessionPanel({
   onCancel,
   onSave,
   editing,
+  hoursCountMode = 'gross',
 }: SessionPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -268,7 +271,7 @@ export function SessionPanel({
 
         {overlap && (
           <p role="status" className="rounded-md bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
-            {t('agenda.panel.overlap', {
+            {t(hoursCountMode === 'net' ? 'agenda.panel.overlapNet' : 'agenda.panel.overlap', {
               title: overlap.kind === 'break' ? t('agenda.break') : overlap.task_title,
               start: clockTime(overlap.started_at, timezone),
               end: overlap.ended_at === null ? t('agenda.now') : clockTime(overlap.ended_at, timezone),

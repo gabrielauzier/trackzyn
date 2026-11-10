@@ -763,6 +763,7 @@
     }
   },
   "agenda": {
+    "netTotal": "Net hours · gross: {{gross}}",
     "errors": {
       "future": "The session cannot end in the future.",
       "duration": "Use 1 minute to 24 hours."
@@ -805,6 +806,7 @@
       "end": "End",
       "duration": "Duration",
       "overlap": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts in both.",
+      "overlapNet": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts once in the total.",
       "editTitle": "Edit session",
       "edit": "Edit",
       "origin": {

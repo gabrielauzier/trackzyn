@@ -138,6 +138,8 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
   )
   // Near sessions of one list and kind are drawn as one block (MERGE-11, MERGE-24).
   const joinGap = current?.merge_gap_minutes ?? null
+  // Overlapping sessions count once in the totals when the workspace counts net hours (HOURS-09).
+  const hoursCountMode = current?.hours_count_mode ?? 'gross'
   const now = useNow()
   const today = dayOf(now, timezone)
   /** The day the agenda is on; the week shown is the one that holds it. */
@@ -453,6 +455,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
   // The session hovered in the list of a joined block takes the selection off the rest of the block.
   const joining = {
     joinGap,
+    hoursCountMode,
     apartId: selected?.id ?? previewing,
     onSelectGroup: selectGroup,
     selectedGroup: selected || previewing ? null : groupIds,
@@ -667,6 +670,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 timezone={timezone}
                 now={now}
                 sessions={overlapping}
+                hoursCountMode={hoursCountMode}
                 defaultListId={listId ?? activeLists[0]?.id ?? null}
                 onCancel={() => drag.setDraft(null)}
                 onSave={async (input, preview) => {
@@ -688,6 +692,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 timezone={timezone}
                 now={now}
                 sessions={overlapping}
+                hoursCountMode={hoursCountMode}
                 defaultListId={selected.list_id}
                 onCancel={() => {
                   setEditTimes(null)
@@ -714,6 +719,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 timezone={timezone}
                 now={now}
                 sessions={overlapping}
+                hoursCountMode={hoursCountMode}
                 onCancel={() => drag.setDraft(null)}
                 onSave={async () => {
                   const at = (minute: number) => zonedInstant(pending.day, minute, timezone).toISOString()

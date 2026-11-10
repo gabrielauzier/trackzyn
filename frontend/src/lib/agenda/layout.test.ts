@@ -97,6 +97,23 @@ describe('dayTotal', () => {
   it('adds the task sessions and leaves breaks out (AGENDA-01)', () => {
     expect(dayTotal([piece('a', 0, 360), piece('b', 400, 415), piece('c', 420, 450, 'break')])).toBe(375 * 60)
   })
+
+  it('HOURS-10 sums overlapping task sessions in gross: 09:00–11:00 and 10:00–12:00 are 4h', () => {
+    expect(dayTotal([piece('a', 540, 660), piece('b', 600, 720)], 'gross')).toBe(4 * 3600)
+  })
+
+  it('HOURS-09 counts the overlap once in net: 09:00–11:00 and 10:00–12:00 are 3h', () => {
+    expect(dayTotal([piece('a', 540, 660), piece('b', 600, 720)], 'net')).toBe(3 * 3600)
+  })
+
+  it('HOURS-12 leaves a break that overlaps a task out of the net total too', () => {
+    expect(dayTotal([piece('a', 540, 660), piece('c', 600, 720, 'break')], 'net')).toBe(2 * 3600)
+  })
+
+  it('HOURS-09 floors the net total once from the exact minutes', () => {
+    // 09:00:00–09:00:40 and 09:00:20–09:01:10 are 70 s together.
+    expect(dayTotal([piece('a', 540, 540 + 40 / 60), piece('b', 540 + 20 / 60, 541 + 10 / 60)], 'net')).toBe(70)
+  })
 })
 
 describe('mondayOf and weekDays', () => {

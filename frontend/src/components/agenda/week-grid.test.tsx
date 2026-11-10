@@ -6,7 +6,7 @@ import { isHiddenSession } from '@/lib/agenda/hide'
 import { dayLimit, weekDays } from '@/lib/agenda/layout'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
+import type { AgendaSession, HoursCountMode, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
 import { PX_PER_MINUTE, WeekGrid } from './week-grid'
 
 const SP = 'America/Sao_Paulo'
@@ -40,7 +40,9 @@ function Grid({
   apartId,
   onSelectGroup,
   selectedGroup,
+  hoursCountMode,
 }: {
+  hoursCountMode?: HoursCountMode
   sessions: AgendaSession[]
   onCommit?: (draft: Draft) => void
   selectedId?: string | null
@@ -64,6 +66,7 @@ function Grid({
       apartId={apartId}
       onSelectGroup={onSelectGroup}
       selectedGroup={selectedGroup}
+      hoursCountMode={hoursCountMode}
     />
   )
 }
@@ -826,3 +829,47 @@ describe('WeekGrid: Planejar dia (PLAN-31)', () => {
   })
 })
 
+
+describe('WeekGrid in net hours (#42)', () => {
+  // Monday 2 November, 09:00–11:00 in focus and 10:00–12:00 typed by hand, in São Paulo.
+  const focused = session('focused', '2026-11-02T12:00:00.000Z', '2026-11-02T14:00:00.000Z')
+  const manual = session('manual', '2026-11-02T13:00:00.000Z', '2026-11-02T15:00:00.000Z', { origin: 'manual' })
+  const total = (container: HTMLElement) => header(container, '2026-11-02').querySelector<HTMLElement>('[data-day-total]')!
+
+  it('HOURS-09 HOURS-11 shows 3hr for the day and, on hover, Net hours · gross: 4hr', async () => {
+    const { container, user } = renderWithProviders(<Grid sessions={[focused, manual]} hoursCountMode="net" />)
+    expect(total(container)).toHaveTextContent('3hr')
+    await user.hover(total(container))
+    expect((await screen.findByRole('tooltip')).textContent).toBe('Net hours · gross: 4hr')
+  })
+
+  it('HOURS-11 shows the same tooltip when the total gets the keyboard focus', async () => {
+    const { container, user } = renderWithProviders(<Grid sessions={[focused, manual]} hoursCountMode="net" />)
+    await user.tab()
+    expect(total(container)).toHaveFocus()
+    expect((await screen.findByRole('tooltip')).textContent).toBe('Net hours · gross: 4hr')
+  })
+
+  it('HOURS-10 shows 4hr in gross, with no tooltip and out of the tab order', async () => {
+    const { container, user } = renderWithProviders(<Grid sessions={[focused, manual]} hoursCountMode="gross" />)
+    expect(total(container)).toHaveTextContent('4hr')
+    expect(total(container)).not.toHaveAttribute('tabindex')
+    await user.hover(total(container))
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
+  it('HOURS-09 counts a session hidden by the workspace minimum in the net union (HIDE-14)', () => {
+    // A hidden 2-minute session 12:00–12:02, after the other two: 3hr 2min together.
+    const short = session('short', '2026-11-02T15:00:00.000Z', '2026-11-02T15:02:00.000Z')
+    const { container } = renderWithProviders(
+      <Grid sessions={[focused, manual, short]} hoursCountMode="net" hidden={(item) => isHiddenSession(item, 5)} />,
+    )
+    expect(total(container)).toHaveTextContent('3hr 2min')
+  })
+
+  it('HOURS-12 leaves a break that overlaps a task out of the net total', () => {
+    const pause = session('pause', '2026-11-02T13:00:00.000Z', '2026-11-02T15:00:00.000Z', { kind: 'break', task_id: null, task_title: null })
+    const { container } = renderWithProviders(<Grid sessions={[focused, pause]} hoursCountMode="net" />)
+    expect(total(container)).toHaveTextContent('2hr')
+  })
+})

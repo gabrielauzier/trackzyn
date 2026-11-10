@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { lists, sessions } from '@/lib/api'
 import { newSessionTimes } from '@/lib/agenda/layout'
 import { i18n, renderWithProviders } from '@/test/utils'
-import type { AgendaSession, AgendaSessionInput, AgendaTask, ListCard } from '@/types'
+import type { AgendaSession, AgendaSessionInput, AgendaTask, HoursCountMode, ListCard } from '@/types'
 import { SessionDetails, SessionPanel, type PanelTimes } from './session-panel'
 
 vi.mock('@/lib/api', () => ({
@@ -63,7 +63,9 @@ function Panel({
   agenda = [],
   editing,
   onSave = (input) => sessions.create(input),
+  hoursCountMode,
 }: {
+  hoursCountMode?: HoursCountMode
   initial: PanelTimes
   onCancel?: () => void
   agenda?: AgendaSession[]
@@ -82,6 +84,7 @@ function Panel({
       onCancel={onCancel}
       onSave={onSave}
       editing={editing}
+      hoursCountMode={hoursCountMode}
     />
   )
 }
@@ -168,6 +171,16 @@ describe('SessionPanel (new)', () => {
     )
     await chooseTask(user, 'Write the report')
     expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
+  })
+
+  it('HOURS-14 ends the overlap warning with The time in common counts once in the total. in net hours', () => {
+    renderWithProviders(<Panel initial={dragged} agenda={[existing]} hoursCountMode="net" />)
+    expect(screen.getByRole('status')).toHaveTextContent('Overlaps Plan the sprint (18:00 – 18:30). The time in common counts once in the total.')
+  })
+
+  it('HOURS-14 keeps The time in common counts in both. in gross hours', () => {
+    renderWithProviders(<Panel initial={dragged} agenda={[existing]} hoursCountMode="gross" />)
+    expect(screen.getByRole('status')).toHaveTextContent('Overlaps Plan the sprint (18:00 – 18:30). The time in common counts in both.')
   })
 
   it('does not warn when the times only touch another session', () => {

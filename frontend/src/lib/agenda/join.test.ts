@@ -142,3 +142,19 @@ describe('joinPieces', () => {
     expect(joinPieces(pieces, null, null)).toStrictEqual(pieces)
   })
 })
+
+describe('joinPieces in net hours (#42)', () => {
+  it('HOURS-13 gives a joined block with overlapping members the length of their union in net', () => {
+    const a = session('a', '10:00', '11:00')
+    const b = session('b', '10:30', '11:30')
+    const [net] = joinPieces(piecesOf([a, b]), 5, null, 'net')
+    expect(net).toMatchObject({ start: minute('10:00'), end: minute('11:30'), seconds: 90 * 60, members: [a, b] })
+  })
+
+  it('HOURS-10 keeps the summed length of the members in gross', () => {
+    const a = session('a', '10:00', '11:00')
+    const b = session('b', '10:30', '11:30')
+    expect(joinPieces(piecesOf([a, b]), 5, null, 'gross')[0]!.seconds).toBe(120 * 60)
+    expect(joinPieces(piecesOf([a, b]), 5, null)[0]!.seconds).toBe(120 * 60)
+  })
+})

@@ -228,12 +228,15 @@ T4 → T8
 
 **Done when**:
 
-- [ ] Foco 09:00–11:00 + manual 10:00–12:00: cabeçalho `3h` em `net` com tooltip `Horas líquidas · bruto: 4h`; `4h` sem tooltip em `gross`
-- [ ] Intervalo sobreposto não entra no total nos dois modos
-- [ ] Sessão escondida por `Esconder sessões curtas` entra na união (L-044)
-- [ ] Bloco unido com membros sobrepostos mostra a união em `net`
-- [ ] Aviso de sobreposição com o texto de cada modo, no painel e na confirmação de mover
-- [ ] Gate check passes: Full (frontend)
+- [x] Foco 09:00–11:00 + manual 10:00–12:00: cabeçalho `3h` em `net` com tooltip `Horas líquidas · bruto: 4h`; `4h` sem tooltip em `gross`
+- [x] Intervalo sobreposto não entra no total nos dois modos
+- [x] Sessão escondida por `Esconder sessões curtas` entra na união (L-044)
+- [x] Bloco unido com membros sobrepostos mostra a união em `net`
+- [x] Aviso de sobreposição com o texto de cada modo, no painel e na confirmação de mover
+- [x] Gate check passes: Full (frontend)
+
+**Also touched**: `frontend/src/components/agenda/day-timeline.tsx` (repassa o modo à grade na visão Dia).
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
