@@ -132,12 +132,21 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
   const tasksCount = draft.blocks.filter((block) => block.kind === 'task').length
 
   /**
-   * `Encaixar` (PLAN-32, PLAN-33): the marked tasks go into the draft, in order, at the first free time of the workday
-   * where each fits, around the draft and the timed tasks; nothing is saved. Gives back the ones left.
+   * `Encaixar` (PLAN-32, PLAN-33): a marked task scheduled with a time on this day goes into the draft at that time,
+   * for its estimate; the others, in order, at the first free time of the workday where each fits, around the draft,
+   * the timed tasks and those windows. Nothing is saved. Gives back the ones left.
    */
   const fitTasks = (tasks: PlanTaskRef[]) => {
-    const occupied = [...draft.blocks, ...fixed].map(({ start, minutes }) => ({ start, minutes }))
-    const sized = tasks.map((task) => ({ task, minutes: clampTask(scheduledMinutes(task.estimate_minutes)) }))
+    const timeOf = new Map(timed.map((task) => [task.id, clockMinutes(task.scheduled_time!) ?? 0]))
+    const windows = tasks.flatMap((task) => {
+      const start = timeOf.get(task.id)
+      return start === undefined ? [] : [{ task, start, minutes: clampTask(scheduledMinutes(task.estimate_minutes)) }]
+    })
+    for (const { task, start } of windows) dispatch({ type: 'add', item: { kind: 'task', task }, start })
+    const occupied = [...draft.blocks, ...fixed, ...windows].map(({ start, minutes }) => ({ start, minutes }))
+    const sized = tasks
+      .filter((task) => !timeOf.has(task.id))
+      .map((task) => ({ task, minutes: clampTask(scheduledMinutes(task.estimate_minutes)) }))
     const { placed, left } = fit(sized, occupied, workday)
     for (const { task, start } of placed) dispatch({ type: 'add', item: { kind: 'task', task: task.task }, start })
     return left.map(({ task }) => task)

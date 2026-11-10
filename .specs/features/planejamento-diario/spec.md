@@ -173,7 +173,7 @@ O que o código já fixa:
 
 **Acceptance Criteria**:
 
-1. WHEN o usuário marca tarefas na lista e clica em `Encaixar` THEN o sistema SHALL colocá-las no rascunho, na ordem marcada, no primeiro horário livre do expediente em que cada uma cabe, sem sobrepor blocos ou tarefas com hora; as sessões, que a grade não mostra, não ocupam horário. (PLAN-32)
+1. WHEN o usuário marca tarefas na lista e clica em `Encaixar` THEN o sistema SHALL colocá-las no rascunho, na ordem marcada, no primeiro horário livre do expediente em que cada uma cabe, sem sobrepor blocos ou tarefas com hora; as sessões, que a grade não mostra, não ocupam horário. Uma tarefa marcada que está agendada com hora naquele dia SHALL ir para o horário agendado, com a duração da estimativa (ou 1h), mesmo fora do expediente, e as outras SHALL se encaixar em volta dela. (PLAN-32)
 2. IF uma tarefa não cabe em nenhum buraco THEN o sistema SHALL deixá-la na lista e mostrar `<n> tarefas não couberam`. (PLAN-33)
 
 **Independent Test**: Marcar três tarefas de 1h com o expediente livre das 09:00 e ver os blocos 09:00, 10:00 e 11:00.

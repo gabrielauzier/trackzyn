@@ -286,6 +286,46 @@ describe('PlanPage', () => {
     expect(footer()).toHaveTextContent('Rascunho — ainda não salvo')
   })
 
+  it('PLAN-32 Encaixar puts a marked task scheduled with a time in its own window, and the others around it', async () => {
+    // Fix the widget is scheduled today 09:00 for 90 min and listed first; Write the spec has no time.
+    const timedTask = { ...candidate('b', 'Fix the widget', 90), scheduled_on: DAY, scheduled_time: '09:00' }
+    vi.mocked(plans.candidates).mockResolvedValue({ tasks: [timedTask, candidate('a', 'Write the spec', 60)] })
+    vi.mocked(agenda.scheduled).mockResolvedValue({
+      timed: [{ id: 'b', title: 'Fix the widget', list, column: 'today', position: 1, estimate_minutes: 90, scheduled_on: DAY, scheduled_time: '09:00', series: null }],
+      untimed: [],
+      projected: [],
+    })
+    const { user } = show()
+    await waitFor(() => expect(document.querySelectorAll('[data-fixed]')).toHaveLength(1))
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Marcar Fix the widget' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Marcar Write the spec' }))
+    await user.click(screen.getByRole('button', { name: 'Encaixar (2)' }))
+
+    const names = blocks().map((block) => block.getAttribute('aria-label'))
+    expect(names).toHaveLength(2)
+    expect(names.find((name) => name!.startsWith('Fix the widget'))).toMatch(/^Fix the widget, 09:00 – 10:30/)
+    expect(names.find((name) => name!.startsWith('Write the spec'))).toMatch(/^Write the spec, 10:30 – 11:30/)
+  })
+
+  it('PLAN-32 a marked task scheduled with a time outside the workday still goes to its own time', async () => {
+    const late = { ...candidate('b', 'Fix the widget', 30), scheduled_on: DAY, scheduled_time: '20:00' }
+    vi.mocked(plans.candidates).mockResolvedValue({ tasks: [late] })
+    vi.mocked(agenda.scheduled).mockResolvedValue({
+      timed: [{ id: 'b', title: 'Fix the widget', list, column: 'today', position: 1, estimate_minutes: 30, scheduled_on: DAY, scheduled_time: '20:00', series: null }],
+      untimed: [],
+      projected: [],
+    })
+    const { user } = show()
+    await waitFor(() => expect(document.querySelectorAll('[data-fixed]')).toHaveLength(1))
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Marcar Fix the widget' }))
+    await user.click(screen.getByRole('button', { name: 'Encaixar (1)' }))
+
+    expect(blocks()).toHaveLength(1)
+    expect(blocks()[0]).toHaveAccessibleName(/^Fix the widget, 20:00 – 20:30/)
+  })
+
   it('PLAN-13 the arrows of the header open the plan of the next and the previous day', async () => {
     const { user } = show()
     await screen.findByRole('heading', { level: 1, name: 'Segunda-feira, 9 de novembro' })
