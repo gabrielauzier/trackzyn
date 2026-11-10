@@ -8,7 +8,17 @@
 
 Corroborated across multiple features. Safe to apply as guidance.
 
-_none_
+### L-044 - Give every spec edge case its own test with the edge condition set up, not a nearby happy path
+- signal: `ac_gap` · recurrence: 2 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments, planejamento-diario
+- evidence: M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages) (+1 more)
+- last seen: 2026-11-10T18:27:14Z
+
+### L-048 - When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.
+- signal: `surviving_mutant` · recurrence: 2 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agenda-adjustments, agendamento
+- evidence: N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages) (+1 more)
+- last seen: 2026-11-10T18:48:14Z
 
 ## Candidates (under observation - do NOT load as guidance yet)
 
@@ -272,12 +282,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M14 agenda.tsx:77 / agenda.test.tsx:275 (ADJ-25) (frontend-pages)
 - last seen: 2026-11-05T04:56:16Z
 
-### L-044 - Give every spec edge case its own test with the edge condition set up, not a nearby happy path
-- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
-- features: agenda-adjustments
-- evidence: M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)
-- last seen: 2026-11-05T04:56:16Z
-
 ### L-045 - Assert a state scoped to one gesture mode is absent during the other modes, not only present during its own.
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend/drag-and-drop` · harmful: 0
 - features: agenda-adjustments
@@ -294,12 +298,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-gestures` · harmful: 0
 - features: agenda-adjustments
 - evidence: N6 frontend/src/pages/agenda.tsx:169 (ADJ-01) (frontend-gestures)
-- last seen: 2026-11-05T05:07:21Z
-
-### L-048 - When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.
-- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
-- features: agenda-adjustments
-- evidence: N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)
 - last seen: 2026-11-05T05:07:21Z
 
 ### L-049 - Assert API payloads through the HTTP route and its response schema, not only the service, so fields the serializer strips are caught
@@ -373,6 +371,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: planejamento-diario
 - evidence: M15 frontend/src/lib/plan/draft-guard.tsx:48 (frontend-routing)
 - last seen: 2026-11-07T23:21:34Z
+
+### L-061 - Test an owner check with another user's record of the right kind, not only with a record of the wrong kind.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend/scoping` · harmful: 0
+- features: planejamento-diario
+- evidence: validation.md round 5 B1 backend-node/src/services/focus.ts:340 (backend/scoping)
+- last seen: 2026-11-10T18:27:14Z
+
+### L-062 - When a switch hides several kinds of items, put one of each kind in the fixture and assert each is gone.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: planejamento-diario
+- evidence: validation.md round 5 F10 frontend/src/pages/agenda.tsx:201 (frontend-pages)
+- last seen: 2026-11-10T18:27:14Z
+
+### L-063 - When a pending, unsaved change is previewed in place, take the saved original from the pending state, not from the previewed lists, and test acting on the preview a second time
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agendamento
+- evidence: frontend/src/pages/agenda.tsx:243 (validation.md round 3, Fix R3-1) (frontend-pages)
+- last seen: 2026-11-10T18:28:05Z
+
+### L-064 - A cache keyed by a parameter needs a test that uses two different keys in one run
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-lib` · harmful: 0
+- features: agendamento
+- evidence: M13 frontend/src/lib/agenda/layout.ts:47 (frontend-lib)
+- last seen: 2026-11-10T18:28:05Z
+
+### L-065 - When a decision changes a behaviour, update every criterion that states the old behaviour, not only the one the decision names
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: agendamento
+- evidence: spec.md:169, spec.md:231-234 (validation.md round 3, Fix R3-3) (specs)
+- last seen: 2026-11-10T18:28:06Z
+
+### L-066 - When a fix changes the input several rules read, test each of those rules on the fixed path, not only the one the bug report named.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: agendamento
+- evidence: frontend/src/pages/agenda.tsx:251 (round-4 S4) (frontend-pages)
+- last seen: 2026-11-10T18:48:13Z
 
 ## Quarantined (failed when applied - ignore)
 

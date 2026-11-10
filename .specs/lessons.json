@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 61,
+  "next_id": 67,
   "lessons": [
     {
       "id": "L-001",
@@ -785,17 +785,19 @@
       "text": "Give every spec edge case its own test with the edge condition set up, not a nearby happy path",
       "signal": "ac_gap",
       "scope": "frontend-pages",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "agenda-adjustments"
+        "agenda-adjustments",
+        "planejamento-diario"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)"
+        "M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)",
+        "validation.md round 5 gap 3 PLAN-48 past day, frontend/src/pages/plan.test.tsx:388 (frontend-pages)"
       ],
       "created": "2026-11-05T04:56:16Z",
-      "last_seen": "2026-11-05T04:56:16Z"
+      "last_seen": "2026-11-10T18:27:14Z"
     },
     {
       "id": "L-045",
@@ -857,17 +859,19 @@
       "text": "When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.",
       "signal": "surviving_mutant",
       "scope": "frontend-pages",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "agenda-adjustments"
+        "agenda-adjustments",
+        "agendamento"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)"
+        "N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)",
+        "frontend/src/pages/agenda.tsx:244 (round-4 S5) (frontend-pages)"
       ],
       "created": "2026-11-05T05:07:21Z",
-      "last_seen": "2026-11-05T05:07:21Z"
+      "last_seen": "2026-11-10T18:48:14Z"
     },
     {
       "id": "L-049",
@@ -1086,6 +1090,114 @@
       ],
       "created": "2026-11-07T23:21:34Z",
       "last_seen": "2026-11-07T23:21:34Z"
+    },
+    {
+      "id": "L-061",
+      "key": "surviving_mutant::test an owner check with another user s record of the right kind not only with a record of the wrong kind",
+      "text": "Test an owner check with another user's record of the right kind, not only with a record of the wrong kind.",
+      "signal": "surviving_mutant",
+      "scope": "backend/scoping",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md round 5 B1 backend-node/src/services/focus.ts:340 (backend/scoping)"
+      ],
+      "created": "2026-11-10T18:27:14Z",
+      "last_seen": "2026-11-10T18:27:14Z"
+    },
+    {
+      "id": "L-062",
+      "key": "surviving_mutant::when a switch hides several kinds of items put one of each kind in the fixture and assert each is gone",
+      "text": "When a switch hides several kinds of items, put one of each kind in the fixture and assert each is gone.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md round 5 F10 frontend/src/pages/agenda.tsx:201 (frontend-pages)"
+      ],
+      "created": "2026-11-10T18:27:14Z",
+      "last_seen": "2026-11-10T18:27:14Z"
+    },
+    {
+      "id": "L-063",
+      "key": "ac_gap::when a pending unsaved change is previewed in place take the saved original from the pending state not from the previewed lists and test acting on the preview a second time",
+      "text": "When a pending, unsaved change is previewed in place, take the saved original from the pending state, not from the previewed lists, and test acting on the preview a second time",
+      "signal": "ac_gap",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/pages/agenda.tsx:243 (validation.md round 3, Fix R3-1) (frontend-pages)"
+      ],
+      "created": "2026-11-10T18:28:05Z",
+      "last_seen": "2026-11-10T18:28:05Z"
+    },
+    {
+      "id": "L-064",
+      "key": "surviving_mutant::a cache keyed by a parameter needs a test that uses two different keys in one run",
+      "text": "A cache keyed by a parameter needs a test that uses two different keys in one run",
+      "signal": "surviving_mutant",
+      "scope": "frontend-lib",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13 frontend/src/lib/agenda/layout.ts:47 (frontend-lib)"
+      ],
+      "created": "2026-11-10T18:28:05Z",
+      "last_seen": "2026-11-10T18:28:05Z"
+    },
+    {
+      "id": "L-065",
+      "key": "spec_precision_gap::when a decision changes a behaviour update every criterion that states the old behaviour not only the one the decision names",
+      "text": "When a decision changes a behaviour, update every criterion that states the old behaviour, not only the one the decision names",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:169, spec.md:231-234 (validation.md round 3, Fix R3-3) (specs)"
+      ],
+      "created": "2026-11-10T18:28:06Z",
+      "last_seen": "2026-11-10T18:28:06Z"
+    },
+    {
+      "id": "L-066",
+      "key": "surviving_mutant::when a fix changes the input several rules read test each of those rules on the fixed path not only the one the bug report named",
+      "text": "When a fix changes the input several rules read, test each of those rules on the fixed path, not only the one the bug report named.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/pages/agenda.tsx:251 (round-4 S4) (frontend-pages)"
+      ],
+      "created": "2026-11-10T18:48:13Z",
+      "last_seen": "2026-11-10T18:48:13Z"
     }
   ]
 }
