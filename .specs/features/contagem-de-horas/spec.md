@@ -192,10 +192,10 @@ O que o código já fixa:
 | HOURS-20 | P1: Relatórios | T4, T8 | In Tasks |
 | HOURS-21 | P1: Relatórios | T4 | In Tasks |
 | HOURS-22 | P1: Relatórios | T4 | In Tasks |
-| HOURS-23 | P1: Tempo gasto | T3 | In Tasks |
-| HOURS-24 | P1: Tempo gasto | T3 | In Tasks |
-| HOURS-25 | P1: Tempo gasto | T3 | In Tasks |
-| HOURS-26 | P1: Tempo gasto | T3 | In Tasks |
+| HOURS-23 | P1: Tempo gasto | T3 | Implementing |
+| HOURS-24 | P1: Tempo gasto | T3 | Implementing |
+| HOURS-25 | P1: Tempo gasto | T3 | Implementing |
+| HOURS-26 | P1: Tempo gasto | T3 | Implementing |
 | HOURS-27 | P1: Capacidade do plano | T7 | In Tasks |
 | HOURS-28 | P1: Capacidade do plano | T7 | In Tasks |
 | HOURS-29 | P1: Capacidade do plano | T7 | In Tasks |

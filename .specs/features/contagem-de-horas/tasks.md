@@ -142,12 +142,14 @@ T4 → T8
 
 **Done when**:
 
-- [ ] Foco 09:00–10:00 + manual 09:30–10:30 → `net` 1h30, `gross` 2h
-- [ ] Encostadas, contida, cadeia de três e sessão aberta sobreposta (até agora, nunca além de `deadline_at`), cada uma com seu teste (L-044)
-- [ ] Sessões de dois membros na mesma tarefa entram na mesma união
-- [ ] Outra tarefa no mesmo workspace, sem sobreposição, não muda (L-048)
-- [ ] `spent_seconds` do quadro e o prazo de uma sessão de foco nova usam o valor líquido (teste de serviço do foco)
-- [ ] Gate check passes: Full (backend)
+- [x] Foco 09:00–10:00 + manual 09:30–10:30 → `net` 1h30, `gross` 2h
+- [x] Encostadas, contida, cadeia de três e sessão aberta sobreposta (até agora, nunca além de `deadline_at`), cada uma com seu teste (L-044)
+- [x] Sessões de dois membros na mesma tarefa entram na mesma união
+- [x] Outra tarefa no mesmo workspace, sem sobreposição, não muda (L-048)
+- [x] `spent_seconds` do quadro e o prazo de uma sessão de foco nova usam o valor líquido (teste de serviço do foco)
+- [x] Gate check passes: Full (backend)
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
