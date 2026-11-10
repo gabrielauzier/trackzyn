@@ -842,6 +842,12 @@
     "days": "Days of the week",
     "emptyDay": "No sessions on this day. Tap + to record one.",
     "futureDay": "This day has not come yet. Sessions show up here when you focus.",
+    "scheduledPanel": {
+      "eyebrow": "Scheduled task",
+      "noTime": "no time",
+      "dragHint": "Drag the block on the grid to reschedule it.",
+      "open": "Open task"
+    },
     "scheduled": {
       "estimate": "Est. {{duration}}",
       "noEstimate": "No estimate",

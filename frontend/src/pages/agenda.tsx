@@ -12,6 +12,7 @@ import { DayScheduledPanel } from '@/components/agenda/day-scheduled-panel'
 import { DayTimeline } from '@/components/agenda/day-timeline'
 import { NewSchedulePanel } from '@/components/agenda/new-schedule-panel'
 import { PlannedBreakPanel } from '@/components/agenda/planned-break-panel'
+import { ScheduledTaskPanel } from '@/components/agenda/scheduled-task-panel'
 import { SessionGroupList } from '@/components/agenda/session-group-list'
 import { ScheduledMoveConfirm } from '@/components/agenda/scheduled-move-confirm'
 import { SessionMoveConfirm } from '@/components/agenda/session-move-confirm'
@@ -185,6 +186,8 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
       : { timed: [...others(scheduled.timed), moved], untimed: others(scheduled.untimed) }
   }, [scheduled, confirming])
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
+  /** The scheduled task whose panel shows (US-5): a click on its block or in `Sem hora`. */
+  const [scheduledId, setScheduledId] = useState<string | null>(null)
   /** The day whose scheduled tasks show in the place of the side panel, from `+X` of the `Sem hora` row (US-14). */
   const [dayPanel, setDayPanel] = useState<string | null>(null)
   /** `Novo agendamento`: a window selected from now on, or the day of the toolbar button without a time (US-8). */
@@ -197,9 +200,22 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
     setScheduling(null)
     setDayPanel(shown)
   }
+  const scheduledTask = scheduledId === null ? null : ([...timed, ...untimed].find((item) => item.id === scheduledId) ?? null)
+  /**
+   * A click on a scheduled task opens its panel in the place of the side panel (US-5); a projection whose open
+   * occurrence is in another week opens the task dialog.
+   */
+  const openScheduled = (id: string) => {
+    if (![...timed, ...untimed].some((item) => item.id === id)) return setOpenTaskId(id)
+    closeSelected()
+    drag.setDraft(null)
+    setDayPanel(null)
+    setScheduling(null)
+    setScheduledId(id)
+  }
   const scheduledProps = hideScheduled
-    ? { timed: NO_SCHEDULED, untimed: NO_SCHEDULED, projected: NO_PROJECTED, onOpenTask: setOpenTaskId, onShowDay: showDay }
-    : { timed, untimed, projected, onOpenTask: setOpenTaskId, onShowDay: showDay }
+    ? { timed: NO_SCHEDULED, untimed: NO_SCHEDULED, projected: NO_PROJECTED, onOpenTask: openScheduled, onShowDay: showDay }
+    : { timed, untimed, projected, onOpenTask: openScheduled, onShowDay: showDay }
   const navigate = useNavigate()
   // The blocks of the user's own saved plans of the week, without done tasks (PLAN-24, PLAN-39). Under `['lists']`, as
   // the scheduled tasks: completing a task anywhere, or saving a plan, reads them again.
@@ -255,6 +271,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
 
   const closeSelected = () => {
     setPlannedBreak(null)
+    setScheduledId(null)
     setSelectedId(null)
     setPreviewId(null)
     setEditTimes(null)
@@ -267,6 +284,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
    */
   const commit = (final: Draft) => {
     setPlannedBreak(null)
+    setScheduledId(null)
     if (final.sessionId === null) {
       // A window that begins at now or later schedules a task; before now, it records a session (US-8, D10).
       setDayPanel(null)
@@ -402,6 +420,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
     // A click on the block whose new time is pending keeps it; another block drops it (ADJ-06).
     if (pending && session.id === pending.sessionId) return
     setPlannedBreak(null)
+    setScheduledId(null)
     setDayPanel(null)
     setScheduling(null)
     drag.setDraft(null)
@@ -413,6 +432,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
   /** A click on a joined block lists its sessions (MERGE-27). */
   const selectGroup = (members: AgendaSession[]) => {
     setPlannedBreak(null)
+    setScheduledId(null)
     setDayPanel(null)
     setScheduling(null)
     drag.setDraft(null)
@@ -594,7 +614,15 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 onSave={confirmMove}
               />
             )}
-            {!confirming && plannedBreak && (
+            {!confirming && scheduledTask && (
+              <ScheduledTaskPanel
+                key={scheduledTask.id}
+                task={scheduledTask}
+                onOpen={() => setOpenTaskId(scheduledTask.id)}
+                onClose={() => setScheduledId(null)}
+              />
+            )}
+            {!confirming && !scheduledTask && plannedBreak && (
               <PlannedBreakPanel
                 key={plannedBreak.id}
                 block={plannedBreak}
@@ -602,7 +630,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 onClose={() => setPlannedBreak(null)}
               />
             )}
-            {!confirming && !plannedBreak && dayPanel && (
+            {!confirming && !scheduledTask && !plannedBreak && dayPanel && (
               <DayScheduledPanel
                 key={dayPanel}
                 day={dayPanel}
@@ -613,7 +641,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 onClose={() => setDayPanel(null)}
               />
             )}
-            {!confirming && !plannedBreak && !dayPanel && canWrite && scheduling && (
+            {!confirming && !scheduledTask && !plannedBreak && !dayPanel && canWrite && scheduling && (
               <NewSchedulePanel
                 key={`${scheduling.day}:${scheduling.window?.start ?? ''}:${scheduling.window?.end ?? ''}`}
                 day={scheduling.day}
@@ -632,7 +660,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 }}
               />
             )}
-            {!confirming && !plannedBreak && !dayPanel && !scheduling && canWrite && draft && (
+            {!confirming && !scheduledTask && !plannedBreak && !dayPanel && !scheduling && canWrite && draft && (
               <SessionPanel
                 times={{ day: draft.day, start: draft.start, end: draft.end }}
                 onTimesChange={changeTimes}
@@ -647,7 +675,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 }}
               />
             )}
-            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && editTimes && canWrite && (
+            {!confirming && !scheduledTask && !plannedBreak && !dayPanel && !scheduling && !draft && selected && editTimes && canWrite && (
               <SessionPanel
                 key={selected.id}
                 editing={selected}
@@ -678,7 +706,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 }}
               />
             )}
-            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && pending && !editTimes && canWrite && (
+            {!confirming && !scheduledTask && !plannedBreak && !dayPanel && !scheduling && !draft && selected && pending && !editTimes && canWrite && (
               <SessionMoveConfirm
                 key={selected.id}
                 session={selected}
@@ -703,7 +731,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
                 }}
               />
             )}
-            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && selected && !editTimes && !pending && (
+            {!confirming && !scheduledTask && !plannedBreak && !dayPanel && !scheduling && !draft && selected && !editTimes && !pending && (
               <SessionDetails
                 key={selected.id}
                 session={selected}
@@ -724,7 +752,7 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
               />
             )}
             {/* While a delete is on its way the chosen session is gone from the list: no flash of the block's list. */}
-            {!confirming && !plannedBreak && !dayPanel && !scheduling && !draft && !selected && group.length > 0 && !remove.isPending && (
+            {!confirming && !scheduledTask && !plannedBreak && !dayPanel && !scheduling && !draft && !selected && group.length > 0 && !remove.isPending && (
               <SessionGroupList
                 sessions={group}
                 timezone={timezone}

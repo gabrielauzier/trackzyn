@@ -842,6 +842,12 @@
     "days": "Dias da semana",
     "emptyDay": "Nenhuma sessão neste dia. Toque em + para registrar uma.",
     "futureDay": "Este dia ainda não chegou. As sessões aparecem aqui quando você focar.",
+    "scheduledPanel": {
+      "eyebrow": "Tarefa agendada",
+      "noTime": "sem hora",
+      "dragHint": "Arraste o bloco na grade para reagendar.",
+      "open": "Abrir tarefa"
+    },
     "scheduled": {
       "estimate": "Est. {{duration}}",
       "noEstimate": "Sem estimativa",

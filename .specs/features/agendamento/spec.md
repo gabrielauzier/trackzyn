@@ -135,7 +135,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - WHEN um bloco agendado e uma sessão se sobrepõem THEN a grade SHALL mostrá-los lado a lado, como as sessões sobrepostas de hoje.
 - Tarefas sem hora SHALL não virar bloco na grade; elas aparecem na linha `Sem hora` (US-14).
 - Tarefas concluídas SHALL não aparecer como bloco agendado; o tempo delas já aparece nas sessões.
-- WHEN o usuário clica no bloco agendado THEN o app SHALL abrir o diálogo da tarefa.
+- WHEN o usuário clica no bloco agendado THEN a Agenda SHALL abrir, no lugar do painel lateral, o painel da tarefa agendada: `Tarefa agendada`, o título, `<dia> · HH:MM – HH:MM` (ou `<dia> · sem hora`), a estimativa (`Sem estimativa` sem ela), `<lista> · <coluna>`, a repetição da série quando houver e `Abrir tarefa`, que abre o diálogo da tarefa. `Esc` e o X SHALL fechar o painel. Uma projeção cuja ocorrência aberta está em outra semana SHALL abrir o diálogo da tarefa (revisto em 2026-11-10).
 - A Agenda SHALL mostrar as tarefas agendadas de todo o workspace (D9).
 
 ### US-6. Reagendar arrastando na Agenda
@@ -146,7 +146,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - O arraste do bloco agendado SHALL funcionar também no futuro; o bloqueio de AGENDA-23 continua valendo só para sessões.
 - WHEN o papel é `viewer` THEN o bloco SHALL não ser arrastável.
 - Ao soltar, valem as "Regras ao salvar o agendamento".
-- WHEN o usuário pressiona e solta o bloco agendado, ou a tarefa da linha `Sem hora`, sem mover o ponteiro além da tolerância do clique THEN a Agenda SHALL não desenhar o arraste (cópia, rascunho ou rótulo) e o clique SHALL abrir a tarefa; o arraste SHALL começar só quando o ponteiro se move.
+- WHEN o usuário pressiona e solta o bloco agendado, ou a tarefa da linha `Sem hora`, sem mover o ponteiro além da tolerância do clique THEN a Agenda SHALL não desenhar o arraste (cópia, rascunho ou rótulo) e o clique SHALL abrir o painel da tarefa; o arraste SHALL começar só quando o ponteiro se move.
 - WHEN a linha `Sem hora` aparece ou some no começo ou no fim do arraste THEN a grade SHALL rolar a mesma altura, para as horas ficarem sob o ponteiro e o bloco não saltar.
 
 ### US-8. Agendar selecionando um horário na Agenda
@@ -226,7 +226,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - A ordem SHALL ser a do quadro: coluna (Hoje, Esta semana, Backlog) e depois `position`.
 - WHEN o dia tem mais de 3 tarefas sem hora THEN a célula SHALL mostrar o botão `+X`, com X = as que não couberam, e o rótulo acessível `Ver todas as N tarefas agendadas do dia <dia>`.
 - WHEN o usuário clica em `+X` THEN o app SHALL abrir, no lugar do painel lateral da Agenda, o painel do dia: `<dia da semana>, <data>`, `N tarefas agendadas · Est. <soma>`, a seção `Sem hora` com todas as tarefas sem hora do dia e a seção `Com hora` com as tarefas com hora do dia em ordem de horário, inclusive a próxima ocorrência projetada de uma série (só leitura).
-- Cada tarefa da célula e do painel SHALL abrir o diálogo da tarefa no clique. No painel, a tarefa sem hora SHALL ter o botão de relógio `Definir hora`, que abre o seletor de hora; ao salvar, ela sai de `Sem hora` e vira um bloco na grade.
+- Cada tarefa da célula SHALL abrir o painel da tarefa agendada no clique (US-5), e cada tarefa do painel do dia, o diálogo da tarefa. No painel, a tarefa sem hora SHALL ter o botão de relógio `Definir hora`, que abre o seletor de hora; ao salvar, ela sai de `Sem hora` e vira um bloco na grade.
 - A altura da linha SHALL acomodar 3 tarefas e o `+X` em todos os dias da semana, para as colunas não ficarem desalinhadas; dias sem tarefa ficam com a célula vazia.
 - Tarefas concluídas SHALL não aparecer na linha, como na grade (D5).
 - WHEN o papel é `viewer` THEN o painel SHALL mostrar as tarefas sem o botão `Definir hora`.

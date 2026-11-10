@@ -1291,7 +1291,7 @@ describe('AgendaPage', () => {
 })
 
 describe('AgendaPage: the scheduled tasks (US-5)', () => {
-  it('reads the scheduled tasks of the week, draws them on the grid and opens the task dialog on a click', async () => {
+  it('US-5 reads the scheduled tasks of the week, draws them on the grid, opens their panel on a click and the task dialog from it', async () => {
     vi.mocked(agenda.scheduled).mockResolvedValue({
       timed: [
         {
@@ -1332,14 +1332,28 @@ describe('AgendaPage: the scheduled tasks (US-5)', () => {
     expect(agenda.scheduled).toHaveBeenCalledWith('2026-11-02', '2026-11-08')
     await user.click(block)
 
+    const panel = (await screen.findByRole('heading', { name: 'Plan the sprint' })).closest('aside')!
+    expect(within(panel).getByText('Scheduled task')).toBeInTheDocument()
+    expect(within(panel).getByText('Thu, Nov 5 · 10:00 – 11:00')).toBeInTheDocument()
+    expect(within(panel).getByText('Est. 1hr')).toBeInTheDocument()
+    expect(within(panel).getByText('Work · This week')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Edit task' })).toBeNull()
+
+    await user.click(within(panel).getByRole('button', { name: 'Open task' }))
     const dialog = await screen.findByRole('dialog', { name: 'Edit task' })
     expect(await within(dialog).findByDisplayValue('Plan the sprint')).toBeInTheDocument()
     expect(tasks.get).toHaveBeenCalledWith('t9')
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Edit task' })).toBeNull())
+
+    // Esc closes the panel, as the X does.
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Plan the sprint' })).toBeNull())
   })
 })
 
 describe('AgendaPage: the Sem hora row (US-14)', () => {
-  it('shows the tasks scheduled without a time in their day and opens the task dialog on a click', async () => {
+  it('US-14 shows the tasks scheduled without a time in their day and opens their panel on a click', async () => {
     vi.mocked(agenda.scheduled).mockResolvedValue({
       timed: [],
       untimed: [
@@ -1378,6 +1392,14 @@ describe('AgendaPage: the Sem hora row (US-14)', () => {
     await waitFor(() => expect(document.querySelector('[data-untimed-day="2026-11-04"]')).not.toBeNull())
     const cell = document.querySelector<HTMLElement>('[data-untimed-day="2026-11-04"]')!
     await user.click(await within(cell).findByRole('button', { name: 'Call the bank' }))
+    const panel = (await screen.findByRole('heading', { name: 'Call the bank' })).closest('aside')!
+    expect(within(panel).getByText('Wed, Nov 4 · no time')).toBeInTheDocument()
+    expect(within(panel).getByText('No estimate')).toBeInTheDocument()
+    expect(within(panel).getByText('Work · Today')).toBeInTheDocument()
+    await user.click(within(panel).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('heading', { name: 'Call the bank' })).toBeNull()
+    await user.click(within(cell).getByRole('button', { name: 'Call the bank' }))
+    await user.click(await screen.findByRole('button', { name: 'Open task' }))
     expect(await screen.findByRole('dialog', { name: 'Edit task' })).toBeInTheDocument()
     expect(tasks.get).toHaveBeenCalledWith('t8')
   })
