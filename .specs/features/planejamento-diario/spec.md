@@ -137,13 +137,13 @@ O que o código já fixa:
 
 **Acceptance Criteria**:
 
-1. The system SHALL mostrar na Agenda os blocos do plano salvo do usuário: os de tarefa com a cor da lista e borda tracejada, e as pausas em cinza hachurado, sem cobrir as sessões. (PLAN-24)
+1. The system SHALL mostrar na Agenda os blocos do plano salvo do usuário, sem cobrir as sessões: os de tarefa como um bloco de tarefa agendada, sem texto, com o fundo e a borda na cor da lista, mas com a borda tracejada e o ícone do plano no canto; e as pausas em cinza hachurado. (PLAN-24)
 2. WHEN uma tarefa tem bloco no plano do dia e também está agendada naquele dia, com `scheduled_time` ou na faixa `Sem hora`, THEN a Agenda do dono do plano SHALL mostrar só o bloco do plano. (PLAN-25)
 3. WHEN o usuário clica em `Começar` numa pausa do plano de hoje, na tela de foco da lista da pausa, THEN o sistema SHALL abrir um Intervalo de `planned_seconds` igual à duração da pausa, na lista da pausa, pelo mesmo caminho de `POST /api/focus/break`. (PLAN-26)
 4. WHEN há uma sessão de tarefa aberta e o usuário começa a pausa THEN o sistema SHALL encerrar a sessão com o mesmo motivo do Intervalo do foco (`break`) antes de abrir o Intervalo. (PLAN-27)
 5. The system SHALL mostrar `Começar` só na tela de foco, na seção `Pausas do plano de hoje`, para as pausas do plano de hoje daquela lista que ainda não terminaram, e não durante um Intervalo. A Agenda não mostra `Começar`: o painel de uma pausa de hoje leva ao foco da lista dela. (PLAN-28)
 6. WHEN o usuário clica num bloco de tarefa do plano na Agenda THEN o sistema SHALL abrir o plano daquele dia. (PLAN-29)
-7. WHEN o usuário passa o mouse ou foca um bloco de tarefa do plano na Agenda THEN o sistema SHALL mostrar um tooltip com o título, a estimativa (`Sem estimativa` sem ela), `Planejada · HH:MM – HH:MM · <duração>`, a lista e `Clique para abrir o plano do dia`, como os tooltips das sessões e das tarefas agendadas. (PLAN-46)
+7. WHEN o usuário passa o mouse ou foca um bloco de tarefa do plano na Agenda THEN o sistema SHALL mostrar um tooltip com o título, a estimativa (`Sem estimativa` sem ela), `Planejada · HH:MM – HH:MM · <duração>`, a lista, `Agendada para <dia>` quando a tarefa está agendada para outro dia, e `Clique para abrir o plano do dia`, como os tooltips das sessões e das tarefas agendadas. (PLAN-46)
 8. WHEN o usuário passa o mouse sobre um bloco de tarefa do plano na Agenda THEN a borda tracejada SHALL ficar sólida e o bloco SHALL ficar por cima dos vizinhos, como num bloco de tarefa agendada. (PLAN-47)
 
 **Independent Test**: Planejar um café às 10:00 hoje, abrir o foco da lista do café, clicar em `Começar` em `Pausas do plano de hoje` e ver o Intervalo de 15 min aberto. Na Agenda, passar o mouse sobre uma tarefa planejada e ver o tooltip e a borda sólida.
@@ -187,7 +187,7 @@ O que o código já fixa:
 - IF o usuário tenta sair da tela com o rascunho não salvo THEN o sistema SHALL perguntar `Descartar o rascunho?` com `Continuar planejando` e `Descartar`. (PLAN-36)
 - IF salvar o plano falha THEN o sistema SHALL manter o rascunho na tela e mostrar `Não foi possível salvar o plano.` com `Tentar de novo`. (PLAN-37)
 - IF uma tarefa planejada já tem `scheduled_on` em outro dia THEN o bloco SHALL mostrar `Agendada para <dia>`, e salvar SHALL manter o dia da tarefa. (PLAN-38)
-- WHEN uma tarefa planejada é concluída THEN o bloco SHALL aparecer riscado no plano e na Agenda. (PLAN-39)
+- WHEN uma tarefa planejada é concluída THEN o bloco SHALL aparecer riscado no plano e, na Agenda, esmaecido, com o título riscado e `Concluída` no tooltip. (PLAN-39)
 - WHEN uma tarefa planejada é excluída ou sua lista é arquivada THEN o bloco SHALL sair do plano. (PLAN-40)
 - IF um viewer tenta salvar um plano ou mudar o expediente THEN a API SHALL responder 403 `Read-only role` e não gravar nada. (PLAN-41)
 - IF um token `tkz_` chama as rotas do plano THEN a API SHALL responder 403 (AD-007). (PLAN-42)

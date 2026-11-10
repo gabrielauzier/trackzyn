@@ -1,12 +1,11 @@
-import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react'
+import type { PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Clock, Repeat } from 'lucide-react'
 
 import { formatDuration } from '@/components/board/format-duration'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { TaskSlot } from '@/components/agenda/task-slot'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES, type LaidOutScheduled } from '@/lib/agenda/layout'
-import { scheduledColors } from '@/lib/agenda/scheduled-colors'
 import { longDay, repeatsLabel } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
 
@@ -51,57 +50,30 @@ export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen, onDragSta
   // A projection does not move (D14); a viewer moves nothing (US-6).
   const action = canWrite && !projection ? t('agenda.scheduled.openOrDrag') : t('agenda.scheduled.open')
 
-  const style: CSSProperties = {
-    top: piece.start * pxPerMinute,
-    height: Math.max(1, (piece.end - piece.start) * pxPerMinute),
-    left: `${(piece.lane / piece.lanes) * 100}%`,
-    width: `${100 / piece.lanes}%`,
-    ...scheduledColors(source.list.color),
-  }
-  const open = () => onOpen?.(taskId)
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return
-    event.preventDefault()
-    open()
-  }
   const Icon = repeats ? Repeat : Clock
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={`${source.title}, ${when}`}
-            data-scheduled-id={taskId}
-            data-projected={projection || undefined}
-            data-draggable={onDragStart ? true : undefined}
-            data-dragging={dragging || undefined}
-            className={cn(
-              'absolute overflow-hidden rounded-md border-2 border-dotted select-none',
-              'outline-2 outline-transparent hover:z-20 focus-visible:outline-(--ring)',
-              // Hover: a solid edge and the open hand of a block that moves.
-              onDragStart && 'cursor-grab hover:border-solid',
-              projection && 'opacity-50',
-              dragging && 'opacity-30',
-            )}
-            style={style}
-            onClick={open}
-            onKeyDown={onKeyDown}
-            // The block is not empty time: a press on it starts no draft on the column under it.
-            onPointerDown={(event) => (onDragStart ? onDragStart(event) : event.stopPropagation())}
-          >
-            <span
-              aria-hidden
-              data-slot={repeats ? 'repeat-icon' : 'clock-icon'}
-              className="absolute top-0 right-0 flex rounded-bl-md bg-background/80 p-0.5"
-            >
-              <Icon size={10} />
-            </span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="flex flex-col gap-0.5">
+    <TaskSlot
+      piece={piece}
+      pxPerMinute={pxPerMinute}
+      color={source.list.color}
+      edge="dotted"
+      icon={Icon}
+      iconSlot={repeats ? 'repeat-icon' : 'clock-icon'}
+      label={`${source.title}, ${when}`}
+      onOpen={() => onOpen?.(taskId)}
+      onPointerDown={onDragStart}
+      // Hover: a solid edge and the open hand of a block that moves.
+      solidOnHover={onDragStart !== undefined}
+      className={cn(onDragStart && 'cursor-grab', projection && 'opacity-50', dragging && 'opacity-30')}
+      data={{
+        'data-scheduled-id': taskId,
+        'data-projected': projection || undefined,
+        'data-draggable': onDragStart ? true : undefined,
+        'data-dragging': dragging || undefined,
+      }}
+      tooltip={
+        <>
           <span className="flex items-baseline gap-2">
             <span className="font-medium break-words whitespace-normal">{source.title}</span>
             <span data-slot="scheduled-estimate" className="ml-auto shrink-0 tabular-nums opacity-80">
@@ -111,8 +83,8 @@ export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen, onDragSta
           <span className="tabular-nums opacity-80">{when}</span>
           <span className="opacity-80">{where}</span>
           <span className="opacity-80">{action}</span>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </>
+      }
+    />
   )
 }

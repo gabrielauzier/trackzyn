@@ -1,10 +1,14 @@
 import { useTranslation } from 'react-i18next'
+import { CalendarCheck } from 'lucide-react'
 
 import { formatDuration } from '@/components/board/format-duration'
+import { TaskSlot } from '@/components/agenda/task-slot'
 import { PlanBlock } from '@/components/plan/plan-block'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES } from '@/lib/agenda/layout'
 import type { DraftBlock } from '@/lib/plan/draft'
+import { longDay } from '@/lib/schedule'
+import { cn } from '@/lib/utils'
 import { clockMinutes } from '@/lib/plan/clock'
 import type { PlannedBlock as Planned } from '@/types'
 
@@ -38,10 +42,11 @@ function PlannedTaskTip({ block }: { block: Extract<Planned, { kind: 'task' }> }
   const language = i18n.resolvedLanguage ?? i18n.language
   const start = clockMinutes(block.start) ?? 0
   const estimate = block.task.estimate_minutes
+  const elsewhere = block.task.scheduled_on !== null && block.task.scheduled_on !== block.day ? block.task.scheduled_on : null
   return (
     <>
       <span className="flex items-baseline gap-2">
-        <span className="font-medium break-words whitespace-normal">{block.task.title}</span>
+        <span className={cn('font-medium break-words whitespace-normal', block.task.done && 'line-through')}>{block.task.title}</span>
         <span data-slot="planned-estimate" className="ml-auto shrink-0 tabular-nums opacity-80">
           {estimate === null ? t('agenda.scheduled.noEstimate') : t('agenda.scheduled.estimate', { duration: formatDuration(estimate * 60, language) })}
         </span>
@@ -54,25 +59,49 @@ function PlannedTaskTip({ block }: { block: Extract<Planned, { kind: 'task' }> }
         })}
       </span>
       <span className="opacity-80">{block.task.list.name}</span>
+      {block.task.done && <span className="opacity-80">{t('board.completed')}</span>}
+      {elsewhere && <span className="opacity-80">{t('schedule.scheduledFor', { day: longDay(elsewhere, t, language) })}</span>}
       <span className="opacity-80">{t('plan.agenda.openPlanHint')}</span>
     </>
   )
 }
 
 /**
- * A block of the user's saved plan on the Agenda (PLAN-24, PLAN-39, PLAN-46, PLAN-47): a task dashed in the colour of
- * its list, crossed out once done, with a tooltip and a solid edge on hover; a break gray and hatched. A break starts
- * from the focus of its list, not from here (PLAN-28).
+ * A block of the user's saved plan on the Agenda (PLAN-24, PLAN-39, PLAN-46, PLAN-47). A task looks like a scheduled
+ * task, without text and with a tooltip, but with a dashed edge and the plan's icon; once done it fades. A break is
+ * gray and hatched, as on the plan. A break starts from the focus of its list, not from here (PLAN-28).
  */
 export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const { planned } = piece
+  const open = onOpen && (() => onOpen(planned))
+  if (planned.kind === 'break') {
+    return (
+      <PlanBlock
+        piece={{ block: asDraftBlock(planned), start: piece.start, end: piece.end, lane: piece.lane, lanes: piece.lanes }}
+        day={planned.day}
+        pxPerMinute={pxPerMinute}
+        onOpen={open}
+      />
+    )
+  }
+  const start = clockMinutes(planned.start) ?? 0
+  const range = t('plan.block.range', { start: minuteClock(start), end: minuteClock((start + planned.minutes) % DAY_MINUTES) })
   return (
-    <PlanBlock
-      piece={{ block: asDraftBlock(planned), start: piece.start, end: piece.end, lane: piece.lane, lanes: piece.lanes }}
-      day={planned.day}
+    <TaskSlot
+      piece={piece}
       pxPerMinute={pxPerMinute}
-      onOpen={onOpen && (() => onOpen(planned))}
-      tooltip={planned.kind === 'task' ? <PlannedTaskTip block={planned} /> : undefined}
+      color={planned.task.list.color}
+      edge="dashed"
+      icon={CalendarCheck}
+      iconSlot="plan-icon"
+      label={`${planned.task.title}, ${range} · ${formatDuration(planned.minutes * 60, language)}`}
+      tooltip={<PlannedTaskTip block={planned} />}
+      onOpen={open}
+      solidOnHover
+      className={cn(planned.task.done && 'opacity-50')}
+      data={{ 'data-plan-block': planned.id, 'data-kind': 'task', 'data-done': planned.task.done || undefined }}
     />
   )
 }

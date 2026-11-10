@@ -9,7 +9,7 @@ const TODAY = '2026-11-09'
 const list = { id: 'l1', name: 'Work', color: 3 }
 
 const coffee: Planned = { id: 'p1', day: TODAY, kind: 'break', start: '10:30', minutes: 15, name: 'Café', list }
-const task = (estimate: number | null): Planned => ({
+const task = (estimate: number | null): Extract<Planned, { kind: 'task' }> => ({
   id: 'p2',
   day: TODAY,
   kind: 'task',
@@ -47,7 +47,8 @@ describe('PlannedBlock (PLAN-24, PLAN-28, PLAN-46, PLAN-47)', () => {
     renderWithProviders(<PlannedBlock piece={piece(task(75), 645)} pxPerMinute={1} onOpen={onOpen} />)
     const block = screen.getByRole('button', { name: /^Escrever a spec, 10:45 – 12:00/ })
     expect(block).toHaveClass('border-dashed')
-    expect(block.style.borderColor).toBe('var(--chart-3)')
+    expect(block.style.borderColor).toContain('var(--chart-3)')
+    expect(block.style.backgroundColor).toContain('var(--chart-3)')
 
     await user.click(block)
     expect(onOpen).toHaveBeenCalledExactlyOnceWith(task(75))
@@ -76,5 +77,34 @@ describe('PlannedBlock (PLAN-24, PLAN-28, PLAN-46, PLAN-47)', () => {
 
     renderWithProviders(<PlannedBlock piece={piece(coffee, 630)} pxPerMinute={1} />)
     expect(screen.getByRole('button', { name: /^Café/ })).not.toHaveClass('hover:border-solid')
+  })
+
+  it('PLAN-24 a planned task shows no text, only the plan icon in the corner, as a scheduled task shows its clock', () => {
+    renderWithProviders(<PlannedBlock piece={piece(task(75), 645)} pxPerMinute={1} />)
+    const block = screen.getByRole('button', { name: /^Escrever a spec/ })
+
+    expect(block.textContent).toBe('')
+    expect(block.querySelector('[data-slot="plan-icon"]')).not.toBeNull()
+  })
+
+  it('PLAN-39 a done planned task fades, and its tooltip crosses out the title and says Concluída', async () => {
+    const done: Planned = { ...task(75), task: { ...task(75).task, done: true } }
+    const { user } = renderWithProviders(<PlannedBlock piece={piece(done, 645)} pxPerMinute={1} />)
+    const block = screen.getByRole('button', { name: /^Escrever a spec/ })
+    expect(block).toHaveClass('opacity-50')
+
+    await user.hover(block)
+    const tooltip = await screen.findByRole('tooltip')
+    expect(tooltip.textContent).toContain('Concluída')
+    expect(screen.getAllByText('Escrever a spec').some((title) => title.classList.contains('line-through'))).toBe(true)
+  })
+
+  it('PLAN-46 the tooltip of a planned task scheduled for another day says Agendada para that day', async () => {
+    const later: Planned = { ...task(75), task: { ...task(75).task, scheduled_on: '2026-11-12' } }
+    const { user } = renderWithProviders(<PlannedBlock piece={piece(later, 645)} pxPerMinute={1} />)
+    await user.hover(screen.getByRole('button', { name: /^Escrever a spec/ }))
+
+    expect((await screen.findByRole('tooltip')).textContent).toMatch(/Agendada para .+/)
+    expect(screen.getByRole('button', { name: /^Escrever a spec/ })).not.toHaveClass('opacity-50')
   })
 })
