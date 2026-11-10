@@ -15,7 +15,11 @@ export type DraftBlock =
   | { key: string; kind: 'break'; start: number; minutes: number; name: string; list: PlanListRef }
 
 /** What is dropped on the grid: a task from the list, or a break (PLAN-04, PLAN-15). */
-export type DropItem = { kind: 'task'; task: PlanTaskRef } | { kind: 'break'; name: string; minutes: number; list: PlanListRef }
+/** What the draft can hold: a task or a break. */
+export type DraftItem = { kind: 'task'; task: PlanTaskRef } | { kind: 'break'; name: string; minutes: number; list: PlanListRef }
+
+/** What the side list drops on the grid: a draft item, or a task to create first in `list` (PLAN-48). */
+export type DropItem = DraftItem | { kind: 'new'; estimate: number | null; list: PlanListRef }
 
 /** Why the last change was refused: a break out of 5 to 120 min (PLAN-17). */
 export type DraftError = 'break_range'
@@ -30,7 +34,7 @@ export interface DraftState {
 }
 
 export type DraftAction =
-  | { type: 'add'; item: DropItem; start: number }
+  | { type: 'add'; item: DraftItem; start: number }
   | { type: 'move'; key: string; start: number }
   | { type: 'resize'; key: string; minutes: number }
   | { type: 'edit'; key: string; start?: number; minutes?: number; list?: PlanListRef }

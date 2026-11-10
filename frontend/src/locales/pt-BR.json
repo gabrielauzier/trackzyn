@@ -1011,7 +1011,12 @@
       "mark": "Marcar {{title}}",
       "fit": "Encaixar ({{count}})",
       "notFit_one": "{{count}} tarefa não coube",
-      "notFit_other": "{{count}} tarefas não couberam"
+      "notFit_other": "{{count}} tarefas não couberam",
+      "newTask": "Nova tarefa",
+      "newTaskTitle": "Nova tarefa",
+      "newTaskDrag": "Arrastar nova tarefa para a grade",
+      "newTaskNoEstimate": "Sem estimativa: 1h",
+      "newTaskTakes": "Ocupa {{duration}} na grade"
     },
     "breakRange": "A pausa vai de 5 min a 2h",
     "breakDialog": {

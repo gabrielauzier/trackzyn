@@ -4,7 +4,7 @@ import { AxiosError, AxiosHeaders } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
-import { agenda, lists, plans, sessions } from '@/lib/api'
+import { agenda, lists, plans, sessions, tasks } from '@/lib/api'
 import { DraftGuardProvider } from '@/lib/plan/draft-guard'
 import { i18n, renderWithProviders } from '@/test/utils'
 import type { ListCard, PlanCandidate, PlanRead } from '@/types'
@@ -15,6 +15,7 @@ vi.mock('@/lib/api', () => ({
   sessions: { list: vi.fn() },
   agenda: { scheduled: vi.fn() },
   plans: { get: vi.fn(), save: vi.fn(), candidates: vi.fn(), planned: vi.fn(), setWorkday: vi.fn() },
+  tasks: { create: vi.fn() },
 }))
 
 const workspace = vi.hoisted(() => ({ canWrite: true }))
@@ -324,6 +325,45 @@ describe('PlanPage', () => {
 
     expect(blocks()).toHaveLength(1)
     expect(blocks()[0]).toHaveAccessibleName(/^Fix the widget, 20:00 – 20:30/)
+  })
+
+  it('PLAN-48 a new task dropped on the grid is created in the first list, in Esta semana for tomorrow, and joins the draft there', async () => {
+    vi.mocked(tasks.create).mockResolvedValue({ id: 'n1', title: 'Nova tarefa', estimate_minutes: 90, scheduled_on: null } as Awaited<ReturnType<typeof tasks.create>>)
+    show()
+    const card = await screen.findByRole('button', { name: 'Arrastar nova tarefa para a grade' })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Estimativa' }), { target: { value: '0130' } })
+    expect(screen.getByText('Ocupa 1h 30min na grade')).toBeInTheDocument()
+
+    fireEvent.pointerDown(card, { clientX: 50, clientY: 50, button: 0 })
+    fireEvent.pointerMove(window, { clientX: 500, clientY: 600 * PX_PER_MINUTE + 1 })
+    fireEvent.pointerUp(window, { clientX: 500, clientY: 600 * PX_PER_MINUTE + 1 })
+
+    await waitFor(() => expect(blocks()).toHaveLength(1))
+    expect(tasks.create).toHaveBeenCalledExactlyOnceWith({ list_id: list.id, title: 'Nova tarefa', estimate_minutes: 90, column: 'this_week' })
+    expect(blocks()[0]).toHaveAccessibleName(/^Nova tarefa, 10:00 – 11:30/)
+    expect(footer()).toHaveTextContent('Rascunho — ainda não salvo')
+  })
+
+  it('PLAN-48 on the plan of today the new task goes to Hoje, and without an estimate takes 1h', async () => {
+    vi.mocked(tasks.create).mockResolvedValue({ id: 'n2', title: 'Nova tarefa', estimate_minutes: null, scheduled_on: null } as Awaited<ReturnType<typeof tasks.create>>)
+    show('/planejar/2026-11-08')
+    const card = await screen.findByRole('button', { name: 'Arrastar nova tarefa para a grade' })
+    expect(screen.getByText('Sem estimativa: 1h')).toBeInTheDocument()
+
+    fireEvent.pointerDown(card, { clientX: 50, clientY: 50, button: 0 })
+    fireEvent.pointerMove(window, { clientX: 500, clientY: 1380 * PX_PER_MINUTE + 1 })
+    fireEvent.pointerUp(window, { clientX: 500, clientY: 1380 * PX_PER_MINUTE + 1 })
+
+    await waitFor(() => expect(blocks()).toHaveLength(1))
+    expect(tasks.create).toHaveBeenCalledExactlyOnceWith({ list_id: list.id, title: 'Nova tarefa', estimate_minutes: null, column: 'today' })
+    expect(blocks()[0]).toHaveAccessibleName(/^Nova tarefa, 23:00 – 00:00/)
+  })
+
+  it('PLAN-48 a viewer gets no new task card', async () => {
+    workspace.canWrite = false
+    show()
+    await screen.findByRole('heading', { level: 1, name: 'Segunda-feira, 9 de novembro' })
+    expect(screen.queryByRole('button', { name: 'Arrastar nova tarefa para a grade' })).toBeNull()
   })
 
   it('PLAN-13 the arrows of the header open the plan of the next and the previous day', async () => {

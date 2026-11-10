@@ -121,7 +121,13 @@ export function PlanGrid({ day, blocks, fixed, workday, pxPerMinute = PX_PER_MIN
     [fixed, shown],
   )
   const dropping = preview?.mode === 'drop' ? preview : null
-  const dropMinutes = dropping ? (dropping.item.kind === 'task' ? scheduledMinutes(dropping.item.task.estimate_minutes) : dropping.item.minutes) : 0
+  const dropMinutes = dropping
+    ? dropping.item.kind === 'task'
+      ? scheduledMinutes(dropping.item.task.estimate_minutes)
+      : dropping.item.kind === 'new'
+        ? scheduledMinutes(dropping.item.estimate)
+        : dropping.item.minutes
+    : 0
 
   return (
     <div ref={scroller} data-plan-scroll className="relative min-h-80 overflow-y-auto">
@@ -212,7 +218,7 @@ export function PlanGrid({ day, blocks, fixed, workday, pxPerMinute = PX_PER_MIN
           className="pointer-events-none fixed z-50 max-w-48 truncate rounded-md border bg-popover px-1.5 py-0.5 text-xs shadow-lg"
           style={{ left: dropping.x + 8, top: dropping.y + 8 }}
         >
-          {dropping.item.kind === 'task' ? dropping.item.task.title : dropping.item.name}
+          {dropping.item.kind === 'task' ? dropping.item.task.title : dropping.item.kind === 'new' ? t('plan.sidebar.newTask') : dropping.item.name}
         </div>
       )}
     </div>

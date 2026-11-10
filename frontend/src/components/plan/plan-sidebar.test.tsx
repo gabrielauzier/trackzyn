@@ -236,5 +236,23 @@ describe('PlanSidebar: Encaixar (PLAN-32, PLAN-33)', () => {
     expect(screen.queryByRole('checkbox')).toBeNull()
     expect(screen.queryByRole('button', { name: /^Fit/ })).toBeNull()
   })
-})
 
+  it('PLAN-48 shows the new task card above the breaks, in the filtered list, and none without a drag', async () => {
+    const { onDragStart, user, unmount } = show()
+    const newTask = screen.getByRole('button', { name: 'Drag a new task onto the grid' })
+    const breaks = screen.getByRole('heading', { name: 'Breaks' })
+    expect(newTask.compareDocumentPosition(breaks) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    fireEvent.pointerDown(newTask, { clientX: 10, clientY: 10, button: 0 })
+    expect(onDragStart).toHaveBeenLastCalledWith(expect.anything(), { kind: 'new', estimate: null, list: work })
+
+    await user.click(screen.getByRole('combobox', { name: 'Filter by list' }))
+    await user.click(await screen.findByRole('option', { name: 'Home' }))
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Drag a new task onto the grid' }), { clientX: 10, clientY: 10, button: 0 })
+    expect(onDragStart).toHaveBeenLastCalledWith(expect.anything(), { kind: 'new', estimate: null, list: home })
+    unmount()
+
+    show({ onDragStart: undefined })
+    expect(screen.queryByRole('button', { name: 'Drag a new task onto the grid' })).toBeNull()
+  })
+})

@@ -1011,7 +1011,12 @@
       "mark": "Mark {{title}}",
       "fit": "Fit ({{count}})",
       "notFit_one": "{{count}} task did not fit",
-      "notFit_other": "{{count}} tasks did not fit"
+      "notFit_other": "{{count}} tasks did not fit",
+      "newTask": "New task",
+      "newTaskTitle": "New task",
+      "newTaskDrag": "Drag a new task onto the grid",
+      "newTaskNoEstimate": "No estimate: 1h",
+      "newTaskTakes": "Takes {{duration}} on the grid"
     },
     "breakRange": "A break lasts from 5 min to 2h",
     "breakDialog": {

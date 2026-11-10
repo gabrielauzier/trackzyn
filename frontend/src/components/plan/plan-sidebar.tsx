@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { minuteClock } from '@/lib/agenda/format'
+import { NewTaskCard } from '@/components/plan/new-task-card'
 import type { DraftBlock, DropItem } from '@/lib/plan/draft'
 import { cn } from '@/lib/utils'
 import type { PlanCandidate, PlanListRef, PlanTaskRef } from '@/types'
@@ -113,6 +114,13 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
 
   return (
     <aside aria-label={t('plan.sidebar.label')} className="flex flex-col gap-4">
+      {onDragStart && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t('plan.sidebar.newTask')}</h2>
+          {/* The list filtered on, else the first active list, as a break's (PLAN-48). */}
+          <NewTaskCard list={lists.find((list) => list.id === listId) ?? breakList} onDragStart={onDragStart} />
+        </section>
+      )}
       <section className="flex flex-col gap-2">
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{t('plan.sidebar.breaks')}</h2>
         <div className="flex flex-wrap gap-2">
