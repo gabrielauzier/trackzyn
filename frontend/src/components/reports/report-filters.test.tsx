@@ -48,6 +48,8 @@ function overview(tasksDone: number): Overview {
     productive: { hours: [], weekdays: [], months: [] },
     by_list: [],
     break_seconds: 0,
+    hours_count_mode: 'gross',
+    gross_task_seconds: 0,
     done: { days: [], early_or_on_time_pct: null, late_pct: null },
   }
 }

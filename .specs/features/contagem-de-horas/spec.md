@@ -187,8 +187,8 @@ O que o código já fixa:
 | HOURS-15 | P1: Relatórios | T4 | Implementing |
 | HOURS-16 | P1: Relatórios | T4 | Implementing |
 | HOURS-17 | P1: Relatórios | T4 | Implementing |
-| HOURS-18 | P1: Relatórios | T8 | In Tasks |
-| HOURS-19 | P1: Relatórios | T8 | In Tasks |
+| HOURS-18 | P1: Relatórios | T8 | Implementing |
+| HOURS-19 | P1: Relatórios | T8 | Implementing |
 | HOURS-20 | P1: Relatórios | T4, T8 | Implementing |
 | HOURS-21 | P1: Relatórios | T4 | Implementing |
 | HOURS-22 | P1: Relatórios | T4 | Implementing |

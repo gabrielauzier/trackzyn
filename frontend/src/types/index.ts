@@ -317,6 +317,10 @@ export interface Overview {
   /** Only lists with time in the period, archived ones included. */
   by_list: { list_id: string; name: string; color: number; is_archived: boolean; seconds: number }[]
   break_seconds: number
+  /** The count the totals follow: in net, time two sessions share counts once (#42). */
+  hours_count_mode: HoursCountMode
+  /** The task time of the period summed session by session, whatever the mode. */
+  gross_task_seconds: number
   done: {
     /** Most recent day first. */
     days: { date: string; tasks: DoneTaskView[] }[]

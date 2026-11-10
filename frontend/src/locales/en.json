@@ -701,11 +701,13 @@
       "invalidPeriod": "The period must end after it starts and have at most 366 days.",
       "listDeleted": "The list was deleted."
     },
+    "netNotice": "Net hours: time in which sessions overlap counts once in the total. The time of each list counts whole.",
     "tiles": {
       "workDays": "Work days",
       "tasksDone": "Tasks done",
       "timeWorked": "Time worked",
-      "avgPerTask": "Average per task"
+      "avgPerTask": "Average per task",
+      "gross": "Gross: {{duration}}"
     },
     "noActivity": "No activity in the period",
     "daily": {

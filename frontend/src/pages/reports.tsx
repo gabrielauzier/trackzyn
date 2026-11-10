@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Download } from 'lucide-react'
+import { Download, Info } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
 import { DailyChart } from '@/components/reports/daily-chart'
@@ -79,7 +79,17 @@ function Reports({ timezone }: { timezone: string }) {
         {overview.data ? (
           <>
             <PrintHeader from={filter.from} to={filter.to} listName={listName} />
-            <OverviewTiles tiles={overview.data.tiles} />
+            {overview.data.hours_count_mode === 'net' && (
+              // The response says how it counted, so the notice never disagrees with its numbers (HOURS-18).
+              <p role="note" className="flex items-start gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                {t('reports.netNotice')}
+              </p>
+            )}
+            <OverviewTiles
+              tiles={overview.data.tiles}
+              grossSeconds={overview.data.hours_count_mode === 'net' ? overview.data.gross_task_seconds : null}
+            />
             <Card className="p-4">
               <DailyChart daily={overview.data.daily} />
             </Card>

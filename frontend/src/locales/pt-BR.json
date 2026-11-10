@@ -701,11 +701,13 @@
       "invalidPeriod": "O período precisa terminar depois do início e ter no máximo 366 dias.",
       "listDeleted": "A lista foi excluída."
     },
+    "netNotice": "Horas líquidas: o tempo em que sessões se sobrepõem conta uma vez no total. O tempo de cada lista conta inteiro.",
     "tiles": {
       "workDays": "Dias trabalhados",
       "tasksDone": "Tarefas concluídas",
       "timeWorked": "Tempo trabalhado",
-      "avgPerTask": "Média por tarefa"
+      "avgPerTask": "Média por tarefa",
+      "gross": "Bruto: {{duration}}"
     },
     "noActivity": "Sem atividade no período",
     "daily": {

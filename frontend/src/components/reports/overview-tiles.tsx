@@ -4,14 +4,21 @@ import { formatDuration } from '@/components/board/format-duration'
 import { StatTile } from '@/components/charts'
 import type { Overview } from '@/types'
 
-/** Work days, tasks done, time worked and the average per task (REPORT-01 to REPORT-03, REPORT-12). */
-export function OverviewTiles({ tiles }: { tiles: Overview['tiles'] }) {
+/**
+ * Work days, tasks done, time worked and the average per task (REPORT-01 to REPORT-03, REPORT-12). With `grossSeconds`,
+ * the time worked is net and shows the gross total under it (HOURS-19).
+ */
+export function OverviewTiles({ tiles, grossSeconds = null }: { tiles: Overview['tiles']; grossSeconds?: number | null }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const items = [
     { label: t('reports.tiles.workDays'), value: String(tiles.work_days) },
     { label: t('reports.tiles.tasksDone'), value: String(tiles.tasks_done) },
-    { label: t('reports.tiles.timeWorked'), value: formatDuration(tiles.task_seconds, locale) },
+    {
+      label: t('reports.tiles.timeWorked'),
+      value: formatDuration(tiles.task_seconds, locale),
+      footnote: grossSeconds === null ? undefined : t('reports.tiles.gross', { duration: formatDuration(grossSeconds, locale) }),
+    },
     {
       label: t('reports.tiles.avgPerTask'),
       value: tiles.avg_seconds_per_task === null ? '—' : formatDuration(tiles.avg_seconds_per_task, locale),
@@ -20,9 +27,9 @@ export function OverviewTiles({ tiles }: { tiles: Overview['tiles'] }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {items.map(({ label, value }) => (
+      {items.map(({ label, value, footnote }) => (
         <div key={label} role="group" aria-label={label}>
-          <StatTile label={label} value={value} className="h-full" />
+          <StatTile label={label} value={value} footnote={footnote} className="h-full" />
         </div>
       ))}
     </div>

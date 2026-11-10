@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/contagem-de-horas/design.md`
-**Status**: In Progress
+**Status**: Done (aguardando o Verifier)
 **Base**: `main` (`0cfb40d`), issue #42.
 
 ---
@@ -286,10 +286,13 @@ T4 → T8
 
 **Done when**:
 
-- [ ] Resposta `net`: aviso com o texto da spec e `Bruto: 4h` no card
-- [ ] Resposta `net` sem sobreposição: aviso e `Bruto` continuam (HOURS-38)
-- [ ] Resposta `gross`: sem aviso e sem `Bruto`
-- [ ] Gate check passes: Full (frontend), depois Build (fim da fase)
+- [x] Resposta `net`: aviso com o texto da spec e `Bruto: 4h` no card
+- [x] Resposta `net` sem sobreposição: aviso e `Bruto` continuam (HOURS-38)
+- [x] Resposta `gross`: sem aviso e sem `Bruto`
+- [x] Gate check passes: Full (frontend), depois Build (fim da fase)
+
+**Also touched**: `frontend/src/components/charts/stat-tile.tsx` (prop opcional `footnote` para a linha `Bruto`) e `frontend/src/components/reports/report-filters.test.tsx` (fixture do overview com os dois campos novos).
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
