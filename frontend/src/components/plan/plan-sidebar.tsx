@@ -230,8 +230,10 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
                   key={task.id}
                   data-candidate={task.id}
                   data-planned={planned !== undefined || undefined}
+                  // Focus by click or drag only, not a tab stop: the edge shows which task is in hand (PLAN-02).
+                  tabIndex={-1}
                   className={cn(
-                    'flex items-center gap-2.5 rounded-md border bg-card px-2.5 py-2 select-none',
+                    'flex items-center gap-2.5 rounded-md border bg-card px-2.5 py-2 outline-none select-none focus:border-primary focus-within:border-primary',
                     onDragStart && 'cursor-grab',
                     planned !== undefined && 'bg-muted/50 opacity-60',
                   )}

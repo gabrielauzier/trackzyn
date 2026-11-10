@@ -140,6 +140,20 @@ describe('PlanSidebar planned tasks (PLAN-04)', () => {
   })
 })
 
+describe('PlanSidebar focus edge (PLAN-02)', () => {
+  it('draws the primary edge on a task focused by a click, a drag or its checkbox, without making it a tab stop', async () => {
+    const { user } = show({ onFit: vi.fn(() => []) })
+    const item = screen.getByText('Review the PR').closest('li')!
+    expect(item).toHaveAttribute('tabindex', '-1')
+    expect(item).toHaveClass('focus:border-primary', 'focus-within:border-primary')
+
+    await user.click(within(item).getByText('Review the PR'))
+    expect(item).toHaveFocus()
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Fix the widget bug' }))
+    expect(screen.getByText('Fix the widget bug').closest('li')).toContainElement(document.activeElement as HTMLElement)
+  })
+})
+
 describe('PlanSidebar breaks (PLAN-14)', () => {
   it('offers Café 15min, Almoço 1h and Nova pausa', async () => {
     await i18n.changeLanguage('pt-BR')
