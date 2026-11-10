@@ -166,7 +166,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 **Como** quem automatiza pelo token ou pelo MCP, **quero** ler e gravar o dia e a hora **para** agendar tarefas de fora do app.
 
 - `create_task` e `update_task` SHALL aceitar `scheduled_on` (`YYYY-MM-DD` ou `null`) e `scheduled_time` (`HH:MM`, em qualquer minuto, ou `null`; D34); `get_board` e `get_task` SHALL devolvê-los.
-- `scheduled_time` sem `scheduled_on`, data inválida ou hora fora do passo SHALL responder 422 com a mensagem de validação.
+- `scheduled_time` sem `scheduled_on`, data inválida ou hora fora de `HH:MM` (ou com segundos) SHALL responder 422 com a mensagem de validação.
 - `create_task` e `update_task` SHALL aceitar `recurrence` (`null` ou `{freq, interval, weekdays?, month_day?, until?, count?}`), com as regras da tabela `task_series`; `get_board` e `get_task` SHALL devolver a regra e a próxima data projetada. `recurrence` sem `scheduled_on` SHALL responder 422.
 
 ### US-9. Escolher a repetição ao agendar
@@ -228,10 +228,11 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - A altura da linha SHALL acomodar 3 tarefas e o `+X` em todos os dias da semana, para as colunas não ficarem desalinhadas; dias sem tarefa ficam com a célula vazia.
 - Tarefas concluídas SHALL não aparecer na linha, como na grade (D5).
 - WHEN o papel é `viewer` THEN o painel SHALL mostrar as tarefas sem o botão `Definir hora`.
-- WHEN o usuário arrasta uma tarefa da linha `Sem hora` para a grade THEN a grade SHALL mostrar o rascunho com 1h a partir do ponto, encaixado em 15 min, e ao soltar SHALL gravar a hora de início (D22). A tarefa sem estimativa SHALL receber 1h de estimativa; com estimativa, o bloco SHALL ficar com a estimativa. Valem as "Regras ao salvar o agendamento" e, numa série, a pergunta de US-12.
-- WHEN o usuário arrasta um bloco agendado para a linha `Sem hora` de um dia THEN o sistema SHALL gravar esse dia e limpar a hora.
-- Durante o arraste, a tarefa SHALL seguir o cursor como uma cópia com sombra e o lugar de origem SHALL ficar apagado; sobre a grade, o rascunho SHALL mostrar o rótulo `<dia> · HH:MM – HH:MM`; sobre a linha `Sem hora` de outro dia, a célula de destino SHALL ficar destacada e o rótulo SHALL dizer `Mover para <dia> · sem hora`, e soltar ali SHALL mudar só o dia. `Esc` SHALL cancelar e devolver a tarefa.
-- Ao soltar, o app SHALL mostrar um aviso `Agendada para <dia>, HH:MM` com `Desfazer`, que volta o dia, a hora e a estimativa ao que eram.
+- WHEN o usuário arrasta uma tarefa da linha `Sem hora` para a grade THEN a grade SHALL mostrar o rascunho com 1h a partir do ponto, encaixado em 15 min, e ao soltar SHALL abrir a confirmação de D35; `Salvar horário` SHALL gravar a hora de início (D22). A tarefa sem estimativa SHALL receber 1h de estimativa; com estimativa, o bloco SHALL ficar com a estimativa. Valem as "Regras ao salvar o agendamento" e, numa série, a pergunta de US-12.
+- WHEN o usuário arrasta um bloco agendado para a linha `Sem hora` de um dia THEN o sistema SHALL abrir a confirmação de D35, e `Salvar horário` SHALL gravar esse dia e limpar a hora.
+- Durante o arraste, a tarefa SHALL seguir o cursor como uma cópia com sombra e o lugar de origem SHALL ficar apagado; sobre a grade, o rascunho SHALL mostrar o rótulo `<dia> · HH:MM – HH:MM`; sobre a linha `Sem hora` de outro dia, a célula de destino SHALL ficar destacada e o rótulo SHALL dizer `Mover para <dia> · sem hora`, e soltar ali SHALL propor só o dia novo. `Esc` SHALL cancelar e devolver a tarefa.
+- Depois de `Salvar horário`, o app SHALL mostrar um aviso `Agendada para <dia>, HH:MM` com `Desfazer`, que volta o dia, a hora e a estimativa ao que eram.
+- WHEN o usuário arrasta de novo o bloco ainda não salvo THEN o horário riscado, o `Desfazer` e a pergunta da série SHALL seguir o agendamento salvo, não o lugar pendente (D35).
 - WHEN o papel é `viewer` THEN as tarefas da linha `Sem hora` SHALL não ser arrastáveis.
 
 ## Decisões

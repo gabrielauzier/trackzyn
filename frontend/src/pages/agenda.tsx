@@ -305,12 +305,15 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
     )
   /** A scheduled task released at a new day or time (US-6, US-14); an occurrence of a series asks first (US-12). */
   const drop = ({ taskId, day, time, from }: ScheduledDrop) => {
-    const task = [...timed, ...untimed].find((item) => item.id === taskId)
+    // The pending block dragged again still moves from its saved place: `timed` and `untimed` already show the preview (D35).
+    const prior = confirming?.id === taskId ? confirming : null
+    const task = prior?.task ?? [...timed, ...untimed].find((item) => item.id === taskId)
     if (!task) return
+    const origin = prior ? { day: task.scheduled_on, time: task.scheduled_time } : from
     const change: ScheduleChange = { scheduled_on: day, scheduled_time: time }
-    const undo: ScheduleChange = { scheduled_on: from.day, scheduled_time: from.time }
+    const undo: ScheduleChange = { scheduled_on: origin.day, scheduled_time: origin.time }
     // From `Sem hora` to the grid, a task without an estimate takes 1h (D22).
-    if (from.time === null && time !== null && task.estimate_minutes === null) {
+    if (origin.time === null && time !== null && task.estimate_minutes === null) {
       change.estimate_minutes = 60
       undo.estimate_minutes = null
     }

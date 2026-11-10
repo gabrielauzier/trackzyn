@@ -55,6 +55,17 @@ describe('dayPieces', () => {
     expect(only).toEqual(expect.objectContaining({ start: 9 * 60, end: 10 * 60 + 20, running: true, seconds: 80 * 60 }))
   })
 
+  it('lays out the same session in each workspace timezone, one after the other', () => {
+    // 16:01 UTC is 13:01 in São Paulo and 01:01 of the next day in Tokyo.
+    const one = session({ started_at: '2026-11-02T16:01:00.000Z', ended_at: '2026-11-02T16:26:00.000Z' })
+    const now = new Date('2026-11-04T12:00:00Z')
+    const [inSaoPaulo] = dayPieces([one], ['2026-11-02'], SP, now).get('2026-11-02')!
+    const tokyo = dayPieces([one], ['2026-11-02', '2026-11-03'], 'Asia/Tokyo', now)
+    expect(inSaoPaulo!.start).toBe(13 * 60 + 1)
+    expect(tokyo.get('2026-11-02')).toEqual([])
+    expect(tokyo.get('2026-11-03')).toEqual([expect.objectContaining({ start: 60 + 1, end: 60 + 26 })])
+  })
+
   it('keeps a day without sessions empty', () => {
     const pieces = dayPieces([], weekDays('2026-11-02'), SP, new Date('2026-11-04T12:00:00Z'))
     expect([...pieces.keys()]).toEqual(weekDays('2026-11-02'))
