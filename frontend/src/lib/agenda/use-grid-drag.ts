@@ -132,7 +132,10 @@ interface Gesture {
   moved: boolean
   /** The draft before the gesture: a pending new time stays when the block is released in place. */
   before: Draft | null
-  /** A selection that begins at now or later: the window of a new schedule (US-8). */
+  /**
+   * The window of a new schedule (US-8): a selection that begins at now or later, or that window's draft moved or
+   * pulled. It stays from now to midnight, where a session's window stops at now.
+   */
   future: boolean
 }
 
@@ -216,6 +219,23 @@ export function useGridDrag({
       const end = Math.min(cap, Math.max(ceil(to), start + step))
       return end > start ? { mode, day: target.day, start, end, sessionId: target.sessionId } : null
     }
+    if (current.future && mode === 'move') {
+      // The window of a new schedule moves within the day, from the first quarter after now (US-8).
+      const day = dayOf?.(clientX) ?? target.day
+      const length = target.end - target.start
+      const first = ceil(limitOf(day))
+      if (first + length > DAY_MINUTES) return null
+      const start = Math.min(DAY_MINUTES - length, Math.max(first, round(target.start + pointer - current.grab)))
+      return { mode, day, start, end: start + length, sessionId: target.sessionId }
+    }
+    if (current.future && mode === 'top') {
+      const start = Math.min(ceil(target.end) - step, Math.max(ceil(limitOf(target.day)), round(pointer)))
+      return { mode, day: target.day, start, end: target.end, sessionId: target.sessionId }
+    }
+    if (current.future && mode === 'bottom') {
+      const end = Math.min(DAY_MINUTES, Math.max(floor(target.start) + step, round(pointer)))
+      return { mode, day: target.day, start: target.start, end, sessionId: target.sessionId }
+    }
     if (mode === 'top') {
       const latestStart = ceil(target.end) - step
       const start = Math.min(latestStart, Math.max(target.end - MAX_MINUTES, round(pointer)))
@@ -251,7 +271,10 @@ export function useGridDrag({
         startY: event.clientY,
         moved: false,
         before: latest.current,
-        future: mode === 'create' && options.current.scheduleAfterNow && grab >= options.current.limit(target.day),
+        // A new block's window from now on is a schedule (US-8), and so is that window when it is moved or pulled.
+        future:
+          options.current.scheduleAfterNow &&
+          (mode === 'create' ? grab >= options.current.limit(target.day) : target.sessionId === null && target.start >= options.current.limit(target.day)),
       }
       if (mode === 'create') {
         const first = place(current, event.clientX, event.clientY)

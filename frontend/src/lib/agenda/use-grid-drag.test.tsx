@@ -437,6 +437,51 @@ describe('useGridDrag', () => {
       expect(onCommit).toHaveBeenCalledWith(expect.objectContaining({ start: at(9, 0), end: at(10, 0) }))
     })
 
+    describe('its draft, moved or pulled', () => {
+      function Window({ limit, onCommit, from }: { limit: number; onCommit: (draft: Draft) => void; from: { start: number; end: number } }) {
+        const drag = useGridDrag({ pxPerMinute: 1, limit: () => limit, onCommit, scheduleAfterNow: true })
+        const target = { day: DAY, ...from, sessionId: null }
+        return (
+          <div data-agenda-column data-testid="column">
+            <div data-testid="window" onPointerDown={(event) => drag.startMove(event, target)} />
+            <div data-testid="top" onPointerDown={(event) => drag.startResize(event, 'top', target)} />
+            <div data-testid="bottom" onPointerDown={(event) => drag.startResize(event, 'bottom', target)} />
+            <span data-testid="draft">{drag.draft ? `${drag.draft.start}-${drag.draft.end}` : 'none'}</span>
+          </div>
+        )
+      }
+
+      it('moves later in the day, past now, keeping its length', () => {
+        const onCommit = vi.fn()
+        render(<Window limit={at(14, 7)} onCommit={onCommit} from={{ start: at(15, 0), end: at(16, 0) }} />)
+        drag(screen.getByTestId('window'), at(15, 30), at(18, 30))
+        expect(onCommit).toHaveBeenCalledWith({ mode: 'move', day: DAY, start: at(18, 0), end: at(19, 0), sessionId: null })
+      })
+
+      it('moves on a day that has not begun, and never before now nor past midnight', () => {
+        const onCommit = vi.fn()
+        const { unmount } = render(<Window limit={0} onCommit={onCommit} from={{ start: at(9, 0), end: at(10, 0) }} />)
+        drag(screen.getByTestId('window'), at(9, 30), at(11, 30))
+        expect(onCommit).toHaveBeenLastCalledWith(expect.objectContaining({ start: at(11, 0), end: at(12, 0) }))
+        unmount()
+
+        render(<Window limit={at(14, 7)} onCommit={onCommit} from={{ start: at(15, 0), end: at(16, 0) }} />)
+        drag(screen.getByTestId('window'), at(15, 30), at(10, 0))
+        expect(onCommit).toHaveBeenLastCalledWith(expect.objectContaining({ start: at(14, 15), end: at(15, 15) }))
+        drag(screen.getByTestId('window'), at(15, 30), at(23, 50))
+        expect(onCommit).toHaveBeenLastCalledWith(expect.objectContaining({ start: at(23, 0), end: at(24, 0) }))
+      })
+
+      it('pulls its bottom past now up to midnight, and its top no earlier than now', () => {
+        const onCommit = vi.fn()
+        render(<Window limit={at(14, 7)} onCommit={onCommit} from={{ start: at(15, 0), end: at(16, 0) }} />)
+        drag(screen.getByTestId('bottom'), at(16, 0), at(19, 0))
+        expect(onCommit).toHaveBeenLastCalledWith(expect.objectContaining({ mode: 'bottom', start: at(15, 0), end: at(19, 0) }))
+        drag(screen.getByTestId('top'), at(15, 0), at(12, 0))
+        expect(onCommit).toHaveBeenLastCalledWith(expect.objectContaining({ mode: 'top', start: at(14, 15), end: at(16, 0) }))
+      })
+    })
+
     it('AGENDA-23 still stops a window that begins before now at now', () => {
       const onCommit = vi.fn()
       render(<Selection limit={at(14, 7)} onCommit={onCommit} />)
