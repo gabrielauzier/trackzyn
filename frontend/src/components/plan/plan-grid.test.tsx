@@ -19,7 +19,6 @@ const taskBlock = (key: string, start: number, minutes: number): DraftBlock => (
   task: { id: `task-${key}`, title: `Task ${key}`, list, done: false, scheduled_on: null, estimate_minutes: null },
 })
 const meeting: FixedBlock = { id: 'm1', kind: 'timed', title: 'Meeting', start: 780, minutes: 60, color: 2 }
-const session: FixedBlock = { id: 's1', kind: 'session', title: 'Morning work', start: 480, minutes: 30, color: 1 }
 
 function Editable({ blocks, fixed, onMove }: { blocks: DraftBlock[]; fixed: FixedBlock[]; onMove: (key: string, start: number) => void }) {
   const drag = usePlanDrag({ pxPerMinute: PX, onDrop: vi.fn(), onMove, onResize: vi.fn() })
@@ -55,13 +54,11 @@ describe('PlanGrid (PLAN-03)', () => {
   })
 
   it('gives the blocks of the draft a bottom handle and the drag, and the fixed blocks neither', () => {
-    show([taskBlock('a', 600, 60)], [meeting, session])
+    show([taskBlock('a', 600, 60)], [meeting])
     expect(blockOf('a').querySelector('[data-handle="bottom"]')).not.toBeNull()
     expect(blockOf('a')).toHaveClass('cursor-grab')
-    for (const title of ['Meeting', 'Morning work']) {
-      expect(fixedOf(title).querySelector('[data-handle]')).toBeNull()
-      expect(fixedOf(title)).not.toHaveClass('cursor-grab')
-    }
+    expect(fixedOf('Meeting').querySelector('[data-handle]')).toBeNull()
+    expect(fixedOf('Meeting')).not.toHaveClass('cursor-grab')
   })
 
   it('moves a block of the draft, and moves nothing from a fixed block', () => {

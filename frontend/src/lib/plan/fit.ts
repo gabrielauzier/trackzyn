@@ -2,7 +2,7 @@ import type { Workday } from '@/types'
 import { clockMinutes } from './clock'
 import { SNAP_MINUTES } from './draft'
 
-/** Time of the day already taken: a block of the draft, a session or a timed task, in minutes since midnight. */
+/** Time of the day already taken: a block of the draft or a timed task, in minutes since midnight. */
 export interface Occupied {
   start: number
   minutes: number

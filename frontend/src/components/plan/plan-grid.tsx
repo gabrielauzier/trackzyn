@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Lock } from 'lucide-react'
 
@@ -14,10 +14,10 @@ import { PlanBlock, type LaidPlanBlock } from './plan-block'
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 
-/** What the day already holds and the plan does not move: a session of the user or a task scheduled with a time (PLAN-03). */
+/** What the day already holds and the plan does not move: a task scheduled with a time (PLAN-03). */
 export interface FixedBlock {
   id: string
-  kind: 'session' | 'timed'
+  kind: 'timed'
   title: string
   /** Minutes since midnight. */
   start: number
@@ -57,11 +57,6 @@ function FixedPiece({ piece, pxPerMinute }: { piece: LaidFixed; pxPerMinute: num
   const { t } = useTranslation()
   const { fixed } = piece
   const range = t('plan.block.range', { start: minuteClock(fixed.start), end: minuteClock((fixed.start + fixed.minutes) % DAY_MINUTES) })
-  const list = `var(--chart-${fixed.color})`
-  const colors: CSSProperties =
-    fixed.kind === 'timed'
-      ? scheduledColors(fixed.color)
-      : { backgroundColor: `color-mix(in oklab, ${list} 30%, var(--card))`, borderColor: list }
   return (
     <div
       aria-label={`${fixed.title}, ${range}`}
@@ -70,24 +65,22 @@ function FixedPiece({ piece, pxPerMinute }: { piece: LaidFixed; pxPerMinute: num
       onPointerDown={(event) => event.stopPropagation()}
       className={cn(
         'absolute flex flex-col gap-0.5 overflow-hidden rounded-md px-2 py-1 text-xs select-none',
-        fixed.kind === 'timed' ? 'border-[1.5px] border-dashed' : 'border',
+        'border-[1.5px] border-dashed',
       )}
       style={{
         top: piece.start * pxPerMinute,
         height: Math.max(1, (piece.end - piece.start) * pxPerMinute),
         left: `${(piece.lane / piece.lanes) * 100}%`,
         width: `${100 / piece.lanes}%`,
-        ...colors,
+        ...scheduledColors(fixed.color),
       }}
     >
       <span className="flex min-w-0 items-center gap-1.5">
         <span className="truncate font-semibold">{fixed.title}</span>
-        {fixed.kind === 'timed' && (
-          <span className="flex shrink-0 items-center gap-0.5 text-[11px] whitespace-nowrap text-muted-foreground">
-            <Lock aria-hidden size={11} />
-            {t('plan.grid.timed')}
-          </span>
-        )}
+        <span className="flex shrink-0 items-center gap-0.5 text-[11px] whitespace-nowrap text-muted-foreground">
+          <Lock aria-hidden size={11} />
+          {t('plan.grid.timed')}
+        </span>
       </span>
       <span className="tabular-nums text-muted-foreground">{range}</span>
     </div>
@@ -96,7 +89,7 @@ function FixedPiece({ piece, pxPerMinute }: { piece: LaidFixed; pxPerMinute: num
 
 /**
  * The grid of one day, 00:00 to 24:00 (PLAN-03, PLAN-21, PLAN-44): it opens at the start of the workday, whose start
- * and end are marked and whose hours outside are shaded. The sessions and the timed tasks are fixed; the blocks of
+ * and end are marked and whose hours outside are shaded. The timed tasks are fixed; the blocks of
  * the draft move and stretch, and overlapping blocks share the width. A block that runs past 24:00 ends at the edge.
  */
 export function PlanGrid({ day, blocks, fixed, workday, pxPerMinute = PX_PER_MINUTE, drag, selectedKey = null, onOpen }: PlanGridProps) {

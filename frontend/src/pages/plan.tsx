@@ -15,9 +15,8 @@ import { WorkdayEditor } from '@/components/plan/workday-editor'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
-import { lists as listsApi, sessions as sessionsApi } from '@/lib/api'
-import { addDays, dayOf, dayPieces, scheduledMinutes } from '@/lib/agenda/layout'
-import { agendaKey } from '@/lib/agenda/use-agenda'
+import { lists as listsApi } from '@/lib/api'
+import { addDays, dayOf, scheduledMinutes } from '@/lib/agenda/layout'
 import { useScheduled } from '@/lib/agenda/use-scheduled'
 import { capacity, type FixedTimed } from '@/lib/plan/capacity'
 import { clockMinutes } from '@/lib/plan/clock'
@@ -46,7 +45,6 @@ type Plan = ReturnType<typeof usePlan>
 interface PlanDayProps {
   day: string
   today: string
-  timezone: string
   activeLists: PlanListRef[]
   /** The plan as read when the page opened: the draft starts from it. */
   initial: PlanRead
@@ -54,7 +52,7 @@ interface PlanDayProps {
 }
 
 /** The day of the plan, once read: the draft, the header, the bar, the side list, the grid and the footer. */
-function PlanDay({ day, today, timezone, activeLists, initial, planned }: PlanDayProps) {
+function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
   const navigate = useNavigate()
@@ -105,12 +103,7 @@ function PlanDay({ day, today, timezone, activeLists, initial, planned }: PlanDa
     onResize: (key, minutes) => dispatch({ type: 'resize', key, minutes }),
   })
 
-  // The user's sessions of the day (the Agenda's query) and the timed tasks of the workspace are fixed (PLAN-03).
-  const sessionsQuery = useQuery({
-    queryKey: agendaKey({ from: day, to: day, listId: null }),
-    queryFn: () => sessionsApi.list({ from: day, to: day }),
-    retry: false,
-  })
+  // The timed tasks of the workspace are fixed; the sessions already done stay on the Agenda (PLAN-03).
   const scheduled = useScheduled(day, day)
   const timed = useMemo(() => scheduled.timed.filter((task) => task.scheduled_on === day && task.scheduled_time !== null), [scheduled.timed, day])
   const fixedTimed: FixedTimed[] = useMemo(
@@ -119,16 +112,8 @@ function PlanDay({ day, today, timezone, activeLists, initial, planned }: PlanDa
   )
   const fixed = useMemo<FixedBlock[]>(() => {
     const inDraft = new Set(draft.blocks.flatMap((block) => (block.kind === 'task' ? [block.task.id] : [])))
-    const sessions = (dayPieces(sessionsQuery.data?.sessions ?? [], [day], timezone, new Date()).get(day) ?? []).map((piece) => ({
-      id: piece.session.id,
-      kind: 'session' as const,
-      title: piece.session.kind === 'break' ? t('agenda.break') : (piece.session.task_title ?? ''),
-      start: piece.start,
-      minutes: piece.end - piece.start,
-      color: piece.session.list_color,
-    }))
     // A timed task with a block in the draft shows only as its block.
-    const tasks = timed
+    return timed
       .filter((task) => !inDraft.has(task.id))
       .map((task) => ({
         id: task.id,
@@ -138,8 +123,7 @@ function PlanDay({ day, today, timezone, activeLists, initial, planned }: PlanDa
         minutes: scheduledMinutes(task.estimate_minutes),
         color: task.list.color,
       }))
-    return [...sessions, ...tasks]
-  }, [sessionsQuery.data, timed, draft.blocks, day, timezone, t])
+  }, [timed, draft.blocks])
 
   const workday = current.workday
   const fits = capacity(draft.blocks, fixedTimed, workday)
@@ -149,7 +133,7 @@ function PlanDay({ day, today, timezone, activeLists, initial, planned }: PlanDa
 
   /**
    * `Encaixar` (PLAN-32, PLAN-33): the marked tasks go into the draft, in order, at the first free time of the workday
-   * where each fits, around the draft, the sessions and the timed tasks; nothing is saved. Gives back the ones left.
+   * where each fits, around the draft and the timed tasks; nothing is saved. Gives back the ones left.
    */
   const fitTasks = (tasks: PlanTaskRef[]) => {
     const occupied = [...draft.blocks, ...fixed].map(({ start, minutes }) => ({ start, minutes }))
@@ -310,7 +294,7 @@ function PlanScreen({ day, timezone, lists }: { day: string; timezone: string; l
     )
   }
   if (!plan.data) return <Skeleton className="h-96 w-full rounded-xl" />
-  return <PlanDay day={day} today={today} timezone={timezone} activeLists={activeLists} initial={plan.data} planned={planned} />
+  return <PlanDay day={day} today={today} activeLists={activeLists} initial={plan.data} planned={planned} />
 }
 
 /** `/planejar/:day`: the logged-in user's plan of a day (PLAN-01); without a valid day, tomorrow's. */
