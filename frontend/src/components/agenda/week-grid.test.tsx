@@ -597,7 +597,17 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
     })
     afterEach(() => vi.restoreAllMocks())
 
-    function Board({ onDrop = vi.fn(), timed = [], untimed }: { onDrop?: () => void; timed?: ScheduledTask[]; untimed: ScheduledTask[] }) {
+    function Board({
+      onDrop = vi.fn(),
+      onOpenTask,
+      timed = [],
+      untimed,
+    }: {
+      onDrop?: () => void
+      onOpenTask?: (id: string) => void
+      timed?: ScheduledTask[]
+      untimed: ScheduledTask[]
+    }) {
       const drag = useGridDrag({
         pxPerMinute: PX_PER_MINUTE,
         limit: (day) => dayLimit(day, NOW, SP),
@@ -605,7 +615,7 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
         onScheduledDrop: onDrop,
         zoneAt: dropZoneAt,
       })
-      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={timed} untimed={untimed} />
+      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={timed} untimed={untimed} onOpenTask={onOpenTask} />
     }
     const cellOf = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-untimed-day="${day}"]`)!
 
@@ -679,10 +689,36 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
       }
     })
 
+    it('US-6 a press on a scheduled block draws no drag until the pointer moves, and a click opens the task', async () => {
+      const onDrop = vi.fn()
+      const onOpenTask = vi.fn()
+      const { container, user } = renderWithProviders(
+        <Board onDrop={onDrop} onOpenTask={onOpenTask} timed={[scheduled('a', '2026-11-05', '10:00')]} untimed={[untimedTask('u', '2026-11-03')]} />,
+      )
+      const block = screen.getByRole('button', { name: /^Scheduled a/ })
+      fireEvent.pointerDown(block, { clientX: 350, clientY: y(10, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientX: 351, clientY: y(10, 10) + 1 })
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      fireEvent.pointerUp(window, { clientX: 351, clientY: y(10, 10) + 1 })
+      expect(onDrop).not.toHaveBeenCalled()
+
+      await user.click(block)
+      expect(onOpenTask).toHaveBeenCalledWith('a')
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+
+      fireEvent.pointerDown(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { clientX: 120, clientY: -100, button: 0 })
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      fireEvent.pointerUp(window, { clientX: 120, clientY: -100 })
+    })
+
     it('a block dragged to the Sem hora row of its own day loses its time', () => {
       const onDrop = vi.fn()
       const { container } = renderWithProviders(<Board onDrop={onDrop} timed={[scheduled('a', '2026-11-05', '10:00')]} untimed={[]} />)
       fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled a/ }), { clientX: 350, clientY: y(10, 10), button: 0 })
+      // The drag starts on the first move; the Sem hora row shows from then on.
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(10, 10) - 10 })
       fireEvent.pointerMove(window, { clientX: 350, clientY: -60 })
       expect(cellOf(container, '2026-11-05')).toHaveAttribute('data-drop-target', 'true')
       fireEvent.pointerUp(window, { clientX: 350, clientY: -60 })

@@ -146,7 +146,6 @@ export function WeekGrid({
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute)
   const today = dayOf(now, timezone)
   const nowMinute = minuteOf(now, timezone)
   const draft = drag?.draft ?? null
@@ -187,6 +186,9 @@ export function WeekGrid({
     () => (untimed && plannedOn.size > 0 ? untimed.filter((task) => !plannedOn.has(`${task.scheduled_on}:${task.id}`)) : untimed),
     [untimed, plannedOn],
   )
+  const untimedShown = Boolean(shownUntimed && (scheduledDraft !== null || shownUntimed.some((task) => days.includes(task.scheduled_on))))
+  // The Sem hora row coming in or going pushes the grid: it scrolls as much, so a drag that has just begun does not jump (US-14).
+  const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute, untimedShown)
   const scheduled = useMemo(() => scheduledPieces(shownTimed, projected, days), [shownTimed, projected, days])
   // Decided on the saved sessions, so a block dragged shorter than the minimum stays until it is saved.
   const hiddenIds = useMemo(() => new Set(hidden ? sessions.filter(hidden).map((session) => session.id) : []), [sessions, hidden])
@@ -240,7 +242,7 @@ export function WeekGrid({
       </div>
       {/* Only when a day shown has a task scheduled without a time, or while a scheduled task is dragged, so it can be
           dropped there to lose its time (US-14). */}
-      {shownUntimed && (scheduledDraft !== null || shownUntimed.some((task) => days.includes(task.scheduled_on))) && (
+      {untimedShown && shownUntimed && (
         <UntimedRow days={days} untimed={shownUntimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />
       )}
       <div ref={scroller} data-agenda-scroll className="relative min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">

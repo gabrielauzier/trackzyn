@@ -146,6 +146,8 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - O arraste do bloco agendado SHALL funcionar também no futuro; o bloqueio de AGENDA-23 continua valendo só para sessões.
 - WHEN o papel é `viewer` THEN o bloco SHALL não ser arrastável.
 - Ao soltar, valem as "Regras ao salvar o agendamento".
+- WHEN o usuário pressiona e solta o bloco agendado, ou a tarefa da linha `Sem hora`, sem mover o ponteiro além da tolerância do clique THEN a Agenda SHALL não desenhar o arraste (cópia, rascunho ou rótulo) e o clique SHALL abrir a tarefa; o arraste SHALL começar só quando o ponteiro se move.
+- WHEN a linha `Sem hora` aparece ou some no começo ou no fim do arraste THEN a grade SHALL rolar a mesma altura, para as horas ficarem sob o ponteiro e o bloco não saltar.
 
 ### US-8. Agendar selecionando um horário na Agenda
 

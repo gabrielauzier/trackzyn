@@ -1556,6 +1556,8 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
 
     function dragTo(element: HTMLElement, from: { x: number; y: number }, to: { x: number; y: number }) {
       fireEvent.pointerDown(element, { clientX: from.x, clientY: from.y, button: 0 })
+      // A drag starts on the first move past the click tolerance, as in a browser.
+      fireEvent.pointerMove(window, { clientX: from.x, clientY: from.y + (to.y > from.y ? 5 : -5) })
       fireEvent.pointerMove(window, { clientX: to.x, clientY: to.y })
       fireEvent.pointerUp(window, { clientX: to.x, clientY: to.y })
     }

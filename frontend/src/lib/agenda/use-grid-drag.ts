@@ -369,7 +369,8 @@ export function useGridDrag({
         startY: event.clientY,
         moved: false,
       }
-      showScheduled({ taskId, title, color, length, from: { day: target.day, time: target.time }, day: target.day, start, x: event.clientX, y: event.clientY })
+      // Nothing is drawn until the pointer moves: a press and release is a click that opens the task (US-6).
+      showScheduled(null)
       setMovingScheduled(true)
     },
     [showScheduled],
@@ -389,7 +390,8 @@ export function useGridDrag({
         startY: event.clientY,
         moved: false,
       }
-      showScheduled({ taskId, title, color, length, from: { day, time: null }, day, start: null, x: event.clientX, y: event.clientY })
+      // Nothing is drawn until the pointer moves: a press and release is a click that opens the task (US-6).
+      showScheduled(null)
       setMovingScheduled(true)
     },
     [showScheduled],
@@ -403,8 +405,11 @@ export function useGridDrag({
       if (Math.abs(event.clientX - current.startX) >= CLICK_TOLERANCE || Math.abs(event.clientY - current.startY) >= CLICK_TOLERANCE) {
         current.moved = true
       }
+      if (!current.moved) return
       const next = placeScheduled(current, event.clientX, event.clientY)
-      showScheduled(next ?? { ...latestScheduled.current!, x: event.clientX, y: event.clientY, nowhere: true })
+      const { target } = current
+      const shown = latestScheduled.current ?? { ...target, day: target.from.day, start: target.from.time === null ? null : minuteOfClock(target.from.time) }
+      showScheduled(next ?? { ...shown, x: event.clientX, y: event.clientY, nowhere: true })
     }
     const up = () => {
       const current = scheduledGesture.current
