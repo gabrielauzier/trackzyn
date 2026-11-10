@@ -118,6 +118,7 @@ export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) 
       label={`${planned.task.title}, ${range} · ${formatDuration(planned.minutes * 60, language)}`}
       tooltip={<PlannedTaskTip block={planned} />}
       onOpen={open}
+      solidOnHover
       data={{ 'data-plan-block': planned.id, 'data-kind': 'task' }}
     />
   )

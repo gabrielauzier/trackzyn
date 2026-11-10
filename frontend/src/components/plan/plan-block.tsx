@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { formatDuration } from '@/components/board/format-duration'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES } from '@/lib/agenda/layout'
-import { HOVER_RING } from '@/lib/agenda/hover-ring'
 import { scheduledColors } from '@/lib/agenda/scheduled-colors'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { DraftBlock } from '@/lib/plan/draft'
@@ -88,9 +87,9 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       className={cn(
         'absolute flex overflow-hidden rounded-md px-2 text-xs select-none',
         short ? 'flex-row items-center gap-2' : 'flex-col gap-0.5 py-1',
-        // The edges of the Agenda: a task's in the faint colour of its list, a break's gray; a block that opens or moves rings on hover.
+        // The edges of the Agenda: a task's in the faint colour of its list, a break's gray; a block that opens or moves turns solid on hover.
         isTask ? 'border-2 border-dashed text-foreground' : 'border-2 border-dashed border-muted-foreground/60 text-muted-foreground',
-        (onOpen || onPointerDown) && HOVER_RING,
+        (onOpen || onPointerDown) && 'hover:z-20 hover:border-solid',
         onPointerDown && 'cursor-grab',
         selected && 'z-10 ring-2 ring-primary ring-offset-1 ring-offset-background',
         'outline-2 outline-transparent focus-visible:outline-(--ring)',

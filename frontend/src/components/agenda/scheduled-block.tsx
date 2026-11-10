@@ -62,7 +62,8 @@ export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen, onDragSta
       label={`${source.title}, ${when}`}
       onOpen={() => onOpen?.(taskId)}
       onPointerDown={onDragStart}
-      // The open hand of a block that moves.
+      // Hover: a solid edge and the open hand of a block that moves.
+      solidOnHover={onDragStart !== undefined}
       className={cn(onDragStart && 'cursor-grab', projection && 'opacity-50', dragging && 'opacity-30')}
       data={{
         'data-scheduled-id': taskId,

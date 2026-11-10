@@ -4,7 +4,6 @@ import { AlarmClockOff, Repeat } from 'lucide-react'
 import { formatDuration } from '@/components/board/format-duration'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { scheduledMinutes } from '@/lib/agenda/layout'
-import { HOVER_RING } from '@/lib/agenda/hover-ring'
 import { scheduledColors } from '@/lib/agenda/scheduled-colors'
 import type { useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { longDay } from '@/lib/schedule'
@@ -86,9 +85,8 @@ export function UntimedRow({ days, untimed, onOpenTask, onShowDay, drag }: Untim
                 data-dragging={moving?.taskId === task.id || undefined}
                 className={cn(
                   'flex h-[26px] w-full min-w-0 shrink-0 items-center gap-1 rounded-md border-2 border-dashed px-1.5 text-left text-xs select-none',
-                  // Hover: the ring of every block; the open hand of a task that moves; dragged, its place fades.
-                  HOVER_RING,
-                  draggable && 'cursor-grab',
+                  // Hover: a solid edge and the open hand of a task that moves; dragged, its place fades.
+                  draggable && 'cursor-grab hover:border-solid',
                   moving?.taskId === task.id && 'opacity-30',
                 )}
                 style={scheduledColors(task.list.color)}

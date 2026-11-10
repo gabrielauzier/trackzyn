@@ -93,14 +93,14 @@ describe('PlanBlock (PLAN-15, PLAN-38, PLAN-39)', () => {
     expect(onOpen).toHaveBeenCalledTimes(2)
   })
 
-  it('PLAN-47 a block that opens or moves, task or break, takes the ring on hover and keeps its dashed edge; one that only shows does not', () => {
+  it('PLAN-47 a block that opens or moves, task or break, turns its dashed edge solid on hover; one that only shows does not', () => {
     const { unmount } = show(taskBlock(), { onOpen: vi.fn() })
-    expect(screen.getByRole('button', { name: /^Review the PR/ })).toHaveClass('border-dashed', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
+    expect(screen.getByRole('button', { name: /^Review the PR/ })).toHaveClass('border-dashed', 'hover:border-solid', 'hover:z-20')
     unmount()
     const again = show(breakBlock, { onPointerDown: vi.fn() })
-    expect(screen.getByRole('button', { name: /^Lunch/ })).toHaveClass('border-dashed', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
+    expect(screen.getByRole('button', { name: /^Lunch/ })).toHaveClass('border-dashed', 'hover:border-solid', 'hover:z-20')
     again.unmount()
     show(breakBlock)
-    expect(screen.getByRole('button', { name: /^Lunch/ })).not.toHaveClass('hover:ring-2')
+    expect(screen.getByRole('button', { name: /^Lunch/ })).not.toHaveClass('hover:border-solid')
   })
 })
