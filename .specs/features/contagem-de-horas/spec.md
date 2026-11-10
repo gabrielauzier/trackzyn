@@ -201,10 +201,10 @@ O que o código já fixa:
 | HOURS-29 | P1: Capacidade do plano | T7 | Implementing |
 | HOURS-30 | P1: Capacidade do plano | T7 | Implementing |
 | HOURS-31 | P1: Capacidade do plano | T7 | Implementing |
-| HOURS-32 | Edge case | T3, T5 | In Tasks |
-| HOURS-33 | Edge case | T3, T5 | In Tasks |
-| HOURS-34 | Edge case | T3, T5 | In Tasks |
-| HOURS-35 | Edge case | T3 | In Tasks |
+| HOURS-32 | Edge case | T3, T5 | Implementing |
+| HOURS-33 | Edge case | T3, T5 | Implementing |
+| HOURS-34 | Edge case | T3, T5 | Implementing |
+| HOURS-35 | Edge case | T3 | Implementing |
 | HOURS-36 | Edge case | T4 | Implementing |
 | HOURS-37 | Edge case | T4 | Implementing |
 | HOURS-38 | Edge case | T4 | Implementing |
