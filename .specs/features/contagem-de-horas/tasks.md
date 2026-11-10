@@ -158,7 +158,7 @@ T4 → T8
 
 ### T4: Overview dos Relatórios em horas líquidas
 
-**What**: `overview` fatia unidades líquidas (tarefas unidas; pausas unidas menos tarefas) no modo `net`, mantém `lists_time` bruto e devolve `hours_count_mode` e `tiles.gross_task_seconds`.
+**What**: `overview` fatia unidades líquidas (tarefas unidas; pausas unidas menos tarefas) no modo `net`, mantém `lists_time` bruto e devolve `hours_count_mode` e `gross_task_seconds`.
 **Where**: `backend-node/src/services/reports.ts`, `backend-node/src/routes/reports.ts`
 **Depends on**: T1
 **Reuses**: `clippedSessions`, fatiamento por hora, arredondamento único
@@ -171,13 +171,16 @@ T4 → T8
 
 **Done when**:
 
-- [ ] Lista A 09:00–11:00 + lista B 10:00–12:00 em `net`: `task_seconds` 3h, `gross_task_seconds` 4h, dia 3h, listas 2h e 2h
-- [ ] Pausa 10:30–11:30 sobre tarefa 09:00–11:00: `break_seconds` 30 min em `net`, 1h em `gross`; período só com pausas devolve a pausa inteira (L-013)
-- [ ] Sobreposição que atravessa a meia-noite divide a união entre os dois dias, e a soma bate com o total
-- [ ] Filtro de lista une só as sessões da lista; sessões de outro membro não entram
-- [ ] `gross` devolve os mesmos números de antes (testes atuais sem mudança de valor)
-- [ ] Relógio fixo nos testes novos (L-015)
-- [ ] Gate check passes: Full (backend)
+- [x] Lista A 09:00–11:00 + lista B 10:00–12:00 em `net`: `task_seconds` 3h, `gross_task_seconds` 4h, dia 3h, listas 2h e 2h
+- [x] Pausa 10:30–11:30 sobre tarefa 09:00–11:00: `break_seconds` 30 min em `net`, 1h em `gross`; período só com pausas devolve a pausa inteira (L-013)
+- [x] Sobreposição que atravessa a meia-noite divide a união entre os dois dias, e a soma bate com o total
+- [x] Filtro de lista une só as sessões da lista; sessões de outro membro não entram
+- [x] `gross` devolve os mesmos números de antes (testes atuais sem mudança de valor)
+- [x] Relógio fixo nos testes novos (L-015)
+- [x] Gate check passes: Full (backend)
+
+**Deviation**: o bruto saiu no nível de cima (`gross_task_seconds`), não dentro de `tiles`: oito testes atuais comparam `tiles` inteiro e continuam sem mudança (Done when "gross devolve os mesmos números"). Spec e design atualizados.
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

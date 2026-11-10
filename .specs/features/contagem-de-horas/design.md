@@ -55,7 +55,7 @@ graph TD
 | System | Integration Method |
 | --- | --- |
 | Banco | Migration `0016_workspace_hours_count_mode.sql`, `NOT NULL DEFAULT 'gross'`, `CHECK (hours_count_mode IN ('gross','net'))`; snapshot e journal do Drizzle |
-| API de Relatórios | `GET /api/reports/overview` ganha `hours_count_mode` e `tiles.gross_task_seconds` |
+| API de Relatórios | `GET /api/reports/overview` ganha `hours_count_mode` e `gross_task_seconds` (no nível de cima, para `tiles` manter a forma que os testes atuais comparam inteira) |
 | API do workspace | Leitura e `PATCH` ganham `hours_count_mode` |
 | Tempo gasto | Sem mudança de assinatura: `spentMilliseconds` lê o modo do workspace pela tarefa (`tasks → lists → workspaces`), então quadro, foco, widget, MCP, prazo, `Estender` e feito × estimado seguem sozinhos (HOURS-24, HOURS-25) |
 
@@ -95,7 +95,7 @@ graph TD
     - `units AS (...)`: no `net`, `SELECT 'task' AS kind, lower(r) AS a, upper(r) AS z FROM task_mr, unnest(m) r UNION ALL SELECT 'break', lower(r), upper(r) FROM task_mr, break_mr, unnest(break_mr.m - task_mr.m) r`; no `gross`, `SELECT kind, a, z FROM s`
     - `slices` fatia `units`; `list_slices` fatia `s` (para `lists_time`)
   - O modo entra como parâmetro (`${mode} = 'net'`) num `WHERE` de cada ramo do `UNION ALL`, para a consulta ser uma só.
-  - Resposta: `hours_count_mode`, `tiles.gross_task_seconds = floor(soma exata de s, kind task)`.
+  - Resposta: `hours_count_mode`, `gross_task_seconds = floor(soma exata de s, kind task)`.
 - **Dependencies**: coluna do modo; `request.workspace.workspace` já traz a linha inteira (`plugins/workspace.ts:48-68`)
 - **Reuses**: `clippedSessions`, fatiamento por hora, arredondamento único (L-016)
 
@@ -169,9 +169,9 @@ interface ReportOverview {
     work_days: number
     tasks_done: number
     task_seconds: number        // líquido no modo net
-    gross_task_seconds: number  // sempre a soma bruta
     avg_seconds_per_task: number | null
   }
+  gross_task_seconds: number    // sempre a soma bruta
 }
 ```
 

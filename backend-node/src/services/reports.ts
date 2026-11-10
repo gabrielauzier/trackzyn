@@ -1,6 +1,6 @@
 import { type SQL, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import type { Workspace } from '../db/schema.ts'
+import type { HoursCountMode, Workspace } from '../db/schema.ts'
 import { dayTimezone } from './day.ts'
 import { settle, spentSeconds } from './focus-settle.ts'
 import { getList } from './lists.ts'
@@ -24,6 +24,10 @@ export interface Overview {
   /** Task time per list, lists without time left out. */
   by_list: Array<{ list_id: string; name: string; color: number; is_archived: boolean; seconds: number }>
   break_seconds: number
+  /** The count the totals follow: in `net`, time two sessions share counts once (HOURS-15, AD-010). */
+  hours_count_mode: HoursCountMode
+  /** The task time of the period summed session by session, whatever the mode (HOURS-19, HOURS-21). */
+  gross_task_seconds: number
   done: DoneReport
 }
 
@@ -119,6 +123,8 @@ interface OverviewRow extends Record<string, unknown> {
   by_list: Overview['by_list'] | null
   /** The exact (fractional) task seconds of the period, rounded only where reported. */
   task_exact: number
+  /** The same, summed session by session (the gross count). */
+  gross_exact: number
   break_seconds: number
   tasks_done: number
 }
@@ -132,19 +138,39 @@ interface OverviewRow extends Record<string, unknown> {
 export async function overview(
   tx: Database,
   userId: string,
-  workspace: Pick<Workspace, 'id' | 'timezone'>,
+  workspace: Pick<Workspace, 'id' | 'timezone'> & { hoursCountMode?: HoursCountMode },
   filter: ReportFilter,
   now: Date,
 ): Promise<Overview> {
   const scope = await reportScope(tx, userId, workspace, filter, now)
   const tz = scope.timezone
+  const mode: HoursCountMode = workspace.hoursCountMode ?? 'gross'
+  // The totals read `units`: the sessions themselves in gross; in net, the union of the task sessions and the
+  // union of the breaks minus any task time, so a shared stretch counts once and as task (HOURS-15, HOURS-16).
+  // The time per list always reads the sessions themselves (HOURS-17).
   const result = (await tx.execute(sql`
     WITH s AS (${clippedSessions(scope, userId, workspace.id)}),
+    task_mr AS (
+      SELECT coalesce(range_agg(tstzrange(a, z)), '{}'::tstzmultirange) AS m FROM s WHERE kind = 'task' AND z > a
+    ),
+    break_mr AS (
+      SELECT coalesce(range_agg(tstzrange(a, z)), '{}'::tstzmultirange) AS m FROM s WHERE kind = 'break' AND z > a
+    ),
+    units AS (
+      SELECT s.kind, s.a, s.z FROM s WHERE ${mode} = 'gross'
+      UNION ALL
+      SELECT 'task', lower(r), upper(r) FROM task_mr, unnest(task_mr.m) AS r WHERE ${mode} = 'net'
+      UNION ALL
+      SELECT 'break', lower(r), upper(r) FROM task_mr, break_mr, unnest(break_mr.m - task_mr.m) AS r WHERE ${mode} = 'net'
+    ),
     slices AS (
-      SELECT s.kind, s.list_id, (h AT TIME ZONE ${tz}) AS local,
-             extract(epoch FROM least(s.z, h + interval '1 hour') - greatest(s.a, h)) AS sec
-      FROM s, LATERAL generate_series(date_trunc('hour', s.a, ${tz}), s.z, interval '1 hour') AS h
-      WHERE s.z > s.a
+      SELECT u.kind, (h AT TIME ZONE ${tz}) AS local,
+             extract(epoch FROM least(u.z, h + interval '1 hour') - greatest(u.a, h)) AS sec
+      FROM units u, LATERAL generate_series(date_trunc('hour', u.a, ${tz}), u.z, interval '1 hour') AS h
+      WHERE u.z > u.a
+    ),
+    list_slices AS (
+      SELECT s.list_id, extract(epoch FROM s.z - s.a) AS sec FROM s WHERE s.kind = 'task' AND s.z > s.a
     ),
     by_day AS (
       SELECT local::date AS day,
@@ -157,7 +183,7 @@ export async function overview(
     months AS (SELECT to_char(local, 'YYYY-MM') AS v, floor(sum(sec)) AS sec FROM slices WHERE kind = 'task' GROUP BY 1),
     lists_time AS (
       SELECT l.id AS list_id, l.name, l.color, l.is_archived, floor(sum(sl.sec))::int AS seconds
-      FROM slices sl JOIN lists l ON l.id = sl.list_id WHERE sl.kind = 'task'
+      FROM list_slices sl JOIN lists l ON l.id = sl.list_id
       GROUP BY l.id HAVING floor(sum(sl.sec)) > 0
     )
     SELECT
@@ -171,6 +197,7 @@ export async function overview(
       (SELECT json_agg(json_build_object('list_id', list_id, 'name', name, 'color', color, 'is_archived', is_archived,
                                          'seconds', seconds) ORDER BY seconds DESC, name, list_id) FROM lists_time) AS by_list,
       (SELECT coalesce(sum(sec), 0)::float8 FROM slices WHERE kind = 'task') AS task_exact,
+      (SELECT coalesce(sum(sec), 0)::float8 FROM list_slices) AS gross_exact,
       (SELECT floor(coalesce(sum(sec), 0))::int FROM slices WHERE kind = 'break') AS break_seconds,
       (SELECT count(*)::int FROM tasks t JOIN lists l ON l.id = t.list_id
        WHERE l.workspace_id = ${workspace.id} AND t.completed_by_user_id = ${userId}
@@ -194,6 +221,8 @@ export async function overview(
     productive: { hours: row.hours ?? [], weekdays: row.weekdays ?? [], months: row.months ?? [] },
     by_list: row.by_list ?? [],
     break_seconds: row.break_seconds,
+    hours_count_mode: mode,
+    gross_task_seconds: Math.floor(row.gross_exact),
     done: await doneReport(tx, userId, workspace.id, scope, now),
   }
 }

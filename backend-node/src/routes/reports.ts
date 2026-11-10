@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
+import { HOURS_COUNT_MODES } from '../db/schema.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { workspaceContext } from '../plugins/workspace.ts'
 import { type ReportFilter, overview } from '../services/reports.ts'
@@ -59,6 +60,8 @@ const overviewSchema = z.object({
     z.object({ list_id: z.string(), name: z.string(), color: z.number(), is_archived: z.boolean(), seconds: z.number() }),
   ),
   break_seconds: z.number(),
+  hours_count_mode: z.enum(HOURS_COUNT_MODES),
+  gross_task_seconds: z.number(),
   done: z.object({
     days: z.array(z.object({ date: z.string(), tasks: z.array(doneTask) })),
     early_or_on_time_pct: z.number().nullable(),

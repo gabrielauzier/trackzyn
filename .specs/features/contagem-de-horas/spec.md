@@ -111,7 +111,7 @@ O que o código já fixa:
 4. WHERE o modo é `net` the system SHALL mostrar acima dos cards o aviso `Horas líquidas: o tempo em que sessões se sobrepõem conta uma vez no total. O tempo de cada lista conta inteiro.` (HOURS-18)
 5. WHERE o modo é `net` the system SHALL mostrar no card `Tempo trabalhado` a linha `Bruto: <total bruto>`, com o bruto igual à soma das sessões de tarefa do período cortadas ao período. (HOURS-19)
 6. WHERE o modo é `gross` the system SHALL calcular todos os números dos Relatórios como hoje, sem o aviso e sem a linha `Bruto`. (HOURS-20)
-7. The system SHALL devolver em `GET /api/reports/overview` o modo usado (`hours_count_mode`) e o total bruto de tarefas do período (`tiles.gross_task_seconds`), nos dois modos. (HOURS-21)
+7. The system SHALL devolver em `GET /api/reports/overview` o modo usado (`hours_count_mode`) e o total bruto de tarefas do período (`gross_task_seconds`, ao lado de `break_seconds`), nos dois modos. (HOURS-21)
 8. The system SHALL arredondar para baixo, uma vez, cada valor líquido a partir da soma exata, como os valores de hoje (REPORT, L-016). (HOURS-22)
 
 **Independent Test**: Com `Horas líquidas`, uma sessão da lista A das 09:00 às 11:00 e uma da lista B das 10:00 às 12:00: `Tempo trabalhado` mostra `3h` e `Bruto: 4h`, o dia mostra 3h no gráfico, e `Tempo por lista` mostra A `2h` e B `2h` com o aviso acima dos cards.
@@ -184,14 +184,14 @@ O que o código já fixa:
 | HOURS-12 | P1: Agenda | T6 | In Tasks |
 | HOURS-13 | P1: Agenda | T6 | In Tasks |
 | HOURS-14 | P1: Agenda | T6 | In Tasks |
-| HOURS-15 | P1: Relatórios | T4 | In Tasks |
-| HOURS-16 | P1: Relatórios | T4 | In Tasks |
-| HOURS-17 | P1: Relatórios | T4 | In Tasks |
+| HOURS-15 | P1: Relatórios | T4 | Implementing |
+| HOURS-16 | P1: Relatórios | T4 | Implementing |
+| HOURS-17 | P1: Relatórios | T4 | Implementing |
 | HOURS-18 | P1: Relatórios | T8 | In Tasks |
 | HOURS-19 | P1: Relatórios | T8 | In Tasks |
-| HOURS-20 | P1: Relatórios | T4, T8 | In Tasks |
-| HOURS-21 | P1: Relatórios | T4 | In Tasks |
-| HOURS-22 | P1: Relatórios | T4 | In Tasks |
+| HOURS-20 | P1: Relatórios | T4, T8 | Implementing |
+| HOURS-21 | P1: Relatórios | T4 | Implementing |
+| HOURS-22 | P1: Relatórios | T4 | Implementing |
 | HOURS-23 | P1: Tempo gasto | T3 | Implementing |
 | HOURS-24 | P1: Tempo gasto | T3 | Implementing |
 | HOURS-25 | P1: Tempo gasto | T3 | Implementing |
@@ -205,10 +205,10 @@ O que o código já fixa:
 | HOURS-33 | Edge case | T3, T5 | In Tasks |
 | HOURS-34 | Edge case | T3, T5 | In Tasks |
 | HOURS-35 | Edge case | T3 | In Tasks |
-| HOURS-36 | Edge case | T4 | In Tasks |
-| HOURS-37 | Edge case | T4 | In Tasks |
-| HOURS-38 | Edge case | T4 | In Tasks |
-| HOURS-39 | Edge case | T4 | In Tasks |
+| HOURS-36 | Edge case | T4 | Implementing |
+| HOURS-37 | Edge case | T4 | Implementing |
+| HOURS-38 | Edge case | T4 | Implementing |
+| HOURS-39 | Edge case | T4 | Implementing |
 
 **Coverage:** 39 total, 39 mapped to tasks, 0 unmapped
 
