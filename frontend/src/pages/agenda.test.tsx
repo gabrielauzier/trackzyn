@@ -1742,6 +1742,28 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('w', { scheduled_on: '2026-11-06', scheduled_time: '16:00' }))
     })
 
+    it('D35 a pending block dropped back on its saved day and time calls the move off, as Cancel', async () => {
+      const rule = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Weekly review', { scheduled_time: '10:00', estimate_minutes: 60, series: { id: 'sr', rule } })],
+        untimed: [],
+        projected: [],
+      })
+      const { container } = renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Weekly review/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 450, y: px(16, 10) })
+      await screen.findByRole('button', { name: 'Save time' })
+      const pendingBlock = within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-06"]')!).getByRole('button', { name: /^Weekly review/ })
+      dragTo(pendingBlock, { x: 450, y: px(16, 10) }, { x: 350, y: px(10, 10) })
+
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Save time' })).toBeNull())
+      expect(screen.queryByRole('button', { name: /^This occurrence only/ })).toBeNull()
+      expect(within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-05"]')!).getByRole('button', { name: /^Weekly review/ })).toBeInTheDocument()
+      expect(within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-06"]')!).queryByRole('button', { name: /^Weekly review/ })).toBeNull()
+      expect(tasks.update).not.toHaveBeenCalled()
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+
     it.each(['Cancel', 'Escape'])('D35 %s puts the block back and saves nothing', async (how) => {
       vi.mocked(agenda.scheduled).mockResolvedValue({
         timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],
