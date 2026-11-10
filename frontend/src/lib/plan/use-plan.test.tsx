@@ -96,7 +96,7 @@ describe('usePlan saving (PLAN-08, PLAN-35, PLAN-37)', () => {
     vi.mocked(plans.save).mockResolvedValue(plan(4))
     const { client, hook } = setup()
     await waitFor(() => expect(hook.result.current.plan.data).toEqual(plan(3)))
-    const planned = ['plans', '2026-11-02', '2026-11-08']
+    const planned = ['lists', 'plans', 'w1', '2026-11-02', '2026-11-08']
     const scheduled = ['lists', 'scheduled', '2026-11-02', '2026-11-08']
     const board = ['lists', 'board', 'l1']
     const other = ['reports', 'overview']

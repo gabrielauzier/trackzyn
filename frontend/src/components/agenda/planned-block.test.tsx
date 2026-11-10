@@ -87,18 +87,6 @@ describe('PlannedBlock (PLAN-24, PLAN-28, PLAN-46, PLAN-47)', () => {
     expect(block.querySelector('[data-slot="plan-icon"]')).not.toBeNull()
   })
 
-  it('PLAN-39 a done planned task fades, and its tooltip crosses out the title and says Concluída', async () => {
-    const done: Planned = { ...task(75), task: { ...task(75).task, done: true } }
-    const { user } = renderWithProviders(<PlannedBlock piece={piece(done, 645)} pxPerMinute={1} />)
-    const block = screen.getByRole('button', { name: /^Escrever a spec/ })
-    expect(block).toHaveClass('opacity-50')
-
-    await user.hover(block)
-    const tooltip = await screen.findByRole('tooltip')
-    expect(tooltip.textContent).toContain('Concluída')
-    expect(screen.getAllByText('Escrever a spec').some((title) => title.classList.contains('line-through'))).toBe(true)
-  })
-
   it('PLAN-46 the tooltip of a planned task scheduled for another day says Agendada para that day', async () => {
     const later: Planned = { ...task(75), task: { ...task(75).task, scheduled_on: '2026-11-12' } }
     const { user } = renderWithProviders(<PlannedBlock piece={piece(later, 645)} pxPerMinute={1} />)

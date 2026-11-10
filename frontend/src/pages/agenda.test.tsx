@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 
@@ -1738,6 +1738,19 @@ describe('AgendaPage: the saved plan (PLAN-24 to PLAN-29)', () => {
     await user.hover(await screen.findByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ }))
 
     expect((await screen.findByRole('tooltip')).textContent).toBe('Fix the widgetEst. 1hrPlanned · 09:00 – 10:00 · 1hrWorkClick to open the plan of the day')
+  })
+
+  it('PLAN-39 a task completed anywhere leaves the Agenda: any write of the board reads the plan again', async () => {
+    const { queryClient } = show()
+    await screen.findByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ })
+    // The server leaves a done task out of the Agenda's read (PLAN-39).
+    vi.mocked(plans.planned).mockResolvedValue({ blocks: [coffee] })
+
+    // What the board, the task dialog and the focus invalidate after completing a task.
+    await act(() => queryClient.invalidateQueries({ queryKey: ['lists'] }))
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Fix the widget/ })).toBeNull())
+    expect(screen.getByRole('button', { name: /^Coffee, 15:00 – 15:15/ })).toBeInTheDocument()
   })
 
   it('PLAN-29 a click on a planned task opens the plan of its day', async () => {

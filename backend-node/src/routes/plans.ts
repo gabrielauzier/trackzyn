@@ -80,7 +80,8 @@ export function planRoutes(ctx: AppContext) {
         schema: { querystring: periodQuery(MAX_AGENDA_DAYS), response: { 200: z.object({ blocks: z.array(plannedSchema) }) } },
         preValidation: reading,
       },
-      async (request) => ({ blocks: await listPlanned(ctx.db, actor(request), request.query.from, request.query.to) }),
+      // The Agenda's read: a done task leaves it, as it leaves the scheduled blocks (PLAN-39).
+      async (request) => ({ blocks: await listPlanned(ctx.db, actor(request), request.query.from, request.query.to, { pendingOnly: true }) }),
     )
 
     typed.get(

@@ -94,9 +94,16 @@ interface BlockRow {
 /**
  * The actor's saved blocks of `from`..`to` (`YYYY-MM-DD`, both included), as the Agenda draws them (PLAN-24): in
  * order of day and start, each with its day; only the actor's own plans in the workspace (PLAN-12). The list of a
- * task block is the task's; blocks whose list is archived are left out (PLAN-40).
+ * task block is the task's; blocks whose list is archived are left out (PLAN-40). With `pendingOnly`, as the Agenda
+ * reads them, a block of a done task is left out too, as a done task leaves the scheduled blocks (PLAN-39, D5).
  */
-export async function listPlanned(db: Database, actor: PlanActor, from: string, to: string): Promise<PlannedBlock[]> {
+export async function listPlanned(
+  db: Database,
+  actor: PlanActor,
+  from: string,
+  to: string,
+  { pendingOnly = false }: { pendingOnly?: boolean } = {},
+): Promise<PlannedBlock[]> {
   const found = await rows<BlockRow & { day: string }>(
     db,
     sql`SELECT b.id, b.kind, to_char(b.start_time, 'HH24:MI') AS start, b.minutes, b.name, p.day::text AS day,
@@ -108,6 +115,7 @@ export async function listPlanned(db: Database, actor: PlanActor, from: string, 
         JOIN lists l ON l.id = coalesce(t.list_id, b.list_id)
         WHERE p.user_id = ${actor.userId} AND p.workspace_id = ${actor.workspaceId}
           AND p.day BETWEEN ${from}::date AND ${to}::date AND NOT l.is_archived
+          AND (${!pendingOnly} OR t.id IS NULL OR t."column" <> 'done')
         ORDER BY p.day, b.start_time, b.kind DESC, b.id`,
   )
   return found.map((row) => {

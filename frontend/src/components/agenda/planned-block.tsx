@@ -8,7 +8,6 @@ import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES } from '@/lib/agenda/layout'
 import type { DraftBlock } from '@/lib/plan/draft'
 import { longDay } from '@/lib/schedule'
-import { cn } from '@/lib/utils'
 import { clockMinutes } from '@/lib/plan/clock'
 import type { PlannedBlock as Planned } from '@/types'
 
@@ -46,7 +45,7 @@ function PlannedTaskTip({ block }: { block: Extract<Planned, { kind: 'task' }> }
   return (
     <>
       <span className="flex items-baseline gap-2">
-        <span className={cn('font-medium break-words whitespace-normal', block.task.done && 'line-through')}>{block.task.title}</span>
+        <span className="font-medium break-words whitespace-normal">{block.task.title}</span>
         <span data-slot="planned-estimate" className="ml-auto shrink-0 tabular-nums opacity-80">
           {estimate === null ? t('agenda.scheduled.noEstimate') : t('agenda.scheduled.estimate', { duration: formatDuration(estimate * 60, language) })}
         </span>
@@ -59,7 +58,6 @@ function PlannedTaskTip({ block }: { block: Extract<Planned, { kind: 'task' }> }
         })}
       </span>
       <span className="opacity-80">{block.task.list.name}</span>
-      {block.task.done && <span className="opacity-80">{t('board.completed')}</span>}
       {elsewhere && <span className="opacity-80">{t('schedule.scheduledFor', { day: longDay(elsewhere, t, language) })}</span>}
       <span className="opacity-80">{t('plan.agenda.openPlanHint')}</span>
     </>
@@ -68,7 +66,7 @@ function PlannedTaskTip({ block }: { block: Extract<Planned, { kind: 'task' }> }
 
 /**
  * A block of the user's saved plan on the Agenda (PLAN-24, PLAN-39, PLAN-46, PLAN-47). A task looks like a scheduled
- * task, without text, with a dashed edge and a tooltip, but with the plan's icon; once done it fades. A break is
+ * task, without text, with a dashed edge and a tooltip, but with the plan's icon; a done task never reaches it (PLAN-39). A break is
  * gray and hatched, as on the plan. A break starts from the focus of its list, not from here (PLAN-28).
  */
 export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) {
@@ -99,8 +97,7 @@ export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) 
       tooltip={<PlannedTaskTip block={planned} />}
       onOpen={open}
       solidOnHover
-      className={cn(planned.task.done && 'opacity-50')}
-      data={{ 'data-plan-block': planned.id, 'data-kind': 'task', 'data-done': planned.task.done || undefined }}
+      data={{ 'data-plan-block': planned.id, 'data-kind': 'task' }}
     />
   )
 }

@@ -222,6 +222,31 @@ describe('GET /api/plans?from&to (PLAN-24)', () => {
     })
   })
 
+  it('PLAN-39 leaves out the block of a done task, keeps it in the plan of the day, and brings it back when the task reopens', async () => {
+    const { owner, workspaceId, listId, taskId } = await setup()
+    const tomorrow = await day(1)
+    await send('PUT', `/api/plans/${tomorrow}`, owner.token, workspaceId, {
+      base_version: 0,
+      blocks: [
+        { kind: 'task', task_id: taskId, start: '09:00', minutes: 45 },
+        { kind: 'break', name: 'Café', list_id: listId, start: '10:00', minutes: 15 },
+      ],
+    })
+    const kinds = async () => ((await send('GET', `/api/plans?from=${tomorrow}&to=${tomorrow}`, owner.token, workspaceId)).json().blocks as Array<{ kind: string }>).map((block) => block.kind)
+    expect(await kinds()).toEqual(['task', 'break'])
+
+    await send('POST', `/api/tasks/${taskId}/move`, owner.token, workspaceId, { column: 'done', before_task_id: null })
+    expect(await kinds()).toEqual(['break'])
+    const plan = (await send('GET', `/api/plans/${tomorrow}`, owner.token, workspaceId)).json()
+    expect(plan.blocks.map((block: { kind: string; task?: { done: boolean } }) => [block.kind, block.task?.done])).toEqual([
+      ['task', true],
+      ['break', undefined],
+    ])
+
+    await send('POST', `/api/tasks/${taskId}/move`, owner.token, workspaceId, { column: 'today', before_task_id: null })
+    expect(await kinds()).toEqual(['task', 'break'])
+  })
+
   it('answers 422 for a period longer than the agenda reads', async () => {
     const { owner, workspaceId } = await setup()
     const reply = await send('GET', `/api/plans?from=${await day(0)}&to=${await day(42)}`, owner.token, workspaceId)

@@ -185,9 +185,10 @@ function Agenda({ timezone, activeLists }: { timezone: string; activeLists: List
   }
   const scheduledProps = { timed, untimed, projected, onOpenTask: setOpenTaskId, onShowDay: showDay }
   const navigate = useNavigate()
-  // The blocks of the user's own saved plans of the week (PLAN-24); saving a plan reads them again under `['plans']`.
+  // The blocks of the user's own saved plans of the week, without done tasks (PLAN-24, PLAN-39). Under `['lists']`, as
+  // the scheduled tasks: completing a task anywhere, or saving a plan, reads them again.
   const plannedQuery = useQuery({
-    queryKey: ['plans', current?.id ?? null, monday, sunday],
+    queryKey: ['lists', 'plans', current?.id ?? null, monday, sunday],
     queryFn: () => plansApi.planned(monday, sunday),
     placeholderData: keepPreviousData,
     retry: false,

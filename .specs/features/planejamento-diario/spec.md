@@ -187,7 +187,7 @@ O que o código já fixa:
 - IF o usuário tenta sair da tela com o rascunho não salvo THEN o sistema SHALL perguntar `Descartar o rascunho?` com `Continuar planejando` e `Descartar`. (PLAN-36)
 - IF salvar o plano falha THEN o sistema SHALL manter o rascunho na tela e mostrar `Não foi possível salvar o plano.` com `Tentar de novo`. (PLAN-37)
 - IF uma tarefa planejada já tem `scheduled_on` em outro dia THEN o bloco SHALL mostrar `Agendada para <dia>`, e salvar SHALL manter o dia da tarefa. (PLAN-38)
-- WHEN uma tarefa planejada é concluída THEN o bloco SHALL aparecer riscado no plano e, na Agenda, esmaecido, com o título riscado e `Concluída` no tooltip. (PLAN-39)
+- WHEN uma tarefa planejada é concluída THEN o bloco SHALL aparecer riscado no plano do dia e SHALL sair da Agenda, como uma tarefa agendada concluída (agendamento D5): o plano é uma noção do encaixe do dia, e o tempo feito já aparece nas sessões. WHEN a tarefa volta de Concluídas THEN o bloco SHALL voltar à Agenda. (PLAN-39)
 - WHEN uma tarefa planejada é excluída ou sua lista é arquivada THEN o bloco SHALL sair do plano. (PLAN-40)
 - IF um viewer tenta salvar um plano ou mudar o expediente THEN a API SHALL responder 403 `Read-only role` e não gravar nada. (PLAN-41)
 - IF um token `tkz_` chama as rotas do plano THEN a API SHALL responder 403 (AD-007). (PLAN-42)
