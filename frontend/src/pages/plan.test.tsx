@@ -129,11 +129,12 @@ const httpError = (status: number) =>
   })
 
 describe('PlanPage', () => {
-  it('PLAN-01 without a day opens the plan of tomorrow in the workspace timezone', async () => {
+  it('PLAN-30 without a day opens the plan of today in the workspace timezone', async () => {
+    // 23:30 of Sunday 8 November in São Paulo, already Monday in UTC: today is the 8th.
     show('/planejar')
-    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(`/planejar/${DAY}`))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Segunda-feira, 9 de novembro' })).toBeInTheDocument()
-    expect(plans.get).toHaveBeenCalledWith(DAY)
+    await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-08'))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Domingo, 8 de novembro' })).toBeInTheDocument()
+    expect(plans.get).toHaveBeenCalledWith('2026-11-08')
   })
 
   it('PLAN-07 PLAN-08 keeps two dropped tasks as a draft and saves them with one PUT, then shows Plano salvo', async () => {

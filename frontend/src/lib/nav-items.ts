@@ -24,7 +24,7 @@ export const navItems: NavItem[] = [
   { type: 'link', key: 'allLists', path: '/', icon: LayoutGrid },
   { type: 'link', key: 'archivedLists', path: '/lists/archived', icon: Archive },
   { type: 'link', key: 'agenda', path: '/agenda', icon: CalendarDays },
-  // `/planejar` opens the plan of tomorrow (PLAN-30).
+  // `/planejar` opens the plan of today (PLAN-30).
   { type: 'link', key: 'plan', path: '/planejar', icon: CalendarCheck },
   { type: 'link', key: 'reports', path: '/reports', icon: BarChart3 },
   { type: 'link', key: 'files', path: '/files', icon: FolderOpen, admin: true },

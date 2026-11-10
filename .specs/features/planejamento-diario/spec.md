@@ -159,7 +159,7 @@ O que o código já fixa:
 
 **Acceptance Criteria**:
 
-1. The system SHALL mostrar `Planejar` na barra lateral, abrindo o plano de amanhã. (PLAN-30)
+1. The system SHALL mostrar `Planejar` na barra lateral, abrindo o plano de hoje no fuso do workspace; `/planejar` sem dia SHALL abrir o de hoje. (PLAN-30)
 2. WHEN o usuário escolhe `Planejar dia` no cabeçalho de um dia da Agenda THEN o sistema SHALL abrir o plano daquele dia. (PLAN-31)
 
 **Independent Test**: Clicar em `Planejar` na barra lateral e chegar ao plano de amanhã.
@@ -277,7 +277,7 @@ O que o código já fixa:
 - **PLAN-D2 (2026-11-07):** o plano é pessoal, por usuário, workspace e dia; as pausas e o expediente também são pessoais.
 - **PLAN-D3 (2026-11-07):** o bloco de tarefa é só do plano: início e duração não mudam `scheduled_time` nem a estimativa. Salvar só dá o dia do plano a uma tarefa sem dia, para ela ir para Hoje.
 - **PLAN-D4 (2026-11-07):** a pausa é uma entidade nova e vira uma sessão de Intervalo quando o usuário clica em `Começar`.
-- **PLAN-D5 (2026-11-07):** qualquer dia de hoje em diante pode ser planejado; a tela abre em amanhã.
+- **PLAN-D5 (2026-11-07, revisada em 2026-11-10):** qualquer dia de hoje em diante pode ser planejado; a tela abre em hoje. `Planejar amanhã`, na Agenda e em Hoje, continua abrindo amanhã.
 - **PLAN-D7 (2026-11-07):** as tarefas agendadas com hora para o dia, sem bloco no plano, ocupam o expediente na conta da capacidade, pela estimativa ou 1h; uma tarefa que tem bloco conta só pelo bloco.
 - **PLAN-D6 (2026-11-07):** a primeira entrega tem a tela de um dia, pausas avulsas, a barra de capacidade, o rascunho e o plano na Agenda; pausas fixas e `Encaixar` vêm depois, e o modelo guarda o plano por dia para o planejado × realizado.
 

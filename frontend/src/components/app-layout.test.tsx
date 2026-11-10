@@ -216,7 +216,7 @@ describe('app layout sidebar', () => {
     expect(links.indexOf('Reports')).toBe(links.indexOf('Plan') + 1)
   })
 
-  it('PLAN-30 offers Planejar, leading to the plan of tomorrow, for a viewer too', () => {
+  it('PLAN-30 offers Planejar, leading to the plan of today, for a viewer too', () => {
     state.canWrite = false
     renderWithProviders(<AppLayout />, { route: '/' })
 

@@ -26,7 +26,7 @@ import { clampTask, draftReducer, emptyDraft, isDirty, type DropItem } from '@/l
 import { fit } from '@/lib/plan/fit'
 import { useDraftGuard } from '@/lib/plan/draft-guard-context'
 import { usePlan } from '@/lib/plan/use-plan'
-import { tomorrowPath } from '@/lib/plan/tomorrow'
+import { todayPath } from '@/lib/plan/tomorrow'
 import { usePlanDrag } from '@/lib/plan/use-plan-drag'
 import { cn } from '@/lib/utils'
 import type { AgendaTaskInput, ListCard, PlanListRef, PlanRead, PlanTaskRef, Task } from '@/types'
@@ -370,7 +370,7 @@ export default function PlanPage() {
 
   if (active.isError) return <p className="py-12 text-center text-sm text-destructive">{t('plan.page.loadError')}</p>
   if (!active.data) return <Skeleton className="h-96 w-full rounded-xl" />
-  if (!isDay(day)) return <Navigate to={tomorrowPath(active.data.timezone)} replace />
+  if (!isDay(day)) return <Navigate to={todayPath(active.data.timezone)} replace />
   // Each day starts its own draft.
   return <PlanScreen key={day} day={day} timezone={active.data.timezone} lists={active.data.lists} />
 }
