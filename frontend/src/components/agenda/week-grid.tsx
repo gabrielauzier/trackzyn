@@ -413,7 +413,7 @@ export function WeekGrid({
         <div
           data-drag-ghost
           aria-hidden
-          className="pointer-events-none fixed z-50 max-w-48 truncate rounded-md border-2 border-dotted px-1.5 py-0.5 text-xs shadow-lg"
+          className="pointer-events-none fixed z-50 max-w-48 truncate rounded-md border-2 border-dashed px-1.5 py-0.5 text-xs shadow-lg"
           style={{ left: scheduledDraft.x + 8, top: scheduledDraft.y + 8, ...scheduledColors(scheduledDraft.color) }}
         >
           {scheduledDraft.title}

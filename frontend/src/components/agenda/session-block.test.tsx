@@ -48,7 +48,7 @@ describe('SessionBlock', () => {
 
   it('edges a break in the full muted foreground', () => {
     renderWithProviders(<SessionBlock piece={laid({ kind: 'break', task_id: null, task_title: null })} pxPerMinute={1} timezone={SP} />)
-    expect(screen.getByRole('button')).toHaveClass('border-dotted', 'border-muted-foreground')
+    expect(screen.getByRole('button')).toHaveClass('border-dashed', 'border-muted-foreground')
   })
 
   it('shows the whole title and the time in a tooltip on hover', async () => {
@@ -109,11 +109,10 @@ describe('SessionBlock', () => {
     expect(block.style.backgroundColor).toContain('var(--chart-5)')
   })
 
-  it('draws a break as Break in grey with a dotted border, as scheduled tasks (AGENDA-04)', () => {
+  it('draws a break as Break in grey with a dashed border, as scheduled and planned blocks (AGENDA-04)', () => {
     renderWithProviders(<SessionBlock piece={laid({ kind: 'break', task_id: null, task_title: null })} pxPerMinute={1} timezone={SP} />)
     const block = screen.getByRole('button', { name: 'Break, 13:01 – 13:26' })
-    expect(block).toHaveClass('border-2', 'border-dotted', 'bg-muted')
-    expect(block).not.toHaveClass('border-dashed')
+    expect(block).toHaveClass('border-2', 'border-dashed', 'bg-muted')
     expect(block.style.backgroundColor).toBe('')
   })
 
@@ -123,7 +122,7 @@ describe('SessionBlock', () => {
     )
     const block = screen.getByRole('button', { name: 'Write the report, 13:01 – now' })
     expect(block).toHaveClass('border-primary')
-    expect(block).not.toHaveClass('border-dotted')
+    expect(block).not.toHaveClass('border-dashed')
   })
 
   it('splits the column width with the sessions it overlaps (AGENDA-06)', () => {

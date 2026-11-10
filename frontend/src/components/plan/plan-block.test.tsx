@@ -42,13 +42,12 @@ describe('PlanBlock (PLAN-15, PLAN-38, PLAN-39)', () => {
     expect([block.style.top, block.style.height]).toEqual(['1080px', '180px'])
   })
 
-  it('draws a break gray and hatched with a dotted edge, with its name and HH:MM – HH:MM, unlike a task', () => {
+  it('draws a break gray and hatched with a dashed edge, with its name and HH:MM – HH:MM, unlike a task', () => {
     show(breakBlock)
     const block = screen.getByRole('button', { name: 'Lunch, 12:00 – 13:00' })
     expect(block).toHaveAttribute('data-kind', 'break')
     expect(block.style.backgroundImage).toBe('repeating-linear-gradient(135deg, var(--muted) 0 6px, var(--border) 6px 8px)')
-    expect(block).toHaveClass('border-2', 'border-dotted', 'border-muted-foreground/60')
-    expect(block).not.toHaveClass('border-dashed')
+    expect(block).toHaveClass('border-2', 'border-dashed', 'border-muted-foreground/60')
     expect(block).not.toHaveClass('border-l-4')
     expect(block.style.borderColor).toBe('')
   })

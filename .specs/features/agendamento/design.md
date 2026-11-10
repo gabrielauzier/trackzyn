@@ -249,7 +249,7 @@ Todos os caminhos de conclusão passam por `moveTask` (`routes/tasks.ts:161`, `m
 | `CustomRecurrence` | `frontend/src/components/schedule/custom-recurrence.tsx` | Regra personalizada e validação |
 | `SeriesScopeDialog` | `frontend/src/components/schedule/series-scope-dialog.tsx` | "Só esta / esta e as próximas" para mover e excluir |
 | `useScheduled` | `frontend/src/lib/agenda/use-scheduled.ts` | Lê `GET /agenda/scheduled`, invalida com o quadro |
-| `ScheduledBlock` | `frontend/src/components/agenda/scheduled-block.tsx` | Bloco pontilhado, relógio ou repetição, tooltip |
+| `ScheduledBlock` | `frontend/src/components/agenda/scheduled-block.tsx` | Bloco tracejado, relógio ou repetição, tooltip |
 | `UntimedRow` | `frontend/src/components/agenda/untimed-row.tsx` | Linha `Sem hora`, 3 por dia, `+X` |
 | `DayScheduledPanel` | `frontend/src/components/agenda/day-scheduled-panel.tsx` | Todas as tarefas agendadas do dia |
 | `NewSchedulePanel` | `frontend/src/components/agenda/new-schedule-panel.tsx` | Agendar uma tarefa existente ou nova numa janela |

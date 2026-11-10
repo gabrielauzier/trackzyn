@@ -84,7 +84,7 @@ export function UntimedRow({ days, untimed, onOpenTask, onShowDay, drag }: Untim
                 data-draggable={draggable || undefined}
                 data-dragging={moving?.taskId === task.id || undefined}
                 className={cn(
-                  'flex h-[26px] w-full min-w-0 shrink-0 items-center gap-1 rounded-md border-2 border-dotted px-1.5 text-left text-xs select-none',
+                  'flex h-[26px] w-full min-w-0 shrink-0 items-center gap-1 rounded-md border-2 border-dashed px-1.5 text-left text-xs select-none',
                   // Hover: a solid edge and the open hand of a task that moves; dragged, its place fades.
                   draggable && 'cursor-grab hover:border-solid',
                   moving?.taskId === task.id && 'opacity-30',

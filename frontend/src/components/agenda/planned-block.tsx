@@ -68,7 +68,7 @@ function PlannedTaskTip({ block }: { block: Extract<Planned, { kind: 'task' }> }
 
 /**
  * A block of the user's saved plan on the Agenda (PLAN-24, PLAN-39, PLAN-46, PLAN-47). A task looks like a scheduled
- * task, without text and with a tooltip, but with a dashed edge and the plan's icon; once done it fades. A break is
+ * task, without text, with a dashed edge and a tooltip, but with the plan's icon; once done it fades. A break is
  * gray and hatched, as on the plan. A break starts from the focus of its list, not from here (PLAN-28).
  */
 export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) {
@@ -93,7 +93,6 @@ export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) 
       piece={piece}
       pxPerMinute={pxPerMinute}
       color={planned.task.list.color}
-      edge="dashed"
       icon={CalendarCheck}
       iconSlot="plan-icon"
       label={`${planned.task.title}, ${range} · ${formatDuration(planned.minutes * 60, language)}`}

@@ -50,7 +50,7 @@ const breakFill: CSSProperties = {
 /**
  * A block of the day plan (PLAN-15, PLAN-38, PLAN-39): the title, `HH:MM – HH:MM` and, for a task, its length. A task
  * takes the colour of its list with a dashed edge, crossed out once done; a task scheduled for another day carries
- * `Agendada para <dia>`. A break is gray and hatched, with a dotted edge like a break session.
+ * `Agendada para <dia>`. A break is gray and hatched, with a dashed edge like a break session.
  */
 export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children }: PlanBlockProps) {
   const { t, i18n } = useTranslation()
@@ -92,7 +92,7 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       className={cn(
         'absolute flex overflow-hidden rounded-md px-2 text-xs select-none',
         short ? 'flex-row items-center gap-2' : 'flex-col gap-0.5 py-1',
-        isTask ? 'border-[1.5px] border-l-4 border-dashed text-foreground' : 'border-2 border-dotted border-muted-foreground/60 text-muted-foreground',
+        isTask ? 'border-[1.5px] border-l-4 border-dashed text-foreground' : 'border-2 border-dashed border-muted-foreground/60 text-muted-foreground',
         onPointerDown && 'cursor-grab',
         selected && 'z-10 ring-2 ring-primary ring-offset-1 ring-offset-background',
         'outline-2 outline-transparent focus-visible:outline-(--ring)',

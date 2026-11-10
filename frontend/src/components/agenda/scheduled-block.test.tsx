@@ -67,11 +67,11 @@ async function tooltipLines(user: ReturnType<typeof show>['user']) {
 }
 
 describe('ScheduledBlock (US-5)', () => {
-  it('carries no text, a faint fill and a dotted edge in its list colour, and the clock in the corner', () => {
+  it('carries no text, a faint fill and a dashed edge in its list colour, and the clock in the corner', () => {
     show(ofTask(task()))
     const block = screen.getByRole('button', { name: 'Write the report, Scheduled · 10:00 – 11:30' })
     expect(block.textContent).toBe('')
-    expect(block).toHaveClass('border-2', 'border-dotted')
+    expect(block).toHaveClass('border-2', 'border-dashed')
     expect(block.style.backgroundColor).toBe('color-mix(in oklab, var(--chart-5) var(--scheduled-tint), var(--card))')
     expect(block.style.borderColor).toBe('color-mix(in oklab, var(--chart-5) var(--scheduled-edge), transparent)')
     expect(block.querySelector('[data-slot="clock-icon"]')).toHaveClass('absolute', 'top-0', 'right-0')
@@ -124,7 +124,7 @@ describe('ScheduledBlock: a series (US-11)', () => {
   it('draws a projection fainter, with the repeat icon', () => {
     show(ofProjection)
     const block = screen.getByRole('button')
-    expect(block).toHaveClass('opacity-50', 'border-dotted')
+    expect(block).toHaveClass('opacity-50', 'border-dashed')
     expect(block).toHaveAttribute('data-projected', 'true')
     expect(block.querySelector('[data-slot="repeat-icon"]')).not.toBeNull()
   })

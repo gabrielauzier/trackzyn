@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 
-/** The fill and the dotted edge of a scheduled task in its list colour, fainter than a session's (US-5, index.css). */
+/** The fill and the dashed edge of a scheduled task in its list colour, fainter than a session's (US-5, index.css). */
 export function scheduledColors(color: number): CSSProperties {
   const list = `var(--chart-${color})`
   return {

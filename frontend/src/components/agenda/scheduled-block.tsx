@@ -23,7 +23,7 @@ interface ScheduledBlockProps {
 }
 
 /**
- * A scheduled task on the grid (US-5): no text, a faint fill and a dotted edge in the colour of its list, and a
+ * A scheduled task on the grid (US-5): no text, a faint fill and a dashed edge in the colour of its list, and a
  * clock in the top right corner, where a joined session block shows its count. The open occurrence of a series
  * shows the repeat icon instead, and a projected occurrence is fainter still (US-11). The tooltip says the title
  * and the estimate, `Agendada · HH:MM – HH:MM` (`(1h)` without an estimate), the list and the column, and what a
@@ -57,7 +57,6 @@ export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen, onDragSta
       piece={piece}
       pxPerMinute={pxPerMinute}
       color={source.list.color}
-      edge="dotted"
       icon={Icon}
       iconSlot={repeats ? 'repeat-icon' : 'clock-icon'}
       label={`${source.title}, ${when}`}

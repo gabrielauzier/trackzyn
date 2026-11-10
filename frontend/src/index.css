@@ -56,7 +56,7 @@
   --session-tint: 20%;
   --session-tint-hover: 32%;
   --session-edge: 75%;
-  /* A scheduled block is fainter than a session: list-colour share of its fill and of its dotted edge (US-5). */
+  /* A scheduled block is fainter than a session: list-colour share of its fill and of its dashed edge (US-5). */
   --scheduled-tint: 8%;
   --scheduled-edge: 50%;
 }

@@ -72,7 +72,7 @@ describe('UntimedRow (US-14, D20)', () => {
   it('draws each task in the style of a scheduled block, with its title in one line and its estimate on the right', () => {
     const { container } = show([task('a', { title: 'A very long title that does not fit in the cell', estimate_minutes: 90 })])
     const item = cell(container, '2026-11-04').querySelector<HTMLElement>('[data-untimed-task="a"]')!
-    expect(item).toHaveClass('h-[26px]', 'border-2', 'border-dotted')
+    expect(item).toHaveClass('h-[26px]', 'border-2', 'border-dashed')
     expect(item.style.backgroundColor).toBe('color-mix(in oklab, var(--chart-4) var(--scheduled-tint), var(--card))')
     expect(item.style.borderColor).toBe('color-mix(in oklab, var(--chart-4) var(--scheduled-edge), transparent)')
     expect(within(item).getByText('A very long title that does not fit in the cell')).toHaveClass('truncate')

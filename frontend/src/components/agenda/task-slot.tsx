@@ -11,8 +11,6 @@ interface TaskSlotProps {
   pxPerMinute: number
   /** The list colour (`--chart-<n>`). */
   color: number
-  /** Dotted for a scheduled task, dashed for a planned one. */
-  edge: 'dotted' | 'dashed'
   /** The icon of the top right corner, which says what kind of block it is. */
   icon: LucideIcon
   iconSlot: string
@@ -32,14 +30,13 @@ interface TaskSlotProps {
 }
 
 /**
- * A task on the Agenda grid without text (US-5, PLAN-46, PLAN-47): a faint fill and an edge in the colour of its list,
- * an icon in the top right corner and a tooltip with the rest. Scheduled and planned tasks share it.
+ * A task on the Agenda grid without text (US-5, PLAN-46, PLAN-47): a faint fill and a dashed edge in the colour of its
+ * list, an icon in the top right corner and a tooltip with the rest. Scheduled and planned tasks share it.
  */
 export function TaskSlot({
   piece,
   pxPerMinute,
   color,
-  edge,
   icon: Icon,
   iconSlot,
   label,
@@ -73,8 +70,7 @@ export function TaskSlot({
             aria-label={label}
             {...data}
             className={cn(
-              'absolute overflow-hidden rounded-md border-2 select-none',
-              edge === 'dotted' ? 'border-dotted' : 'border-dashed',
+              'absolute overflow-hidden rounded-md border-2 border-dashed select-none',
               'outline-2 outline-transparent hover:z-20 focus-visible:outline-(--ring)',
               solidOnHover && 'hover:border-solid',
               className,
