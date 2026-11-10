@@ -34,6 +34,8 @@ interface PlanBlockProps {
   children?: ReactNode
   /** Shown on hover and focus, as on the Agenda's blocks (PLAN-46). */
   tooltip?: ReactNode
+  /** Drawn on the Agenda: no text, as every block there (PLAN-24). */
+  onAgenda?: boolean
 }
 
 
@@ -47,7 +49,7 @@ const breakFill: CSSProperties = {
  * takes the faint colour and the 2px dashed edge of a task on the Agenda, solid on hover, crossed out once done; a task scheduled for another day carries
  * `Agendada para <dia>`. A break is gray and hatched, with a dashed edge like a break session.
  */
-export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children, tooltip }: PlanBlockProps) {
+export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children, tooltip, onAgenda = false }: PlanBlockProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const { block } = piece
@@ -87,7 +89,8 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       className={cn(
         'absolute flex overflow-hidden rounded-md px-2 text-xs select-none',
         short ? 'flex-row items-center gap-2' : 'flex-col gap-0.5 py-1',
-        // The edges of the Agenda: a task's in the faint colour of its list, a break's gray; a block that opens or moves turns solid on hover.
+        // The edges of the Agenda: a task's in the faint colour of its list, a break's gray, as the break chips of the side
+        // list (PLAN-15); a block that opens or moves turns solid on hover.
         isTask ? 'border-2 border-dashed text-foreground' : 'border-2 border-dashed border-muted-foreground/60 text-muted-foreground',
         (onOpen || onPointerDown) && 'hover:z-20 hover:border-solid',
         onPointerDown && 'cursor-grab',
@@ -99,22 +102,26 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       onKeyDown={onKeyDown}
       onPointerDown={(event) => (onPointerDown ? onPointerDown(event) : event.stopPropagation())}
     >
-      <span className="flex min-w-0 items-center gap-1.5">
-        <span data-slot="plan-block-title" className={cn('truncate font-semibold', done && 'text-muted-foreground line-through')}>
-          {title}
-        </span>
-        {elsewhere && (
-          <span
-            data-slot="plan-block-elsewhere"
-            className="shrink-0 rounded-full bg-amber-100 px-1.5 text-[11px] whitespace-nowrap text-amber-900 dark:bg-amber-950 dark:text-amber-200"
-          >
-            {t('schedule.scheduledFor', { day: longDay(elsewhere, t, language) })}
+      {!onAgenda && (
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span data-slot="plan-block-title" className={cn('truncate font-semibold', done && 'text-muted-foreground line-through')}>
+            {title}
           </span>
-        )}
-      </span>
-      <span data-slot="plan-block-time" className="shrink-0 tabular-nums text-muted-foreground">
-        {when}
-      </span>
+          {elsewhere && (
+            <span
+              data-slot="plan-block-elsewhere"
+              className="shrink-0 rounded-full bg-amber-100 px-1.5 text-[11px] whitespace-nowrap text-amber-900 dark:bg-amber-950 dark:text-amber-200"
+            >
+              {t('schedule.scheduledFor', { day: longDay(elsewhere, t, language) })}
+            </span>
+          )}
+        </span>
+      )}
+      {!onAgenda && (
+        <span data-slot="plan-block-time" className="shrink-0 tabular-nums text-muted-foreground">
+          {when}
+        </span>
+      )}
       {children}
     </div>
   )

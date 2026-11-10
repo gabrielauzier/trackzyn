@@ -255,4 +255,14 @@ describe('PlanSidebar: Encaixar (PLAN-32, PLAN-33)', () => {
     show({ onDragStart: undefined })
     expect(screen.queryByRole('button', { name: 'Drag a new task onto the grid' })).toBeNull()
   })
+
+  it('PLAN-15 draws the break chips with the 2px dashed gray edge of a break block on the grid', () => {
+    show()
+    for (const chip of document.querySelectorAll<HTMLElement>('[data-break]')) {
+      expect(chip).toHaveClass('border-2', 'border-dashed', 'border-muted-foreground/60')
+      expect(chip.style.backgroundImage).toBe('repeating-linear-gradient(135deg, var(--muted) 0 6px, var(--border) 6px 8px)')
+    }
+    expect(document.querySelectorAll('[data-break]')).toHaveLength(2)
+  })
 })
+

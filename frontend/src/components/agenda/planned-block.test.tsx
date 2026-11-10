@@ -104,4 +104,14 @@ describe('PlannedBlock (PLAN-24, PLAN-28, PLAN-46, PLAN-47)', () => {
     expect((await screen.findByRole('tooltip')).textContent).toMatch(/Agendada para .+/)
     expect(screen.getByRole('button', { name: /^Escrever a spec/ })).not.toHaveClass('opacity-50')
   })
+
+  it('PLAN-24 a planned break on the Agenda shows no text and keeps the 2px dashed edge of the Agenda', () => {
+    renderWithProviders(<PlannedBlock piece={piece(coffee, 630)} pxPerMinute={1} onOpen={vi.fn()} />)
+    const block = screen.getByRole('button', { name: /^Café, 10:30 – 10:45/ })
+
+    expect(block.textContent).toBe('')
+    expect(block).toHaveClass('border-2', 'border-dashed')
+    expect(block.style.backgroundImage).toContain('repeating-linear-gradient')
+  })
 })
+

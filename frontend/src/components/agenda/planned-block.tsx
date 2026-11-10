@@ -103,6 +103,7 @@ export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) 
         pxPerMinute={pxPerMinute}
         onOpen={open}
         tooltip={<PlannedBreakTip block={planned} />}
+        onAgenda
       />
     )
   }

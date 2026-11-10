@@ -103,7 +103,7 @@ O que o código já fixa:
 **Acceptance Criteria**:
 
 1. The system SHALL mostrar, acima das tarefas, as pausas prontas `Café` (`15min`) e `Almoço` (`1h`) e o botão `Nova pausa`, com as durações no formato do app (`formatDuration`: `15min`, `1h`, `1h 30min`), o mesmo em blocos, editor e barra de capacidade. (PLAN-14)
-2. WHEN o usuário solta uma pausa na grade THEN o sistema SHALL criar no rascunho um bloco de pausa com o nome e a duração dela, desenhado em cinza hachurado, diferente dos blocos de tarefa. (PLAN-15)
+2. WHEN o usuário solta uma pausa na grade THEN o sistema SHALL criar no rascunho um bloco de pausa com o nome e a duração dela, desenhado em cinza hachurado com borda tracejada de 2px, diferente dos blocos de tarefa; os atalhos de pausa da lista lateral SHALL ter a mesma borda. (PLAN-15)
 3. WHEN o usuário cria uma `Nova pausa` THEN o sistema SHALL pedir o nome (1 a 40 caracteres) e a duração, e criar o bloco no rascunho; IF o nome fica vazio ou passa de 40 caracteres THEN o sistema SHALL mostrar `O nome vai de 1 a 40 caracteres` e não criar. (PLAN-16)
 4. IF a duração de uma pausa fica fora de 5 a 120 min THEN o sistema SHALL recusar a mudança com `A pausa vai de 5 min a 2h` e manter a duração anterior. (PLAN-17)
 5. The system SHALL guardar em cada pausa a lista do Intervalo, com a primeira lista ativa já escolhida e editável no bloco. (PLAN-18)
@@ -138,7 +138,7 @@ O que o código já fixa:
 
 **Acceptance Criteria**:
 
-1. The system SHALL mostrar na Agenda os blocos do plano salvo do usuário, sem cobrir as sessões: os de tarefa como um bloco de tarefa agendada, sem texto, com o fundo e a borda tracejada na cor da lista, mas com o ícone do plano no canto; e as pausas em cinza hachurado com borda tracejada, como os intervalos e as tarefas agendadas. (PLAN-24)
+1. The system SHALL mostrar na Agenda os blocos do plano salvo do usuário, sem cobrir as sessões: os de tarefa como um bloco de tarefa agendada, sem texto, com o fundo e a borda tracejada na cor da lista, mas com o ícone do plano no canto; e as pausas, também sem texto (o nome fica no tooltip), em cinza hachurado com borda tracejada, como os intervalos e as tarefas agendadas. (PLAN-24)
 2. WHEN uma tarefa tem bloco no plano do dia e também está agendada naquele dia, com `scheduled_time` ou na faixa `Sem hora`, THEN a Agenda do dono do plano SHALL mostrar só o bloco do plano. (PLAN-25)
 3. WHEN o usuário clica em `Começar` numa pausa do plano de hoje, na tela de foco da lista da pausa, THEN o sistema SHALL abrir um Intervalo de `planned_seconds` igual à duração da pausa, na lista da pausa, pelo mesmo caminho de `POST /api/focus/break`. (PLAN-26)
 4. WHEN há uma sessão de tarefa aberta e o usuário começa a pausa THEN o sistema SHALL encerrar a sessão com o mesmo motivo do Intervalo do foco (`break`) antes de abrir o Intervalo. (PLAN-27)

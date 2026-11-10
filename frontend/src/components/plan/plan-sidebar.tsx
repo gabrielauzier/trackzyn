@@ -134,7 +134,8 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
                 data-break={key}
                 disabled={!usable}
                 className={cn(
-                  'flex h-9 items-center gap-1.5 rounded-md border border-dashed border-muted-foreground/60 px-3 text-sm select-none disabled:opacity-50',
+                  // The edge of a break block on the grid (PLAN-15).
+                  'flex h-9 items-center gap-1.5 rounded-md border-2 border-dashed border-muted-foreground/60 px-3 text-sm select-none disabled:opacity-50',
                   usable && 'cursor-grab',
                 )}
                 style={{ backgroundImage: 'repeating-linear-gradient(135deg, var(--muted) 0 6px, var(--border) 6px 8px)' }}
