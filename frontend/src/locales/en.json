@@ -829,8 +829,10 @@
       "days": "Week days",
       "allDays": "All",
       "workDays": "Mon – Fri",
-      "hideBreaks": "Hide breaks",
-      "hideBreaksHint": "Hides the pauses from the agenda"
+      "showBreaks": "Show breaks",
+      "showBreaksHint": "Shows the breaks on the agenda",
+      "showScheduled": "Show schedules",
+      "showScheduledHint": "Shows the scheduled and planned tasks"
     },
     "list": "List",
     "allLists": "All lists",

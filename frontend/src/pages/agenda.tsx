@@ -28,7 +28,7 @@ import { lists, plans as plansApi, sessions as sessionsApi, tasks as tasksApi } 
 import { extractApiError } from '@/lib/api-errors'
 import { dropZoneAt } from '@/lib/agenda/drop-zone'
 import { isHiddenSession } from '@/lib/agenda/hide'
-import { readHideBreaks, saveHideBreaks } from '@/lib/agenda/hide-breaks'
+import { readHideBreaks, readHideScheduled, saveHideBreaks, saveHideScheduled } from '@/lib/agenda/hide-breaks'
 import { addDays, dayLimit, dayOf, minuteOf, mondayOf, newSessionTimes, weekDays, zonedInstant } from '@/lib/agenda/layout'
 import { agendaKey, useAgenda } from '@/lib/agenda/use-agenda'
 import { useScheduled } from '@/lib/agenda/use-scheduled'
@@ -38,13 +38,17 @@ import { type Zoom, pxPerMinuteAt, readZoom, saveZoom } from '@/lib/agenda/zoom'
 import { tomorrowPath } from '@/lib/plan/tomorrow'
 import { asksSeriesScope, longDay, type ScheduleChangeFields } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, AgendaSessionChanges, ListCard, PlannedBlock, ScheduledTask, SeriesScope, TaskSchedule } from '@/types'
+import type { AgendaSession, AgendaSessionChanges, ListCard, PlannedBlock, ProjectedOccurrence, ScheduledTask, SeriesScope, TaskSchedule } from '@/types'
 
 const ALL_LISTS = 'all'
 
 const NO_PLAN: PlannedBlock[] = []
 
 type PlannedBreak = Extract<PlannedBlock, { kind: 'break' }>
+
+/** Nothing scheduled, the same arrays on every render: `Exibir agendamentos` off. */
+const NO_SCHEDULED: ScheduledTask[] = []
+const NO_PROJECTED: ProjectedOccurrence[] = []
 
 /** A change of the schedule of a task from the agenda, with the estimate a drop from `Sem hora` gives (D22). */
 type ScheduleChange = ScheduleChangeFields & { estimate_minutes?: number | null }
@@ -121,6 +125,12 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
     setHideBreaks(next)
     saveHideBreaks(next)
   }
+  /** `Exibir agendamentos` off: the scheduled tasks and the planned tasks leave the grid, remembered on this device. */
+  const [hideScheduled, setHideScheduled] = useState(readHideScheduled)
+  const pickHideScheduled = (next: boolean) => {
+    setHideScheduled(next)
+    saveHideScheduled(next)
+  }
   const hidden = useCallback(
     (session: AgendaSession) => (hideBreaks && session.kind === 'break') || isHiddenSession(session, minSessionMinutes),
     [hideBreaks, minSessionMinutes],
@@ -187,7 +197,9 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
     setScheduling(null)
     setDayPanel(shown)
   }
-  const scheduledProps = { timed, untimed, projected, onOpenTask: setOpenTaskId, onShowDay: showDay }
+  const scheduledProps = hideScheduled
+    ? { timed: NO_SCHEDULED, untimed: NO_SCHEDULED, projected: NO_PROJECTED, onOpenTask: setOpenTaskId, onShowDay: showDay }
+    : { timed, untimed, projected, onOpenTask: setOpenTaskId, onShowDay: showDay }
   const navigate = useNavigate()
   // The blocks of the user's own saved plans of the week, without done tasks (PLAN-24, PLAN-39). Under `['lists']`, as
   // the scheduled tasks: completing a task anywhere, or saving a plan, reads them again.
@@ -207,8 +219,13 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
     setScheduling(null)
     setPlannedBreak(block)
   }
+  // `Exibir agendamentos` off hides the planned tasks; `Exibir intervalos` off, the planned breaks.
+  const shownPlanned = useMemo(
+    () => (hideScheduled || hideBreaks ? planned.filter((block) => (block.kind === 'task' ? !hideScheduled : !hideBreaks)) : planned),
+    [planned, hideScheduled, hideBreaks],
+  )
   const plannedProps = {
-    planned,
+    planned: shownPlanned,
     onOpenPlanned: openPlanned,
     // `Planejar dia` in the header of a day (PLAN-31).
     onPlanDay: (shown: string) => navigate(`/planejar/${shown}`),
@@ -328,9 +345,11 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
       showDays={view === 'week'}
       zoom={zoom}
       hideBreaks={hideBreaks}
+      hideScheduled={hideScheduled}
       onDaysChange={pickDays}
       onZoomChange={pickZoom}
       onHideBreaksChange={pickHideBreaks}
+      onHideScheduledChange={pickHideScheduled}
     />
   )
   const draft = drag.draft !== null && drag.draft.sessionId === null ? drag.draft : null

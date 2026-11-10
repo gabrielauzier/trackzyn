@@ -20,6 +20,9 @@ interface AgendaViewMenuProps {
   onDaysChange: (days: WeekDay[]) => void
   onZoomChange: (zoom: Zoom) => void
   onHideBreaksChange?: (hide: boolean) => void
+  /** Whether the agenda hides the scheduled tasks and the planned tasks. */
+  hideScheduled?: boolean
+  onHideScheduledChange?: (hide: boolean) => void
 }
 
 /** A Monday, to name the week days in the reader's language. */
@@ -32,10 +35,20 @@ function dayName(day: WeekDay, locale: string): string {
 
 /**
  * The view options of the agenda (DAYS-01 to DAYS-18): a button in the corner of the grid that opens a menu with the
- * week days to show (week view only), `Ocultar intervalos` (ADJ-21) and the zoom. Every change applies at once, and the
- * menu stays open.
+ * week days to show (week view only), `Exibir intervalos` (ADJ-21), `Exibir agendamentos` and the zoom. Both switches
+ * are on when nothing is hidden. Every change applies at once, and the menu stays open.
  */
-export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDaysChange, onZoomChange, onHideBreaksChange }: AgendaViewMenuProps) {
+export function AgendaViewMenu({
+  days,
+  showDays,
+  zoom,
+  hideBreaks = false,
+  hideScheduled = false,
+  onDaysChange,
+  onZoomChange,
+  onHideBreaksChange,
+  onHideScheduledChange,
+}: AgendaViewMenuProps) {
   const { t, i18n } = useTranslation()
   const id = useId()
   const trigger = useRef<HTMLButtonElement>(null)
@@ -68,8 +81,8 @@ export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDay
           className="relative inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground data-[state=open]:border-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary"
         >
           <SlidersHorizontal className="size-4" aria-hidden />
-          {/* A hidden day or hidden breaks: the view differs from the default (DAYS-14, ADJ-24). */}
-          {(filtered || hideBreaks) && (
+          {/* A hidden day, hidden breaks or hidden schedules: the view differs from the default (DAYS-14, ADJ-24). */}
+          {(filtered || hideBreaks || hideScheduled) && (
             <span data-filter-dot aria-hidden className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-card bg-primary" />
           )}
         </button>
@@ -124,17 +137,31 @@ export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDay
         <div data-hide-breaks className="flex items-center justify-between gap-4 px-2">
           <div className="flex flex-col gap-0.5">
             <label id={`${id}-breaks`} htmlFor={`${id}-breaks-switch`} className="text-sm font-medium">
-              {t('agenda.viewMenu.hideBreaks')}
+              {t('agenda.viewMenu.showBreaks')}
             </label>
             <span id={`${id}-breaks-hint`} className="text-xs text-muted-foreground">
-              {t('agenda.viewMenu.hideBreaksHint')}
+              {t('agenda.viewMenu.showBreaksHint')}
             </span>
           </div>
           <Switch
             id={`${id}-breaks-switch`}
             aria-labelledby={`${id}-breaks`}
-            checked={hideBreaks}
-            onCheckedChange={(hide) => onHideBreaksChange?.(hide)}
+            checked={!hideBreaks}
+            onCheckedChange={(show) => onHideBreaksChange?.(!show)}
+          />
+        </div>
+        <div data-hide-scheduled className="flex items-center justify-between gap-4 px-2">
+          <div className="flex flex-col gap-0.5">
+            <label id={`${id}-scheduled`} htmlFor={`${id}-scheduled-switch`} className="text-sm font-medium">
+              {t('agenda.viewMenu.showScheduled')}
+            </label>
+            <span className="text-xs text-muted-foreground">{t('agenda.viewMenu.showScheduledHint')}</span>
+          </div>
+          <Switch
+            id={`${id}-scheduled-switch`}
+            aria-labelledby={`${id}-scheduled`}
+            checked={!hideScheduled}
+            onCheckedChange={(show) => onHideScheduledChange?.(!show)}
           />
         </div>
         <div className="-mx-3 h-px bg-border" />

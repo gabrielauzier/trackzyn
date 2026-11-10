@@ -249,7 +249,7 @@ describe('AgendaPage', () => {
     const openPause: AgendaSession = { ...pause, id: 'b2', started_at: '2026-11-04T17:00:00.000Z', ended_at: null }
     const turnOn = async (user: ReturnType<typeof renderWithProviders>['user']) => {
       await user.click(await screen.findByRole('button', { name: /^View options/ }))
-      await user.click(within(await screen.findByRole('dialog')).getByRole('switch', { name: 'Hide breaks' }))
+      await user.click(within(await screen.findByRole('dialog')).getByRole('switch', { name: 'Show breaks' }))
     }
 
     it('ADJ-22 ADJ-23 takes every break off at once, open or closed, keeping the day totals, and brings them back', async () => {
@@ -267,7 +267,7 @@ describe('AgendaPage', () => {
       expect(container.querySelector('[data-filter-dot]')).not.toBeNull()
       expect(screen.getByRole('dialog')).toBeInTheDocument()
 
-      await user.click(within(screen.getByRole('dialog')).getByRole('switch', { name: 'Hide breaks' }))
+      await user.click(within(screen.getByRole('dialog')).getByRole('switch', { name: 'Show breaks' }))
       expect(screen.getByRole('button', { name: 'Break, 11:00 – 11:15' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Break, 14:00 – now' })).toBeInTheDocument()
     })
@@ -1768,6 +1768,47 @@ describe('AgendaPage: the saved plan (PLAN-24 to PLAN-29)', () => {
 
     await waitFor(() => expect(screen.queryByRole('button', { name: /^Fix the widget/ })).toBeNull())
     expect(screen.getByRole('button', { name: /^Coffee, 15:00 – 15:15/ })).toBeInTheDocument()
+  })
+
+  it('Show schedules off takes the scheduled and planned tasks off the grid and the Sem hora row, keeps the planned breaks, and is remembered', async () => {
+    const task = { id: 's1', title: 'Weekly sync', list, column: 'this_week' as const, position: 0, estimate_minutes: 60, series: null }
+    vi.mocked(agenda.scheduled).mockResolvedValue({
+      timed: [{ ...task, scheduled_on: '2026-11-03', scheduled_time: '14:00' }],
+      untimed: [{ ...task, id: 's2', title: 'Call the bank', scheduled_on: '2026-11-03', scheduled_time: null }],
+      projected: [],
+    })
+    const { user, container, unmount } = show()
+    await screen.findByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ })
+    expect(await screen.findByRole('button', { name: /^Weekly sync/ })).toBeInTheDocument()
+    expect(container.querySelector('[data-untimed-row]')).not.toBeNull()
+
+    await user.click(screen.getByRole('button', { name: /^View options/ }))
+    const toggle = within(await screen.findByRole('dialog')).getByRole('switch', { name: 'Show schedules' })
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await user.click(toggle)
+
+    expect(screen.queryByRole('button', { name: /^Fix the widget/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Weekly sync/ })).toBeNull()
+    expect(container.querySelector('[data-untimed-row]')).toBeNull()
+    expect(screen.getByRole('button', { name: /^Coffee, 15:00 – 15:15/ })).toBeInTheDocument()
+    expect(container.querySelector('[data-filter-dot]')).not.toBeNull()
+    expect(localStorage.getItem('agenda.hideScheduled')).toBe('true')
+    unmount()
+
+    show()
+    await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ })
+    expect(screen.queryByRole('button', { name: /^Fix the widget/ })).toBeNull()
+    localStorage.removeItem('agenda.hideScheduled')
+  })
+
+  it('Show breaks off also takes the planned breaks off the grid', async () => {
+    const { user } = show()
+    await screen.findByRole('button', { name: /^Coffee, 15:00 – 15:15/ })
+    await user.click(screen.getByRole('button', { name: /^View options/ }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('switch', { name: 'Show breaks' }))
+    expect(screen.queryByRole('button', { name: /^Coffee/ })).toBeNull()
+    expect(screen.getByRole('button', { name: /^Fix the widget, 09:00 – 10:00/ })).toBeInTheDocument()
+    localStorage.removeItem('agenda.hideBreaks')
   })
 
   it('PLAN-29 a click on a planned task opens the plan of its day', async () => {

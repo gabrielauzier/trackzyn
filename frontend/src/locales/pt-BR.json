@@ -829,8 +829,10 @@
       "days": "Dias da semana",
       "allDays": "Todos",
       "workDays": "Seg – Sex",
-      "hideBreaks": "Ocultar intervalos",
-      "hideBreaksHint": "Esconde as pausas da agenda"
+      "showBreaks": "Exibir intervalos",
+      "showBreaksHint": "Mostra as pausas na agenda",
+      "showScheduled": "Exibir agendamentos",
+      "showScheduledHint": "Mostra as tarefas agendadas e planejadas"
     },
     "list": "Lista",
     "allLists": "Todas as listas",
