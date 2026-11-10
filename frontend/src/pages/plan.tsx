@@ -58,7 +58,7 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
   const navigate = useNavigate()
-  const { canWrite } = useWorkspace()
+  const { canWrite, current: workspace } = useWorkspace()
   const { setDraftDay, confirmLeave } = useDraftGuard()
   const { plan, candidates, save, saveState, clearSave, saveWorkday } = planned
   const current = plan.data ?? initial
@@ -158,7 +158,8 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
   }, [timed, draft.blocks])
 
   const workday = current.workday
-  const fits = capacity(draft.blocks, fixedTimed, workday)
+  // The bar counts overlapping blocks once when the workspace counts net hours (HOURS-27).
+  const fits = capacity(draft.blocks, fixedTimed, workday, workspace?.hours_count_mode ?? 'gross')
   const breakList = activeLists[0] ?? null
   const selected = draft.blocks.find((block) => block.key === selectedKey) ?? null
   const tasksCount = draft.blocks.filter((block) => block.kind === 'task').length

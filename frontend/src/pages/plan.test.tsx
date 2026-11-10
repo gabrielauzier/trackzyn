@@ -18,9 +18,12 @@ vi.mock('@/lib/api', () => ({
   tasks: { create: vi.fn() },
 }))
 
-const workspace = vi.hoisted(() => ({ canWrite: true }))
+const workspace = vi.hoisted(() => ({ canWrite: true, hoursCountMode: 'gross' as 'gross' | 'net' }))
 vi.mock('@/contexts/workspace-context', () => ({
-  useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace' }, canWrite: workspace.canWrite }),
+  useWorkspace: () => ({
+    current: { id: 'ws', name: 'Synthetic workspace', hours_count_mode: workspace.hoursCountMode },
+    canWrite: workspace.canWrite,
+  }),
 }))
 
 const SP = 'America/Sao_Paulo'
@@ -86,6 +89,7 @@ function show(route = `/planejar/${DAY}`) {
 beforeEach(async () => {
   vi.clearAllMocks()
   workspace.canWrite = true
+  workspace.hoursCountMode = 'gross'
   // Sunday 8 November 2026, 23:30 in São Paulo: already Monday in UTC.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-11-09T02:30:00.000Z'))
@@ -455,5 +459,29 @@ describe('PlanPage', () => {
     await user.click(screen.getByRole('button', { name: 'Próximo dia' }))
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar' }))
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-10'))
+  })
+})
+
+describe('PlanPage in net hours (#42)', () => {
+  const block = (id: string, start: string, minutes: number) => ({
+    id,
+    kind: 'task' as const,
+    start,
+    minutes,
+    task: { id: `t-${id}`, title: `Task ${id}`, list, done: false, scheduled_on: DAY, estimate_minutes: minutes },
+  })
+  const lunch = { id: 'lunch', kind: 'break' as const, start: '12:00', minutes: 60, name: 'Almoço', list }
+  const capacityText = () => document.querySelector('[data-slot="capacity-text"]')
+
+  it('HOURS-27 HOURS-29 follows the workspace: 3h planejadas de 9h livres · 0min em pausas in net, 4h de 8h with 1h em pausas in gross', async () => {
+    vi.mocked(plans.get).mockResolvedValue(planOf({ blocks: [block('a', '10:00', 120), block('b', '11:00', 120), lunch] }))
+    workspace.hoursCountMode = 'net'
+    const { unmount } = show()
+    await waitFor(() => expect(capacityText()?.textContent).toBe('3h planejadas de 9h livres · 0min em pausas'))
+    unmount()
+
+    workspace.hoursCountMode = 'gross'
+    show()
+    await waitFor(() => expect(capacityText()?.textContent).toBe('4h planejadas de 8h livres · 1h em pausas'))
   })
 })

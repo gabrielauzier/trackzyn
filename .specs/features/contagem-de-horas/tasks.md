@@ -258,11 +258,13 @@ T4 → T8
 
 **Done when**:
 
-- [ ] Expediente 09:00–18:00, blocos 10:00–12:00 e 11:00–13:00, almoço 12:00–13:00: `net` 3h planejadas de 9h livres, sem pausa; `gross` 4h de 8h, 1h em pausas
-- [ ] Agendada sem bloco coberta por um bloco não conta como agendada no `net`
-- [ ] Pausa coberta por uma agendada sai das pausas no `net`
-- [ ] Página do plano passa o modo do workspace (teste de página com a barra no `net`)
-- [ ] Gate check passes: Full (frontend)
+- [x] Expediente 09:00–18:00, blocos 10:00–12:00 e 11:00–13:00, almoço 12:00–13:00: `net` 3h planejadas de 9h livres, 0min em pausas; `gross` 4h de 8h, 1h em pausas
+- [x] Agendada sem bloco coberta por um bloco não conta como agendada no `net`
+- [x] Pausa coberta por uma agendada sai das pausas no `net`
+- [x] Página do plano passa o modo do workspace (teste de página com a barra no `net`)
+- [x] Gate check passes: Full (frontend)
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

@@ -149,7 +149,7 @@ O que o código já fixa:
 4. The system SHALL calcular `livres` como o expediente menos pausas e agendadas, e o excesso como planejadas menos livres, nos dois modos (PLAN-19, PLAN-20). (HOURS-30)
 5. WHERE o modo é `gross` the system SHALL calcular a barra como hoje. (HOURS-31)
 
-**Independent Test**: Com `Horas líquidas`, expediente 09:00–18:00, dois blocos de tarefa das 10:00 às 12:00 e das 11:00 às 13:00 e um almoço das 12:00 às 13:00: a barra mostra `3h planejadas de 9h livres` (o almoço coberto pelo bloco não conta como pausa); com `Horas totais`, `4h planejadas de 8h livres · 1h em pausas`.
+**Independent Test**: Com `Horas líquidas`, expediente 09:00–18:00, dois blocos de tarefa das 10:00 às 12:00 e das 11:00 às 13:00 e um almoço das 12:00 às 13:00: a barra mostra `3h planejadas de 9h livres · 0min em pausas` (o almoço coberto pelo bloco não conta como pausa; o trecho de pausas aparece sempre, PLAN-19); com `Horas totais`, `4h planejadas de 8h livres · 1h em pausas`.
 
 ---
 
@@ -196,11 +196,11 @@ O que o código já fixa:
 | HOURS-24 | P1: Tempo gasto | T3 | Implementing |
 | HOURS-25 | P1: Tempo gasto | T3 | Implementing |
 | HOURS-26 | P1: Tempo gasto | T3 | Implementing |
-| HOURS-27 | P1: Capacidade do plano | T7 | In Tasks |
-| HOURS-28 | P1: Capacidade do plano | T7 | In Tasks |
-| HOURS-29 | P1: Capacidade do plano | T7 | In Tasks |
-| HOURS-30 | P1: Capacidade do plano | T7 | In Tasks |
-| HOURS-31 | P1: Capacidade do plano | T7 | In Tasks |
+| HOURS-27 | P1: Capacidade do plano | T7 | Implementing |
+| HOURS-28 | P1: Capacidade do plano | T7 | Implementing |
+| HOURS-29 | P1: Capacidade do plano | T7 | Implementing |
+| HOURS-30 | P1: Capacidade do plano | T7 | Implementing |
+| HOURS-31 | P1: Capacidade do plano | T7 | Implementing |
 | HOURS-32 | Edge case | T3, T5 | In Tasks |
 | HOURS-33 | Edge case | T3, T5 | In Tasks |
 | HOURS-34 | Edge case | T3, T5 | In Tasks |
