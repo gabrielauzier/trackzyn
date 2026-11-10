@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
-import { users, workspaces } from '../db/schema.ts'
+import { HOURS_COUNT_MODES, users, workspaces } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { isValidTimezone } from '../services/timezones.ts'
 import { authGuards } from '../plugins/auth.ts'
@@ -46,6 +46,8 @@ const workspaceUpdateBody = z.object({
   min_session_minutes: z.number().int().min(1).max(60).nullable().optional(),
   /** Absent keeps the value; null turns the join off (#23). */
   merge_gap_minutes: z.number().int().min(1).max(60).nullable().optional(),
+  /** Absent keeps the value; null is refused, the mode always has one (#42). */
+  hours_count_mode: z.enum(HOURS_COUNT_MODES).optional(),
 })
 
 const memberInviteBody = z.object({
@@ -119,6 +121,7 @@ export function workspaceRoutes(ctx: AppContext) {
         }
         if (body.min_session_minutes !== undefined) updates.minSessionMinutes = body.min_session_minutes
         if (body.merge_gap_minutes !== undefined) updates.mergeGapMinutes = body.merge_gap_minutes
+        if (body.hours_count_mode !== undefined) updates.hoursCountMode = body.hours_count_mode
         if (Object.keys(updates).length > 0) await ctx.db.update(workspaces).set(updates).where(eq(workspaces.id, id))
         const updated = (await getWorkspace(ctx.db, id)) ?? workspace
         return toWorkspaceRead(updated, member.role)

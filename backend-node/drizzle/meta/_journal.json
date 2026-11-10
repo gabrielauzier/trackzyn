@@ -113,6 +113,13 @@
       "when": 1794326849676,
       "tag": "0015_planned_break_started",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794352603606,
+      "tag": "0016_workspace_hours_count_mode",
+      "breakpoints": true
     }
   ]
 }

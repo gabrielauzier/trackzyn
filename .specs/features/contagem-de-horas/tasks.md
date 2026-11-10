@@ -86,10 +86,13 @@ T4 → T8
 
 **Done when**:
 
-- [ ] Workspace existente lê `gross`; workspace novo nasce `gross`
-- [ ] `CHECK` recusa um valor fora de `gross`/`net` direto no banco
-- [ ] `PATCH` grava `net` e `gross`; sem o campo mantém; `null` e `liquid` → 422 sem gravar; editor e leitor → 403; gestor aceito
-- [ ] Gate check passes: Full (backend)
+- [x] Workspace existente lê `gross`; workspace novo nasce `gross`
+- [x] `CHECK` recusa um valor fora de `gross`/`net` direto no banco
+- [x] `PATCH` grava `net` e `gross`; sem o campo mantém; `null` e `liquid` → 422 sem gravar; editor e leitor → 403; gestor aceito
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/src/services/workspaces.ts` (os dois workspaces novos montados em memória nascem `gross`), `backend-node/test/fixtures/pg-columns.json`, `backend-node/test/db/pglite.test.ts` e `backend-node/test/db/baseline.test.ts` (catálogo relido de um PostgreSQL 16.15 em 2026-11-10; a única mudança é a coluna nova).
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

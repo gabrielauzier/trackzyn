@@ -170,11 +170,11 @@ O que o código já fixa:
 
 | Requirement ID | Story | Task | Status |
 | --- | --- | --- | --- |
-| HOURS-01 | P1: Escolher o modo | T1 | In Tasks |
-| HOURS-02 | P1: Escolher o modo | T1 | In Tasks |
-| HOURS-03 | P1: Escolher o modo | T1 | In Tasks |
-| HOURS-04 | P1: Escolher o modo | T1 | In Tasks |
-| HOURS-05 | P1: Escolher o modo | T1 | In Tasks |
+| HOURS-01 | P1: Escolher o modo | T1 | Implementing |
+| HOURS-02 | P1: Escolher o modo | T1 | Implementing |
+| HOURS-03 | P1: Escolher o modo | T1 | Implementing |
+| HOURS-04 | P1: Escolher o modo | T1 | Implementing |
+| HOURS-05 | P1: Escolher o modo | T1 | Implementing |
 | HOURS-06 | P1: Escolher o modo | T2 | In Tasks |
 | HOURS-07 | P1: Escolher o modo | T2 | In Tasks |
 | HOURS-08 | P1: Escolher o modo | T2 | In Tasks |

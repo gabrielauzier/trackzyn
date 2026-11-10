@@ -33,7 +33,9 @@ describe('the Drizzle schema on PGlite', () => {
     // got the drizzle/*.sql files in journal order: the only change from the reading through 0011 was
     // task_series.time (time, nullable). The tables day_plans and day_plan_blocks of 0014_day_plans were added on
     // 2026-11-07 from the same catalog query on PGlite, as no PostgreSQL server was running; day_plan_blocks.started_at
-    // (timestamptz, nullable) of 0015_planned_break_started on 2026-11-10, the same way.
+    // (timestamptz, nullable) of 0015_planned_break_started on 2026-11-10, the same way. Read again on 2026-11-10 from a
+    // PostgreSQL 16.15 through 0016_workspace_hours_count_mode, journal order: the only change was
+    // workspaces.hours_count_mode (character varying(5), not null) after merge_gap_minutes.
     const expected = JSON.parse(readFileSync(join(import.meta.dirname, '../fixtures/pg-columns.json'), 'utf8')) as Record<
       string,
       Array<{ column: string; type: string; nullable: boolean; maxLength: number | null }>
