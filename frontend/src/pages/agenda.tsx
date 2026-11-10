@@ -309,6 +309,11 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
     const prior = confirming?.id === taskId ? confirming : null
     const task = prior?.task ?? [...timed, ...untimed].find((item) => item.id === taskId)
     if (!task) return
+    // Dropped back on its saved day and time, the move is called off, as `Cancelar` (D35).
+    if (day === task.scheduled_on && time === task.scheduled_time) {
+      setConfirming(null)
+      return
+    }
     const origin = prior ? { day: task.scheduled_on, time: task.scheduled_time } : from
     const change: ScheduleChange = { scheduled_on: day, scheduled_time: time }
     const undo: ScheduleChange = { scheduled_on: origin.day, scheduled_time: origin.time }

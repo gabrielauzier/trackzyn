@@ -1686,6 +1686,105 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
       await waitFor(() => expect(tasks.update).toHaveBeenLastCalledWith('t', { scheduled_on: '2026-11-05', scheduled_time: '10:00' }))
     })
 
+    it('D35 an occurrence of a series dragged twice asks for the scope and undoes to the saved place', async () => {
+      const rule = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Weekly review', { scheduled_time: '10:00', estimate_minutes: 60, series: { id: 'sr', rule } })],
+        untimed: [],
+        projected: [],
+      })
+      const { container, user } = renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Weekly review/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 350, y: px(16, 10) })
+      await screen.findByRole('button', { name: 'Save time' })
+      const pendingBlock = within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-05"]')!).getByRole('button', { name: /^Weekly review/ })
+      dragTo(pendingBlock, { x: 350, y: px(16, 10) }, { x: 450, y: px(12, 10) })
+      const panel = (await screen.findByRole('heading', { name: 'Weekly review' })).closest('aside')!
+      expect(within(panel).getByText('Thu, Nov 5 · 10:00 – 11:00').tagName).toBe('DEL')
+      await saveTime()
+      await user.click(await screen.findByRole('button', { name: /^This occurrence only/ }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('t', { scheduled_on: '2026-11-06', scheduled_time: '12:00', scope: 'occurrence' }))
+      await waitFor(() => expect(toast.success).toHaveBeenCalled())
+      const [, options] = lastToast()
+      ;(options as { action: { label: string; onClick: () => void } }).action.onClick()
+      await waitFor(() => expect(tasks.update).toHaveBeenLastCalledWith('t', { scheduled_on: '2026-11-05', scheduled_time: '10:00', scope: 'occurrence' }))
+    })
+
+    it('D35 a task from Sem hora without an estimate, dragged twice, still gets 1h and Desfazer clears it (D22)', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [scheduledTask('u', 'Call the bank')], projected: [] })
+      const { container } = renderWithProviders(<AgendaPage />)
+      await waitFor(() => expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull())
+      dragTo(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { x: 320, y: -100 }, { x: 450, y: px(15, 20) })
+      await screen.findByRole('button', { name: 'Save time' })
+      const pendingBlock = within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-06"]')!).getByRole('button', { name: /^Call the bank/ })
+      dragTo(pendingBlock, { x: 450, y: px(15, 20) }, { x: 550, y: px(17, 10) })
+      await saveTime()
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('u', { scheduled_on: '2026-11-07', scheduled_time: '17:00', estimate_minutes: 60 }))
+      await waitFor(() => expect(toast.success).toHaveBeenCalled())
+      const [, options] = lastToast()
+      ;(options as { action: { label: string; onClick: () => void } }).action.onClick()
+      await waitFor(() => expect(tasks.update).toHaveBeenLastCalledWith('u', { scheduled_on: '2026-11-05', scheduled_time: null, estimate_minutes: null }))
+    })
+
+    it('D35 a task moved from Sem hora to the Sem hora of another day keeps no time', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [scheduledTask('u', 'Call the bank')], projected: [] })
+      const { container } = renderWithProviders(<AgendaPage />)
+      await waitFor(() => expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull())
+      dragTo(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { x: 320, y: -100 }, { x: 550, y: -60 })
+      await saveTime()
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('u', { scheduled_on: '2026-11-07', scheduled_time: null }))
+    })
+
+    it('D35 Cancel on a drop from Sem hora puts the task back', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({ timed: [], untimed: [scheduledTask('u', 'Call the bank')], projected: [] })
+      const { container, user } = renderWithProviders(<AgendaPage />)
+      await waitFor(() => expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull())
+      dragTo(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { x: 320, y: -100 }, { x: 450, y: px(15, 20) })
+      await user.click(await screen.findByRole('button', { name: 'Cancel' }))
+      expect(container.querySelector('[data-untimed-task="u"]')).not.toBeNull()
+      expect(within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-06"]')!).queryByRole('button', { name: /^Call the bank/ })).toBeNull()
+      expect(tasks.update).not.toHaveBeenCalled()
+    })
+
+    it('D35 another task dragged while one is pending moves only that task', async () => {
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 }), scheduledTask('w', 'Write notes', { scheduled_time: '14:00', estimate_minutes: 30 })],
+        untimed: [],
+        projected: [],
+      })
+      renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Plan the sprint/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 550, y: px(8, 10) })
+      await screen.findByRole('button', { name: 'Save time' })
+      dragTo(screen.getByRole('button', { name: /^Write notes/ }), { x: 350, y: px(14, 5) }, { x: 450, y: px(16, 5) })
+      const panel = (await screen.findByRole('heading', { name: 'Write notes' })).closest('aside')!
+      expect(within(panel).getByText('Thu, Nov 5 · 14:00 – 14:30').tagName).toBe('DEL')
+      await saveTime()
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith('w', { scheduled_on: '2026-11-06', scheduled_time: '16:00' }))
+    })
+
+    it('D35 a pending block dropped back on its saved day and time calls the move off, as Cancel', async () => {
+      const rule = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+      vi.mocked(agenda.scheduled).mockResolvedValue({
+        timed: [scheduledTask('t', 'Weekly review', { scheduled_time: '10:00', estimate_minutes: 60, series: { id: 'sr', rule } })],
+        untimed: [],
+        projected: [],
+      })
+      const { container } = renderWithProviders(<AgendaPage />)
+      const block = await screen.findByRole('button', { name: /^Weekly review/ })
+      dragTo(block, { x: 350, y: px(10, 10) }, { x: 450, y: px(16, 10) })
+      await screen.findByRole('button', { name: 'Save time' })
+      const pendingBlock = within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-06"]')!).getByRole('button', { name: /^Weekly review/ })
+      dragTo(pendingBlock, { x: 450, y: px(16, 10) }, { x: 350, y: px(10, 10) })
+
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Save time' })).toBeNull())
+      expect(screen.queryByRole('button', { name: /^This occurrence only/ })).toBeNull()
+      expect(within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-05"]')!).getByRole('button', { name: /^Weekly review/ })).toBeInTheDocument()
+      expect(within(container.querySelector<HTMLElement>('[data-agenda-column="2026-11-06"]')!).queryByRole('button', { name: /^Weekly review/ })).toBeNull()
+      expect(tasks.update).not.toHaveBeenCalled()
+      expect(toast.success).not.toHaveBeenCalled()
+    })
+
     it.each(['Cancel', 'Escape'])('D35 %s puts the block back and saves nothing', async (how) => {
       vi.mocked(agenda.scheduled).mockResolvedValue({
         timed: [scheduledTask('t', 'Plan the sprint', { scheduled_time: '10:00', estimate_minutes: 90 })],

@@ -233,6 +233,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - Durante o arraste, a tarefa SHALL seguir o cursor como uma cópia com sombra e o lugar de origem SHALL ficar apagado; sobre a grade, o rascunho SHALL mostrar o rótulo `<dia> · HH:MM – HH:MM`; sobre a linha `Sem hora` de outro dia, a célula de destino SHALL ficar destacada e o rótulo SHALL dizer `Mover para <dia> · sem hora`, e soltar ali SHALL propor só o dia novo. `Esc` SHALL cancelar e devolver a tarefa.
 - Depois de `Salvar horário`, o app SHALL mostrar um aviso `Agendada para <dia>, HH:MM` com `Desfazer`, que volta o dia, a hora e a estimativa ao que eram.
 - WHEN o usuário arrasta de novo o bloco ainda não salvo THEN o horário riscado, o `Desfazer` e a pergunta da série SHALL seguir o agendamento salvo, não o lugar pendente (D35).
+- WHEN o usuário solta o bloco ainda não salvo de volta no dia e na hora salvos THEN o sistema SHALL desfazer a mudança como `Cancelar`: fechar a confirmação, sem gravar nada nem mostrar aviso (D35).
 - WHEN o papel é `viewer` THEN as tarefas da linha `Sem hora` SHALL não ser arrastáveis.
 
 ## Decisões
@@ -276,7 +277,7 @@ A tarefa ganha `series_id` (`uuid`, nulo, `on delete set null`): a ocorrência a
 - **D32 (2026-11-07):** o painel `Novo agendamento` pergunta "só esta ou esta e as próximas" quando a tarefa escolhida é ocorrência de uma série.
 - **D33 (2026-11-07):** o `delete_task` do MCP numa ocorrência aberta segue o `DELETE` da API sem escopo: exclui só esta e cria a próxima.
 - **D34 (2026-11-07):** a hora do agendamento é um campo `HH:MM`, não uma lista de horários, e aceita qualquer minuto (10:10 vale). A API, o MCP e o banco deixam de exigir o passo de 15 min (migration 0013); os segundos continuam zerados. O arraste na grade continua encaixando em 15 min (D22).
-- **D35 (2026-11-07):** soltar uma tarefa agendada na Agenda (bloco, linha `Sem hora` ou de `Sem hora` para a grade) pede confirmação como a sessão movida: o painel `Novo horário — ainda não salvo` com `Cancelar` e `Salvar horário`. Numa série, a pergunta `Só esta` ou `Esta e as próximas` vem depois de `Salvar horário`. O aviso com `Desfazer` continua depois de salvar.
+- **D35 (2026-11-07):** soltar uma tarefa agendada na Agenda (bloco, linha `Sem hora` ou de `Sem hora` para a grade) pede confirmação como a sessão movida: o painel `Novo horário — ainda não salvo` com `Cancelar` e `Salvar horário`. Numa série, a pergunta `Só esta` ou `Esta e as próximas` vem depois de `Salvar horário`. O aviso com `Desfazer` continua depois de salvar. Soltar de volta no lugar salvo vale como `Cancelar` (2026-11-10).
 
 Não há decisões em aberto.
 
