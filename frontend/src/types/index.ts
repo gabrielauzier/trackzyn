@@ -73,6 +73,8 @@ export interface AppSetting {
   value: string
 }
 
+export type HoursCountMode = 'gross' | 'net'
+
 export interface Workspace {
   id: string
   name: string
@@ -87,6 +89,8 @@ export interface Workspace {
   min_session_minutes: number | null
   /** Sessions of one list and kind this many minutes apart or less are drawn as one block in the agenda; null keeps them apart. */
   merge_gap_minutes: number | null
+  /** How totals count time that overlaps: gross sums every interval, net counts the overlap once (#42). */
+  hours_count_mode: HoursCountMode
   created_at: string
   created_by_user_id: string | null
   managed_by_user_id: string | null

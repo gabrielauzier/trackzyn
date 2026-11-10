@@ -114,11 +114,13 @@ T4 → T8
 
 **Done when**:
 
-- [ ] O card mostra a descrição, e cada opção o nome, o exemplo e a explicação da spec; a opção guardada aparece marcada
-- [ ] Escolher a outra chama `workspacesApi.update({ hours_count_mode })` e invalida as consultas
-- [ ] Sem `canManage`, as duas opções ficam desabilitadas
-- [ ] Teste do cliente HTTP com o corpo do `PATCH` (L-007)
-- [ ] Gate check passes: Full (frontend)
+- [x] O card mostra a descrição, e cada opção o nome, o exemplo e a explicação da spec; a opção guardada aparece marcada
+- [x] Escolher a outra chama `workspacesApi.update({ hours_count_mode })` e invalida as consultas
+- [x] Sem `canManage`, as duas opções ficam desabilitadas
+- [x] Teste do cliente HTTP com o corpo do `PATCH` (L-007)
+- [x] Gate check passes: Full (frontend)
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

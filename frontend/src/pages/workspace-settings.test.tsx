@@ -43,6 +43,7 @@ const workspace = (minSessionMinutes: number | null): Workspace => ({
   color: null,
   min_session_minutes: minSessionMinutes,
   merge_gap_minutes: null,
+  hours_count_mode: 'gross',
   created_at: '2026-10-01T00:00:00.000Z',
   created_by_user_id: 'u1',
   managed_by_user_id: null,
@@ -266,6 +267,75 @@ describe('workspace settings: join near sessions (#23)', () => {
       expect(screen.getByText('minutos')).toBeInTheDocument()
       fireEvent.change(screen.getByLabelText('Até'), { target: { value: '61' } })
       expect(screen.getByText('Entre 1 e 60 minutos.')).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+})
+
+describe('workspace settings: hours count mode (#42)', () => {
+  const card = () => screen.getByRole('radiogroup', { name: 'Hours count' })
+  const option = (name: string) => screen.getByRole('radio', { name: new RegExp(`^${name}`) })
+
+  it('HOURS-06 shows the card right below Join near sessions, with its description, each option with its example and explanation, and the stored mode checked', async () => {
+    state.workspace = { ...workspace(null), hours_count_mode: 'net' }
+    renderWithProviders(<WorkspaceSettingsPage />)
+    const join = await screen.findByRole('switch', { name: 'Join near sessions' })
+    expect(join.compareDocumentPosition(card()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(
+      screen.getByText('How the Agenda, the Reports, the Planning and the time spent on tasks add up sessions and blocks that overlap.'),
+    ).toBeInTheDocument()
+
+    expect(option('Total hours')).toHaveTextContent('09:00–11:00 + 10:00–12:00 = 4h')
+    expect(option('Total hours')).toHaveTextContent('Adds up each whole session, even when sessions overlap.')
+    expect(option('Net hours')).toHaveTextContent('09:00–11:00 + 10:00–12:00 = 3h')
+    expect(option('Net hours')).toHaveTextContent('Time in which sessions or blocks overlap counts once.')
+    expect(option('Net hours')).toHaveAttribute('aria-checked', 'true')
+    expect(option('Total hours')).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('HOURS-07 saves net at once with only the mode in the body, and refreshes the workspace and every query', async () => {
+    const { user, queryClient } = renderWithProviders(<WorkspaceSettingsPage />)
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
+    await user.click(await screen.findByRole('radio', { name: /^Net hours/ }))
+
+    await waitFor(() => expect(workspacesApi.update).toHaveBeenCalledWith('ws', { hours_count_mode: 'net' }))
+    await waitFor(() => expect(invalidate).toHaveBeenCalled())
+  })
+
+  it('HOURS-07 sends nothing when the stored mode is clicked again', async () => {
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    await user.click(await screen.findByRole('radio', { name: /^Total hours/ }))
+    expect(workspacesApi.update).not.toHaveBeenCalled()
+  })
+
+  it('HOURS-08 shows an editor both options disabled, with the stored mode checked, and sends nothing on a click', async () => {
+    state.canManage = false
+    state.workspace = { ...workspace(null), hours_count_mode: 'net', role: 'editor' }
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    const total = await screen.findByRole('radio', { name: /^Total hours/ })
+    expect(total).toBeDisabled()
+    expect(option('Net hours')).toBeDisabled()
+    expect(option('Net hours')).toHaveAttribute('aria-checked', 'true')
+    await user.click(total)
+    expect(workspacesApi.update).not.toHaveBeenCalled()
+  })
+
+  it('HOURS-06 names it Contagem de horas in Portuguese, with Horas totais and Horas líquidas', async () => {
+    const { i18n } = await import('@/test/utils')
+    await i18n.changeLanguage('pt-BR')
+    try {
+      renderWithProviders(<WorkspaceSettingsPage />)
+      expect(await screen.findByRole('radiogroup', { name: 'Contagem de horas' })).toBeInTheDocument()
+      expect(
+        screen.getByText('Como a Agenda, os Relatórios, o Planejamento e o tempo gasto das tarefas somam sessões e blocos que se sobrepõem.'),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('radio', { name: /^Horas totais/ })).toHaveTextContent(
+        'Soma cada sessão inteira, mesmo quando sessões se sobrepõem.',
+      )
+      expect(screen.getByRole('radio', { name: /^Horas líquidas/ })).toHaveTextContent(
+        'O tempo em que sessões ou blocos se sobrepõem conta uma vez.',
+      )
     } finally {
       await i18n.changeLanguage('en')
     }

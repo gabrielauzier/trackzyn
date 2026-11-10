@@ -175,9 +175,9 @@ O que o código já fixa:
 | HOURS-03 | P1: Escolher o modo | T1 | Implementing |
 | HOURS-04 | P1: Escolher o modo | T1 | Implementing |
 | HOURS-05 | P1: Escolher o modo | T1 | Implementing |
-| HOURS-06 | P1: Escolher o modo | T2 | In Tasks |
-| HOURS-07 | P1: Escolher o modo | T2 | In Tasks |
-| HOURS-08 | P1: Escolher o modo | T2 | In Tasks |
+| HOURS-06 | P1: Escolher o modo | T2 | Implementing |
+| HOURS-07 | P1: Escolher o modo | T2 | Implementing |
+| HOURS-08 | P1: Escolher o modo | T2 | Implementing |
 | HOURS-09 | P1: Agenda | T6 | In Tasks |
 | HOURS-10 | P1: Agenda | T6 | In Tasks |
 | HOURS-11 | P1: Agenda | T6 | In Tasks |
