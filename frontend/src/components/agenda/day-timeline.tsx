@@ -52,8 +52,6 @@ interface DayTimelineProps {
   planned?: PlannedBlock[]
   onOpenPlanned?: (block: PlannedBlock) => void
   onPlanDay?: (day: string) => void
-  /** Where the day header pins, under the page's pinned header (the week's `stickyTop`). */
-  stickyTop?: number
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -90,7 +88,6 @@ export function DayTimeline({
   planned,
   onOpenPlanned,
   onPlanDay,
-  stickyTop,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -166,7 +163,6 @@ export function DayTimeline({
         planned={planned}
         onOpenPlanned={onOpenPlanned}
         onPlanDay={onPlanDay}
-        stickyTop={stickyTop}
       />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}

@@ -101,20 +101,21 @@ const dayHeader = async (day?: string) => {
 }
 
 describe('AgendaPage', () => {
-  it('AGENDA-02 pins the title and the toolbar on one line, with no legend, and pins the grid headers and the open panel under them', async () => {
+  it('AGENDA-02 puts the title and the toolbar on one line, with no legend, and fits the grid and the panel to the window', async () => {
     const { container } = renderWithProviders(<AgendaPage />)
     await screen.findByRole('button', { name: 'Write the report, 10:00 – 11:00' })
     const header = container.querySelector<HTMLElement>('[data-slot="agenda-header"]')!
-    expect(header).toHaveClass('lg:sticky', 'lg:top-0', 'lg:z-30', 'bg-background')
     expect(within(header).getByRole('heading', { level: 1, name: 'Agenda' })).toBeInTheDocument()
     expect(within(header).getByRole('button', { name: 'Next week' })).toBeInTheDocument()
     expect(header).toHaveClass('flex-wrap', 'items-center')
-    expect(header).not.toHaveClass('flex-col')
+    expect(header).not.toHaveClass('flex-col', 'lg:sticky')
     expect(screen.queryByRole('list', { name: 'Legend' })).toBeNull()
-    // The grid's headers pin right under it (jsdom gives it no height).
-    expect(container.querySelector<HTMLElement>('[data-agenda-sticky]')).toHaveClass('lg:sticky')
-    expect(container.querySelector<HTMLElement>('[data-agenda-sticky]')!.style.top).toBe('0px')
-    expect(container.querySelector('[data-slot="agenda-panels"]')).toHaveClass('lg:sticky', 'lg:overflow-y-auto', 'empty:hidden')
+    // The page does not scroll: the grid takes what the header leaves of the window and scrolls its hours inside.
+    const scroller = container.querySelector<HTMLElement>('[data-agenda-scroll]')!
+    expect(scroller).toHaveClass('overflow-y-auto', 'flex-1', 'min-h-0')
+    expect(scroller.parentElement).toHaveClass('max-h-[calc(100dvh-var(--agenda-header,10rem)-4rem)]', 'overflow-hidden')
+    expect(container.querySelector('[data-slot="agenda-panels"]')).toHaveClass('lg:overflow-y-auto', 'empty:hidden')
+    expect(container.querySelector('[data-slot="agenda-panels"]')).not.toHaveClass('lg:sticky')
   })
 
   it('opens on the current week and moves to the next one (AGENDA-08)', async () => {
@@ -142,7 +143,7 @@ describe('AgendaPage', () => {
     const levels = within(zoom).getAllByRole('button')
     expect(levels.map((level) => level.textContent)).toEqual(['1x', '2x', '3x'])
     const pressed = () => levels.filter((level) => level.getAttribute('aria-pressed') === 'true').map((level) => level.textContent)
-    const gridHeight = () => (container.querySelector('[data-agenda-body] > div') as HTMLElement).style.height
+    const gridHeight = () => (container.querySelector('[data-agenda-scroll] > div') as HTMLElement).style.height
 
     // 3x by default: 144 px an hour; the 1-hour session is as tall as an hour.
     expect(pressed()).toEqual(['3x'])
@@ -1547,7 +1548,7 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
         const left = (day: string) => (Number(day.slice(8)) - 2) * 100
         if (untimedDay) return DOMRect.fromRect({ x: left(untimedDay), y: -120, width: 100, height: 112 })
         if (agendaColumn) return DOMRect.fromRect({ x: left(agendaColumn), y: 0, width: 100, height: 24 * 60 * PX_PER_MINUTE })
-        if (this.hasAttribute('data-agenda-body')) return DOMRect.fromRect({ x: 0, y: 0, width: 700, height: 24 * 60 * PX_PER_MINUTE })
+        if (this.hasAttribute('data-agenda-scroll')) return DOMRect.fromRect({ x: 0, y: 0, width: 700, height: 24 * 60 * PX_PER_MINUTE })
         return real.call(this)
       })
       vi.mocked(tasks.update).mockResolvedValue({} as Task)

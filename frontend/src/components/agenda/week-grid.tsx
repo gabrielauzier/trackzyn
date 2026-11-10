@@ -1,4 +1,4 @@
-import { useMemo, useRef, type PointerEvent, type ReactNode } from 'react'
+import { useMemo, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
@@ -82,11 +82,6 @@ interface WeekGridProps {
   onOpenPlanned?: (block: Planned) => void
   /** `Planejar dia` in the header of today and the days after it: opens the plan of the day (PLAN-31). */
   onPlanDay?: (day: string) => void
-  /**
-   * Where the day headers and the `Sem hora` row pin, in px from the window's top: under the page's pinned header.
-   * Absent, they do not pin.
-   */
-  stickyTop?: number
 }
 
 /** The planned blocks of each day, in minutes since its midnight and cut at 24:00 (PLAN-44). */
@@ -148,16 +143,10 @@ export function WeekGrid({
   planned = NONE,
   onOpenPlanned,
   onPlanDay,
-  stickyTop,
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const sticky = useRef<HTMLDivElement>(null)
-  // The page scrolls the grid; 07:00 opens under the page's header and the grid's own, with a breath so its label shows
-  // (AGENDA-02).
-  const body = useZoomScroll<HTMLDivElement>(pxPerMinute, () =>
-    stickyTop === undefined ? 0 : stickyTop + (sticky.current?.offsetHeight ?? 0) + 12,
-  )
+  const scroller = useZoomScroll<HTMLDivElement>(pxPerMinute)
   const today = dayOf(now, timezone)
   const nowMinute = minuteOf(now, timezone)
   const draft = drag?.draft ?? null
@@ -206,18 +195,15 @@ export function WeekGrid({
   return (
     <div
       data-grabbing={grabbing || undefined}
-      className={cn('flex min-h-0 flex-col', grabbing && 'cursor-grabbing [&_*]:cursor-grabbing')}
+      // As tall as what is left of the window under the page's header (`--agenda-header`), so the page itself never
+      // scrolls: only the hours do (AGENDA-02).
+      className={cn(
+        'flex max-h-[calc(100dvh-var(--agenda-header,10rem)-4rem)] min-h-80 flex-col overflow-hidden rounded-xl border bg-card',
+        grabbing && 'cursor-grabbing [&_*]:cursor-grabbing',
+      )}
     >
-      {/* The day headers and the `Sem hora` row pin under the page's header while the page scrolls the hours. They draw
-          the grid's rounded top themselves, on the page's ground, so pinned they still look like the top of the grid. */}
-      <div
-        ref={sticky}
-        data-agenda-sticky
-        className={cn('bg-background', stickyTop !== undefined && 'lg:sticky lg:z-20')}
-        style={stickyTop !== undefined ? { top: stickyTop } : undefined}
-      >
-      <div data-agenda-top className="overflow-clip rounded-t-xl border bg-card">
-      <div data-agenda-header className="flex border-b">
+      {/* Both reserve the scrollbar's width, so the day headers line up with the columns under them. */}
+      <div data-agenda-header className="flex shrink-0 overflow-y-hidden border-b [scrollbar-gutter:stable]">
         <div className="flex w-14 shrink-0 items-center justify-center">{corner}</div>
         {days.map((day) => {
           const total = dayTotal(pieces.get(day) ?? [])
@@ -257,11 +243,7 @@ export function WeekGrid({
       {shownUntimed && (scheduledDraft !== null || shownUntimed.some((task) => days.includes(task.scheduled_on))) && (
         <UntimedRow days={days} untimed={shownUntimed} onOpenTask={onOpenTask} onShowDay={onShowDay} drag={drag} />
       )}
-      </div>
-      </div>
-      {/* Its own stacking layer: the now line and a block risen on hover stay under the pinned headers. The rest of the
-          grid's box: its sides and its rounded bottom. */}
-      <div ref={body} data-agenda-body className="relative isolate overflow-clip rounded-b-xl border border-t-0 bg-card">
+      <div ref={scroller} data-agenda-scroll className="relative min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
           <div className="relative w-14 shrink-0" aria-hidden>
             {HOURS.map((hour) => (

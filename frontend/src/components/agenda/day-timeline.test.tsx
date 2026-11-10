@@ -214,7 +214,7 @@ describe('DayTimeline corner (#26)', () => {
     const { container } = timeline('2026-11-03', { corner: <button type="button">View options</button> })
     const corner = screen.getByRole('button', { name: 'View options' })
     expect(container.querySelector('[data-agenda-header]')).toContainElement(corner)
-    expect(container.querySelector('[data-agenda-body]')).not.toContainElement(corner)
+    expect(container.querySelector('[data-agenda-scroll]')).not.toContainElement(corner)
     expect(container.querySelector('[data-agenda-corner]')).toBeNull()
     expect(corner.closest('[aria-hidden="true"]')).toBeNull()
   })

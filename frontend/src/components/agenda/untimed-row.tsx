@@ -47,7 +47,7 @@ export function UntimedRow({ days, untimed, onOpenTask, onShowDay, drag }: Untim
   const draggable = Boolean(drag?.schedulable)
 
   return (
-    <div data-untimed-row className="flex border-b">
+    <div data-untimed-row className="flex shrink-0 overflow-y-hidden border-b [scrollbar-gutter:stable]">
       <div className="flex w-14 shrink-0 items-start justify-center pt-2 text-muted-foreground">
         <TooltipProvider>
           <Tooltip>

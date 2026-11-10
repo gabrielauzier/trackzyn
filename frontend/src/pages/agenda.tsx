@@ -99,7 +99,7 @@ function sessionTimes(session: AgendaSession, timezone: string): PanelTimes {
 }
 
 function Agenda({ timezone, activeLists, title }: { timezone: string; activeLists: ListCard[]; title: ReactNode }) {
-  /** The pinned header: the grid's day headers and the side panels pin under it (AGENDA-02). */
+  /** The page's header: the grid and the side panel take what is left of the window under it (AGENDA-02). */
   const header = useRef<HTMLDivElement>(null)
   const [headerHeight, setHeaderHeight] = useState(0)
   useLayoutEffect(() => {
@@ -414,13 +414,8 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
 
   return (
     <div className="flex flex-col gap-4" style={{ '--agenda-header': `${headerHeight}px` } as CSSProperties}>
-      {/* One line: the page title, then the toolbar. Wide, it stays at the top of the window, over the page's padding,
-          while the page scrolls the grid under it (AGENDA-02). */}
-      <div
-        ref={header}
-        data-slot="agenda-header"
-        className="flex flex-wrap items-center gap-x-6 gap-y-3 bg-background lg:sticky lg:top-0 lg:z-30 lg:-mx-6 lg:-mt-6 lg:px-6 lg:pt-6 lg:pb-3"
-      >
+      {/* One line: the page title, then the toolbar. Its height leaves the rest of the window to the grid (AGENDA-02). */}
+      <div ref={header} data-slot="agenda-header" className="flex flex-wrap items-center gap-x-6 gap-y-3">
         {title}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {/* The week opens on the chosen day's week, the day view on the day itself (AGENDA-40, AGENDA-41). */}
@@ -523,7 +518,6 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
           <div className="min-w-0 flex-1">
             {view === 'week' ? (
               <WeekGrid
-                stickyTop={headerHeight}
                 days={visibleDays}
                 corner={viewMenu}
                 sessions={sessions}
@@ -540,7 +534,6 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
               />
             ) : (
               <DayTimeline
-                stickyTop={headerHeight}
                 corner={viewMenu}
                 day={day}
                 sessions={sessions}
@@ -562,11 +555,8 @@ function Agenda({ timezone, activeLists, title }: { timezone: string; activeList
               />
             )}
           </div>
-          {/* Wide, the open panel stays under the pinned headers while the page scrolls, and scrolls inside when taller. */}
-          <div
-            data-slot="agenda-panels"
-            className="empty:hidden lg:sticky lg:top-[calc(var(--agenda-header)+0.5rem)] lg:max-h-[calc(100vh-var(--agenda-header)-1.5rem)] lg:overflow-y-auto"
-          >
+          {/* The open panel fits what is left of the window, as the grid does, and scrolls inside when taller. */}
+          <div data-slot="agenda-panels" className="empty:hidden lg:max-h-[calc(100dvh-var(--agenda-header)-4rem)] lg:overflow-y-auto">
             {confirming && (
               <ScheduledMoveConfirm
                 key={confirming.id}
