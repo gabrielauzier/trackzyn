@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { formatDuration } from '@/components/board/format-duration'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES } from '@/lib/agenda/layout'
+import { scheduledColors } from '@/lib/agenda/scheduled-colors'
 import type { DraftBlock } from '@/lib/plan/draft'
 import { longDay } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
@@ -32,15 +33,6 @@ interface PlanBlockProps {
   children?: ReactNode
 }
 
-/** A task block in the colour of its list: a faint fill, a dashed edge and a solid left edge. */
-const taskColors = (color: number): CSSProperties => {
-  const list = `var(--chart-${color})`
-  return {
-    backgroundColor: `color-mix(in oklab, ${list} 12%, var(--card))`,
-    borderColor: list,
-    borderLeftStyle: 'solid',
-  }
-}
 
 /** A break: gray and hatched, unlike any task (PLAN-15). */
 const breakFill: CSSProperties = {
@@ -49,7 +41,7 @@ const breakFill: CSSProperties = {
 
 /**
  * A block of the day plan (PLAN-15, PLAN-38, PLAN-39): the title, `HH:MM – HH:MM` and, for a task, its length. A task
- * takes the colour of its list with a dashed edge, crossed out once done; a task scheduled for another day carries
+ * takes the faint colour and the 2px dashed edge of a task on the Agenda, solid on hover, crossed out once done; a task scheduled for another day carries
  * `Agendada para <dia>`. A break is gray and hatched, with a dashed edge like a break session.
  */
 export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children }: PlanBlockProps) {
@@ -72,7 +64,7 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
     height,
     left: `${(piece.lane / piece.lanes) * 100}%`,
     width: `${100 / piece.lanes}%`,
-    ...(isTask ? taskColors(block.task.list.color) : breakFill),
+    ...(isTask ? scheduledColors(block.task.list.color) : breakFill),
   }
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!onOpen || (event.key !== 'Enter' && event.key !== ' ')) return
@@ -92,7 +84,8 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       className={cn(
         'absolute flex overflow-hidden rounded-md px-2 text-xs select-none',
         short ? 'flex-row items-center gap-2' : 'flex-col gap-0.5 py-1',
-        isTask ? 'border-[1.5px] border-l-4 border-dashed text-foreground' : 'border-2 border-dashed border-muted-foreground/60 text-muted-foreground',
+        // The edges of the Agenda: a task's in the faint colour of its list, solid on hover; a break's gray.
+        isTask ? 'border-2 border-dashed text-foreground hover:z-20 hover:border-solid' : 'border-2 border-dashed border-muted-foreground/60 text-muted-foreground',
         onPointerDown && 'cursor-grab',
         selected && 'z-10 ring-2 ring-primary ring-offset-1 ring-offset-background',
         'outline-2 outline-transparent focus-visible:outline-(--ring)',

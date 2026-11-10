@@ -30,15 +30,17 @@ function show(block: DraftBlock, props: { onOpen?: () => void } = {}) {
 }
 
 describe('PlanBlock (PLAN-15, PLAN-38, PLAN-39)', () => {
-  it('shows the title, HH:MM – HH:MM and the length of a task, in the colour of its list with a dashed edge', () => {
+  it('shows the title, HH:MM – HH:MM and the length of a task, with the Agenda 2px dashed edge and faint fill in its list colour', () => {
     show(taskBlock())
     const block = screen.getByRole('button', { name: 'Review the PR, 09:00 – 10:30 · 1hr 30min' })
     expect(block.querySelector('[data-slot="plan-block-title"]')).toHaveTextContent('Review the PR')
     expect(block.querySelector('[data-slot="plan-block-time"]')).toHaveTextContent('09:00 – 10:30 · 1hr 30min')
-    expect(block).toHaveClass('border-dashed', 'border-l-4')
-    expect(block.style.borderColor).toBe('var(--chart-3)')
-    expect(block.style.borderLeftStyle).toBe('solid')
-    expect(block.style.backgroundColor).toBe('color-mix(in oklab, var(--chart-3) 12%, var(--card))')
+    expect(block).toHaveClass('border-2', 'border-dashed', 'hover:border-solid', 'hover:z-20')
+    expect(block).not.toHaveClass('border-l-4')
+    // The same fill and edge as a planned or scheduled task on the Agenda.
+    expect(block.style.borderColor).toBe('color-mix(in oklab, var(--chart-3) var(--scheduled-edge), transparent)')
+    expect(block.style.borderLeftStyle).toBe('')
+    expect(block.style.backgroundColor).toBe('color-mix(in oklab, var(--chart-3) var(--scheduled-tint), var(--card))')
     expect([block.style.top, block.style.height]).toEqual(['1080px', '180px'])
   })
 
@@ -48,7 +50,7 @@ describe('PlanBlock (PLAN-15, PLAN-38, PLAN-39)', () => {
     expect(block).toHaveAttribute('data-kind', 'break')
     expect(block.style.backgroundImage).toBe('repeating-linear-gradient(135deg, var(--muted) 0 6px, var(--border) 6px 8px)')
     expect(block).toHaveClass('border-2', 'border-dashed', 'border-muted-foreground/60')
-    expect(block).not.toHaveClass('border-l-4')
+    expect(block).not.toHaveClass('border-l-4', 'hover:border-solid')
     expect(block.style.borderColor).toBe('')
   })
 

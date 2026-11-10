@@ -65,7 +65,7 @@ function FixedPiece({ piece, pxPerMinute }: { piece: LaidFixed; pxPerMinute: num
       onPointerDown={(event) => event.stopPropagation()}
       className={cn(
         'absolute flex flex-col gap-0.5 overflow-hidden rounded-md px-2 py-1 text-xs select-none',
-        'border-[1.5px] border-dashed',
+        'border-2 border-dashed',
       )}
       style={{
         top: piece.start * pxPerMinute,

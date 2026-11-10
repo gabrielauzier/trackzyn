@@ -79,7 +79,7 @@ describe('PlanGrid (PLAN-03)', () => {
     try {
       show([], [meeting])
       expect(fixedOf('Meeting')).toHaveTextContent('Agendada com hora')
-      expect(fixedOf('Meeting')).toHaveClass('border-dashed')
+      expect(fixedOf('Meeting')).toHaveClass('border-2', 'border-dashed')
     } finally {
       await i18n.changeLanguage('en')
     }
