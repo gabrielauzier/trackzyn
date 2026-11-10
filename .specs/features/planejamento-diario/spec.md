@@ -177,6 +177,7 @@ O que o código já fixa:
 
 1. WHEN o usuário marca tarefas na lista e clica em `Encaixar` THEN o sistema SHALL colocá-las no rascunho, na ordem marcada, no primeiro horário livre do expediente em que cada uma cabe, sem sobrepor blocos ou tarefas com hora; as sessões, que a grade não mostra, não ocupam horário. Uma tarefa marcada que está agendada com hora naquele dia SHALL ir para o horário agendado, com a duração da estimativa (ou 1h), mesmo fora do expediente, e as outras SHALL se encaixar em volta dela. (PLAN-32)
 2. IF uma tarefa não cabe em nenhum buraco THEN o sistema SHALL deixá-la na lista e mostrar `<n> tarefas não couberam`. (PLAN-33)
+3. WHEN o usuário marca a caixa no título de um grupo da lista THEN o sistema SHALL marcar as tarefas que o grupo mostra (depois da busca e do filtro de lista), na ordem da lista, depois das já marcadas; com parte delas marcada, a caixa SHALL aparecer mista, e com todas marcadas, desmarcá-la SHALL desmarcar só as do grupo. (PLAN-50)
 
 **Independent Test**: Marcar três tarefas de 1h com o expediente livre das 09:00 e ver os blocos 09:00, 10:00 e 11:00.
 
@@ -252,6 +253,7 @@ O que o código já fixa:
 | PLAN-47 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
 | PLAN-48 | P1: Montar o plano de um dia | Tasks | Implementing |
 | PLAN-49 | P1: Ver o plano na Agenda e começar uma pausa | Tasks | Implementing |
+| PLAN-50 | P3: Encaixar o que sobrou | Tasks | Implementing |
 
 **Coverage:** 45 total, 45 mapped to tasks (T1 a T25), 0 unmapped.
 

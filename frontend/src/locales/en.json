@@ -1010,6 +1010,7 @@
       "planned": "planned {{time}}",
       "noEstimate": "no estimate",
       "empty": "No tasks found",
+      "markGroup": "Mark all in {{group}}",
       "mark": "Mark {{title}}",
       "fit": "Fit ({{count}})",
       "notFit_one": "{{count}} task did not fit",

@@ -76,6 +76,17 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
     setNotFit(0)
     setMarked((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
   }
+  /**
+   * The checkbox of a group (PLAN-50): marks the tasks it shows that are not marked yet, in list order, after the ones
+   * already marked; with all of them marked, it unmarks them.
+   */
+  const toggleGroup = (tasks: PlanCandidate[]) => {
+    setNotFit(0)
+    const ids = tasks.map((task) => task.id)
+    setMarked((current) =>
+      ids.every((id) => current.includes(id)) ? current.filter((id) => !ids.includes(id)) : [...current, ...ids.filter((id) => !current.includes(id))],
+    )
+  }
   /** `Encaixar`: the tasks that fit go into the draft and leave the marks; the rest stay marked with the notice. */
   const fitMarked = () => {
     if (!onFit) return
@@ -194,10 +205,20 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
       {groups.length === 0 && <p className="text-sm text-muted-foreground">{t('plan.sidebar.empty')}</p>}
       {groups.map(({ group, tasks }) => (
         <section key={group} aria-labelledby={`plan-group-${group}`} className="flex flex-col gap-1.5">
-          <h2 id={`plan-group-${group}`} className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            {t(`plan.sidebar.groups.${group}`)}{' '}
-            <span className="font-medium">{tasks.length}</span>
-          </h2>
+          <div className="flex items-center gap-2.5">
+            {onFit && (
+              <GroupCheckbox
+                label={t('plan.sidebar.markGroup', { group: t(`plan.sidebar.groups.${group}`) })}
+                marked={tasks.filter((task) => marked.includes(task.id)).length}
+                total={tasks.length}
+                onToggle={() => toggleGroup(tasks)}
+              />
+            )}
+            <h2 id={`plan-group-${group}`} className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {t(`plan.sidebar.groups.${group}`)}{' '}
+              <span className="font-medium">{tasks.length}</span>
+            </h2>
+          </div>
           <ul className="flex flex-col gap-1.5">
             {tasks.map((task) => {
               const planned = plannedAt.get(task.id)
@@ -242,5 +263,23 @@ export function PlanSidebar({ day, candidates, blocks, breakList, onDragStart, o
         </section>
       ))}
     </aside>
+  )
+}
+
+/** The checkbox of a group, mixed while only part of it is marked (PLAN-50). It lines up with the ones of the tasks. */
+function GroupCheckbox({ label, marked, total, onToggle }: { label: string; marked: number; total: number; onToggle: () => void }) {
+  const some = marked > 0 && marked < total
+  return (
+    <input
+      type="checkbox"
+      aria-label={label}
+      data-group-mark
+      checked={marked === total}
+      ref={(input) => {
+        if (input) input.indeterminate = some
+      }}
+      className="ml-[11px] size-4 shrink-0 cursor-pointer accent-(--primary)"
+      onChange={onToggle}
+    />
   )
 }

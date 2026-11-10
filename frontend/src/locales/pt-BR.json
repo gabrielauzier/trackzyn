@@ -1010,6 +1010,7 @@
       "planned": "no plano {{time}}",
       "noEstimate": "sem estimativa",
       "empty": "Nenhuma tarefa encontrada",
+      "markGroup": "Marcar todas em {{group}}",
       "mark": "Marcar {{title}}",
       "fit": "Encaixar ({{count}})",
       "notFit_one": "{{count}} tarefa não coube",

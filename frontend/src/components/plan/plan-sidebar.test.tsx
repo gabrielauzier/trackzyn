@@ -226,6 +226,51 @@ describe('PlanSidebar: Encaixar (PLAN-32, PLAN-33)', () => {
     }
   })
 
+  it('PLAN-50 marks a whole group from its checkbox, in list order after the marks made before', async () => {
+    const { user } = renderWithProviders(<Harness />)
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Review the PR' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Mark all in This week' }))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark all in This week' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Fix the widget bug' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Call the bank' })).toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'Fit (3)' }))
+
+    // 1h30 from 09:00, then 2h from 10:30, then 1h (no estimate) from 12:30.
+    expect(draftItems()).toEqual(['review@540', 'widget@630', 'later@750'])
+  })
+
+  it('PLAN-50 shows a group in part marked as mixed, completes it, then unmarks only that group', async () => {
+    const { user } = renderWithProviders(<Harness />)
+    const group = () => screen.getByRole<HTMLInputElement>('checkbox', { name: 'Mark all in This week' })
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Review the PR' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Mark Fix the widget bug' }))
+    expect(group()).not.toBeChecked()
+    expect(group().indeterminate).toBe(true)
+
+    await user.click(group())
+    expect(group()).toBeChecked()
+    expect(group().indeterminate).toBe(false)
+    expect(screen.getByRole('button', { name: 'Fit (3)' })).toBeInTheDocument()
+
+    await user.click(group())
+    expect(screen.getByRole('checkbox', { name: 'Mark Fix the widget bug' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Call the bank' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Review the PR' })).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Fit (1)' })).toBeInTheDocument()
+  })
+
+  it('PLAN-50 marks only the tasks the search leaves in the group', async () => {
+    const { user } = renderWithProviders(<Harness />)
+    await user.type(screen.getByPlaceholderText('Search tasks'), 'bank')
+    await user.click(screen.getByRole('checkbox', { name: 'Mark all in This week' }))
+    await user.clear(screen.getByPlaceholderText('Search tasks'))
+
+    expect(screen.getByRole('checkbox', { name: 'Mark Call the bank' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Mark Fix the widget bug' })).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Fit (1)' })).toBeInTheDocument()
+  })
+
   it('marking a task does not start a drag, and without onFit there is nothing to mark', async () => {
     const { onDragStart, unmount } = show({ onFit: vi.fn(() => []) })
     fireEvent.pointerDown(screen.getByRole('checkbox', { name: 'Mark Review the PR' }), { button: 0 })
