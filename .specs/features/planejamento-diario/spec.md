@@ -137,7 +137,7 @@ O que o código já fixa:
 
 **Acceptance Criteria**:
 
-1. The system SHALL mostrar na Agenda os blocos do plano salvo do usuário, sem cobrir as sessões: os de tarefa como um bloco de tarefa agendada, sem texto, com o fundo e a borda na cor da lista, mas com a borda tracejada e o ícone do plano no canto; e as pausas em cinza hachurado. (PLAN-24)
+1. The system SHALL mostrar na Agenda os blocos do plano salvo do usuário, sem cobrir as sessões: os de tarefa como um bloco de tarefa agendada, sem texto, com o fundo e a borda na cor da lista, mas com a borda tracejada e o ícone do plano no canto; e as pausas em cinza hachurado com borda pontilhada, como os intervalos e as tarefas agendadas. (PLAN-24)
 2. WHEN uma tarefa tem bloco no plano do dia e também está agendada naquele dia, com `scheduled_time` ou na faixa `Sem hora`, THEN a Agenda do dono do plano SHALL mostrar só o bloco do plano. (PLAN-25)
 3. WHEN o usuário clica em `Começar` numa pausa do plano de hoje, na tela de foco da lista da pausa, THEN o sistema SHALL abrir um Intervalo de `planned_seconds` igual à duração da pausa, na lista da pausa, pelo mesmo caminho de `POST /api/focus/break`. (PLAN-26)
 4. WHEN há uma sessão de tarefa aberta e o usuário começa a pausa THEN o sistema SHALL encerrar a sessão com o mesmo motivo do Intervalo do foco (`break`) antes de abrir o Intervalo. (PLAN-27)

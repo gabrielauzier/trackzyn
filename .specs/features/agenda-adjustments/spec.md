@@ -126,7 +126,7 @@ A issue #29 junta sete ajustes da Agenda:
 24. WHILE breaks are hidden, the view options button SHALL show its dot, in both views.  <!-- state-driven -->
 25. WHEN the Agenda opens THEN `Ocultar intervalos` SHALL be as it was left last on this device, or off when storage holds no valid choice.  <!-- event-driven -->
 
-**Independent Test**: Ligar `Ocultar intervalos`: os blocos tracejados de intervalo somem, os totais continuam iguais e o botão ganha o ponto. Recarregar: os intervalos continuam escondidos.
+**Independent Test**: Ligar `Ocultar intervalos`: os blocos pontilhados de intervalo somem, os totais continuam iguais e o botão ganha o ponto. Recarregar: os intervalos continuam escondidos.
 
 ---
 

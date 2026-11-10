@@ -50,7 +50,7 @@ type PlannedBreak = Extract<PlannedBlock, { kind: 'break' }>
 const LEGEND = [
   { key: 'session', style: { backgroundColor: 'var(--chart-1)' } },
   { key: 'planned', style: { backgroundColor: 'var(--card)', border: '1.5px dashed var(--chart-2)' } },
-  { key: 'break', style: { backgroundImage: 'repeating-linear-gradient(135deg, var(--muted) 0 4px, var(--border) 4px 6px)', border: '1px dashed var(--muted-foreground)' } },
+  { key: 'break', style: { backgroundImage: 'repeating-linear-gradient(135deg, var(--muted) 0 4px, var(--border) 4px 6px)', border: '1.5px dotted var(--muted-foreground)' } },
   { key: 'scheduled', style: { backgroundColor: 'var(--card)', border: '1.5px dotted var(--chart-2)' } },
 ] as const
 
