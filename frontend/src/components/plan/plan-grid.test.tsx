@@ -57,6 +57,14 @@ describe('PlanGrid (PLAN-03)', () => {
     wide.mockRestore()
   })
 
+  it('PLAN-03 opens with the workday start just under what is pinned over the page', () => {
+    const wide = vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: query === '(min-width: 1024px)' }) as MediaQueryList)
+    vi.mocked(window.scrollTo).mockClear()
+    renderWithProviders(<PlanGrid day={DAY} blocks={[]} fixed={[]} workday={workday} pxPerMinute={PX} scrollInset={() => 90} />)
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 450 })
+    wide.mockRestore()
+  })
+
   it('PLAN-03 stacked on a narrow screen, does not scroll the page past the list', () => {
     vi.mocked(window.scrollTo).mockClear()
     show([])

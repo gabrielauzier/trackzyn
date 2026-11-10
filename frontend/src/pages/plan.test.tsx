@@ -391,11 +391,12 @@ describe('PlanPage', () => {
     expect(screen.queryByRole('button', { name: 'Arrastar nova tarefa para a grade' })).toBeNull()
   })
 
-  it('PLAN-03 side by side, the list stays at the top of the window and the grid grows with the page, with no height of its own', async () => {
+  it('PLAN-03 side by side, the header stays at the top, the list under it off its scrollbar, and the grid grows with the page', async () => {
     show()
     await screen.findByRole('group', { name: 'Grade do dia' })
     const side = document.querySelector<HTMLElement>('[data-slot="plan-side"]')!
-    expect(side).toHaveClass('lg:sticky', 'lg:top-6', 'lg:overflow-y-auto')
+    expect(document.querySelector('[data-slot="plan-header"]')).toHaveClass('lg:sticky', 'lg:top-0', 'lg:z-30', 'bg-background')
+    expect(side).toHaveClass('lg:sticky', 'lg:top-[calc(var(--plan-header)+0.5rem)]', 'lg:overflow-y-auto', 'lg:pr-3')
     const section = document.querySelector<HTMLElement>('[data-plan-grid]')!.closest('section')!
     expect(section.className).not.toMatch(/h-\[calc|overflow-y-auto/)
   })

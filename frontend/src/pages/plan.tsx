@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -70,6 +70,18 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
   // A past day and a viewer only read the plan (PLAN-34, PLAN-41).
   const readOnly = !current.editable || !canWrite
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  /** The pinned header: the list sits under it and the page opens with the workday start below it (PLAN-03). */
+  const header = useRef<HTMLElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
+  useLayoutEffect(() => {
+    const node = header.current
+    if (!node) return
+    const measure = () => setHeaderHeight(node.offsetHeight)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
   const [breakOpen, setBreakOpen] = useState(false)
   const [workdayOpen, setWorkdayOpen] = useState(false)
 
@@ -176,8 +188,13 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
   const showFooter = !readOnly && (dirty || saveState === 'conflict' || saveState === 'failed')
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
-      <header className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-col gap-4 pb-4" style={{ '--plan-header': `${headerHeight}px` } as CSSProperties}>
+      {/* Side by side, the header stays at the top of the window, over the page's padding, while the page scrolls (PLAN-03). */}
+      <header
+        ref={header}
+        data-slot="plan-header"
+        className="flex flex-wrap items-center gap-3 bg-background lg:sticky lg:top-0 lg:z-30 lg:-mx-6 lg:-mt-6 lg:px-6 lg:pt-6 lg:pb-3"
+      >
         <div className="flex items-center">
           <Button type="button" variant="ghost" size="icon" aria-label={t('plan.page.previousDay')} onClick={() => goTo(addDays(day, -1))}>
             <ChevronLeft size={16} />
@@ -209,9 +226,12 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
       </header>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* Side by side, the list stays at the top of the window while the page scrolls the grid, and scrolls inside when
-            taller than the window (PLAN-03). */}
-        <div data-slot="plan-side" className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:w-80 lg:shrink-0 lg:overflow-y-auto">
+        {/* Side by side, the list stays under the header while the page scrolls the grid, and scrolls inside when taller
+            than the window, its items kept off the scrollbar (PLAN-03). */}
+        <div
+          data-slot="plan-side"
+          className="lg:sticky lg:top-[calc(var(--plan-header)+0.5rem)] lg:max-h-[calc(100vh-var(--plan-header)-1.5rem)] lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:pr-3"
+        >
           <PlanSidebar
             day={day}
             candidates={candidates}
@@ -231,6 +251,8 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
             drag={readOnly ? undefined : drag}
             selectedKey={selectedKey}
             onOpen={setSelectedKey}
+            // The header, and a breath under it so the workday's first hour label shows.
+            scrollInset={() => (header.current?.offsetHeight ?? 0) + 16}
           />
         </section>
       </div>

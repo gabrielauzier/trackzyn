@@ -44,6 +44,8 @@ interface PlanGridProps {
   selectedKey?: string | null
   /** A click on a block of the draft opens it (PLAN-06). */
   onOpen?: (key: string) => void
+  /** How much of the window's top is pinned over the page (the plan's header): the workday start opens below it. */
+  scrollInset?: () => number
 }
 
 type LaidFixed = { fixed: FixedBlock; start: number; end: number; lane: number; lanes: number }
@@ -95,17 +97,20 @@ function FixedPiece({ piece, pxPerMinute }: { piece: LaidFixed; pxPerMinute: num
  * and end are marked and whose hours outside are shaded. The timed tasks are fixed; the blocks of
  * the draft move and stretch, and overlapping blocks share the width. A block that runs past 24:00 ends at the edge.
  */
-export function PlanGrid({ day, blocks, fixed, workday, pxPerMinute = PX_PER_MINUTE, drag, selectedKey = null, onOpen }: PlanGridProps) {
+export function PlanGrid({ day, blocks, fixed, workday, pxPerMinute = PX_PER_MINUTE, drag, selectedKey = null, onOpen, scrollInset }: PlanGridProps) {
   const { t } = useTranslation()
   const grid = useRef<HTMLDivElement>(null)
   const workStart = minuteOfClock(workday.start)
   const workEnd = minuteOfClock(workday.end)
 
   // The grid has no scroll of its own: the page scrolls it (PLAN-03). Side by side with the list (wide screens), the page
-  // opens at the start of the workday, and a new workday or zoom scrolls there again; stacked, it opens at the top.
+  // opens with the start of the workday just under what is pinned over it, and a new workday or zoom scrolls there again;
+  // stacked, it opens at the top.
   useLayoutEffect(() => {
     if (!grid.current || !window.matchMedia(WIDE).matches) return
-    window.scrollTo({ top: grid.current.getBoundingClientRect().top + window.scrollY + workStart * pxPerMinute })
+    window.scrollTo({ top: grid.current.getBoundingClientRect().top + window.scrollY + workStart * pxPerMinute - (scrollInset?.() ?? 0) })
+    // The inset is read when the page scrolls, not a reason to scroll again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workStart, pxPerMinute])
 
   const preview = drag?.preview ?? null
