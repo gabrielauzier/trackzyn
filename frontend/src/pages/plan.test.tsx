@@ -327,36 +327,61 @@ describe('PlanPage', () => {
     expect(blocks()[0]).toHaveAccessibleName(/^Fix the widget, 20:00 – 20:30/)
   })
 
-  it('PLAN-48 a new task dropped on the grid is created in the first list, in Esta semana for tomorrow, and joins the draft there', async () => {
-    vi.mocked(tasks.create).mockResolvedValue({ id: 'n1', title: 'Nova tarefa', estimate_minutes: 90, scheduled_on: null } as Awaited<ReturnType<typeof tasks.create>>)
-    show()
+  /** Drags the `Nova tarefa` card onto the grid, at `minute`. */
+  const dropNewTask = async (minute: number) => {
     const card = await screen.findByRole('button', { name: 'Arrastar nova tarefa para a grade' })
-    fireEvent.change(screen.getByRole('textbox', { name: 'Estimativa' }), { target: { value: '0130' } })
-    expect(screen.getByText('Ocupa 1h 30min na grade')).toBeInTheDocument()
-
     fireEvent.pointerDown(card, { clientX: 50, clientY: 50, button: 0 })
-    fireEvent.pointerMove(window, { clientX: 500, clientY: 600 * PX_PER_MINUTE + 1 })
-    fireEvent.pointerUp(window, { clientX: 500, clientY: 600 * PX_PER_MINUTE + 1 })
+    fireEvent.pointerMove(window, { clientX: 500, clientY: minute * PX_PER_MINUTE + 1 })
+    fireEvent.pointerUp(window, { clientX: 500, clientY: minute * PX_PER_MINUTE + 1 })
+  }
+
+  it('PLAN-48 dropping the card opens the new task form with its estimate, without the Concluídas notice; saved, the task joins the draft there', async () => {
+    vi.mocked(tasks.create).mockResolvedValue({ id: 'n1', list_id: list.id, title: 'Escrever o roteiro', estimate_minutes: 90, scheduled_on: null } as Awaited<ReturnType<typeof tasks.create>>)
+    const { user } = show()
+    fireEvent.change(await screen.findByRole('textbox', { name: 'Estimativa' }), { target: { value: '0130' } })
+    await dropNewTask(600)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Nova tarefa' })
+    expect(within(dialog).getByText('Para o plano do dia.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('textbox', { name: 'Estimativa' })).toHaveValue('01:30')
+    expect(within(dialog).queryByText(/Concluídas/)).toBeNull()
+    expect(tasks.create).not.toHaveBeenCalled()
+
+    await user.type(within(dialog).getByRole('textbox', { name: 'Título' }), 'Escrever o roteiro')
+    await user.click(within(dialog).getByRole('button', { name: 'Adicionar' }))
 
     await waitFor(() => expect(blocks()).toHaveLength(1))
-    expect(tasks.create).toHaveBeenCalledExactlyOnceWith({ list_id: list.id, title: 'Nova tarefa', estimate_minutes: 90, column: 'this_week' })
-    expect(blocks()[0]).toHaveAccessibleName(/^Nova tarefa, 10:00 – 11:30/)
+    expect(tasks.create).toHaveBeenCalledExactlyOnceWith({ list_id: list.id, title: 'Escrever o roteiro', estimate_minutes: 90, column: 'this_week' })
+    expect(blocks()[0]).toHaveAccessibleName(/^Escrever o roteiro, 10:00 – 11:30/)
+    expect(screen.queryByRole('dialog')).toBeNull()
     expect(footer()).toHaveTextContent('Rascunho — ainda não salvo')
   })
 
   it('PLAN-48 on the plan of today the new task goes to Hoje, and without an estimate takes 1h', async () => {
-    vi.mocked(tasks.create).mockResolvedValue({ id: 'n2', title: 'Nova tarefa', estimate_minutes: null, scheduled_on: null } as Awaited<ReturnType<typeof tasks.create>>)
-    show('/planejar/2026-11-08')
-    const card = await screen.findByRole('button', { name: 'Arrastar nova tarefa para a grade' })
-    expect(screen.getByText('Sem estimativa: 1h')).toBeInTheDocument()
+    vi.mocked(tasks.create).mockResolvedValue({ id: 'n2', list_id: list.id, title: 'Ligar para o banco', estimate_minutes: null, scheduled_on: null } as Awaited<ReturnType<typeof tasks.create>>)
+    const { user } = show('/planejar/2026-11-08')
+    await dropNewTask(1380)
 
-    fireEvent.pointerDown(card, { clientX: 50, clientY: 50, button: 0 })
-    fireEvent.pointerMove(window, { clientX: 500, clientY: 1380 * PX_PER_MINUTE + 1 })
-    fireEvent.pointerUp(window, { clientX: 500, clientY: 1380 * PX_PER_MINUTE + 1 })
+    const dialog = await screen.findByRole('dialog', { name: 'Nova tarefa' })
+    await user.type(within(dialog).getByRole('textbox', { name: 'Título' }), 'Ligar para o banco')
+    await user.click(within(dialog).getByRole('button', { name: 'Adicionar' }))
 
     await waitFor(() => expect(blocks()).toHaveLength(1))
-    expect(tasks.create).toHaveBeenCalledExactlyOnceWith({ list_id: list.id, title: 'Nova tarefa', estimate_minutes: null, column: 'today' })
-    expect(blocks()[0]).toHaveAccessibleName(/^Nova tarefa, 23:00 – 00:00/)
+    expect(tasks.create).toHaveBeenCalledExactlyOnceWith({ list_id: list.id, title: 'Ligar para o banco', estimate_minutes: null, column: 'today' })
+    expect(blocks()[0]).toHaveAccessibleName(/^Ligar para o banco, 23:00 – 00:00/)
+  })
+
+  it('PLAN-48 cancelling the form creates nothing and adds no block', async () => {
+    const { user } = show()
+    await dropNewTask(600)
+
+    const dialog = await screen.findByRole('dialog', { name: 'Nova tarefa' })
+    await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(tasks.create).not.toHaveBeenCalled()
+    expect(blocks()).toHaveLength(0)
+    expect(footer()).toBeNull()
   })
 
   it('PLAN-48 a viewer gets no new task card', async () => {

@@ -1013,7 +1013,6 @@
       "notFit_one": "{{count}} tarefa não coube",
       "notFit_other": "{{count}} tarefas não couberam",
       "newTask": "Nova tarefa",
-      "newTaskTitle": "Nova tarefa",
       "newTaskDrag": "Arrastar nova tarefa para a grade",
       "newTaskNoEstimate": "Sem estimativa: 1h",
       "newTaskTakes": "Ocupa {{duration}} na grade"
@@ -1111,6 +1110,9 @@
       "title": "Pausas do plano de hoje",
       "start": "Começar",
       "startAria": "Começar {{name}}"
+    },
+    "newTask": {
+      "hint": "Para o plano do dia."
     }
   }
 }

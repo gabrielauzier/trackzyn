@@ -1013,7 +1013,6 @@
       "notFit_one": "{{count}} task did not fit",
       "notFit_other": "{{count}} tasks did not fit",
       "newTask": "New task",
-      "newTaskTitle": "New task",
       "newTaskDrag": "Drag a new task onto the grid",
       "newTaskNoEstimate": "No estimate: 1h",
       "newTaskTakes": "Takes {{duration}} on the grid"
@@ -1111,6 +1110,9 @@
       "title": "Today's planned breaks",
       "start": "Start",
       "startAria": "Start {{name}}"
+    },
+    "newTask": {
+      "hint": "For the plan of the day."
     }
   }
 }

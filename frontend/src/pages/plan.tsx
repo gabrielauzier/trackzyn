@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 
 import { DatePickerChip } from '@/components/agenda/date-picker-chip'
+import { NewSessionTaskDialog } from '@/components/agenda/new-session-task-dialog'
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
 import { BlockEditor } from '@/components/plan/block-editor'
 import { BreakDialog } from '@/components/plan/break-dialog'
 import { CapacityBar } from '@/components/plan/capacity-bar'
 import { PlanGrid, type FixedBlock } from '@/components/plan/plan-grid'
 import { PlanSidebar } from '@/components/plan/plan-sidebar'
+import { toDuration } from '@/components/board/estimate'
 import { WorkdayEditor } from '@/components/plan/workday-editor'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
-import { extractApiError } from '@/lib/api-errors'
 import { addDays, dayOf, scheduledMinutes } from '@/lib/agenda/layout'
 import { useScheduled } from '@/lib/agenda/use-scheduled'
 import { capacity, type FixedTimed } from '@/lib/plan/capacity'
@@ -29,7 +29,7 @@ import { usePlan } from '@/lib/plan/use-plan'
 import { tomorrowPath } from '@/lib/plan/tomorrow'
 import { usePlanDrag } from '@/lib/plan/use-plan-drag'
 import { cn } from '@/lib/utils'
-import type { ListCard, PlanListRef, PlanRead, PlanTaskRef } from '@/types'
+import type { AgendaTaskInput, ListCard, PlanListRef, PlanRead, PlanTaskRef, Task } from '@/types'
 
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
@@ -99,26 +99,26 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
   }
 
   const queryClient = useQueryClient()
+  /** Where `Nova tarefa` fell on the grid, while its form is open (PLAN-48). */
+  const [newTask, setNewTask] = useState<{ item: Extract<DropItem, { kind: 'new' }>; start: number } | null>(null)
   /**
-   * `Nova tarefa` dropped on the grid (PLAN-48): the task is created at once in the list of the card, titled `Nova
-   * tarefa`, with the card's estimate, in Hoje when the plan is today's and in Esta semana otherwise; then its block
-   * goes into the draft where it fell, as a task dropped from the list. The day is the plan's once it is saved (PLAN-09).
+   * The form of `Nova tarefa` saved (PLAN-48): the task goes to Hoje when the plan is today's and to Esta semana
+   * otherwise; its day is the plan's once the plan is saved (PLAN-09).
    */
-  const createTask = useMutation({
-    mutationFn: ({ item }: { item: Extract<DropItem, { kind: 'new' }>; start: number }) =>
-      tasksApi.create({ list_id: item.list.id, title: t('plan.sidebar.newTaskTitle'), estimate_minutes: item.estimate, column: day === today ? 'today' : 'this_week' }),
-    onSuccess: (task, { item, start }) => {
-      const ref: PlanTaskRef = { id: task.id, title: task.title, list: item.list, done: false, scheduled_on: task.scheduled_on, estimate_minutes: task.estimate_minutes }
-      dispatch({ type: 'add', item: { kind: 'task', task: ref }, start })
-      // The side list shows it as planned, and the board has it; the saved plan does not change.
-      void queryClient.invalidateQueries({ predicate: ({ queryKey }) => queryKey[0] === 'plan' && queryKey[3] === 'candidates' })
-      void queryClient.invalidateQueries({ queryKey: ['lists'] })
-    },
-    onError: (error) => toast.error(extractApiError(error, t('common.error'))),
-  })
+  const createPlanTask = (input: AgendaTaskInput) => tasksApi.create({ ...input, estimate_minutes: input.estimate_minutes ?? null, column: day === today ? 'today' : 'this_week' })
+  /** Its block goes into the draft where the card fell, as a task dropped from the list. */
+  const placeNewTask = (task: Task) => {
+    if (!newTask) return
+    const list = activeLists.find((item) => item.id === task.list_id) ?? newTask.item.list
+    const ref: PlanTaskRef = { id: task.id, title: task.title, list, done: false, scheduled_on: task.scheduled_on, estimate_minutes: task.estimate_minutes }
+    dispatch({ type: 'add', item: { kind: 'task', task: ref }, start: newTask.start })
+    setNewTask(null)
+    // The side list shows it as planned; the saved plan does not change.
+    void queryClient.invalidateQueries({ predicate: ({ queryKey }) => queryKey[0] === 'plan' && queryKey[3] === 'candidates' })
+  }
   const drag = usePlanDrag({
     pxPerMinute: PX_PER_MINUTE,
-    onDrop: (item, start) => (item.kind === 'new' ? createTask.mutate({ item, start }) : dispatch({ type: 'add', item, start })),
+    onDrop: (item, start) => (item.kind === 'new' ? setNewTask({ item, start }) : dispatch({ type: 'add', item, start })),
     onMove: (key, start) => dispatch({ type: 'move', key, start }),
     onResize: (key, minutes) => dispatch({ type: 'resize', key, minutes }),
   })
@@ -298,6 +298,17 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
           dispatch({ type: 'add', item, start: clockMinutes(workday.start) ?? 0 })
           setBreakOpen(false)
         }}
+      />
+      <NewSessionTaskDialog
+        open={newTask !== null}
+        onOpenChange={(open) => !open && setNewTask(null)}
+        lists={activeLists}
+        defaultListId={newTask?.item.list.id ?? null}
+        defaultTitle=""
+        defaultEstimate={toDuration(newTask?.item.estimate ?? null)}
+        hint={t('plan.newTask.hint')}
+        onSubmit={createPlanTask}
+        onCreated={placeNewTask}
       />
       <WorkdayEditor open={workdayOpen} onOpenChange={setWorkdayOpen} workday={workday} onSave={saveWorkday} />
     </div>

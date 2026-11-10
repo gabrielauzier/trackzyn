@@ -159,4 +159,27 @@ describe('NewSessionTaskDialog', () => {
     expect(within(modal).getByText('via Agenda')).toBeInTheDocument()
     await i18n.changeLanguage('en')
   })
+
+  it('PLAN-48 created elsewhere: starts on the estimate and hint given, hides the Done notice and creates through onSubmit', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(CREATED)
+    const { user, onCreated } = dialog({ defaultTitle: '', defaultEstimate: '01:30', hint: 'For the plan of the day.', onSubmit })
+    const modal = await screen.findByRole('dialog', { name: 'New task' })
+    expect(within(modal).getByText('For the plan of the day.')).toBeInTheDocument()
+    expect(within(modal).getByRole('textbox', { name: 'Estimate' })).toHaveValue('01:30')
+    expect(within(modal).queryByText(i18n.t('agenda.newTask.info'))).toBeNull()
+
+    await user.type(within(modal).getByLabelText('Title'), 'Write the outline')
+    await user.click(within(modal).getByRole('button', { name: 'Add' }))
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith(CREATED))
+    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ list_id: 'adset', title: 'Write the outline', estimate_minutes: 90 })
+    expect(sessions.createTask).not.toHaveBeenCalled()
+  })
+
+  it('PICK-12 on the agenda keeps the notice that the task goes to Done', async () => {
+    dialog()
+    const modal = await screen.findByRole('dialog', { name: 'New task' })
+    expect(within(modal).getByText(i18n.t('agenda.newTask.info'))).toBeInTheDocument()
+  })
 })
+

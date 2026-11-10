@@ -402,6 +402,7 @@ export const tasks = {
     column: TaskColumn
     scheduled_on?: string | null
     scheduled_time?: string | null
+    notes?: string
   }): Promise<Task> => {
     const { data } = await api.post('/tasks', payload)
     return data
