@@ -1104,7 +1104,9 @@
       "plannedRange": "Planejada · {{start}} – {{end}} · {{duration}}",
       "openPlanHint": "Clique para abrir o plano do dia",
       "startInFocus": "Comece esta pausa pelo foco de {{list}}.",
-      "openFocus": "Abrir o foco"
+      "openFocus": "Abrir o foco",
+      "breakRange": "Pausa planejada · {{start}} – {{end}} · {{duration}}",
+      "openBreakHint": "Clique para ver a pausa"
     },
     "focus": {
       "title": "Pausas do plano de hoje",

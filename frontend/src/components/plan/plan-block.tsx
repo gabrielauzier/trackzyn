@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { formatDuration } from '@/components/board/format-duration'
 import { minuteClock } from '@/lib/agenda/format'
 import { DAY_MINUTES } from '@/lib/agenda/layout'
+import { HOVER_RING } from '@/lib/agenda/hover-ring'
 import { scheduledColors } from '@/lib/agenda/scheduled-colors'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { DraftBlock } from '@/lib/plan/draft'
 import { longDay } from '@/lib/schedule'
 import { cn } from '@/lib/utils'
@@ -31,6 +33,8 @@ interface PlanBlockProps {
   onPointerDown?: (event: PointerEvent) => void
   /** The handle of the bottom edge, drawn by the grid. */
   children?: ReactNode
+  /** Shown on hover and focus, as on the Agenda's blocks (PLAN-46). */
+  tooltip?: ReactNode
 }
 
 
@@ -44,7 +48,7 @@ const breakFill: CSSProperties = {
  * takes the faint colour and the 2px dashed edge of a task on the Agenda, solid on hover, crossed out once done; a task scheduled for another day carries
  * `Agendada para <dia>`. A break is gray and hatched, with a dashed edge like a break session.
  */
-export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children }: PlanBlockProps) {
+export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, onPointerDown, children, tooltip }: PlanBlockProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const { block } = piece
@@ -72,7 +76,7 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
     onOpen()
   }
 
-  return (
+  const drawn = (
     <div
       role="button"
       tabIndex={0}
@@ -84,8 +88,9 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       className={cn(
         'absolute flex overflow-hidden rounded-md px-2 text-xs select-none',
         short ? 'flex-row items-center gap-2' : 'flex-col gap-0.5 py-1',
-        // The edges of the Agenda: a task's in the faint colour of its list, solid on hover; a break's gray.
-        isTask ? 'border-2 border-dashed text-foreground hover:z-20 hover:border-solid' : 'border-2 border-dashed border-muted-foreground/60 text-muted-foreground',
+        // The edges of the Agenda: a task's in the faint colour of its list, a break's gray; a block that opens or moves rings on hover.
+        isTask ? 'border-2 border-dashed text-foreground' : 'border-2 border-dashed border-muted-foreground/60 text-muted-foreground',
+        (onOpen || onPointerDown) && HOVER_RING,
         onPointerDown && 'cursor-grab',
         selected && 'z-10 ring-2 ring-primary ring-offset-1 ring-offset-background',
         'outline-2 outline-transparent focus-visible:outline-(--ring)',
@@ -113,5 +118,16 @@ export function PlanBlock({ piece, day, pxPerMinute, selected = false, onOpen, o
       </span>
       {children}
     </div>
+  )
+  if (tooltip === undefined) return drawn
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>{drawn}</TooltipTrigger>
+        <TooltipContent side="right" className="flex flex-col gap-0.5">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }

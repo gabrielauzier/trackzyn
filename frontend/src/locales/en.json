@@ -1104,7 +1104,9 @@
       "plannedRange": "Planned · {{start}} – {{end}} · {{duration}}",
       "openPlanHint": "Click to open the plan of the day",
       "startInFocus": "Start this break from the focus of {{list}}.",
-      "openFocus": "Open the focus"
+      "openFocus": "Open the focus",
+      "breakRange": "Planned break · {{start}} – {{end}} · {{duration}}",
+      "openBreakHint": "Click to see the break"
     },
     "focus": {
       "title": "Today's planned breaks",

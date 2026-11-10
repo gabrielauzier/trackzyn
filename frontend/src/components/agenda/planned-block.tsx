@@ -64,10 +64,31 @@ function PlannedTaskTip({ block }: { block: Extract<Planned, { kind: 'task' }> }
   )
 }
 
+/** The tooltip of a planned break (PLAN-46): its name, `Pausa planejada · HH:MM – HH:MM · <duração>`, its list and the click. */
+function PlannedBreakTip({ block }: { block: Extract<Planned, { kind: 'break' }> }) {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
+  const start = clockMinutes(block.start) ?? 0
+  return (
+    <>
+      <span className="font-medium break-words whitespace-normal">{block.name}</span>
+      <span className="tabular-nums opacity-80">
+        {t('plan.agenda.breakRange', {
+          start: minuteClock(start),
+          end: minuteClock((start + block.minutes) % DAY_MINUTES),
+          duration: formatDuration(block.minutes * 60, language),
+        })}
+      </span>
+      <span className="opacity-80">{t('plan.agenda.breakList', { list: block.list.name })}</span>
+      <span className="opacity-80">{t('plan.agenda.openBreakHint')}</span>
+    </>
+  )
+}
+
 /**
  * A block of the user's saved plan on the Agenda (PLAN-24, PLAN-39, PLAN-46, PLAN-47). A task looks like a scheduled
  * task, without text, with a dashed edge and a tooltip, but with the plan's icon; a done task never reaches it (PLAN-39). A break is
- * gray and hatched, as on the plan. A break starts from the focus of its list, not from here (PLAN-28).
+ * gray and hatched, as on the plan, with its own tooltip. A break starts from the focus of its list, not from here (PLAN-28).
  */
 export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) {
   const { t, i18n } = useTranslation()
@@ -81,6 +102,7 @@ export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) 
         day={planned.day}
         pxPerMinute={pxPerMinute}
         onOpen={open}
+        tooltip={<PlannedBreakTip block={planned} />}
       />
     )
   }
@@ -96,7 +118,6 @@ export function PlannedBlock({ piece, pxPerMinute, onOpen }: PlannedBlockProps) 
       label={`${planned.task.title}, ${range} · ${formatDuration(planned.minutes * 60, language)}`}
       tooltip={<PlannedTaskTip block={planned} />}
       onOpen={open}
-      solidOnHover
       data={{ 'data-plan-block': planned.id, 'data-kind': 'task' }}
     />
   )

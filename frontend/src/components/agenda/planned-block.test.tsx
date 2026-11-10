@@ -70,13 +70,22 @@ describe('PlannedBlock (PLAN-24, PLAN-28, PLAN-46, PLAN-47)', () => {
     expect((await screen.findByRole('tooltip')).textContent).toBe('Escrever a specSem estimativaPlanejada · 10:45 – 12:00 · 1h 15minWorkClique para abrir o plano do dia')
   })
 
-  it('PLAN-47 a planned task turns its dashed edge solid and rises above its neighbours on hover; a break does not', () => {
-    const { unmount } = renderWithProviders(<PlannedBlock piece={piece(task(75), 645)} pxPerMinute={1} />)
-    expect(screen.getByRole('button', { name: /^Escrever a spec/ })).toHaveClass('hover:border-solid', 'hover:z-20')
+  it('PLAN-47 on hover a planned task and a planned break keep their dashed edge and take a ring around it, above their neighbours', () => {
+    const { unmount } = renderWithProviders(<PlannedBlock piece={piece(task(75), 645)} pxPerMinute={1} onOpen={vi.fn()} />)
+    const block = screen.getByRole('button', { name: /^Escrever a spec/ })
+    expect(block).toHaveClass('border-dashed', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
+    expect(block).not.toHaveClass('hover:border-solid')
     unmount()
 
-    renderWithProviders(<PlannedBlock piece={piece(coffee, 630)} pxPerMinute={1} />)
-    expect(screen.getByRole('button', { name: /^Café/ })).not.toHaveClass('hover:border-solid')
+    renderWithProviders(<PlannedBlock piece={piece(coffee, 630)} pxPerMinute={1} onOpen={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /^Café/ })).toHaveClass('border-dashed', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
+  })
+
+  it('PLAN-46 hovering a planned break shows its name, the planned time, its list and what a click does', async () => {
+    const { user } = renderWithProviders(<PlannedBlock piece={piece(coffee, 630)} pxPerMinute={1} onOpen={vi.fn()} />)
+    await user.hover(screen.getByRole('button', { name: /^Café/ }))
+
+    expect((await screen.findByRole('tooltip')).textContent).toBe('CaféPausa planejada · 10:30 – 10:45 · 15minIntervalo em WorkClique para ver a pausa')
   })
 
   it('PLAN-24 a planned task shows no text, only the plan icon in the corner, as a scheduled task shows its clock', () => {

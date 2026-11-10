@@ -536,11 +536,12 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
       return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={timed} projected={projected} />
     }
 
-    it('lets the open occurrence be dragged, with the open hand on hover, but never a projection', () => {
+    it('lets the open occurrence be dragged, with the open hand and the ring on hover, but never a projection', () => {
       renderWithProviders(<Draggable timed={[scheduled('a', '2026-11-05', '10:00')]} projected={[projection]} />)
       const block = screen.getByRole('button', { name: /^Scheduled a/ })
       expect(block).toHaveAttribute('data-draggable', 'true')
-      expect(block).toHaveClass('cursor-grab', 'hover:border-solid')
+      expect(block).toHaveClass('cursor-grab', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
+      expect(block).not.toHaveClass('hover:border-solid')
       expect(screen.getByRole('button', { name: /^Weekly review/ })).not.toHaveAttribute('data-draggable')
     })
 
@@ -602,11 +603,11 @@ describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
     }
     const cellOf = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-untimed-day="${day}"]`)!
 
-    it('hover: the task of the row shows a solid edge and the open hand, and a viewer cannot drag it', () => {
+    it('hover: the task of the row shows the ring and the open hand, and a viewer cannot drag it', () => {
       const { unmount } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03')]} />)
       const task = screen.getByRole('button', { name: /^Scheduled u/ })
       expect(task).toHaveAttribute('data-draggable', 'true')
-      expect(task).toHaveClass('cursor-grab', 'hover:border-solid')
+      expect(task).toHaveClass('cursor-grab', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
       unmount()
       grid({ untimed: [untimedTask('u', '2026-11-03')] })
       expect(screen.getByRole('button', { name: /^Scheduled u/ })).not.toHaveAttribute('data-draggable')

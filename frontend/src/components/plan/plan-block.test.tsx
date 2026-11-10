@@ -25,7 +25,7 @@ const breakBlock: DraftBlock = { key: 'b2', kind: 'break', start: 720, minutes: 
 
 const laid = (block: DraftBlock): LaidPlanBlock => ({ block, start: block.start, end: block.start + block.minutes, lane: 0, lanes: 1 })
 
-function show(block: DraftBlock, props: { onOpen?: () => void } = {}) {
+function show(block: DraftBlock, props: { onOpen?: () => void; onPointerDown?: () => void } = {}) {
   return renderWithProviders(<PlanBlock piece={laid(block)} day={DAY} pxPerMinute={2} {...props} />)
 }
 
@@ -35,7 +35,7 @@ describe('PlanBlock (PLAN-15, PLAN-38, PLAN-39)', () => {
     const block = screen.getByRole('button', { name: 'Review the PR, 09:00 – 10:30 · 1hr 30min' })
     expect(block.querySelector('[data-slot="plan-block-title"]')).toHaveTextContent('Review the PR')
     expect(block.querySelector('[data-slot="plan-block-time"]')).toHaveTextContent('09:00 – 10:30 · 1hr 30min')
-    expect(block).toHaveClass('border-2', 'border-dashed', 'hover:border-solid', 'hover:z-20')
+    expect(block).toHaveClass('border-2', 'border-dashed')
     expect(block).not.toHaveClass('border-l-4')
     // The same fill and edge as a planned or scheduled task on the Agenda.
     expect(block.style.borderColor).toBe('color-mix(in oklab, var(--chart-3) var(--scheduled-edge), transparent)')
@@ -50,7 +50,7 @@ describe('PlanBlock (PLAN-15, PLAN-38, PLAN-39)', () => {
     expect(block).toHaveAttribute('data-kind', 'break')
     expect(block.style.backgroundImage).toBe('repeating-linear-gradient(135deg, var(--muted) 0 6px, var(--border) 6px 8px)')
     expect(block).toHaveClass('border-2', 'border-dashed', 'border-muted-foreground/60')
-    expect(block).not.toHaveClass('border-l-4', 'hover:border-solid')
+    expect(block).not.toHaveClass('border-l-4')
     expect(block.style.borderColor).toBe('')
   })
 
@@ -91,5 +91,16 @@ describe('PlanBlock (PLAN-15, PLAN-38, PLAN-39)', () => {
     screen.getByRole('button').focus()
     await user.keyboard('{Enter}')
     expect(onOpen).toHaveBeenCalledTimes(2)
+  })
+
+  it('PLAN-47 a block that opens or moves, task or break, takes the ring on hover and keeps its dashed edge; one that only shows does not', () => {
+    const { unmount } = show(taskBlock(), { onOpen: vi.fn() })
+    expect(screen.getByRole('button', { name: /^Review the PR/ })).toHaveClass('border-dashed', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
+    unmount()
+    const again = show(breakBlock, { onPointerDown: vi.fn() })
+    expect(screen.getByRole('button', { name: /^Lunch/ })).toHaveClass('border-dashed', 'hover:ring-2', 'hover:ring-primary', 'hover:ring-offset-1', 'hover:z-20')
+    again.unmount()
+    show(breakBlock)
+    expect(screen.getByRole('button', { name: /^Lunch/ })).not.toHaveClass('hover:ring-2')
   })
 })

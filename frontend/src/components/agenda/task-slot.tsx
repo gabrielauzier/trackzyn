@@ -2,6 +2,7 @@ import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from 'reac
 import type { LucideIcon } from 'lucide-react'
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { HOVER_RING } from '@/lib/agenda/hover-ring'
 import { scheduledColors } from '@/lib/agenda/scheduled-colors'
 import { cn } from '@/lib/utils'
 
@@ -22,8 +23,6 @@ interface TaskSlotProps {
   onOpen?: () => void
   /** A press on the block; absent, the press only keeps the column from starting a draft under it. */
   onPointerDown?: (event: PointerEvent) => void
-  /** The edge turns solid on hover. */
-  solidOnHover?: boolean
   className?: string
   /** `data-*` attributes of the block. */
   data?: Record<`data-${string}`, string | boolean | undefined>
@@ -43,7 +42,6 @@ export function TaskSlot({
   tooltip,
   onOpen,
   onPointerDown,
-  solidOnHover = false,
   className,
   data,
 }: TaskSlotProps) {
@@ -71,8 +69,8 @@ export function TaskSlot({
             {...data}
             className={cn(
               'absolute overflow-hidden rounded-md border-2 border-dashed select-none',
-              'outline-2 outline-transparent hover:z-20 focus-visible:outline-(--ring)',
-              solidOnHover && 'hover:border-solid',
+              'outline-2 outline-transparent focus-visible:outline-(--ring)',
+              HOVER_RING,
               className,
             )}
             style={style}
