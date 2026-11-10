@@ -1,4 +1,214 @@
-# Planejamento diário Validation (round 4)
+# Validation: Planejamento diário - PASS ✅ (round 6)
+
+**Date**: 2026-11-10
+**Spec**: `.specs/features/planejamento-diario/spec.md` (plus `agenda-adjustments/spec.md` ADJ-26 and `agendamento/spec.md` D35 for the merged `drop` fix)
+**Diff range**: `47e43f1..8a5af42` (67c180a tests, ffe95fd specs, 8a5af42 merge of `feat/agendamento` bringing f661873 and 2efa8a9)
+**Verifier**: independent sub-agent, round 6 (author ≠ verifier)
+
+**Verdict**: PASS ✅ (round 6). The three round-5 gaps are closed by tests that assert the spec outcome, the stale spec text is fixed, both gates are green, and the sensor killed 6/6, including the two round-5 survivors (B1, F10). The merged `drop` fix fits this branch: tsc is clean and its D35 test passes here. Older rounds follow below; the round-5 FAIL is superseded.
+
+---
+
+## Round 6: `47e43f1..8a5af42`
+
+### Round-5 gaps → resolution
+
+| # | Gap (round 5) | Evidence on HEAD 8a5af42 | Result |
+| --- | --- | --- | --- |
+| 1 | PLAN-49, a break that is not the user's (B1) | `backend-node/test/routes/plans.test.ts:317-337` - an `editor` member saves `Café`; the owner posts `/api/focus/break` with that id → `reply.statusCode` `toBe(422)`, `toMatchObject({ code: 'plan_break_unknown' })`, `GET /api/focus` `session` `toBeNull()`, editor's `GET /api/plans/<day>` block `toMatchObject({ id, started_at: null })`, editor's Agenda read still `['Café']`. The old test (`:302`) is renamed to what it really sends (a task block) | ✅ Closed (B1 killed) |
+| 2 | ADJ-26, projected occurrences (F10) | `frontend/src/pages/agenda.test.tsx:1797-1836` - test named `ADJ-26 …`; the mock has a projected `Weekly review` (`series-1`, 2026-11-05 11:00); `:1818` shown before, `:1828` `queryByRole('button', { name: /^Weekly review/ })` `toBeNull()` after `Show schedules` off | ✅ Closed (F10 killed). After reopening, the test still checks only `Fix the widget` (the same `hideScheduled` flag drives all four kinds) - not a gap |
+| 3 | PLAN-48, past day sees no card | `frontend/src/pages/plan.test.tsx:238-239` in the PLAN-34 past-day test - `queryByRole('button', { name: 'Arrastar nova tarefa para a grade' })` `toBeNull()` | ✅ Closed (P48 killed) |
+| 4 | PLAN-02, focus on a drag (cosmetic) | unchanged: native mousedown focus on a `tabIndex=-1` `li` (`use-plan-drag.ts` does not `preventDefault`); jsdom cannot drive it | ⚠️ Noted, not blocking |
+
+### Stale spec text (round 5) → resolution
+
+| Item | Now | Result |
+| --- | --- | --- |
+| Out of Scope "`Encaixar` automático … fora da primeira entrega" | row removed (`planejamento-diario/spec.md:27-33`) | ✅ |
+| PLAN-D6 "`Encaixar` vêm depois" | `spec.md:285` "… e o `Encaixar`, que entrou já nesta entrega; pausas fixas vêm depois" | ✅ |
+| Assumptions "abrindo em amanhã" | `spec.md:47` "abrindo em hoje … revista em 2026-11-10" | ✅ |
+| PLAN-30 Independent Test | `spec.md:165` "chegar ao plano de hoje; `Planejar amanhã` chega ao de amanhã" | ✅ |
+| Coverage line 45 | `spec.md:257` "50 total … PLAN-46 a PLAN-50 … checked in rounds 5 and 6" | ✅ |
+| P1 criteria order 7, 9, 8 | `spec.md:146-148` now 7 (PLAN-46), 8 (PLAN-47), 9 (PLAN-49) | ✅ |
+| ADJ-26 coverage / test id | `agenda-adjustments/spec.md:174` "26 total … ADJ-26 … checked in that feature's `validation.md`"; test now named `ADJ-26` | ✅ (the ADJ-26 row at `:172` still reads `Implementing`, task `—`; see traceability below) |
+
+### Merged `drop` fix (f661873 via 8a5af42)
+
+`frontend/src/pages/agenda.tsx:307-325`: a block still pending confirmation and dragged again reads the task, the undo and the `Sem hora` check from `confirming` (`:309`, `:312`, `:314`). `confirming` (`:172`) has the same shape here (`id, change, undo, task, schedule`), the plan/agenda code of this branch does not touch `drop`, `tsc -b` is clean, and `agenda.test.tsx:1665-1687` (D35, struck-through `Thu, Nov 5 · 10:00 – 11:30` as `DEL`, save `2026-11-06 12:00`, `Desfazer` back to `2026-11-05 10:00`) passes on this branch. 2efa8a9 only adds `frontend/src/lib/agenda/layout.test.ts:58-67` (one session in two timezones), green.
+
+### Gates (round 6)
+
+| Gate | Result |
+| --- | --- |
+| `cd frontend && npx tsc -b --noEmit` | ✅ exit 0 |
+| `cd frontend && npx vitest run` | ✅ 176 files, 1935 passed (round 5: 1933 → +2: D35 re-drag, two-timezone layout), exit 0 |
+| `cd backend-node && npx vitest run` | ✅ 77 files passed, 1 skipped; 1037 passed, 9 skipped (round 5: 1036 → +1, the other member's break), exit 0, first run |
+
+No test deleted; one test title narrowed to what it sends (`plans.test.ts:302`).
+
+### Discrimination sensor (round 6)
+
+Scratch: temporary `git worktree --detach` at `8a5af42` under the scratchpad (`r6/wt`), `node_modules` symlinked. One literal replacement per mutant, the listed file run, then `git checkout` of the file in the scratch. No `git stash`. Worktree removed with `git worktree remove --force`; the real tree's `git status --porcelain` equals the baseline taken first.
+
+| # | File (HEAD) | Mutation | Tests run | Result |
+| --- | --- | --- | --- | --- |
+| B1 | `backend-node/src/services/focus.ts:340` | owner clause → `sql\`true\`` | `test/routes/plans.test.ts` | ✅ Killed (`… break of another member …`; survived in round 5) |
+| B1b | `focus.ts:340` | drop only `user_id = …` (any plan of the workspace) | same | ✅ Killed (same test) |
+| F10 | `frontend/src/pages/agenda.tsx:201` | `Exibir agendamentos` off keeps `projected` | `src/pages/agenda.test.tsx` | ✅ Killed (`ADJ-26 …`; survived in round 5) |
+| P48 | `frontend/src/pages/plan.tsx:240` | card hidden only for a viewer (`readOnly` → `!canWrite`), so a past day shows it | `src/pages/plan.test.tsx` | ✅ Killed (`PLAN-34 a past day …`) |
+| D1 | `agenda.tsx:309` | `prior` always null (pre-f661873) | `agenda.test.tsx` | ✅ Killed (`D35 a pending block dragged again …`) |
+| D2 | `agenda.tsx:314` | undo back to `from` (the preview) instead of the saved place | `agenda.test.tsx` | ✅ Killed (same test, `Desfazer`) |
+
+**Sensor depth**: targeted re-run of the round-5 survivors plus the new tests and the merged fix. **Result** (round 6): 6/6 killed - PASS ✅
+
+### Requirement traceability (round 6)
+
+| Requirement | New status |
+| --- | --- |
+| PLAN-48, PLAN-49 | ✅ Verified |
+| ADJ-26 | ✅ Verified (the `agenda-adjustments/spec.md:172` row still says `Implementing`; the author may flip it) |
+| PLAN-01..PLAN-50 rows in `planejamento-diario/spec.md:206-255` | the Traceability table still says `Implementing` for every row; verified across rounds 1-6, the author may flip them |
+| everything verified in round 5 | unchanged ✅ |
+
+### Summary (round 6)
+
+**Overall**: ✅ Ready. Spec-anchored check: the 3 open criteria now assert the spec outcome (422 `plan_break_unknown`, no session, break still pending; projected occurrence gone; no card on a past day). Sensor 6/6. Gates: frontend 1935 passed, backend 1037 passed. Remaining notes, non-blocking: PLAN-02 drag focus (cosmetic), traceability rows still `Implementing`.
+
+---
+
+## Round 5 header (kept)
+
+**Date**: 2026-11-10
+**Spec**: `.specs/features/planejamento-diario/spec.md` (plus `agenda-view-menu/spec.md` DAYS-07/13, `agenda-adjustments/spec.md` ADJ-21..26, `agenda/spec.md` AGENDA-02/04, `agendamento/spec.md` US-5/US-8/US-14 for the Agenda commits)
+**Diff range**: `c9145e0..47e43f1` (24 commits after the round-4 PASS, 034c2dc..47e43f1; frontend plus one backend change, 83db1bd, with `backend-node/drizzle/0015_planned_break_started.sql`)
+**Verifier**: independent sub-agent, round 5 (author ≠ verifier)
+
+**Verdict**: FAIL ❌ (round 5). Every gate is green and every requirement in the range behaves as the spec says on HEAD, but the sensor found 2 surviving mutants out of 26, both test-only gaps: the owner check of a planned break started from the focus (PLAN-49, B1) and the projected occurrences under `Exibir agendamentos` off (ADJ-26, F10). Nothing in the code needs to change; two assertions are missing. See *Round 5* below.
+
+---
+
+## Round 5: `c9145e0..47e43f1`
+
+### Commits → requirements
+
+| Commit | Requirement(s) |
+| --- | --- |
+| 01feb10, 2c27633, 9bba3af, 7146741, 6f53614 | PLAN-24, PLAN-26, PLAN-28, PLAN-39 (tooltip), PLAN-46, PLAN-47, PLAN-15 |
+| 71b4bad, 3af5b35 | AGENDA-04, PLAN-24, US-5 (dashed edge everywhere) |
+| f3a3dda | PLAN-39 (done task leaves the Agenda; backend `pendingOnly`) |
+| b748b74, c689abc | PLAN-03 (no sessions on the plan), PLAN-32 (timed task to its own window) |
+| 436161c, 274f812 | PLAN-48 |
+| 1ab7fa1, 1bc76b3, be9dd62 | PLAN-03 (edges, page scroll, pinned header and list) |
+| 9e533a1 | PLAN-30, PLAN-D5 (opens today) |
+| 1d8ac5c, 585568b, 5472ed0 | AGENDA-02, US-14 (grid fitted to the window, `Sem hora` only when needed) |
+| 78710ed | US-8 (a new schedule's window moved or pulled keeps the schedule rule) |
+| 83db1bd | PLAN-49 (backend + migration 0015) |
+| ddbd668 | ADJ-21..26 |
+| 1202ebb | DAYS-07, DAYS-13 |
+| c1622bc | PLAN-50 |
+| 47e43f1 | PLAN-02 (focus edge) |
+
+### Spec-anchored acceptance criteria (requirements touched in the range)
+
+| Req | Spec-defined outcome | `file:line` + assertion | Result |
+| --- | --- | --- | --- |
+| PLAN-02 | A list task clicked, dragged or with its box marked takes the primary edge while in focus | `frontend/src/components/plan/plan-sidebar.test.tsx:144-154` - `toHaveAttribute('tabindex','-1')`, `toHaveClass('focus:border-primary','focus-within:border-primary')`, `toHaveFocus()` after a click, checkbox focus inside the `li` | ✅ PASS (drag path relies on the native mousedown focus, `use-plan-drag.ts:100-107` does not `preventDefault`; not driven by a test - minor, gap 4) |
+| PLAN-03 | Whole day, no own scroll; page opens at workday start under the pinned header; header and list sticky; no sessions on the plan; 2px dashed edges | `plan-grid.test.tsx:49-57` - height `1440px`, no `overflow-y-auto`, `scrollTo({top:540})`; `:59-64` `scrollTo({top:450})` with inset 90; `:66-70` no scroll stacked; `pages/plan.test.tsx:395-403` sticky classes; `pages/plan.test.tsx:253-289` - `queryByLabelText(/^Answer the mail/)` null, `sessions.list` not called; `plan-block.test.tsx:33`, `:47` edges | ✅ PASS |
+| PLAN-15 | Break block and side chips: gray hatched, 2px dashed | `plan-block.test.tsx:47`; `plan-sidebar.test.tsx:318-325` - `toHaveClass('border-2','border-dashed','border-muted-foreground/60')`, exact hatch gradient | ✅ PASS |
+| PLAN-24 | Planned task: no text, list colour, dashed, plan icon; break: no text, hatched, dashed | `components/agenda/planned-block.test.tsx:41`, `:91`, `:108` | ✅ PASS |
+| PLAN-26 | `Começar` on the focus opens an Intervalo of the break length in its list | `pages/focus.test.tsx:1172-1180` - `toMatchObject({ type:'break', minutes:15, list_id:LIST, plan_block_id:'p-coffee' })` | ✅ PASS |
+| PLAN-27 | With a task counting, Start still sends the break (server closes the session) | `pages/focus.test.tsx:1192-1200` - `{ type:'break', minutes:60, list_id:LIST }` | ✅ PASS (server side unchanged, covered in earlier rounds) |
+| PLAN-28 | `Começar` only on the focus, section `Pausas do plano de hoje`, breaks of today in this list not ended, not during an Intervalo; Agenda has none, its panel leads to the focus | `pages/focus.test.tsx:1164-1170` - exact item texts `['Café10:30 – 10:45 · 15minStart','Almoço12:00 – 13:00 · 1hrStart']` (excludes the 08:00 break, the other list, tomorrow, the task); `:1202-1214`, `:1216-1223`, `:1225-1232`; `pages/agenda.test.tsx:1721`, `:1732`, `:1743`; `planned-block.test.tsx:32` | ✅ PASS |
+| PLAN-30 / PLAN-D5 | `Planejar` and `/planejar` open today in the workspace timezone; `Planejar amanhã` still tomorrow | `pages/plan.test.tsx:132-138` - path `/planejar/2026-11-08` at 23:30 São Paulo (UTC Monday); `app-layout.test.tsx:227-232` href `/planejar`; `pages/agenda.test.tsx` PLAN-01 test still `/planejar/2026-11-05` | ✅ PASS |
+| PLAN-32 | Encaixar in marked order; a marked timed task goes to its own time for its estimate, even outside the workday; sessions take no time | `pages/plan.test.tsx:253-289` (`10:00 – 11:00` over a session), `:291-311` (`09:00 – 10:30` and `10:30 – 11:30`), `:313-328` (`20:00 – 20:30`) | ✅ PASS |
+| PLAN-39 | Done task: crossed out on the plan, leaves the Agenda, comes back when reopened | `backend-node/test/routes/plans.test.ts:226-249` - `kinds()` `['task','break']` → `['break']` → back; plan of the day keeps `['task', true]`; `pages/agenda.test.tsx:1760-1771` re-read under `['lists']` | ✅ PASS |
+| PLAN-46 | Tooltips of planned task and break with the exact lines | `planned-block.test.tsx:57`, `:66`, `:84`, `:99`; `pages/agenda.test.tsx:1753` | ✅ PASS |
+| PLAN-47 | Dashed edge solid on hover and block on top, for blocks that open or move | `planned-block.test.tsx:73`; `plan-block.test.tsx:97` (a fixed block does not change) | ✅ PASS |
+| PLAN-48 | Card above breaks; `Sem estimativa: 1h` / `Ocupa <duração>`; refused estimate drags nothing; drop opens the Agenda form on the filtered/first list with the card estimate, no Concluídas notice; Hoje for today, Esta semana otherwise; block where it fell; cancel creates nothing; viewer and past day see no card | `new-task-card.test.tsx:20-59`; `plan-sidebar.test.tsx:299-316` (order, filtered list `home`, none without drag); `pages/plan.test.tsx:339-359` (`column:'this_week'`, `10:00 – 11:30`), `:361-373` (`column:'today'`, `23:00 – 00:00`), `:375-386`, `:388-393` (viewer); `new-session-task-dialog.test.tsx:162` | ✅ PASS except the past-day half, which has no test (gap 3) |
+| PLAN-49 | Start marks the break in the same write; it leaves the Agenda and the focus list; stays on the plan; saving again keeps the mark; a break that is not the user's → `plan_break_unknown`, no Intervalo | `backend-node/test/routes/plans.test.ts:259-300` - `started_at` null → string, `names()` `['Almoço']`, saved again with id → `toMatchObject({ id, start:'10:15', started_at })`; `:302-315` - 422 `plan_break_unknown`, `session` null, **but only for a task block of the same user**; `frontend/src/lib/plan/draft.test.ts:137-148`; `pages/focus.test.tsx:1182-1190` | ❌ GAP on "não é do usuário": no test sends another user's break id (B1 survived, gap 1) |
+| PLAN-50 | Group box marks the shown tasks in list order after the marks made; mixed when partial; all marked → unmarks only that group | `plan-sidebar.test.tsx:243-255` (`['review@540','widget@630','later@750']`), `:257-275` (`indeterminate` true/false, `Fit (1)`), `:277-286` (search) | ✅ PASS |
+| AGENDA-02 / US-14 | One-line header, no legend, grid fitted to the window; `Sem hora` only when needed | `pages/agenda.test.tsx:104-120`; `app-layout.test.tsx:219`; `week-grid.test.tsx:512` | ✅ PASS |
+| AGENDA-04 / US-5 | Dashed edge on breaks and scheduled blocks | `session-block.test.tsx:112`; `scheduled-block.test.tsx:70` | ✅ PASS |
+| US-8 (78710ed) | A new schedule's window moved/pulled: from the first quarter after now to midnight | `frontend/src/lib/agenda/use-grid-drag.test.tsx:454-481` - exact `start/end` (`18:00-19:00`, `11:00-12:00`, `14:15-15:15`, `23:00-24:00`, bottom `19:00`, top `14:15`) | ✅ PASS |
+| DAYS-07 | One row of pills Seg..Dom, full names read, pressed when shown, primary vs gray outline | `components/agenda/view-menu.test.tsx:44-61` | ✅ PASS |
+| DAYS-13 | Only day shown → its pill disabled | `view-menu.test.tsx:87-92` | ✅ PASS |
+| ADJ-21/22/24/25 | `Exibir intervalos`, on by default, hint, position; off hides breaks and planned breaks; dot; remembered (stored value keeps its meaning) | `view-menu.test.tsx:148-171`, `:190-196`, `:198-205`; `pages/agenda.test.tsx:300`, `:312`, `:1804-1812`; `lib/agenda/hide-breaks.test.ts:10-26` | ✅ PASS |
+| ADJ-26 | `Exibir agendamentos` on by default, under `Exibir intervalos`; off hides timed, `Sem hora`, **projected** and planned tasks, keeps sessions and planned breaks; remembered | `view-menu.test.tsx:174-188`; `pages/agenda.test.tsx:1773-1802` - timed, planned task and `[data-untimed-row]` gone, `Coffee` kept, `localStorage 'agenda.hideScheduled'` `'true'`, reopened still hidden | ❌ GAP on the projected occurrences: the test mocks `projected: []` (F10 survived, gap 2). Tests do not cite `ADJ-26` by id. |
+
+### Gates (round 5)
+
+| Gate | Result |
+| --- | --- |
+| `cd frontend && npx vitest run` | ✅ 176 files, 1933 passed (round 4: 175 / 1884 → +49), exit 0 |
+| `cd frontend && npx tsc -b --noEmit` | ✅ exit 0 |
+| `cd backend-node && npx vitest run` | ✅ 77 files passed, 1 skipped; 1036 passed, 9 skipped, exit 0 (idle re-run). The first run, alongside the sensor, had 4 failures in `test/routes/oidc.test.ts` (`expected 500 to be 307`, ~8 s each): load timeouts in a file this range does not touch; alone it passes 8/8, and the idle full re-run is green. |
+
+No test was deleted; the backend changes only extend expected objects with `started_at: null` (`plans-read.test.ts:136`, `:251`, `plans-save.test.ts:98`, `plans.test.ts:218`).
+
+### Discrimination sensor (round 5)
+
+Scratch: a temporary `git worktree` at `47e43f1` under the scratchpad (`verifier-r5/wt`), `node_modules` symlinked from the main checkout. Each mutant is one literal replacement (`mut.py`), then the listed test files, then `git checkout` of that file in the scratch. No `git stash`. The worktree was removed with `git worktree remove --force`; `git status --porcelain` of the real tree equals the baseline taken first (`diff` empty).
+
+| # | File (HEAD) | Mutation | Tests run | Result |
+| --- | --- | --- | --- | --- |
+| B1 | `backend-node/src/services/focus.ts:340` | Drop the owner clause (`planId IN (SELECT id FROM day_plans WHERE user_id = … AND workspace_id = …)` → `true`) | `test/routes/plans.test.ts` | ❌ **Survived** (21/21) |
+| B2 | `backend-node/src/services/focus.ts:339` | Drop `eq(dayPlanBlocks.kind, 'break')` | `plans.test.ts` | ✅ Killed (`answers 422 plan_break_unknown …`) |
+| B3 | `backend-node/src/services/plans.ts:276` | Saved again, `startedAt: null` always | `plans.test.ts`, `plans-save.test.ts` | ✅ Killed |
+| B4 | `backend-node/src/services/plans.ts:120` | Agenda read keeps started breaks | `plans.test.ts`, `plans-read.test.ts` | ✅ Killed |
+| B5 | `backend-node/src/services/plans.ts:119` | Agenda read keeps done tasks | same | ✅ Killed (PLAN-39) |
+| B6 | `backend-node/src/services/focus.ts:344` | Never throw `plan_break_unknown` | `plans.test.ts` | ✅ Killed |
+| B7 | `backend-node/src/routes/plans.ts:94` | `pendingOnly: false` | `plans.test.ts` | ✅ Killed (2 tests) |
+| F1 | `frontend/src/lib/plan/draft.ts:145` | A saved break goes back without its id | `draft.test.ts`, `use-plan.test.tsx`, `plan.test.tsx` | ✅ Killed |
+| F2 | `frontend/src/components/plan/plan-sidebar.tsx:87` | Group marks go before the marks made | `plan-sidebar.test.tsx` | ✅ Killed |
+| F3 | `plan-sidebar.tsx:281` | `indeterminate` always false | same | ✅ Killed |
+| F4 | `plan-sidebar.tsx:87` | Unmarking a group clears every mark | same | ✅ Killed |
+| F5 | `frontend/src/pages/plan.tsx:176` | No own window for a marked timed task | `plan.test.tsx` | ✅ Killed (2 tests) |
+| F6 | `plan.tsx:120` | New task always to `this_week` | `plan.test.tsx` | ✅ Killed |
+| F7 | `plan.tsx:126` | New task block at 00:00, not where the card fell | `plan.test.tsx` | ✅ Killed (2 tests) |
+| F8 | `frontend/src/pages/agenda.tsx:224` | `Exibir intervalos` off keeps planned breaks | `agenda.test.tsx` | ✅ Killed |
+| F9 | `agenda.tsx:201` | `Exibir agendamentos` off keeps the `Sem hora` tasks | `agenda.test.tsx` | ✅ Killed |
+| F10 | `agenda.tsx:201` | `Exibir agendamentos` off keeps the projected occurrences | `agenda.test.tsx` | ❌ **Survived** (106/106) |
+| F11 | `frontend/src/lib/agenda/hide-breaks.ts:28` | `readHideScheduled` ignores storage | `agenda.test.tsx`, `view-menu.test.tsx` | ✅ Killed |
+| F12 | `frontend/src/components/agenda/view-menu.tsx:124` | Last shown day's pill not disabled | `view-menu.test.tsx`, `agenda.test.tsx` | ✅ Killed (DAYS-13) |
+| F13 | `view-menu.tsx:84` | Dot ignores `hideScheduled` | same | ✅ Killed (2 tests) |
+| F14 | `frontend/src/lib/agenda/use-grid-drag.ts:277` | A moved/pulled schedule window is not `future` (pre-78710ed) | `use-grid-drag.test.tsx`, `agenda.test.tsx` | ✅ Killed (3 tests) |
+| F15 | `use-grid-drag.ts:228` | Moved window may start before now (`Math.max(0, …)`) | `use-grid-drag.test.tsx` | ✅ Killed |
+| F16 | `frontend/src/pages/focus.tsx:137` | A started break stays in the list until the re-read | `focus.test.tsx` | ✅ Killed |
+| F17 | `frontend/src/components/focus/planned-breaks.tsx:31` | Ended breaks still listed | `focus.test.tsx` | ✅ Killed (2 tests) |
+| F18 | `focus.tsx:137` | Breaks of other lists listed | `focus.test.tsx` | ✅ Killed (2 tests) |
+| F19 | `plan-sidebar.tsx:234` | List task loses `tabIndex={-1}` | `plan-sidebar.test.tsx` | ✅ Killed |
+
+**Sensor depth**: expanded (PLAN-49 touches data integrity across users). **Result (round 5, superseded by round 6)**: 24/26 killed, 2 survived - FAIL ❌.
+
+### Ranked gaps (round 5)
+
+1. **PLAN-49, owner check not tested (B1, Major).** `backend-node/src/services/focus.ts:340` limits the update to the actor's own plans in the workspace, which is correct on HEAD, but `backend-node/test/routes/plans.test.ts:302-315` only sends the id of the same user's *task* block, although its title says "a break of another user". Failing scenario with the clause removed: user B (same workspace) saves a plan with `Café`; user A posts `POST /api/focus/break` with `plan_block_id` = B's break id → 200, A's Intervalo opens and B's break gets `started_at` and vanishes from B's Agenda. Fix task: in that test (or a new one), save a break as a second member and send its id as the owner; expect 422 `plan_break_unknown`, `GET /api/focus` session null, and B's `GET /api/plans/<day>` break `started_at` still null.
+2. **ADJ-26, projected occurrences not tested (F10, Minor).** `frontend/src/pages/agenda.tsx:201` empties `projected` under `Exibir agendamentos` off, as the spec asks, but `pages/agenda.test.tsx:1773-1802` mocks `projected: []`. Failing scenario with the mutant: a series' next occurrence keeps showing on the grid with the switch off. Fix task: add a projected occurrence to that test's mock and assert it is gone after the click and after reopening; name the test `ADJ-26 …`.
+3. **PLAN-48, past day not tested (Minor, evidence-or-zero).** The spec says "Um `viewer` e um dia passado SHALL não ver o card"; only the viewer is tested (`pages/plan.test.tsx:388-393`). The past day shares `readOnly` (`pages/plan.tsx:71`, `:240`), so HEAD is right. Fix task: in the PLAN-34 test (`pages/plan.test.tsx:228`) assert `queryByRole('button', { name: 'Arrastar nova tarefa para a grade' })` is null.
+4. **PLAN-02, the drag path (Cosmetic).** Focus on a drag comes from the browser's mousedown on a `tabIndex=-1` `li`; jsdom `pointerDown` does not focus, so only the click and the checkbox are tested. Acceptable; noted only.
+
+### Stale or imprecise spec text (do not block, for the author)
+
+- `planejamento-diario/spec.md:30` (Out of Scope): "`Encaixar` automático … fora da primeira entrega" - PLAN-32, PLAN-33, PLAN-50 are implemented.
+- `spec.md:286` (PLAN-D6): "pausas fixas e `Encaixar` vêm depois" - same.
+- `spec.md:48` (Assumptions table): "Qualquer dia de hoje em diante, abrindo em amanhã" - PLAN-D5 was revised to open on today.
+- `spec.md:166` (Independent Test of PLAN-30): "chegar ao plano de amanhã" - now today.
+- `spec.md:258` Coverage: "45 total, 45 mapped (T1 a T25)" - PLAN-46..PLAN-50 make 50, and their rows say only "Tasks".
+- `spec.md` P1 *Ver o plano na Agenda*: the criteria read 7, 9, 8 (PLAN-49 sits before PLAN-47).
+- `agenda-adjustments/spec.md`: ADJ-26 is `Implementing` with no task, and the Coverage line still says 25 total; no test names `ADJ-26`.
+
+### Requirement traceability (round 5)
+
+| Requirement | New status |
+| --- | --- |
+| PLAN-02, PLAN-03, PLAN-15, PLAN-24, PLAN-26, PLAN-27, PLAN-28, PLAN-30, PLAN-32, PLAN-39, PLAN-46, PLAN-47, PLAN-50; DAYS-07, DAYS-13; ADJ-21..25; AGENDA-02, AGENDA-04 | ✅ Verified |
+| PLAN-49 | ❌ Needs Fix (test: another user's break) |
+| PLAN-48 | ⚠️ Needs Fix (test: past day) |
+| ADJ-26 | ❌ Needs Fix (test: projected occurrences) |
+
+---
+
+## Round 4 header (kept)
 
 **Date**: 2026-11-08
 **Spec**: `.specs/features/planejamento-diario/spec.md`
