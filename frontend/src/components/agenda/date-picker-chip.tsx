@@ -15,6 +15,8 @@ interface DatePickerChipProps {
   shown: string
   /** The chosen day, YYYY-MM-DD. */
   onPick: (day: string) => void
+  /** The chip's text; `Hoje` when absent. */
+  label?: string
 }
 
 /** The calendar works in local dates; a YYYY-MM-DD day is read as that day at local midnight. */
@@ -24,7 +26,7 @@ const localDate = (day: string) => new Date(`${day}T00:00:00`)
  * The `Hoje` chip (AGENDA-39): it opens the calendar of the month, with today filled in indigo, the month
  * arrows and `Ir para hoje`; choosing a day hands it over and closes the calendar (AGENDA-40, AGENDA-41).
  */
-export function DatePickerChip({ today, shown, onPick }: DatePickerChipProps) {
+export function DatePickerChip({ today, shown, onPick, label }: DatePickerChipProps) {
   const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
 
@@ -38,7 +40,7 @@ export function DatePickerChip({ today, shown, onPick }: DatePickerChipProps) {
       <PopoverTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           <CalendarDays size={14} />
-          {t('agenda.today')}
+          {label ?? t('agenda.today')}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">

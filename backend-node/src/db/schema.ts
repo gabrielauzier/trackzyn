@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   check,
+  date,
   index,
   integer,
   json,
@@ -10,6 +11,7 @@ import {
   primaryKey,
   smallint,
   text,
+  time,
   timestamp,
   unique,
   uniqueIndex,
@@ -184,6 +186,58 @@ export type TaskColumn = (typeof TASK_COLUMNS)[number]
 /** Where a task came from when no token made it (PICK-17). */
 export type TaskOrigin = 'agenda'
 
+export const SERIES_FREQS = ['daily', 'weekly', 'monthly'] as const
+export type SeriesFreq = (typeof SERIES_FREQS)[number]
+
+/**
+ * A recurrence rule of a scheduled task (Recorrência, D15). At most one occurrence of a series is pending at a
+ * time (D13): the rule starts from the open occurrence's `scheduled_on`, so the series keeps no start day. It
+ * keeps its own time, which the next occurrence takes, so moving one occurrence alone does not move the
+ * next ones (D27).
+ */
+export const taskSeries = pgTable(
+  'task_series',
+  {
+    id: uuid('id').primaryKey(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    freq: varchar('freq', { length: 8 }).$type<SeriesFreq>().notNull(),
+    /** Every N days, weeks or months, 1 to 99. */
+    interval: smallint('interval').notNull().default(1),
+    /** Only for `weekly`: 1 (Monday) to 7 (Sunday), at least one. Weekdays is `weekly` with 1 to 5. */
+    weekdays: smallint('weekdays').array(),
+    /** Only for `monthly`: 1 to 31; a shorter month falls on its last day. */
+    monthDay: smallint('month_day'),
+    /** The last possible day (`YYYY-MM-DD`); never together with `count`. */
+    until: date('until', { mode: 'string' }),
+    /** How many occurrences the series has in all, 1 to 999; never together with `until`. */
+    count: smallint('count'),
+    /** Occurrences created so far, the first one included, for `count`. */
+    createdCount: smallint('created_count').notNull().default(1),
+    /** The start time of the series, in the workspace's timezone, to the minute; null for none (D27, D34). */
+    time: time('time'),
+    /** When the series ended: stopped, or `until` or `count` reached. */
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index('ix_task_series_workspace').on(t.workspaceId),
+    check('ck_task_series_freq', sql`${t.freq} IN ('daily', 'weekly', 'monthly')`),
+    check('ck_task_series_interval', sql`${t.interval} BETWEEN 1 AND 99`),
+    check(
+      'ck_task_series_weekdays',
+      sql`${t.weekdays} IS NULL OR (cardinality(${t.weekdays}) >= 1 AND ${t.weekdays} <@ ARRAY[1,2,3,4,5,6,7]::smallint[])`,
+    ),
+    check('ck_task_series_month_day', sql`${t.monthDay} BETWEEN 1 AND 31`),
+    check('ck_task_series_count', sql`${t.count} BETWEEN 1 AND 999`),
+    check('ck_task_series_until_or_count', sql`${t.until} IS NULL OR ${t.count} IS NULL`),
+    check('ck_task_series_weekly_weekdays', sql`(${t.freq} = 'weekly') = (${t.weekdays} IS NOT NULL)`),
+    check('ck_task_series_monthly_month_day', sql`(${t.freq} = 'monthly') = (${t.monthDay} IS NOT NULL)`),
+    check('ck_task_series_time_minute', sql`${t.time} IS NULL OR extract(second FROM ${t.time}) = 0`),
+  ],
+)
+
 export const tasks = pgTable(
   'tasks',
   {
@@ -206,6 +260,14 @@ export const tasks = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     /** Where the task came from when no token made it: `agenda` reads as `via Agenda` (PICK-17). */
     createdFrom: varchar('created_from', { length: 16 }).$type<TaskOrigin>(),
+    /** The day the task is scheduled for, in the workspace's timezone (`YYYY-MM-DD`). */
+    scheduledOn: date('scheduled_on', { mode: 'string' }),
+    /** The start time on `scheduledOn`, in the workspace's timezone, to the minute (`HH:MM:SS`, D34). */
+    scheduledTime: time('scheduled_time'),
+    /** When this schedule brought the task to Today (D21); cleared whenever the day or the time change. */
+    scheduleAppliedAt: timestamp('schedule_applied_at', { withTimezone: true }),
+    /** The series this task is an occurrence of (the open one or a completed one); deleting the series keeps the task. */
+    seriesId: uuid('series_id').references(() => taskSeries.id, { onDelete: 'set null' }),
   },
   (t) => [
     index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
@@ -216,6 +278,14 @@ export const tasks = pgTable(
     check('ck_tasks_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
     check('ck_tasks_done_completed_at', sql`(${t.column} = 'done') = (${t.completedAt} IS NOT NULL)`),
     check('ck_tasks_created_from', sql`${t.createdFrom} IN ('agenda')`),
+    check('ck_tasks_schedule_time_needs_day', sql`${t.scheduledTime} IS NULL OR ${t.scheduledOn} IS NOT NULL`),
+    check('ck_tasks_schedule_time_minute', sql`${t.scheduledTime} IS NULL OR extract(second FROM ${t.scheduledTime}) = 0`),
+    // Only the candidates of the move to Today: the frequent reads (the focus polls every 15 s) touch a small index.
+    index('ix_tasks_schedule_due')
+      .on(t.listId, t.scheduledOn)
+      .where(sql`${t.scheduledOn} IS NOT NULL AND ${t.scheduleAppliedAt} IS NULL AND ${t.column} IN ('backlog', 'this_week')`),
+    index('ix_tasks_scheduled_on').on(t.scheduledOn).where(sql`${t.scheduledOn} IS NOT NULL AND ${t.column} <> 'done'`),
+    index('ix_tasks_series').on(t.seriesId).where(sql`${t.seriesId} IS NOT NULL`),
   ],
 )
 
@@ -320,6 +390,69 @@ export const taskIdempotencyKeys = pgTable(
   (t) => [primaryKey({ columns: [t.tokenId, t.key] })],
 )
 
+export const DAY_PLAN_BLOCK_KINDS = ['task', 'break'] as const
+export type DayPlanBlockKind = (typeof DAY_PLAN_BLOCK_KINDS)[number]
+
+/** The plan of one user for one day of one workspace (planejamento-diario, PLAN-D2); `version` guards two tabs (PLAN-35). */
+export const dayPlans = pgTable(
+  'day_plans',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    /** The planned day, in the workspace's timezone (`YYYY-MM-DD`). */
+    day: date('day', { mode: 'string' }).notNull(),
+    /** 1 on the first save, plus 1 on each save after it. */
+    version: integer('version').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [unique('uq_day_plans_user_workspace_day').on(t.userId, t.workspaceId, t.day)],
+)
+
+/** A block of a day plan: a task, or a break with its name and the list of the break session (PLAN-D3, PLAN-D4). */
+export const dayPlanBlocks = pgTable(
+  'day_plan_blocks',
+  {
+    id: uuid('id').primaryKey(),
+    planId: uuid('plan_id')
+      .notNull()
+      .references(() => dayPlans.id, { onDelete: 'cascade' }),
+    kind: varchar('kind', { length: 8 }).$type<DayPlanBlockKind>().notNull(),
+    /** Only for a task; deleting the task drops the block (PLAN-40). */
+    taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'cascade' }),
+    /** Only for a break, 1 to 40 characters. */
+    name: varchar('name', { length: 40 }),
+    /** Only for a break: the list of the break session it starts. */
+    listId: uuid('list_id').references(() => lists.id, { onDelete: 'cascade' }),
+    /** The start, to the minute, in the workspace's timezone. */
+    startTime: time('start_time').notNull(),
+    /** A task lasts 5 to 1440 minutes; a break 5 to 120, the limit of a break session. */
+    minutes: smallint('minutes').notNull(),
+    /** Only for a break: when `Começar` on the focus opened its Intervalo; then it leaves the Agenda (PLAN-49). */
+    startedAt: timestamp('started_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('ix_day_plan_blocks_plan_start').on(t.planId, t.startTime),
+    // Partial, so the cascades from tasks and lists touch only the blocks that point at them.
+    index('ix_day_plan_blocks_task').on(t.taskId).where(sql`${t.taskId} IS NOT NULL`),
+    index('ix_day_plan_blocks_list').on(t.listId).where(sql`${t.listId} IS NOT NULL`),
+    check('ck_day_plan_blocks_kind', sql`${t.kind} IN ('task', 'break')`),
+    check(
+      'ck_day_plan_blocks_shape',
+      sql`(${t.kind} = 'task' AND ${t.taskId} IS NOT NULL AND ${t.name} IS NULL AND ${t.listId} IS NULL) OR (${t.kind} = 'break' AND ${t.taskId} IS NULL AND ${t.name} IS NOT NULL AND char_length(${t.name}) BETWEEN 1 AND 40 AND ${t.listId} IS NOT NULL)`,
+    ),
+    check(
+      'ck_day_plan_blocks_minutes',
+      sql`(${t.kind} = 'task' AND ${t.minutes} BETWEEN 5 AND 1440) OR (${t.kind} = 'break' AND ${t.minutes} BETWEEN 5 AND 120)`,
+    ),
+    check('ck_day_plan_blocks_start_minute', sql`extract(second FROM ${t.startTime}) = 0`),
+  ],
+)
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Workspace = typeof workspaces.$inferSelect
@@ -329,6 +462,9 @@ export type UserPasskey = typeof userPasskeys.$inferSelect
 export type List = typeof lists.$inferSelect
 export type Task = typeof tasks.$inferSelect
 export type Subtask = typeof subtasks.$inferSelect
+export type TaskSeries = typeof taskSeries.$inferSelect
 export type FocusSession = typeof focusSessions.$inferSelect
 export type FocusAction = typeof focusActions.$inferSelect
 export type AccessToken = typeof personalAccessTokens.$inferSelect
+export type DayPlan = typeof dayPlans.$inferSelect
+export type DayPlanBlock = typeof dayPlanBlocks.$inferSelect

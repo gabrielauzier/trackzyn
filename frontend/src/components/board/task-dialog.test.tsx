@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 
 import { TaskDialog } from '@/components/board/task-dialog'
@@ -25,6 +25,9 @@ const task: Task = {
   created_at: '2026-10-24T10:00:00Z',
   subtasks: [{ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', task_id: TASK, title: 'Outline', done: false, position: 0 }],
   created_via: null,
+  scheduled_on: null,
+  scheduled_time: null,
+  series: null,
 }
 
 beforeEach(() => {
@@ -188,5 +191,150 @@ describe('TaskDialog', () => {
     expect(screen.getByLabelText('Notes')).toHaveAttribute('contenteditable', 'false')
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Delete task' })).not.toBeInTheDocument()
+  })
+})
+
+describe('TaskDialog: Agendamento (US-2)', () => {
+  // Wednesday 2026-11-11, 14:07 in America/Sao_Paulo.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-11T17:07:00Z'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const THURSDAYS = { freq: 'weekly' as const, interval: 1, weekdays: [4], month_day: null, until: null, count: null }
+  async function open(overrides: Partial<Task>, canWrite = true) {
+    vi.mocked(tasks.get).mockResolvedValue({ ...task, ...overrides })
+    const rendered = renderWithProviders(<TaskDialog taskId={TASK} canWrite={canWrite} timeZone="America/Sao_Paulo" onClose={vi.fn()} />)
+    await screen.findByDisplayValue('Write the report')
+    return rendered
+  }
+  const text = () => screen.getByTestId('schedule-text')
+
+  it('shows Sem agendamento for a task without a schedule', async () => {
+    await open({})
+    expect(text()).toHaveTextContent(/^Not scheduled$/)
+    expect(screen.queryByRole('button', { name: 'Clear time' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove schedule' })).not.toBeInTheDocument()
+  })
+
+  it('shows the day, and the start and the end from the estimate', async () => {
+    const { unmount } = await open({ scheduled_on: '2026-11-12' })
+    expect(text()).toHaveTextContent(/^Thu, Nov 12$/)
+    unmount()
+
+    await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', estimate_minutes: 120 })
+    expect(text()).toHaveTextContent(/^Thu, Nov 12 · 10:00 – 12:00$/)
+  })
+
+  it('D7 D23 without an estimate the end is one hour on, marked +1h', async () => {
+    await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', estimate_minutes: null })
+    expect(text()).toHaveTextContent(/^Thu, Nov 12 · 10:00 – 11:00 \(\+1h\)$/)
+  })
+
+  it('says the rule of a series, in Portuguese too: Qui, 12 nov · 10:00 – 12:00 · ↻ toda quinta', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', estimate_minutes: 120, series: { id: 's', rule: THURSDAYS, next_on: '2026-11-19' } })
+      expect(text()).toHaveTextContent(/^Qui, 12 nov · 10:00 – 12:00 · toda quinta$/)
+      expect(within(text()).getByRole('img', { name: 'Repete' })).toBeInTheDocument()
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('Limpar hora clears only the time; Remover agendamento clears the day and the time', async () => {
+    const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00' })
+    await user.click(screen.getByRole('button', { name: 'Clear time' }))
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_time: null }))
+
+    await user.click(screen.getByRole('button', { name: 'Remove schedule' }))
+    await waitFor(() => expect(tasks.update).toHaveBeenLastCalledWith(TASK, { scheduled_on: null }))
+  })
+
+  it('changes the day with the picker, which starts from the schedule of the task', async () => {
+    const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00' })
+    await user.click(screen.getByRole('button', { name: 'Change' }))
+    expect(screen.getByRole('button', { name: 'Thu, Nov 12' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Fri, Nov 13' }))
+    await user.click(within(screen.getByRole('button', { name: 'Fri, Nov 13' }).closest('form')!).getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_on: '2026-11-13', scheduled_time: '10:00' }))
+  })
+
+  it('a task without a schedule opens the picker from Agendar', async () => {
+    const { user } = await open({})
+    await user.click(screen.getByRole('button', { name: 'Schedule' }))
+    expect(screen.getByRole('button', { name: 'Wed, Nov 11' })).toHaveAttribute('aria-current', 'date')
+  })
+
+  describe('US-12 the question of a series', () => {
+    const series = { id: 's', rule: THURSDAYS, next_on: '2026-11-19' }
+
+    it('Limpar hora of an occurrence asks first and sends the scope chosen', async () => {
+      const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', series })
+      await user.click(screen.getByRole('button', { name: 'Clear time' }))
+      const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
+      expect(tasks.update).not.toHaveBeenCalled()
+      await user.click(within(question).getByRole('button', { name: /^This occurrence only/ }))
+      await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_time: null, scope: 'occurrence' }))
+    })
+
+    it('a new day from the picker asks first and sends the scope chosen', async () => {
+      // Every day: a rule the new day leaves as it is, so only the day changes.
+      const daily = { ...THURSDAYS, freq: 'daily' as const, weekdays: null }
+      const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', series: { ...series, rule: daily } })
+      await user.click(screen.getByRole('button', { name: 'Change' }))
+      await user.click(screen.getByRole('button', { name: 'Fri, Nov 13' }))
+      await user.click(within(screen.getByRole('button', { name: 'Fri, Nov 13' }).closest('form')!).getByRole('button', { name: 'Save' }))
+      const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
+      await user.click(within(question).getByRole('button', { name: /^This and the next ones/ }))
+      await waitFor(() =>
+        expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_on: '2026-11-13', scheduled_time: '10:00', scope: 'series' }),
+      )
+    })
+
+    it('D30 an occurrence of Every Thursday moved to Friday keeps the rule, asks, and This and the next ones sends no new rule', async () => {
+      const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', series })
+      await user.click(screen.getByRole('button', { name: 'Change' }))
+      await user.click(screen.getByRole('button', { name: 'Fri, Nov 13' }))
+      expect(screen.getByRole('radio', { name: 'Every Thursday' })).toBeChecked()
+      await user.click(within(screen.getByRole('button', { name: 'Fri, Nov 13' }).closest('form')!).getByRole('button', { name: 'Save' }))
+      const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
+      expect(tasks.update).not.toHaveBeenCalled()
+      await user.click(within(question).getByRole('button', { name: /^This and the next ones/ }))
+      await waitFor(() =>
+        expect(tasks.update).toHaveBeenCalledWith(TASK, { scheduled_on: '2026-11-13', scheduled_time: '10:00', scope: 'series' }),
+      )
+    })
+
+    it('Cancel saves nothing', async () => {
+      const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', series })
+      await user.click(screen.getByRole('button', { name: 'Clear time' }))
+      const question = await screen.findByRole('dialog', { name: 'Change a repeating task' })
+      await user.click(within(question).getByRole('button', { name: 'Cancel' }))
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Change a repeating task' })).not.toBeInTheDocument())
+      expect(tasks.update).not.toHaveBeenCalled()
+    })
+
+    it('deleting an occurrence asks how, with the day of the next one, and sends the scope chosen', async () => {
+      const { user } = await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00', series })
+      await user.click(screen.getByRole('button', { name: 'Delete task' }))
+      const question = await screen.findByRole('dialog', { name: 'Delete a repeating task' })
+      expect(within(question).getByRole('button', { name: /^Delete this one only/ })).toHaveTextContent('Thu, Nov 19')
+      expect(tasks.remove).not.toHaveBeenCalled()
+      await user.click(within(question).getByRole('button', { name: /^Delete this one and end the series/ }))
+      await waitFor(() => expect(tasks.remove).toHaveBeenCalledWith(TASK, 'series'))
+    })
+  })
+
+  it('shows the schedule to a viewer, with nothing to change it', async () => {
+    await open({ scheduled_on: '2026-11-12', scheduled_time: '10:00' }, false)
+    expect(text()).toHaveTextContent('Thu, Nov 12 · 10:00 – 11:30')
+    expect(screen.queryByRole('button', { name: 'Change' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Clear time' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove schedule' })).not.toBeInTheDocument()
   })
 })

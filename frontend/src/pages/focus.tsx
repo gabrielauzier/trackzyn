@@ -31,6 +31,7 @@ import { FocusSubtasks } from '@/components/focus/focus-subtasks'
 import { FocusTaskCard } from '@/components/focus/focus-task-card'
 import { FocusDrop, NextTaskItem, NextTaskOverlay } from '@/components/focus/next-tasks'
 import { OfflineConflicts } from '@/components/focus/offline-conflicts'
+import { PlannedBreaks, type PlannedBreak } from '@/components/focus/planned-breaks'
 import { SoundSettings } from '@/components/focus/sound-settings'
 import { ListBadge } from '@/components/lists/list-badge'
 import { Button } from '@/components/ui/button'
@@ -38,9 +39,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkspace } from '@/contexts/workspace-context'
-import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
+import { lists as listsApi, plans as plansApi, tasks as tasksApi } from '@/lib/api'
+import { dayOf, minuteOf } from '@/lib/agenda/layout'
 import { extractApiError } from '@/lib/api-errors'
 import { type FocusRouteState, collapseFocus, isDesktop, notifyFocusChanged, rememberFocusList } from '@/lib/desktop/focus-window'
+import { serverNow } from '@/lib/focus/clock'
 import { deviceId } from '@/lib/focus/device-id'
 import { taskLeft } from '@/lib/focus/task-left'
 import { FOCUS_DROP_ID, arrangeQueue } from '@/lib/focus/next-order'
@@ -79,7 +82,7 @@ export default function FocusPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { canWrite } = useWorkspace()
+  const { canWrite, current } = useWorkspace()
   const queryClient = useQueryClient()
   const { state, display, actions: focusActions, conflicts, expired } = useFocus(listId)
   const { playComplete } = useFocusSounds(state, display)
@@ -96,7 +99,7 @@ export default function FocusPage() {
       skip: (taskId: string) => tell(focusActions.skip(taskId)),
       complete: (taskId: string) => tell(focusActions.complete(taskId)),
       extend: (taskId: string) => tell(focusActions.extend(taskId)),
-      takeBreak: (minutes: number) => tell(focusActions.takeBreak(minutes)),
+      takeBreak: (minutes: number, planBlockId?: string) => tell(focusActions.takeBreak(minutes, planBlockId)),
       endBreak: () => tell(focusActions.endBreak()),
       retry: (actionId: string) => tell(focusActions.retry(actionId)),
     }
@@ -116,6 +119,31 @@ export default function FocusPage() {
     queryKey: ['lists', { archived: false }],
     queryFn: () => listsApi.list({ archived: false }),
   })
+
+  // The breaks of the user's plan of today in this list, each with `Começar` (PLAN-26, PLAN-28); saving a plan reads
+  // them again under `['plans']`.
+  const timezone = allLists?.timezone ?? null
+  const nowInstant = new Date(serverNow())
+  const planDay = timezone === null ? null : dayOf(nowInstant, timezone)
+  const { data: todayPlan } = useQuery({
+    queryKey: ['plans', current?.id ?? null, planDay, planDay],
+    queryFn: () => plansApi.planned(planDay!, planDay!),
+    enabled: planDay !== null && canWrite,
+    retry: false,
+  })
+  /** The breaks of the plan started here: they leave the list at once, before the plan is read again (PLAN-49). */
+  const [startedBreaks, setStartedBreaks] = useState<string[]>([])
+  const plannedBreaks = (todayPlan?.blocks ?? []).flatMap((block) =>
+    block.kind === 'break' && block.day === planDay && block.list.id === listId && !startedBreaks.includes(block.id) ? [block] : [],
+  )
+  /** `Começar`: an Intervalo of the break's length, which marks the break started; the Agenda and this list drop it. */
+  const startPlannedBreak = (block: PlannedBreak) => {
+    setStartedBreaks((ids) => [...ids, block.id])
+    void actions.takeBreak(block.minutes, block.id).finally(() => {
+      void queryClient.invalidateQueries({ queryKey: ['plans'] })
+      void queryClient.invalidateQueries({ queryKey: ['lists'] })
+    })
+  }
 
   // Start once per list, on the first state the server answers. Coming from `Focar agora` on the
   // desktop, the focus then goes to the widget (WIDGET-01): once the start was answered, or at once when
@@ -360,6 +388,10 @@ export default function FocusPage() {
                   actions={{ ...actions, complete }}
                 />
               </div>
+            )}
+
+            {canWrite && timezone !== null && display.mode !== 'break' && (
+              <PlannedBreaks breaks={plannedBreaks} nowMinute={minuteOf(nowInstant, timezone)} onStart={startPlannedBreak} />
             )}
 
             {queue.length > 0 && (

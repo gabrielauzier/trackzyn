@@ -1,11 +1,12 @@
 import { fireEvent, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { dropZoneAt } from '@/lib/agenda/drop-zone'
 import { isHiddenSession } from '@/lib/agenda/hide'
 import { dayLimit, weekDays } from '@/lib/agenda/layout'
 import { useGridDrag, type Draft } from '@/lib/agenda/use-grid-drag'
-import { renderWithProviders } from '@/test/utils'
-import type { AgendaSession } from '@/types'
+import { i18n, renderWithProviders } from '@/test/utils'
+import type { AgendaSession, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
 import { PX_PER_MINUTE, WeekGrid } from './week-grid'
 
 const SP = 'America/Sao_Paulo'
@@ -123,6 +124,8 @@ describe('WeekGrid', () => {
     const grid = container.querySelector('[data-agenda-scroll]')!
     for (const element of [headerRow, grid]) expect(element).toHaveClass('[scrollbar-gutter:stable]')
     expect(headerRow).toHaveClass('overflow-y-hidden')
+    // In a box as tall as the window, the headers keep their height and only the hours give way.
+    expect(headerRow).toHaveClass('shrink-0')
     expect(grid).toHaveClass('overflow-y-auto')
   })
 
@@ -296,11 +299,12 @@ describe('WeekGrid', () => {
     expect(today.querySelector<HTMLElement>('[data-now-line]')!.style.top).toBe(`${y(14, 7)}px`)
   })
 
-  it('hatches the time after now: the rest of today and the later days (AGENDA-23)', () => {
+  it('D10 draws the time after now like the time before: no hatching on the rest of today or the later days', () => {
     const { container } = renderWithProviders(<Grid sessions={[]} />)
     expect(column(container, '2026-11-03').querySelector('[data-future]')).toBeNull()
-    expect(column(container, '2026-11-04').querySelector<HTMLElement>('[data-future]')!.style.top).toBe(`${y(14, 7)}px`)
-    expect(column(container, '2026-11-05').querySelector<HTMLElement>('[data-future]')!.style.top).toBe('0px')
+    expect(column(container, '2026-11-04').querySelector('[data-future]')).toBeNull()
+    expect(column(container, '2026-11-05').querySelector('[data-future]')).toBeNull()
+    expect(column(container, '2026-11-04').querySelector('[data-now-line]')).not.toBeNull()
   })
 
   it('draws a draft while dragging over empty time (AGENDA-14)', () => {
@@ -439,3 +443,386 @@ describe('WeekGrid', () => {
     })
   })
 })
+
+describe('WeekGrid: the scheduled tasks (US-5, US-11)', () => {
+  const scheduled = (id: string, day: string, time: string, estimate: number | null = 90): ScheduledTask => ({
+    id,
+    title: `Scheduled ${id}`,
+    list: { id: 'l1', name: 'Work', color: 3 },
+    column: 'this_week',
+    position: 0,
+    estimate_minutes: estimate,
+    scheduled_on: day,
+    scheduled_time: time,
+    series: null,
+  })
+  const projection: ProjectedOccurrence = {
+    series_id: 'series-1',
+    task_id: 'open-1',
+    title: 'Weekly review',
+    list: { id: 'l1', name: 'Work', color: 3 },
+    on: '2026-11-06',
+    time: '09:00',
+    estimate_minutes: 30,
+    rule: { freq: 'weekly', interval: 1, weekdays: [5], month_day: null, until: null, count: null },
+  }
+  const grid = (props: Partial<Parameters<typeof WeekGrid>[0]>) =>
+    renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} {...props} />)
+
+  it('draws a task with a time as a block in its day at its time, for its estimate, in the past and in the future', () => {
+    const { container } = grid({ timed: [scheduled('a', '2026-11-05', '10:00'), scheduled('b', '2026-11-02', '08:00', null)] })
+    const future = within(column(container, '2026-11-05')).getByRole('button', { name: 'Scheduled a, Scheduled · 10:00 – 11:30' })
+    expect([future.style.top, future.style.height]).toEqual([`${y(10)}px`, `${90 * PX_PER_MINUTE}px`])
+    const past = within(column(container, '2026-11-02')).getByRole('button', { name: 'Scheduled b, Scheduled · 08:00 – 09:00 (1h)' })
+    expect(past.style.height).toBe(`${60 * PX_PER_MINUTE}px`)
+  })
+
+  it('puts a scheduled block and a session that overlap side by side', () => {
+    const { container } = grid({
+      sessions: [session('s', '2026-11-03T13:00:00.000Z', '2026-11-03T14:00:00.000Z')],
+      timed: [scheduled('a', '2026-11-03', '10:30')],
+    })
+    const day = within(column(container, '2026-11-03'))
+    const block = day.getByRole('button', { name: /^Scheduled a/ })
+    const work = day.getByRole('button', { name: 'Task s, 10:00 – 11:00' })
+    expect([work.style.left, work.style.width, block.style.left, block.style.width]).toEqual(['0%', '50%', '50%', '50%'])
+  })
+
+  it('draws the projections of a series fainter, on their day', () => {
+    const { container } = grid({ projected: [projection] })
+    const block = within(column(container, '2026-11-06')).getByRole('button', { name: /^Weekly review, Next occurrence/ })
+    expect(block).toHaveAttribute('data-projected', 'true')
+    expect(block).toHaveClass('opacity-50')
+  })
+
+  it('opens the task of a block on a click, and the open occurrence of a projection', async () => {
+    const onOpenTask = vi.fn()
+    const { user } = grid({ timed: [scheduled('a', '2026-11-05', '10:00')], projected: [projection], onOpenTask })
+    await user.click(screen.getByRole('button', { name: /^Scheduled a/ }))
+    await user.click(screen.getByRole('button', { name: /^Weekly review/ }))
+    expect(onOpenTask.mock.calls).toEqual([['a'], ['open-1']])
+  })
+
+  it('says the drag in the tooltip only where the grid has the gestures: not to a viewer', async () => {
+    const { user } = grid({ timed: [scheduled('a', '2026-11-05', '10:00')] })
+    await user.hover(screen.getByRole('button', { name: /^Scheduled a/ }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/Work · This weekClick to open$/)
+  })
+
+  it('US-14 shows no Sem hora row while no day shown has a task without a time', () => {
+    const { container } = grid({ untimed: [] })
+    expect(container.querySelector('[data-untimed-row]')).toBeNull()
+  })
+
+  it('US-14 puts the Sem hora row between the day headers and the timeline, with the untimed tasks of each day', () => {
+    const { container } = grid({ untimed: [{ ...scheduled('u', '2026-11-05', '10:00'), scheduled_time: null }] })
+    const row = container.querySelector<HTMLElement>('[data-untimed-row]')!
+    expect(container.querySelector('[data-agenda-header]')!.nextElementSibling).toBe(row)
+    expect(row.nextElementSibling).toBe(container.querySelector('[data-agenda-scroll]'))
+    expect(within(row.querySelector<HTMLElement>('[data-untimed-day="2026-11-05"]')!).getByRole('button', { name: /^Scheduled u/ })).toBeInTheDocument()
+    // Without a time it is not a block on the grid.
+    expect(within(column(container, '2026-11-05')).queryByRole('button', { name: /^Scheduled u/ })).toBeNull()
+  })
+
+  it('starts no draft from a press on a block', () => {
+    function WithDrag() {
+      const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit: vi.fn() })
+      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={[scheduled('a', '2026-11-03', '10:00')]} />
+    }
+    const { container } = renderWithProviders(<WithDrag />)
+    const block = screen.getByRole('button', { name: /^Scheduled a/ })
+    fireEvent.pointerDown(block, { clientY: y(10, 15), button: 0 })
+    fireEvent.pointerMove(window, { clientY: y(11) })
+    fireEvent.pointerUp(window, { clientY: y(11) })
+    expect(container.querySelector('[data-draft]')).toBeNull()
+  })
+
+  describe('dragging a scheduled block (US-6)', () => {
+    function Draggable({ onDrop = vi.fn(), timed, projected }: { onDrop?: () => void; timed: ScheduledTask[]; projected?: ProjectedOccurrence[] }) {
+      const drag = useGridDrag({ pxPerMinute: PX_PER_MINUTE, limit: (day) => dayLimit(day, NOW, SP), onCommit: vi.fn(), onScheduledDrop: onDrop })
+      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={timed} projected={projected} />
+    }
+
+    it('lets the open occurrence be dragged, with the open hand on hover, but never a projection', () => {
+      renderWithProviders(<Draggable timed={[scheduled('a', '2026-11-05', '10:00')]} projected={[projection]} />)
+      const block = screen.getByRole('button', { name: /^Scheduled a/ })
+      expect(block).toHaveAttribute('data-draggable', 'true')
+      expect(block).toHaveClass('cursor-grab', 'hover:border-solid')
+      expect(screen.getByRole('button', { name: /^Weekly review/ })).not.toHaveAttribute('data-draggable')
+    })
+
+    it('does not let a viewer drag a block', () => {
+      grid({ timed: [scheduled('a', '2026-11-05', '10:00')] })
+      expect(screen.getByRole('button', { name: /^Scheduled a/ })).not.toHaveAttribute('data-draggable')
+    })
+
+    it('fades the block, draws the draft with its day and times and a copy that follows the pointer, and saves on release', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Draggable onDrop={onDrop} timed={[scheduled('a', '2026-11-05', '10:00')]} />)
+      const block = screen.getByRole('button', { name: /^Scheduled a/ })
+      fireEvent.pointerDown(block, { clientX: 10, clientY: y(10, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientX: 40, clientY: y(16, 10) })
+      expect(block).toHaveAttribute('data-dragging', 'true')
+      expect(block).toHaveClass('opacity-30')
+      const draft = column(container, '2026-11-05').querySelector<HTMLElement>('[data-scheduled-draft]')!
+      expect(draft).toHaveTextContent('Thu, Nov 5 · 16:00 – 17:30')
+      expect([draft.style.top, draft.style.height]).toEqual([`${y(16)}px`, `${90 * PX_PER_MINUTE}px`])
+      const ghost = container.querySelector<HTMLElement>('[data-drag-ghost]')!
+      expect(ghost).toHaveTextContent('Scheduled a')
+      expect([ghost.style.left, ghost.style.top]).toEqual(['48px', `${y(16, 10) + 8}px`])
+
+      fireEvent.pointerUp(window, { clientX: 40, clientY: y(16, 10) })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'a', day: '2026-11-05', time: '16:00', from: { day: '2026-11-05', time: '10:00' } })
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+    })
+  })
+
+  describe('dragging between Sem hora and the grid (US-14, D22): the states of the drag', () => {
+    const untimedTask = (id: string, day: string, estimate: number | null = null): ScheduledTask => ({
+      ...scheduled(id, day, '00:00', estimate),
+      scheduled_time: null,
+    })
+    // Each day is 100 px wide from Monday at x = 0; the Sem hora row is from y = -120 to -8, the grid from y = 0.
+    beforeEach(() => {
+      const real = HTMLElement.prototype.getBoundingClientRect
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        const { agendaColumn, untimedDay } = this.dataset
+        const left = (day: string) => (Number(day.slice(8)) - 2) * 100
+        if (untimedDay) return DOMRect.fromRect({ x: left(untimedDay), y: -120, width: 100, height: 112 })
+        if (agendaColumn) return DOMRect.fromRect({ x: left(agendaColumn), y: 0, width: 100, height: 24 * 60 * PX_PER_MINUTE })
+        if (this.hasAttribute('data-agenda-scroll')) return DOMRect.fromRect({ x: 0, y: 0, width: 700, height: 24 * 60 * PX_PER_MINUTE })
+        return real.call(this)
+      })
+    })
+    afterEach(() => vi.restoreAllMocks())
+
+    function Board({
+      onDrop = vi.fn(),
+      onOpenTask,
+      timed = [],
+      untimed,
+    }: {
+      onDrop?: () => void
+      onOpenTask?: (id: string) => void
+      timed?: ScheduledTask[]
+      untimed: ScheduledTask[]
+    }) {
+      const drag = useGridDrag({
+        pxPerMinute: PX_PER_MINUTE,
+        limit: (day) => dayLimit(day, NOW, SP),
+        onCommit: vi.fn(),
+        onScheduledDrop: onDrop,
+        zoneAt: dropZoneAt,
+      })
+      return <WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} drag={drag} timed={timed} untimed={untimed} onOpenTask={onOpenTask} />
+    }
+    const cellOf = (container: HTMLElement, day: string) => container.querySelector<HTMLElement>(`[data-untimed-day="${day}"]`)!
+
+    it('hover: the task of the row shows a solid edge and the open hand, and a viewer cannot drag it', () => {
+      const { unmount } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03')]} />)
+      const task = screen.getByRole('button', { name: /^Scheduled u/ })
+      expect(task).toHaveAttribute('data-draggable', 'true')
+      expect(task).toHaveClass('cursor-grab', 'hover:border-solid')
+      unmount()
+      grid({ untimed: [untimedTask('u', '2026-11-03')] })
+      expect(screen.getByRole('button', { name: /^Scheduled u/ })).not.toHaveAttribute('data-draggable')
+    })
+
+    it('dragging: the task fades in its place and a copy with a shadow follows the pointer', () => {
+      const { container } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03')]} />)
+      const task = screen.getByRole('button', { name: /^Scheduled u/ })
+      fireEvent.pointerDown(task, { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 160, clientY: -60 })
+      expect(task).toHaveClass('opacity-30')
+      const ghost = container.querySelector<HTMLElement>('[data-drag-ghost]')!
+      expect(ghost).toHaveClass('shadow-lg')
+      expect(ghost).toHaveTextContent('Scheduled u')
+      expect([ghost.style.left, ghost.style.top]).toEqual(['168px', '-52px'])
+    })
+
+    it('over the grid: the draft of 1 h from the pointer with the label of the day and the times, saved on release', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} untimed={[untimedTask('u', '2026-11-03')]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled u/ }), { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(15, 20) })
+      const draft = column(container, '2026-11-05').querySelector<HTMLElement>('[data-scheduled-draft]')!
+      expect(draft).toHaveTextContent('Thu, Nov 5 · 15:15 – 16:15')
+      expect([draft.style.top, draft.style.height]).toEqual([`${y(15, 15)}px`, `${60 * PX_PER_MINUTE}px`])
+      fireEvent.pointerUp(window, { clientX: 350, clientY: y(15, 20) })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'u', day: '2026-11-05', time: '15:15', from: { day: '2026-11-03', time: null } })
+    })
+
+    it('over the grid: a task with an estimate drafts its estimate', () => {
+      const { container } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03', 30)]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled u/ }), { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(15, 20) })
+      expect(column(container, '2026-11-05').querySelector('[data-scheduled-draft]')).toHaveTextContent('15:15 – 15:45')
+    })
+
+    it('over the Sem hora row of another day: the cell is outlined and says Mover para <dia> · sem hora; the release changes only the day', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} untimed={[untimedTask('u', '2026-11-03')]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled u/ }), { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 150, clientY: -90 })
+      // Its own day is not a target.
+      expect(container.querySelector('[data-drop-target]')).toBeNull()
+      fireEvent.pointerMove(window, { clientX: 450, clientY: -90 })
+      const cell = cellOf(container, '2026-11-06')
+      expect(cell).toHaveAttribute('data-drop-target', 'true')
+      expect(cell).toHaveClass('outline-dashed', 'outline-indigo-500')
+      expect(within(cell).getByText('Move to Fri, Nov 6 · no time')).toBeInTheDocument()
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      fireEvent.pointerUp(window, { clientX: 450, clientY: -90 })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'u', day: '2026-11-06', time: null, from: { day: '2026-11-03', time: null } })
+    })
+
+    it('says Mover para <dia> · sem hora in Portuguese', async () => {
+      await i18n.changeLanguage('pt-BR')
+      try {
+        const { container } = renderWithProviders(<Board untimed={[untimedTask('u', '2026-11-03')]} />)
+        fireEvent.pointerDown(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { clientX: 120, clientY: -100, button: 0 })
+        fireEvent.pointerMove(window, { clientX: 450, clientY: -90 })
+        expect(within(cellOf(container, '2026-11-06')).getByText('Mover para sex, 6 nov · sem hora')).toBeInTheDocument()
+      } finally {
+        await i18n.changeLanguage('en')
+      }
+    })
+
+    it('US-6 a press on a scheduled block draws no drag until the pointer moves, and a click opens the task', async () => {
+      const onDrop = vi.fn()
+      const onOpenTask = vi.fn()
+      const { container, user } = renderWithProviders(
+        <Board onDrop={onDrop} onOpenTask={onOpenTask} timed={[scheduled('a', '2026-11-05', '10:00')]} untimed={[untimedTask('u', '2026-11-03')]} />,
+      )
+      const block = screen.getByRole('button', { name: /^Scheduled a/ })
+      fireEvent.pointerDown(block, { clientX: 350, clientY: y(10, 10), button: 0 })
+      fireEvent.pointerMove(window, { clientX: 351, clientY: y(10, 10) + 1 })
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      fireEvent.pointerUp(window, { clientX: 351, clientY: y(10, 10) + 1 })
+      expect(onDrop).not.toHaveBeenCalled()
+
+      await user.click(block)
+      expect(onOpenTask).toHaveBeenCalledWith('a')
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+
+      fireEvent.pointerDown(container.querySelector<HTMLElement>('[data-untimed-task="u"]')!, { clientX: 120, clientY: -100, button: 0 })
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      fireEvent.pointerUp(window, { clientX: 120, clientY: -100 })
+    })
+
+    it('a block dragged to the Sem hora row of its own day loses its time', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} timed={[scheduled('a', '2026-11-05', '10:00')]} untimed={[]} />)
+      fireEvent.pointerDown(screen.getByRole('button', { name: /^Scheduled a/ }), { clientX: 350, clientY: y(10, 10), button: 0 })
+      // The drag starts on the first move; the Sem hora row shows from then on.
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(10, 10) - 10 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: -60 })
+      expect(cellOf(container, '2026-11-05')).toHaveAttribute('data-drop-target', 'true')
+      fireEvent.pointerUp(window, { clientX: 350, clientY: -60 })
+      expect(onDrop).toHaveBeenCalledWith({ taskId: 'a', day: '2026-11-05', time: null, from: { day: '2026-11-05', time: '10:00' } })
+    })
+
+    it('Esc cancels: the draft, the copy and the faded place go, and nothing is saved', () => {
+      const onDrop = vi.fn()
+      const { container } = renderWithProviders(<Board onDrop={onDrop} untimed={[untimedTask('u', '2026-11-03')]} />)
+      const task = screen.getByRole('button', { name: /^Scheduled u/ })
+      fireEvent.pointerDown(task, { clientX: 120, clientY: -100, button: 0 })
+      fireEvent.pointerMove(window, { clientX: 350, clientY: y(15, 20) })
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(container.querySelector('[data-scheduled-draft]')).toBeNull()
+      expect(container.querySelector('[data-drag-ghost]')).toBeNull()
+      expect(task).not.toHaveClass('opacity-30')
+      fireEvent.pointerUp(window, { clientX: 350, clientY: y(15, 20) })
+      expect(onDrop).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('WeekGrid: the saved plan (PLAN-24, PLAN-25)', () => {
+  const list = { id: 'l1', name: 'Work', color: 3 }
+  const timedTask = (id: string, day: string, time: string): ScheduledTask => ({
+    id,
+    title: `Scheduled ${id}`,
+    list,
+    column: 'this_week',
+    position: 0,
+    estimate_minutes: 60,
+    scheduled_on: day,
+    scheduled_time: time,
+    series: null,
+  })
+  const plannedTask = (id: string, day: string, start: string, taskId: string): PlannedBlock => ({
+    id,
+    day,
+    kind: 'task',
+    start,
+    minutes: 60,
+    task: { id: taskId, title: `Scheduled ${taskId}`, list, done: false, scheduled_on: day, estimate_minutes: 60 },
+  })
+  const lunch: PlannedBlock = { id: 'p-lunch', day: '2026-11-03', kind: 'break', start: '10:30', minutes: 60, name: 'Lunch', list }
+  const grid = (props: Partial<Parameters<typeof WeekGrid>[0]>) =>
+    renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} {...props} />)
+
+  it('draws the planned blocks in their day at their time, beside an overlapping session instead of over it', () => {
+    const { container } = grid({
+      sessions: [session('s', '2026-11-03T13:00:00.000Z', '2026-11-03T14:00:00.000Z')],
+      planned: [lunch, plannedTask('p-a', '2026-11-05', '14:00', 'a')],
+    })
+    const tuesday = within(column(container, '2026-11-03'))
+    const work = tuesday.getByRole('button', { name: 'Task s, 10:00 – 11:00' })
+    const pause = tuesday.getByRole('button', { name: /^Lunch, 10:30 – 11:30/ })
+    expect([pause.style.top, pause.style.height]).toEqual([`${y(10, 30)}px`, `${60 * PX_PER_MINUTE}px`])
+    expect([work.style.left, work.style.width, pause.style.left, pause.style.width]).toEqual(['0%', '50%', '50%', '50%'])
+    expect(within(column(container, '2026-11-05')).getByRole('button', { name: /^Scheduled a, 14:00 – 15:00/ })).toHaveAttribute('data-kind', 'task')
+  })
+
+  it('shows a task with a planned block and a time on the same day once, as the planned block', () => {
+    const { container } = grid({
+      timed: [timedTask('a', '2026-11-05', '10:00'), timedTask('b', '2026-11-05', '16:00')],
+      planned: [plannedTask('p-a', '2026-11-05', '14:00', 'a'), plannedTask('p-b', '2026-11-04', '09:00', 'b')],
+    })
+    const thursday = within(column(container, '2026-11-05'))
+    const blocksOfA = thursday.getAllByRole('button', { name: /^Scheduled a,/ })
+    expect(blocksOfA).toHaveLength(1)
+    expect(blocksOfA[0]).toHaveAttribute('data-plan-block', 'p-a')
+    // A block planned on another day leaves the scheduled block where it is.
+    expect(thursday.getByRole('button', { name: /^Scheduled b, Scheduled · 16:00/ })).toBeInTheDocument()
+  })
+
+  it('leaves a task with a planned block out of the Sem hora row of that day, and keeps it on another day', () => {
+    const untimedTask = (id: string, day: string): ScheduledTask => ({ ...timedTask(id, day, '00:00'), scheduled_time: null })
+    const { container } = grid({
+      untimed: [untimedTask('a', '2026-11-05'), untimedTask('b', '2026-11-05'), untimedTask('c', '2026-11-06')],
+      planned: [plannedTask('p-a', '2026-11-05', '14:00', 'a'), plannedTask('p-c', '2026-11-05', '16:00', 'c')],
+    })
+    const row = (day: string) => container.querySelector(`[data-untimed-day="${day}"]`) as HTMLElement
+    expect([...row('2026-11-05').querySelectorAll('[data-untimed-task]')].map((el) => el.getAttribute('data-untimed-task'))).toEqual(['b'])
+    // A block planned on another day leaves the task in the row of its own day.
+    expect(row('2026-11-06').querySelector('[data-untimed-task="c"]')).not.toBeNull()
+    expect(within(column(container, '2026-11-05')).getAllByRole('button', { name: /^Scheduled a,/ })).toHaveLength(1)
+  })
+
+  it('without planned blocks, draws the scheduled task as before', () => {
+    const { container } = grid({ timed: [timedTask('a', '2026-11-05', '10:00')] })
+    expect(container.querySelector('[data-plan-block]')).toBeNull()
+    expect(within(column(container, '2026-11-05')).getByRole('button', { name: /^Scheduled a, Scheduled · 10:00/ })).toBeInTheDocument()
+  })
+})
+
+describe('WeekGrid: Planejar dia (PLAN-31)', () => {
+  it('heads today and the days after it with Planejar dia, which opens the plan of that day', async () => {
+    const onPlanDay = vi.fn()
+    const { container, user } = renderWithProviders(<WeekGrid days={WEEK} sessions={[]} timezone={SP} now={NOW} onPlanDay={onPlanDay} />)
+
+    // Today is Wednesday 4 November: the days before it have nothing to plan.
+    expect(within(header(container, '2026-11-03')).queryByRole('button', { name: 'Plan day' })).toBeNull()
+    expect(within(header(container, '2026-11-04')).getByRole('button', { name: 'Plan day' })).toBeInTheDocument()
+    await user.click(within(header(container, '2026-11-06')).getByRole('button', { name: 'Plan day' }))
+
+    expect(onPlanDay).toHaveBeenCalledExactlyOnceWith('2026-11-06')
+  })
+})
+

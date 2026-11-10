@@ -4,6 +4,7 @@ import type { Database } from '../db/client.ts'
 import { type TaskColumn, taskIdempotencyKeys, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import type { TokenPrincipal } from './access-tokens.ts'
+import type { RecurrenceRule } from './recurrence.ts'
 import { type TaskWithSubtasks, createTask, getTask } from './tasks.ts'
 
 const KEY_LIFETIME_MS = 86_400_000
@@ -16,6 +17,11 @@ export interface TaskIntake {
   column: TaskColumn
   notes: string
   subtasks: string[]
+  /** The schedule the caller applies once the task exists (US-7); it counts for the request hash. */
+  scheduledOn?: string | null
+  scheduledTime?: string | null
+  /** The rule the caller applies once the task exists (US-7, MCP only); it counts for the request hash. */
+  recurrence?: RecurrenceRule | null
 }
 
 /** The body of `POST /api/tasks` after its schema, with every default filled: two ways of saying the same thing hash the same (IDEM-03). */
@@ -26,6 +32,9 @@ export function toTaskIntake(body: {
   column: TaskColumn
   notes?: string
   subtasks?: string[]
+  scheduled_on?: string | null
+  scheduled_time?: string | null
+  recurrence?: RecurrenceRule | null
 }): TaskIntake {
   return {
     listId: body.list_id.toLowerCase(),
@@ -34,12 +43,18 @@ export function toTaskIntake(body: {
     column: body.column,
     notes: body.notes ?? '',
     subtasks: body.subtasks ?? [],
+    scheduledOn: body.scheduled_on ?? null,
+    scheduledTime: body.scheduled_time ?? null,
+    recurrence: body.recurrence ?? null,
   }
 }
 
-function requestHash({ listId, title, estimateMinutes, column, notes, subtasks }: TaskIntake): string {
+function requestHash({ listId, title, estimateMinutes, column, notes, subtasks, scheduledOn, scheduledTime, recurrence }: TaskIntake): string {
+  // Left out when there is none, so a key stored before the schedule or the rule counted keeps its hash.
+  const schedule = scheduledOn == null ? {} : { scheduledOn, scheduledTime: scheduledTime ?? null }
+  const rule = recurrence == null ? {} : { recurrence }
   return createHash('sha256')
-    .update(JSON.stringify({ listId, title, estimateMinutes, column, notes, subtasks }))
+    .update(JSON.stringify({ listId, title, estimateMinutes, column, notes, subtasks, ...schedule, ...rule }))
     .digest('hex')
 }
 

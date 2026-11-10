@@ -5,7 +5,9 @@ import type { AppContext } from '../context.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { workspaceContext } from '../plugins/workspace.ts'
 import { buildBoard } from '../services/board.ts'
+import { applyDueSchedules } from '../services/schedule.ts'
 import { UUID_PATTERN } from '../services/users.ts'
+import { seriesReadSchema } from './tasks.ts'
 
 const taskCard = z.object({
   id: z.string(),
@@ -15,6 +17,9 @@ const taskCard = z.object({
   position: z.number(),
   subtasks: z.object({ done: z.number(), total: z.number() }),
   created_via: z.string().nullable(),
+  scheduled_on: z.string().nullable(),
+  scheduled_time: z.string().nullable(),
+  series: seriesReadSchema.nullable(),
 })
 const column = z.object({ tasks: z.array(taskCard), estimate_minutes: z.number() })
 const progressColumn = column.extend({ done: z.number(), total: z.number() })
@@ -46,7 +51,12 @@ export function boardRoutes(ctx: AppContext) {
         config: { tokenScope: 'tasks:read' },
         preValidation: [requireUser, workspaceContext(ctx)],
       },
-      async (request) => buildBoard(ctx.db, request.params.list_id.toLowerCase(), request.workspace.workspace, request.workspace.user.id),
+      async (request) => {
+        const now = new Date()
+        // The tasks scheduled for today come to Today before the board is read (US-4, AD-009).
+        await applyDueSchedules(ctx.db, request.workspace.workspace.id, now)
+        return buildBoard(ctx.db, request.params.list_id.toLowerCase(), request.workspace.workspace, request.workspace.user.id, now)
+      },
     )
   }
 }

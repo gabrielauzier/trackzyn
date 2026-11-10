@@ -11,6 +11,7 @@ import { ProtectedRoute } from '@/components/protected-route'
 import { AdminRoute } from '@/components/admin-route'
 import { AppLayout } from '@/components/app-layout'
 import { DesktopGate } from '@/components/desktop-gate'
+import { DraftGuardProvider } from '@/lib/plan/draft-guard'
 
 const SetupPage = lazy(() => import('@/pages/setup'))
 const LoginPage = lazy(() => import('@/pages/login'))
@@ -22,6 +23,7 @@ const ListBoardPage = lazy(() => import('@/pages/list-board'))
 const FocusPage = lazy(() => import('@/pages/focus'))
 const FocusWidgetPage = lazy(() => import('@/pages/focus-widget'))
 const AgendaPage = lazy(() => import('@/pages/agenda'))
+const PlanPage = lazy(() => import('@/pages/plan'))
 const ReportsPage = lazy(() => import('@/pages/reports'))
 const FilesPage = lazy(() => import('@/pages/files'))
 const ComponentsShowcasePage = lazy(() => import('@/pages/showcase'))
@@ -73,7 +75,10 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <SidebarStateProvider>
-                              <AppLayout />
+                              {/* An unsaved day plan guards the links of the shell (PLAN-36). */}
+                              <DraftGuardProvider>
+                                <AppLayout />
+                              </DraftGuardProvider>
                             </SidebarStateProvider>
                           </ProtectedRoute>
                         }
@@ -83,6 +88,8 @@ function App() {
                         <Route path="/lists/:listId" element={<ListBoardPage />} />
                         <Route path="/focus/:listId" element={<FocusPage />} />
                         <Route path="/agenda" element={<AgendaPage />} />
+                        <Route path="/planejar" element={<PlanPage />} />
+                        <Route path="/planejar/:day" element={<PlanPage />} />
                         <Route path="/reports" element={<ReportsPage />} />
                         {/* Files and Components are for the instance's superuser only (#32). */}
                         <Route path="/files" element={<AdminRoute><FilesPage /></AdminRoute>} />

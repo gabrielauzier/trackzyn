@@ -71,6 +71,48 @@
       "when": 1793841849076,
       "tag": "0009_task_updated_and_origin",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794026705741,
+      "tag": "0010_task_schedule",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794028839967,
+      "tag": "0011_task_series",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794031938303,
+      "tag": "0012_task_series_time",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794067799958,
+      "tag": "0013_task_time_any_minute",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794086051915,
+      "tag": "0014_day_plans",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794326849676,
+      "tag": "0015_planned_break_started",
+      "breakpoints": true
     }
   ]
 }

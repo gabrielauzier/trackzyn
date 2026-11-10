@@ -129,7 +129,9 @@ export function useFocus(listId?: string) {
       skip: (taskId: string) => act({ type: 'skip', task_id: taskId }),
       complete: (taskId: string) => act({ type: 'complete', task_id: taskId }),
       extend: (taskId: string) => act({ type: 'extend', task_id: taskId }),
-      takeBreak: (minutes: number) => act({ type: 'break', minutes, list_id: listId ?? '' }),
+      // From a break of the plan, its id goes along and the server marks it started (PLAN-49).
+      takeBreak: (minutes: number, planBlockId?: string) =>
+        act({ type: 'break', minutes, list_id: listId ?? '', ...(planBlockId ? { plan_block_id: planBlockId } : {}) }),
       endBreak: () => act({ type: 'break/end' }),
       recover: (decision: 'keep' | 'cut') => act({ type: 'recover', decision }),
       retry: (actionId: string) => {

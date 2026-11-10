@@ -96,7 +96,7 @@ describe('board service', () => {
       { id: randomUUID(), taskId: id, title: 'c', done: false, position: 2 },
     ])
     const [card] = (await board()).columns.today.tasks
-    expect(card).toEqual({ id, title: 'with subtasks', estimate_minutes: 87, spent_seconds: 0, position: expect.any(Number), subtasks: { done: 1, total: 3 }, created_via: null })
+    expect(card).toEqual({ id, title: 'with subtasks', estimate_minutes: 87, spent_seconds: 0, position: expect.any(Number), subtasks: { done: 1, total: 3 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null })
   })
 
   const focusSession = (taskId: string, startedAt: string, minutes: number, open = false) =>

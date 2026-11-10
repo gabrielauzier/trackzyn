@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 
+import { Route, Routes, useLocation } from 'react-router-dom'
 import HomePage from '@/pages/home'
 import { lists } from '@/lib/api'
 import { renderWithProviders } from '@/test/utils'
@@ -307,5 +308,26 @@ describe('HomePage', () => {
     expect(wrapper).not.toHaveClass('cursor-grabbing')
     expect(wrapper).not.toHaveAttribute('aria-pressed', 'true')
     fireEvent.pointerUp(document, { isPrimary: true, button: 0, clientX: 50, clientY: 10 })
+  })
+})
+
+function Where() {
+  return <span data-testid="where">{useLocation().pathname}</span>
+}
+
+describe('HomePage: Planejar amanhã (PLAN-01)', () => {
+  it('leads to the plan of tomorrow in the workspace timezone', async () => {
+    // Sunday 8 November 2026, 23:30 in São Paulo: already Monday in UTC.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-09T02:30:00.000Z'))
+    const { user } = renderWithProviders(
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/planejar/:day" element={<Where />} />
+      </Routes>,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Plan tomorrow' }))
+    expect(await screen.findByTestId('where')).toHaveTextContent('/planejar/2026-11-09')
   })
 })

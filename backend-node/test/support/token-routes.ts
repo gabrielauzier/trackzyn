@@ -11,6 +11,7 @@ export const TOKEN_ROUTES: ReadonlyArray<{ method: string; url: string; scope: T
   { method: 'POST', url: '/api/tasks/:task_id/move', scope: 'tasks:write' },
   { method: 'POST', url: '/api/tasks/:task_id/move-to-list', scope: 'tasks:write' },
   { method: 'POST', url: '/api/tasks/:task_id/duplicate', scope: 'tasks:write' },
+  { method: 'POST', url: '/api/tasks/:task_id/skip', scope: 'tasks:write' },
   { method: 'POST', url: '/api/tasks/:task_id/subtasks', scope: 'tasks:write' },
   { method: 'PATCH', url: '/api/subtasks/:subtask_id', scope: 'tasks:write' },
   { method: 'POST', url: '/api/subtasks/:subtask_id/move', scope: 'tasks:write' },
@@ -25,7 +26,7 @@ export const MCP_ROUTES: ReadonlyArray<{ method: string; url: string; scope: 'an
   { method: 'DELETE', url: '/api/mcp', scope: 'any' },
 ]
 
-/** The agenda routes declare no scope, so a token gets 403 on them (AD-007, Out of Scope of the agenda). */
+/** The agenda and day plan routes declare no scope, so a token gets 403 on them (AD-007, Out of Scope of the agenda). */
 export const CLOSED_AGENDA_ROUTES: ReadonlyArray<{ method: string; url: string }> = [
   { method: 'GET', url: '/api/sessions' },
   { method: 'GET', url: '/api/sessions/tasks' },
@@ -34,6 +35,12 @@ export const CLOSED_AGENDA_ROUTES: ReadonlyArray<{ method: string; url: string }
   { method: 'POST', url: '/api/sessions' },
   { method: 'PATCH', url: '/api/sessions/:id' },
   { method: 'DELETE', url: '/api/sessions/:id' },
+  { method: 'GET', url: '/api/agenda/scheduled' },
+  { method: 'GET', url: '/api/plans' },
+  { method: 'GET', url: '/api/plans/:day' },
+  { method: 'PUT', url: '/api/plans/:day' },
+  { method: 'GET', url: '/api/plans/:day/candidates' },
+  { method: 'PUT', url: '/api/users/me/workday' },
 ]
 
 export const routeKey = (route: { method: string; url: string }) => `${route.method} ${route.url}`

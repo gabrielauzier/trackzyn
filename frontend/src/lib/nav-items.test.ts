@@ -18,7 +18,7 @@ describe('visibleNavItems', () => {
     expect(linkKeys(asMember)).not.toContain('components')
     expect(separators(asMember)).not.toContain('nav.groupDevelopers')
     // The rest of the workspace section stays.
-    expect(linkKeys(asMember)).toEqual(['newList', 'allLists', 'archivedLists', 'agenda', 'reports'])
+    expect(linkKeys(asMember)).toEqual(['newList', 'allLists', 'archivedLists', 'agenda', 'plan', 'reports'])
     expect(separators(asMember)).toEqual(['nav.groupWorkspace'])
     // Not a superuser is the default.
     expect(visibleNavItems(navItems, () => false)).toEqual(asMember)

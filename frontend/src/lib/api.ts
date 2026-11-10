@@ -22,14 +22,22 @@ import type {
   FileSettings,
   FocusState,
   ListsResponse,
+  PlanBlockInput,
+  PlanCandidate,
+  PlannedBlock,
+  PlanRead,
   Overview,
+  RecurrenceRule,
   ReportQuery,
+  ScheduledResponse,
+  SeriesScope,
   SessionsReport,
   Subtask,
   Task,
   TaskColumn,
   TaskList,
   StoredFile,
+  Workday,
   Workspace,
   WorkspaceMember,
   WorkspaceRole,
@@ -392,6 +400,9 @@ export const tasks = {
     title: string
     estimate_minutes: number | null
     column: TaskColumn
+    scheduled_on?: string | null
+    scheduled_time?: string | null
+    notes?: string
   }): Promise<Task> => {
     const { data } = await api.post('/tasks', payload)
     return data
@@ -402,7 +413,18 @@ export const tasks = {
   },
   update: async (
     id: string,
-    payload: { title?: string; estimate_minutes?: number | null; notes?: string },
+    payload: {
+      title?: string
+      estimate_minutes?: number | null
+      notes?: string
+      /** A field left out keeps its value; null clears it (clearing the day clears the time). */
+      scheduled_on?: string | null
+      scheduled_time?: string | null
+      /** Null stops the repetition; a rule always counts for the series from there on. */
+      recurrence?: RecurrenceRule | null
+      /** Only for an occurrence of a series (D16); the API takes `occurrence` when left out. */
+      scope?: SeriesScope
+    },
   ): Promise<Task> => {
     const { data } = await api.patch(`/tasks/${id}`, payload)
     return data
@@ -422,8 +444,49 @@ export const tasks = {
     const { data } = await api.post(`/tasks/${id}/move`, payload)
     return data
   },
-  remove: async (id: string): Promise<void> => {
-    await api.delete(`/tasks/${id}`)
+  /** Deletes the task; for an occurrence of a series, `series` also ends the series (US-12). */
+  remove: async (id: string, scope?: SeriesScope): Promise<void> => {
+    await api.delete(`/tasks/${id}`, scope === undefined ? {} : { params: { scope } })
+  },
+  /** Moves an occurrence of a series to the next day of its rule, keeping the time spent (D18). */
+  skip: async (id: string): Promise<Task> => {
+    const { data } = await api.post(`/tasks/${id}/skip`)
+    return data
+  },
+}
+
+// Agenda: the scheduled tasks of the whole workspace (`from`/`to` are YYYY-MM-DD, at most 42 days)
+export const agenda = {
+  scheduled: async (from: string, to: string): Promise<ScheduledResponse> => {
+    const { data } = await api.get('/agenda/scheduled', { params: { from, to } })
+    return data
+  },
+}
+
+// Plans: the logged-in user's day plans in the current workspace (`day`, `from` and `to` are YYYY-MM-DD)
+export const plans = {
+  get: async (day: string): Promise<PlanRead> => {
+    const { data } = await api.get(`/plans/${day}`)
+    return data
+  },
+  /** Replaces the whole plan of the day; answers 409 `plan_changed` when `base_version` is not the saved one (PLAN-35). */
+  save: async (day: string, body: { base_version: number; blocks: PlanBlockInput[] }): Promise<PlanRead> => {
+    const { data } = await api.put(`/plans/${day}`, body)
+    return data
+  },
+  candidates: async (day: string): Promise<{ tasks: PlanCandidate[] }> => {
+    const { data } = await api.get(`/plans/${day}/candidates`)
+    return data
+  },
+  /** The saved blocks of a period, at most 42 days (PLAN-24). */
+  planned: async (from: string, to: string): Promise<{ blocks: PlannedBlock[] }> => {
+    const { data } = await api.get('/plans', { params: { from, to } })
+    return data
+  },
+  /** Keeps the workday in the user's preferences; answers 422 when the end is not after the start (PLAN-22, PLAN-23). */
+  setWorkday: async (workday: Workday): Promise<Workday> => {
+    const { data } = await api.put('/users/me/workday', workday)
+    return data
   },
 }
 

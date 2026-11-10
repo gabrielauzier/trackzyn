@@ -30,7 +30,7 @@ interface SessionBlockProps {
 
 /**
  * One session on the grid (AGENDA-03 to AGENDA-05), in the color of its list; a break in grey with a dashed
- * border; an open session with an indigo border. The block carries no text: hovering or focusing it opens a
+ * border, as scheduled and planned blocks; an open session with an indigo border. The block carries no text: hovering or focusing it opens a
  * tooltip with the whole title (or `Intervalo`) and `HH:MM – HH:MM`, `agora` for the end of an open session.
  * A joined block (`piece.members`) carries only the count of its sessions in its top right corner, and its
  * tooltip lists each session (MERGE-25, MERGE-26, MERGE-32).
@@ -91,7 +91,7 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
               // Hovered or focused, the fill takes more of the list colour and the outline shows.
               'outline-2 outline-transparent hover:z-20 hover:[--session-tint:var(--session-tint-hover)] hover:outline-(--block-color)',
               'focus-visible:[--session-tint:var(--session-tint-hover)] focus-visible:outline-(--block-color)',
-              isBreak ? 'border border-dashed border-muted-foreground bg-muted' : 'border border-l-4',
+              isBreak ? 'border-2 border-dashed border-muted-foreground bg-muted' : 'border border-l-4',
               piece.running && 'border-2 border-primary',
               movable && 'cursor-grab',
               selected && 'z-10 [--session-tint:var(--session-tint-hover)] ring-2 ring-ring ring-offset-1 ring-offset-background',

@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/contexts/auth-context'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
 import { adminPaths, navItems } from '@/lib/nav-items'
+import { useDraftGuard } from '@/lib/plan/draft-guard-context'
 import { ShellLogo } from '@/components/shell-logo'
 import { cn, normalizeText } from '@/lib/utils'
 
@@ -143,6 +144,9 @@ export interface CommandPaletteProps {
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { confirmLeave } = useDraftGuard()
+  /** An unsaved day plan asks `Descartar o rascunho?` before the palette leaves it (PLAN-36). */
+  const go = useCallback((to: string) => confirmLeave(() => navigate(to)), [confirmLeave, navigate])
   const { user } = useAuth()
   const { isEnabled } = useFeatureFlags()
   const [query, setQuery] = useState('')
@@ -216,9 +220,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       })
       handleOpenChange(false)
       // Slight delay so dialog closes before navigation animation
-      setTimeout(() => navigate(item.path), 0)
+      setTimeout(() => go(item.path), 0)
     },
-    [navigate, handleOpenChange]
+    [go, handleOpenChange]
   )
 
   const showEmptyHome = debounced.trim().length === 0
@@ -339,7 +343,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                             onSelect={() => {
                               if (a.onSelect) {
                                 handleOpenChange(false)
-                                setTimeout(() => a.onSelect!(navigate), 0)
+                                setTimeout(() => a.onSelect!(go), 0)
                               }
                             }}
                             className={itemClasses()}
@@ -415,7 +419,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                             onSelect={() => {
                               if (a.onSelect) {
                                 handleOpenChange(false)
-                                setTimeout(() => a.onSelect!(navigate), 0)
+                                setTimeout(() => a.onSelect!(go), 0)
                               }
                             }}
                             className={itemClasses()}

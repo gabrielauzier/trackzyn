@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 49,
+  "next_id": 67,
   "lessons": [
     {
       "id": "L-001",
@@ -785,17 +785,19 @@
       "text": "Give every spec edge case its own test with the edge condition set up, not a nearby happy path",
       "signal": "ac_gap",
       "scope": "frontend-pages",
-      "status": "candidate",
+      "status": "confirmed",
       "features": [
-        "agenda-adjustments"
+        "agenda-adjustments",
+        "planejamento-diario"
       ],
-      "recurrence": 1,
+      "recurrence": 2,
       "harmful": 0,
       "evidence": [
-        "M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)"
+        "M22 week-grid.tsx:121 / edge case Sessao escondida (frontend-pages)",
+        "validation.md round 5 gap 3 PLAN-48 past day, frontend/src/pages/plan.test.tsx:388 (frontend-pages)"
       ],
       "created": "2026-11-05T04:56:16Z",
-      "last_seen": "2026-11-05T04:56:16Z"
+      "last_seen": "2026-11-10T18:27:14Z"
     },
     {
       "id": "L-045",
@@ -857,17 +859,345 @@
       "text": "When a criterion narrows a rule to 'its own' item, add a test acting on a different item in the same state to prove the narrowing.",
       "signal": "surviving_mutant",
       "scope": "frontend-pages",
+      "status": "confirmed",
+      "features": [
+        "agenda-adjustments",
+        "agendamento"
+      ],
+      "recurrence": 2,
+      "harmful": 0,
+      "evidence": [
+        "N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)",
+        "frontend/src/pages/agenda.tsx:244 (round-4 S5) (frontend-pages)"
+      ],
+      "created": "2026-11-05T05:07:21Z",
+      "last_seen": "2026-11-10T18:48:14Z"
+    },
+    {
+      "id": "L-049",
+      "key": "ac_gap::assert api payloads through the http route and its response schema not only the service so fields the serializer strips are caught",
+      "text": "Assert API payloads through the HTTP route and its response schema, not only the service, so fields the serializer strips are caught",
+      "signal": "ac_gap",
+      "scope": "routes",
       "status": "candidate",
       "features": [
-        "agenda-adjustments"
+        "agendamento"
       ],
       "recurrence": 1,
       "harmful": 0,
       "evidence": [
-        "N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages)"
+        "backend-node/src/routes/scheduled.ts:26 (US-11 projected[].rule stripped by response schema) (routes)"
       ],
-      "created": "2026-11-05T05:07:21Z",
-      "last_seen": "2026-11-05T05:07:21Z"
+      "created": "2026-11-07T08:41:46Z",
+      "last_seen": "2026-11-07T08:41:46Z"
+    },
+    {
+      "id": "L-050",
+      "key": "ac_gap::when a rule must run on every read list each read path including mcp tools and test the rule through each one",
+      "text": "When a rule must run on every read, list each read path including MCP tools and test the rule through each one",
+      "signal": "ac_gap",
+      "scope": "mcp",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/mcp/tools.ts:83 (AD-009 get_board without applyDueSchedules) (mcp)"
+      ],
+      "created": "2026-11-07T08:41:46Z",
+      "last_seen": "2026-11-07T08:41:46Z"
+    },
+    {
+      "id": "L-051",
+      "key": "spec_precision_gap::define the default scope of token and mcp writes wherever the app asks the user to choose a scope",
+      "text": "Define the default scope of token and MCP writes wherever the app asks the user to choose a scope",
+      "signal": "spec_precision_gap",
+      "scope": "mcp",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md US-12 MCP delete_task on an open occurrence (mcp)"
+      ],
+      "created": "2026-11-07T08:41:46Z",
+      "last_seen": "2026-11-07T08:41:46Z"
+    },
+    {
+      "id": "L-052",
+      "key": "spec_precision_gap::give rest and mcp create bodies the same fields or reject an unsupported field with 422 instead of stripping it silently",
+      "text": "Give REST and MCP create bodies the same fields, or reject an unsupported field with 422, instead of stripping it silently",
+      "signal": "spec_precision_gap",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/routes/tasks.ts:67 (REST POST /api/tasks strips recurrence, 201 series null) (routes)"
+      ],
+      "created": "2026-11-07T09:00:49Z",
+      "last_seen": "2026-11-07T09:00:49Z"
+    },
+    {
+      "id": "L-053",
+      "key": "surviving_mutant::when a component test drives a callback through a harness that re implements the page wiring also test the page s own wiring of that callback",
+      "text": "When a component test drives a callback through a harness that re-implements the page wiring, also test the page's own wiring of that callback.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13 frontend/src/pages/plan.tsx:155 (frontend-pages)"
+      ],
+      "created": "2026-11-07T23:01:44Z",
+      "last_seen": "2026-11-07T23:01:44Z"
+    },
+    {
+      "id": "L-054",
+      "key": "surviving_mutant::test every exit route a navigation guard intercepts at its call site not only the guard provider",
+      "text": "Test every exit route a navigation guard intercepts at its call site, not only the guard provider.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-shell",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M14 frontend/src/components/app-layout.tsx:85 (frontend-shell)",
+        "E1 frontend/src/components/app-layout.tsx:186; E2 app-layout.tsx:136 (logo links) (frontend-shell)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:40:33Z"
+    },
+    {
+      "id": "L-055",
+      "key": "ac_gap::a leave with unsaved changes guard must cover browser back and every in app navigation entry point or the spec must say which exits are excluded",
+      "text": "A leave-with-unsaved-changes guard must cover browser back and every in-app navigation entry point, or the spec must say which exits are excluded.",
+      "signal": "ac_gap",
+      "scope": "frontend-routing",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-36 validation.md deviation (c) (frontend-routing)",
+        "PLAN-36 frontend/src/components/workspace-switcher.tsx:208 (frontend-routing)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:21:34Z"
+    },
+    {
+      "id": "L-056",
+      "key": "ac_gap::when an ac lists alternative triggers a or b test each trigger not just one",
+      "text": "When an AC lists alternative triggers (A or B), test each trigger, not just one.",
+      "signal": "ac_gap",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-13 frontend/src/pages/plan.tsx:180 (frontend-pages)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-057",
+      "key": "spec_precision_gap::specify the display format of compound and sub hour durations when an ac quotes duration text",
+      "text": "Specify the display format of compound and sub-hour durations when an AC quotes duration text.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-14/PLAN-19 validation.md precision gap 1 (spec)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-058",
+      "key": "spec_precision_gap::specify the user facing message for every validation rule an ac states",
+      "text": "Specify the user-facing message for every validation rule an AC states.",
+      "signal": "spec_precision_gap",
+      "scope": "spec",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PLAN-16 break-dialog.test.tsx:44 (spec)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-059",
+      "key": "spec_deviation::when a range limit equals a day boundary 24 00 state whether hh mm fields must accept it",
+      "text": "When a range limit equals a day boundary (24:00), state whether HH:MM fields must accept it.",
+      "signal": "spec_deviation",
+      "scope": "frontend-forms",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/components/plan/block-editor.tsx:86 (frontend-forms)"
+      ],
+      "created": "2026-11-07T23:01:45Z",
+      "last_seen": "2026-11-07T23:01:45Z"
+    },
+    {
+      "id": "L-060",
+      "key": "surviving_mutant::when a guard must keep blocking after the user chooses to stay repeat the attempt and assert it is still blocked before testing the discard",
+      "text": "When a guard must keep blocking after the user chooses to stay, repeat the attempt and assert it is still blocked before testing the discard.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-routing",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M15 frontend/src/lib/plan/draft-guard.tsx:48 (frontend-routing)"
+      ],
+      "created": "2026-11-07T23:21:34Z",
+      "last_seen": "2026-11-07T23:21:34Z"
+    },
+    {
+      "id": "L-061",
+      "key": "surviving_mutant::test an owner check with another user s record of the right kind not only with a record of the wrong kind",
+      "text": "Test an owner check with another user's record of the right kind, not only with a record of the wrong kind.",
+      "signal": "surviving_mutant",
+      "scope": "backend/scoping",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md round 5 B1 backend-node/src/services/focus.ts:340 (backend/scoping)"
+      ],
+      "created": "2026-11-10T18:27:14Z",
+      "last_seen": "2026-11-10T18:27:14Z"
+    },
+    {
+      "id": "L-062",
+      "key": "surviving_mutant::when a switch hides several kinds of items put one of each kind in the fixture and assert each is gone",
+      "text": "When a switch hides several kinds of items, put one of each kind in the fixture and assert each is gone.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "planejamento-diario"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md round 5 F10 frontend/src/pages/agenda.tsx:201 (frontend-pages)"
+      ],
+      "created": "2026-11-10T18:27:14Z",
+      "last_seen": "2026-11-10T18:27:14Z"
+    },
+    {
+      "id": "L-063",
+      "key": "ac_gap::when a pending unsaved change is previewed in place take the saved original from the pending state not from the previewed lists and test acting on the preview a second time",
+      "text": "When a pending, unsaved change is previewed in place, take the saved original from the pending state, not from the previewed lists, and test acting on the preview a second time",
+      "signal": "ac_gap",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/pages/agenda.tsx:243 (validation.md round 3, Fix R3-1) (frontend-pages)"
+      ],
+      "created": "2026-11-10T18:28:05Z",
+      "last_seen": "2026-11-10T18:28:05Z"
+    },
+    {
+      "id": "L-064",
+      "key": "surviving_mutant::a cache keyed by a parameter needs a test that uses two different keys in one run",
+      "text": "A cache keyed by a parameter needs a test that uses two different keys in one run",
+      "signal": "surviving_mutant",
+      "scope": "frontend-lib",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M13 frontend/src/lib/agenda/layout.ts:47 (frontend-lib)"
+      ],
+      "created": "2026-11-10T18:28:05Z",
+      "last_seen": "2026-11-10T18:28:05Z"
+    },
+    {
+      "id": "L-065",
+      "key": "spec_precision_gap::when a decision changes a behaviour update every criterion that states the old behaviour not only the one the decision names",
+      "text": "When a decision changes a behaviour, update every criterion that states the old behaviour, not only the one the decision names",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:169, spec.md:231-234 (validation.md round 3, Fix R3-3) (specs)"
+      ],
+      "created": "2026-11-10T18:28:06Z",
+      "last_seen": "2026-11-10T18:28:06Z"
+    },
+    {
+      "id": "L-066",
+      "key": "surviving_mutant::when a fix changes the input several rules read test each of those rules on the fixed path not only the one the bug report named",
+      "text": "When a fix changes the input several rules read, test each of those rules on the fixed path, not only the one the bug report named.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-pages",
+      "status": "candidate",
+      "features": [
+        "agendamento"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/pages/agenda.tsx:251 (round-4 S4) (frontend-pages)"
+      ],
+      "created": "2026-11-10T18:48:13Z",
+      "last_seen": "2026-11-10T18:48:13Z"
     }
   ]
 }

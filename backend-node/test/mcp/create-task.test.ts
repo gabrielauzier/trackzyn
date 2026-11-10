@@ -51,7 +51,18 @@ describe('tools/list', () => {
     expect(description?.length).toBeGreaterThan(20)
     expect(inputSchema.required).toEqual(['list_id', 'title'])
     const fields = inputSchema.properties as Record<string, Record<string, unknown>>
-    expect(Object.keys(fields).sort()).toEqual(['column', 'estimate_minutes', 'idempotency_key', 'list_id', 'notes', 'subtasks', 'title'])
+    expect(Object.keys(fields).sort()).toEqual([
+      'column',
+      'estimate_minutes',
+      'idempotency_key',
+      'list_id',
+      'notes',
+      'recurrence',
+      'scheduled_on',
+      'scheduled_time',
+      'subtasks',
+      'title',
+    ])
     expect(fields.list_id).toMatchObject({ type: 'string', pattern: expect.any(String) })
     expect(fields.title).toMatchObject({ type: 'string', minLength: 1, maxLength: 255 })
     expect(fields.column).toMatchObject({ enum: ['backlog', 'this_week', 'today', 'done'], default: 'backlog' })
@@ -222,6 +233,21 @@ describe('idempotency_key', () => {
     const { create, stored } = await setup()
     await create({ title: 'Once', idempotency_key: 'k-2' })
     expect(await create({ title: 'Other', idempotency_key: 'k-2' })).toMatchObject({ isError: true, text: 'Idempotency key reused with a different payload' })
+    expect(await stored()).toHaveLength(1)
+  })
+
+  it('US-7 MCP-05 the same key with the same rule replays; with another rule it answers the conflict and creates nothing', async () => {
+    const { create, stored } = await setup()
+    const day = new Date(Date.now() + 20 * 86_400_000).toISOString().slice(0, 10)
+    const args = { title: 'Weekly', scheduled_on: day, recurrence: { freq: 'daily', interval: 1 }, idempotency_key: 'k-rule' }
+    const first = await create(args)
+    expect(first.isError).toBe(false)
+    expect((await create(args)).json()).toMatchObject({ id: first.json().id, replayed: true })
+
+    const other = await create({ ...args, recurrence: { freq: 'daily', interval: 2 } })
+    expect(other).toMatchObject({ isError: true, text: 'Idempotency key reused with a different payload' })
+    const none = await create({ ...args, recurrence: null })
+    expect(none).toMatchObject({ isError: true, text: 'Idempotency key reused with a different payload' })
     expect(await stored()).toHaveLength(1)
   })
 

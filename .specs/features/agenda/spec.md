@@ -62,9 +62,9 @@ Cada sessão de foco fica registrada com início e fim, mas hoje só aparece com
 **Acceptance Criteria**:
 
 1. WHEN o usuário abre `/agenda` com largura de 768 px ou mais THEN o sistema SHALL mostrar a semana atual de segunda a domingo, uma coluna por dia com o dia da semana, o número do dia e o total de tempo das sessões de tarefa do dia (`6h 15min`), e uma grade de 00:00 a 24:00 com uma linha por hora. (AGENDA-01)
-2. WHEN a grade abre THEN o sistema SHALL rolar até 07:00. (AGENDA-02)
+2. The system SHALL esticar a grade por toda a largura da área de conteúdo e pela altura que o cabeçalho deixa na janela, sem rolagem da página: só as horas da grade rolam, e os cabeçalhos dos dias e a faixa `Sem hora` reservam a largura da barra de rolagem, alinhados às colunas. O título (`<workspace> / Agenda`) e a barra de ferramentas SHALL ficar numa única linha, sem legenda; o painel aberto à direita SHALL caber na mesma altura, com rolagem própria quando for mais alto. WHEN a grade abre THEN ela SHALL rolar até 07:00, e WHEN o zoom muda THEN o minuto no topo SHALL continuar no lugar. (AGENDA-02)
 3. The system SHALL desenhar cada sessão como um bloco na coluna do seu dia, com o topo no horário de início e a altura proporcional à duração, mostrando o título da tarefa (ou `Intervalo`) e `HH:MM – HH:MM` com dois dígitos. (AGENDA-03)
-4. The system SHALL colorir o bloco de uma sessão de tarefa com a cor da lista dela e desenhar o intervalo em cinza com borda tracejada. (AGENDA-04)
+4. The system SHALL colorir o bloco de uma sessão de tarefa com a cor da lista dela e desenhar o intervalo em cinza com borda tracejada, como a das tarefas agendadas e dos blocos do plano. (AGENDA-04)
 5. WHILE uma sessão está aberta, o sistema SHALL desenhar o bloco até a hora atual, com borda índigo e `agora` no lugar do fim, e uma linha horizontal na hora atual na coluna de hoje. (AGENDA-05)
 6. WHEN duas ou mais sessões se sobrepõem no mesmo dia THEN o sistema SHALL dividir a largura da coluna entre elas, lado a lado, sem que um bloco cubra o outro. (AGENDA-06)
 7. WHEN uma sessão atravessa a meia-noite no fuso do workspace THEN o sistema SHALL desenhar um bloco em cada dia, com o pedaço daquele dia. (AGENDA-07)

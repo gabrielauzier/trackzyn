@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import type { PGlite } from '@electric-sql/pglite'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -98,6 +98,7 @@ describe('createTaskFromToken', () => {
     ['subtask title', () => ({ subtasks: ['one', 'other'] })],
     ['subtask order', () => ({ subtasks: ['two', 'one'] })],
     ['no subtasks', () => ({ subtasks: [] })],
+    ['scheduled day', () => ({ scheduledOn: '2026-11-13' })],
   ])('IDEM-03 the same key with a different %s answers 409 and creates nothing', async (_field, changes) => {
     await send({}, 'retry-1')
 
@@ -106,6 +107,41 @@ describe('createTaskFromToken', () => {
     expect(error).toBeInstanceOf(HttpError)
     expect(error).toMatchObject({ statusCode: 409, detail: 'Idempotency key reused with a different payload' })
     expect(await storedTasks()).toHaveLength(1)
+  })
+
+  it('IDEM-03 the same key with the same day and another time answers 409; with the same time it replays', async () => {
+    const first = await send({ scheduledOn: '2026-11-13', scheduledTime: '14:00' }, 'retry-1')
+    expect((await send({ scheduledOn: '2026-11-13', scheduledTime: '14:00' }, 'retry-1')).task.id).toBe(first.task.id)
+
+    const error = await refusal(send({ scheduledOn: '2026-11-13', scheduledTime: '14:15' }, 'retry-1'))
+
+    expect(error).toMatchObject({ statusCode: 409, detail: 'Idempotency key reused with a different payload' })
+    expect(await storedTasks()).toHaveLength(1)
+  })
+
+  it('US-7 IDEM-03 the same key with the same rule replays; with another rule, or none, it answers 409', async () => {
+    const weekly = { freq: 'weekly' as const, interval: 1, weekdays: [4], monthDay: null, until: null, count: null }
+    const day = { scheduledOn: '2026-11-12', scheduledTime: '09:00' }
+    const first = await send({ ...day, recurrence: weekly }, 'retry-1')
+    expect(await send({ ...day, recurrence: { ...weekly } }, 'retry-1')).toMatchObject({ replayed: true, task: { id: first.task.id } })
+
+    for (const other of [{ ...weekly, weekdays: [5] }, { ...weekly, interval: 2 }, { ...weekly, count: 4 }, null]) {
+      expect(await refusal(send({ ...day, recurrence: other }, 'retry-1'))).toMatchObject({
+        statusCode: 409,
+        detail: 'Idempotency key reused with a different payload',
+      })
+    }
+    expect(await storedTasks()).toHaveLength(1)
+  })
+
+  it('US-7 IDEM-03 a request without a rule keeps the hash of the keys stored before the rule counted', async () => {
+    const { listId: list, title, estimateMinutes, column, notes, subtasks } = input()
+    const before = createHash('sha256').update(JSON.stringify({ listId: list, title, estimateMinutes, column, notes, subtasks })).digest('hex')
+
+    await send({ recurrence: null }, 'retry-1')
+
+    expect((await storedKeys()).map((key) => key.requestHash)).toEqual([before])
+    expect(await send({}, 'retry-1')).toMatchObject({ replayed: true })
   })
 
   it('IDEM-03 the same key on another list answers 409', async () => {

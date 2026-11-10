@@ -24,11 +24,20 @@ interface NewSessionTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   /** The active lists the task can go to. */
-  lists: ListCard[]
+  lists: Pick<ListCard, 'id' | 'name' | 'color'>[]
   /** The list it starts on: the one the agenda filters, else the first (PICK-12). */
   defaultListId: string | null
   /** The title it starts with: the search text, or empty (PICK-12). */
   defaultTitle: string
+  /** The `HH:MM` estimate it starts with; empty by default. */
+  defaultEstimate?: string
+  /** The line under the title; the agenda's by default. */
+  hint?: string
+  /**
+   * Creates the task elsewhere than the agenda (the plan, PLAN-48); then the notice that it goes to Concluídas does not
+   * show. By default the agenda's route creates it concluded.
+   */
+  onSubmit?: (input: AgendaTaskInput) => Promise<Task>
   onCreated: (task: Task) => void
 }
 
@@ -36,18 +45,36 @@ interface NewSessionTaskDialogProps {
  * `Nova tarefa` of the agenda (PICK-12 to PICK-19): the list, the title and the estimate of the board form, and the
  * notes of `Editar tarefa` behind `Adicionar anotações`. The task is created concluded, from the agenda.
  */
-export function NewSessionTaskDialog({ open, onOpenChange, lists, defaultListId, defaultTitle, onCreated }: NewSessionTaskDialogProps) {
+export function NewSessionTaskDialog({
+  open,
+  onOpenChange,
+  lists,
+  defaultListId,
+  defaultTitle,
+  defaultEstimate,
+  hint,
+  onSubmit,
+  onCreated,
+}: NewSessionTaskDialogProps) {
   const { t } = useTranslation()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('agenda.newTask.title')}</DialogTitle>
-          <DialogDescription>{t('agenda.newTask.hint')}</DialogDescription>
+          <DialogDescription>{hint ?? t('agenda.newTask.hint')}</DialogDescription>
         </DialogHeader>
         {/* Mounted with the dialog, so every opening starts from the list and the title given. */}
         {open && (
-          <NewTaskForm lists={lists} defaultListId={defaultListId} defaultTitle={defaultTitle} onCancel={() => onOpenChange(false)} onCreated={onCreated} />
+          <NewTaskForm
+            lists={lists}
+            defaultListId={defaultListId}
+            defaultTitle={defaultTitle}
+            defaultEstimate={defaultEstimate}
+            onSubmit={onSubmit}
+            onCancel={() => onOpenChange(false)}
+            onCreated={onCreated}
+          />
         )}
       </DialogContent>
     </Dialog>
@@ -58,9 +85,11 @@ function NewTaskForm({
   lists,
   defaultListId,
   defaultTitle,
+  defaultEstimate = '',
+  onSubmit,
   onCancel,
   onCreated,
-}: Omit<NewSessionTaskDialogProps, 'open' | 'onOpenChange'> & { onCancel: () => void }) {
+}: Omit<NewSessionTaskDialogProps, 'open' | 'onOpenChange' | 'hint'> & { onCancel: () => void }) {
   const { t } = useTranslation()
   const id = useId()
   const queryClient = useQueryClient()
@@ -79,7 +108,7 @@ function NewTaskForm({
   const startList = lists.some((list) => list.id === defaultListId) ? defaultListId! : (lists[0]?.id ?? '')
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { listId: startList, title: defaultTitle, estimate: '', notes: '' },
+    defaultValues: { listId: startList, title: defaultTitle, estimate: defaultEstimate, notes: '' },
   })
 
   const create = useMutation({
@@ -87,7 +116,7 @@ function NewTaskForm({
       const input: AgendaTaskInput = { list_id: values.listId, title: values.title, estimate_minutes: durationMinutes(values.estimate) }
       // The switch decides what is saved: off, no notes, whatever was typed (PICK-15).
       if (withNotes) input.notes = values.notes
-      return sessionsApi.createTask(input)
+      return (onSubmit ?? sessionsApi.createTask)(input)
     },
     onSuccess: (task) => {
       void queryClient.invalidateQueries({ queryKey: ['agenda-tasks'] })
@@ -172,18 +201,21 @@ function NewTaskForm({
             />
           )}
         </div>
-        <div className="flex gap-2.5 rounded-lg border bg-muted/40 px-3 py-2.5">
-          <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <div className="flex flex-col gap-1.5">
-            <p className="text-sm text-muted-foreground">{t('agenda.newTask.info')}</p>
-            <span className="flex gap-1.5">
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-                {t('agenda.picker.done')}
+        {/* The agenda's task is created concluded; a task created elsewhere is not (PLAN-48). */}
+        {!onSubmit && (
+          <div className="flex gap-2.5 rounded-lg border bg-muted/40 px-3 py-2.5">
+            <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm text-muted-foreground">{t('agenda.newTask.info')}</p>
+              <span className="flex gap-1.5">
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+                  {t('agenda.picker.done')}
+                </span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">{t('board.createdVia', { name: 'Agenda' })}</span>
               </span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">{t('board.createdVia', { name: 'Agenda' })}</span>
-            </span>
+            </div>
           </div>
-        </div>
+        )}
         {serverError && (
           <p role="alert" className="text-sm text-destructive">
             {serverError}

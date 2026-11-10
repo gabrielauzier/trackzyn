@@ -6,7 +6,7 @@ import { i18n, renderWithProviders } from '@/test/utils'
 import { AgendaViewMenu } from './view-menu'
 
 function menu(props: Partial<Parameters<typeof AgendaViewMenu>[0]> = {}) {
-  const handlers = { onDaysChange: vi.fn(), onZoomChange: vi.fn(), onHideBreaksChange: vi.fn() }
+  const handlers = { onDaysChange: vi.fn(), onZoomChange: vi.fn(), onHideBreaksChange: vi.fn(), onHideScheduledChange: vi.fn() }
   const result = renderWithProviders(
     <AgendaViewMenu days={[0, 1, 2, 3, 4, 5, 6] as WeekDay[]} showDays zoom={3} hideBreaks={false} {...handlers} {...props} />,
   )
@@ -16,7 +16,7 @@ const open = async (user: ReturnType<typeof renderWithProviders>['user']) => {
   await user.click(screen.getByRole('button', { name: /^View options/ }))
   return screen.findByRole('dialog', { name: 'View options' })
 }
-const dayBoxes = (panel: HTMLElement) => within(within(panel).getByRole('group', { name: 'Week days' })).getAllByRole('checkbox')
+const dayBoxes = (panel: HTMLElement) => within(within(panel).getByRole('group', { name: 'Week days' })).getAllByRole('button')
 
 describe('AgendaViewMenu', () => {
   it('DAYS-03 opens below its button on a click and marks the button as expanded', async () => {
@@ -41,7 +41,7 @@ describe('AgendaViewMenu', () => {
     expect(screen.getByRole('button', { name: 'View options' })).toHaveFocus()
   })
 
-  it('DAYS-07 lists the seven days from Monday to Sunday, each checked as shown', async () => {
+  it('DAYS-07 lists the seven days from Monday to Sunday in one line of pills, short names shown, each pressed as shown', async () => {
     const { user } = menu({ days: [0, 1, 2, 3, 4] })
     const boxes = dayBoxes(await open(user))
     expect(boxes.map((box) => box.getAttribute('aria-label'))).toEqual([
@@ -53,7 +53,11 @@ describe('AgendaViewMenu', () => {
       'Saturday',
       'Sunday',
     ])
-    expect(boxes.map((box) => box.getAttribute('aria-checked'))).toEqual(['true', 'true', 'true', 'true', 'true', 'false', 'false'])
+    expect(boxes.map((box) => box.textContent)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+    expect(boxes.map((box) => box.getAttribute('aria-pressed'))).toEqual(['true', 'true', 'true', 'true', 'true', 'false', 'false'])
+    expect(boxes[0]).toHaveClass('rounded-full', 'border-primary')
+    expect(boxes[5]).toHaveClass('rounded-full', 'border-border')
+    expect(boxes[0]!.parentElement).toHaveClass('flex')
   })
 
   it('DAYS-08 leaves the week days out when they are not asked for, keeping the zoom', async () => {
@@ -66,7 +70,7 @@ describe('AgendaViewMenu', () => {
   it('DAYS-09 DAYS-17 hands over a day unchecked at once, with the menu still open', async () => {
     const { user, onDaysChange } = menu()
     const panel = await open(user)
-    await user.click(within(panel).getByRole('checkbox', { name: 'Saturday' }))
+    await user.click(within(panel).getByRole('button', { name: 'Saturday' }))
     expect(onDaysChange).toHaveBeenCalledWith([0, 1, 2, 3, 4, 6])
     expect(screen.getByRole('dialog', { name: 'View options' })).toBeInTheDocument()
   })
@@ -80,7 +84,7 @@ describe('AgendaViewMenu', () => {
     expect(onDaysChange).toHaveBeenLastCalledWith([0, 1, 2, 3, 4, 5, 6])
   })
 
-  it('DAYS-13 disables the checkbox of the only day shown', async () => {
+  it('DAYS-13 disables the pill of the only day shown', async () => {
     const { user } = menu({ days: [3] })
     const boxes = dayBoxes(await open(user))
     expect(boxes[3]).toBeDisabled()
@@ -128,7 +132,9 @@ describe('AgendaViewMenu', () => {
     expect(within(panel).getByRole('button', { name: 'Todos' })).toBeInTheDocument()
     expect(within(panel).getByRole('button', { name: 'Seg – Sex' })).toBeInTheDocument()
     expect(within(panel).getByRole('group', { name: 'Lupa' })).toBeInTheDocument()
-    expect(within(panel).getByRole('checkbox', { name: 'Segunda-feira' })).toBeInTheDocument()
+    const monday = within(panel).getByRole('button', { name: 'Segunda-feira' })
+    expect(monday).toHaveTextContent('Seg')
+    expect(within(panel).getByRole('button', { name: 'Sábado' })).toHaveTextContent('Sáb')
     await i18n.changeLanguage('en')
   })
   it('ADJ-20 is 352 px wide and keeps 16 px between Week days and its shortcuts', async () => {
@@ -139,13 +145,13 @@ describe('AgendaViewMenu', () => {
     expect(title.parentElement).toHaveClass('gap-4', 'justify-between')
   })
 
-  it('ADJ-21 shows Hide breaks, off, with its hint, between the week days and the zoom, in both views', async () => {
+  it('ADJ-21 shows Show breaks, on, with its hint, between the week days and the zoom, in both views', async () => {
     for (const showDays of [true, false]) {
       const { user, unmount } = menu({ showDays })
       const panel = await open(user)
-      const toggle = within(panel).getByRole('switch', { name: 'Hide breaks' })
-      expect(toggle).toHaveAttribute('aria-checked', 'false')
-      expect(within(panel).getByText('Hides the pauses from the agenda')).toBeInTheDocument()
+      const toggle = within(panel).getByRole('switch', { name: 'Show breaks' })
+      expect(toggle).toHaveAttribute('aria-checked', 'true')
+      expect(within(panel).getByText('Shows the breaks on the agenda')).toBeInTheDocument()
       const row = panel.querySelector('[data-hide-breaks]')!
       const zoom = within(panel).getByRole('group', { name: 'Zoom' })
       expect(row.compareDocumentPosition(zoom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
@@ -157,12 +163,28 @@ describe('AgendaViewMenu', () => {
     }
   })
 
-  it('ADJ-21 hands over the switch turned on, with the menu still open', async () => {
+  it('ADJ-21 turning Show breaks off hides the breaks, with the menu still open', async () => {
     const { user, onHideBreaksChange } = menu()
     const panel = await open(user)
-    await user.click(within(panel).getByRole('switch', { name: 'Hide breaks' }))
+    await user.click(within(panel).getByRole('switch', { name: 'Show breaks' }))
     expect(onHideBreaksChange).toHaveBeenCalledWith(true)
     expect(screen.getByRole('dialog', { name: 'View options' })).toBeInTheDocument()
+  })
+
+  it('shows Show schedules, on, under Show breaks; turned off it hides them and the dot shows', async () => {
+    const { user, onHideScheduledChange, unmount } = menu()
+    const panel = await open(user)
+    const toggle = within(panel).getByRole('switch', { name: 'Show schedules' })
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    expect(within(panel).getByText('Shows the scheduled and planned tasks')).toBeInTheDocument()
+    const breaks = panel.querySelector('[data-hide-breaks]')!
+    expect(breaks.compareDocumentPosition(panel.querySelector('[data-hide-scheduled]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    await user.click(toggle)
+    expect(onHideScheduledChange).toHaveBeenCalledWith(true)
+    unmount()
+
+    const hidden = menu({ hideScheduled: true })
+    expect(hidden.container.querySelector('[data-filter-dot]')).not.toBeNull()
   })
 
   it('ADJ-24 shows the dot while the breaks are hidden, with the seven days and in the day view', () => {
@@ -173,13 +195,15 @@ describe('AgendaViewMenu', () => {
     expect(day.container.querySelector('[data-filter-dot]')).not.toBeNull()
   })
 
-  it('reads Ocultar intervalos and its hint in Portuguese', async () => {
+  it('reads Exibir intervalos and Exibir agendamentos with their hints in Portuguese', async () => {
     await i18n.changeLanguage('pt-BR')
     const { user } = menu()
     await user.click(screen.getByRole('button', { name: /^Opções de exibição/ }))
     const panel = await screen.findByRole('dialog', { name: 'Opções de exibição' })
-    expect(within(panel).getByRole('switch', { name: 'Ocultar intervalos' })).toBeInTheDocument()
-    expect(within(panel).getByText('Esconde as pausas da agenda')).toBeInTheDocument()
+    expect(within(panel).getByRole('switch', { name: 'Exibir intervalos' })).toBeInTheDocument()
+    expect(within(panel).getByText('Mostra as pausas na agenda')).toBeInTheDocument()
+    expect(within(panel).getByRole('switch', { name: 'Exibir agendamentos' })).toBeInTheDocument()
+    expect(within(panel).getByText('Mostra as tarefas agendadas e planejadas')).toBeInTheDocument()
     await i18n.changeLanguage('en')
   })
 })

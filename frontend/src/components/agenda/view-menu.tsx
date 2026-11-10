@@ -2,7 +2,6 @@ import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal, ZoomIn } from 'lucide-react'
 
-import { Checkbox } from '@/components/ui/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { ALL_DAYS, WORK_DAYS, type WeekDay, toggleDay } from '@/lib/agenda/week-days'
@@ -20,22 +19,35 @@ interface AgendaViewMenuProps {
   onDaysChange: (days: WeekDay[]) => void
   onZoomChange: (zoom: Zoom) => void
   onHideBreaksChange?: (hide: boolean) => void
+  /** Whether the agenda hides the scheduled tasks and the planned tasks. */
+  hideScheduled?: boolean
+  onHideScheduledChange?: (hide: boolean) => void
 }
 
 /** A Monday, to name the week days in the reader's language. */
 const MONDAY = Date.UTC(2026, 10, 2)
 
-function dayName(day: WeekDay, locale: string): string {
-  const name = new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(new Date(MONDAY + day * 86_400_000))
+function dayName(day: WeekDay, locale: string, weekday: 'long' | 'short' = 'long'): string {
+  const name = new Intl.DateTimeFormat(locale, { weekday, timeZone: 'UTC' }).format(new Date(MONDAY + day * 86_400_000)).replace(/\.$/, '')
   return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1)
 }
 
 /**
  * The view options of the agenda (DAYS-01 to DAYS-18): a button in the corner of the grid that opens a menu with the
- * week days to show (week view only), `Ocultar intervalos` (ADJ-21) and the zoom. Every change applies at once, and the
- * menu stays open.
+ * week days to show (week view only), `Exibir intervalos` (ADJ-21), `Exibir agendamentos` and the zoom. Both switches
+ * are on when nothing is hidden. Every change applies at once, and the menu stays open.
  */
-export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDaysChange, onZoomChange, onHideBreaksChange }: AgendaViewMenuProps) {
+export function AgendaViewMenu({
+  days,
+  showDays,
+  zoom,
+  hideBreaks = false,
+  hideScheduled = false,
+  onDaysChange,
+  onZoomChange,
+  onHideBreaksChange,
+  onHideScheduledChange,
+}: AgendaViewMenuProps) {
   const { t, i18n } = useTranslation()
   const id = useId()
   const trigger = useRef<HTMLButtonElement>(null)
@@ -68,8 +80,8 @@ export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDay
           className="relative inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground data-[state=open]:border-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary"
         >
           <SlidersHorizontal className="size-4" aria-hidden />
-          {/* A hidden day or hidden breaks: the view differs from the default (DAYS-14, ADJ-24). */}
-          {(filtered || hideBreaks) && (
+          {/* A hidden day, hidden breaks or hidden schedules: the view differs from the default (DAYS-14, ADJ-24). */}
+          {(filtered || hideBreaks || hideScheduled) && (
             <span data-filter-dot aria-hidden className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-card bg-primary" />
           )}
         </button>
@@ -96,25 +108,28 @@ export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDay
                 {shortcut(WORK_DAYS, t('agenda.viewMenu.workDays'))}
               </span>
             </div>
-            <div role="group" aria-labelledby={`${id}-days`} className="flex flex-col">
+            {/* One line of pills, short names shown and full names read, like the shortcuts above (DAYS-07). */}
+            <div role="group" aria-labelledby={`${id}-days`} className="flex gap-1 px-2">
               {ALL_DAYS.map((day) => {
-                const name = dayName(day, i18n.language)
-                const checked = days.includes(day)
+                const shown = days.includes(day)
                 // The last shown day stays: the week always shows one (DAYS-13).
-                const onlyOne = checked && days.length === 1
+                const onlyOne = shown && days.length === 1
                 return (
-                  <label
+                  <button
                     key={day}
-                    className={cn('flex min-h-9 items-center gap-2.5 rounded-lg px-2 text-sm', onlyOne ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-muted')}
+                    type="button"
+                    data-day={day}
+                    aria-label={dayName(day, i18n.language)}
+                    aria-pressed={shown}
+                    disabled={onlyOne}
+                    className={cn(
+                      'h-8 min-w-0 flex-1 rounded-full border-[1.5px] text-xs font-medium transition-colors disabled:cursor-not-allowed',
+                      shown ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground',
+                    )}
+                    onClick={() => onDaysChange(toggleDay(days, day))}
                   >
-                    <Checkbox
-                      aria-label={name}
-                      checked={checked}
-                      disabled={onlyOne}
-                      onCheckedChange={() => onDaysChange(toggleDay(days, day))}
-                    />
-                    <span aria-hidden>{name}</span>
-                  </label>
+                    <span aria-hidden>{dayName(day, i18n.language, 'short')}</span>
+                  </button>
                 )
               })}
             </div>
@@ -124,17 +139,31 @@ export function AgendaViewMenu({ days, showDays, zoom, hideBreaks = false, onDay
         <div data-hide-breaks className="flex items-center justify-between gap-4 px-2">
           <div className="flex flex-col gap-0.5">
             <label id={`${id}-breaks`} htmlFor={`${id}-breaks-switch`} className="text-sm font-medium">
-              {t('agenda.viewMenu.hideBreaks')}
+              {t('agenda.viewMenu.showBreaks')}
             </label>
             <span id={`${id}-breaks-hint`} className="text-xs text-muted-foreground">
-              {t('agenda.viewMenu.hideBreaksHint')}
+              {t('agenda.viewMenu.showBreaksHint')}
             </span>
           </div>
           <Switch
             id={`${id}-breaks-switch`}
             aria-labelledby={`${id}-breaks`}
-            checked={hideBreaks}
-            onCheckedChange={(hide) => onHideBreaksChange?.(hide)}
+            checked={!hideBreaks}
+            onCheckedChange={(show) => onHideBreaksChange?.(!show)}
+          />
+        </div>
+        <div data-hide-scheduled className="flex items-center justify-between gap-4 px-2">
+          <div className="flex flex-col gap-0.5">
+            <label id={`${id}-scheduled`} htmlFor={`${id}-scheduled-switch`} className="text-sm font-medium">
+              {t('agenda.viewMenu.showScheduled')}
+            </label>
+            <span className="text-xs text-muted-foreground">{t('agenda.viewMenu.showScheduledHint')}</span>
+          </div>
+          <Switch
+            id={`${id}-scheduled-switch`}
+            aria-labelledby={`${id}-scheduled`}
+            checked={!hideScheduled}
+            onCheckedChange={(show) => onHideScheduledChange?.(!show)}
           />
         </div>
         <div className="-mx-3 h-px bg-border" />

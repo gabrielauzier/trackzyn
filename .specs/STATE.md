@@ -66,6 +66,14 @@
 - **Date**: 2026-11-04
 - **Status**: active
 
+### AD-009
+- **Decision**: Regras dependentes de data nas tarefas (a ida para Hoje pelo agendamento e a próxima ocorrência de uma série) são aplicadas na leitura e na escrita, nunca por job. Toda leitura que mostra colunas de tarefas (quadro, home, foco, widget, Agenda) chama `applyDueSchedules` antes de responder, e a próxima ocorrência nasce em `moveTask` ao entrar em `done`. As ocorrências futuras de uma série são calculadas na leitura, sem gravar.
+- **Reason**: Funciona igual no servidor e no modo local (PGlite, sem worker), e o banco continua sendo a verdade para web, desktop, MCP e mobile. Estende o princípio de AD-001 para tarefas. Abordagem A do design do agendamento, aprovada pelo usuário em 2026-11-07.
+- **Trade-off**: Leituras passam a gravar (idempotente, sob `lockList`); o polling do foco (AD-003) faz uma consulta a mais, mitigada pelo índice parcial `ix_tasks_schedule_due`. Conforma com AD-004 (dia no fuso do workspace), AD-006 (conclusão por `moveTask`) e AD-007 (`GET /agenda/scheduled` fechada a tokens).
+- **Scope**: `agendamento`, `listas-e-quadro`, `foco-e-sons`, `agenda`; schema `tasks`, `task_series`; backend `services/schedule.ts`, `services/series.ts`, `services/tasks.ts`.
+- **Date**: 2026-11-07
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/agenda-adjustments` (#29)

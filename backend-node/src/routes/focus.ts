@@ -16,7 +16,8 @@ import {
   skipFocus,
   startFocus,
 } from '../services/focus.ts'
-import { readFocusState, readUserFocusState } from '../services/focus-state.ts'
+import { openSession, readFocusState, readUserFocusState } from '../services/focus-state.ts'
+import { applyDueSchedules } from '../services/schedule.ts'
 import { UUID_PATTERN } from '../services/users.ts'
 
 const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
@@ -90,10 +91,18 @@ export function focusRoutes(ctx: AppContext) {
       '/api/focus',
       { schema: { querystring: z.object({ list_id: uuid.optional() }), response }, preValidation: reading },
       // Without a list, the app reads the user's focus wherever the user is (SYNC-08, SYNC-09, SYNC-11).
-      async (request) =>
-        request.query.list_id === undefined
-          ? readUserFocusState(ctx.db, request.workspace.user.id, new Date())
-          : readFocusState(ctx.db, request.workspace.user.id, request.workspace.workspace, request.query.list_id.toLowerCase(), new Date()),
+      async (request) => {
+        const now = new Date()
+        const userId = request.workspace.user.id
+        if (request.query.list_id === undefined) {
+          // The tasks scheduled for today come to Today first (US-4, AD-009), in the workspace of the open session.
+          const session = await openSession(ctx.db, userId)
+          await applyDueSchedules(ctx.db, session?.workspaceId ?? request.workspace.workspace.id, now)
+          return readUserFocusState(ctx.db, userId, now)
+        }
+        await applyDueSchedules(ctx.db, request.workspace.workspace.id, now)
+        return readFocusState(ctx.db, userId, request.workspace.workspace, request.query.list_id.toLowerCase(), now)
+      },
     )
 
     typed.post(
@@ -130,7 +139,8 @@ export function focusRoutes(ctx: AppContext) {
     typed.post(
       '/api/focus/break',
       {
-        schema: { body: actionBody.extend({ minutes: z.number().int().min(1).max(120), list_id: uuid }), response },
+        // `plan_block_id`: the break of the user's plan this Intervalo starts (PLAN-49).
+        schema: { body: actionBody.extend({ minutes: z.number().int().min(1).max(120), list_id: uuid, plan_block_id: uuid.optional() }), response },
         preValidation: writing,
       },
       async (request) =>
@@ -138,7 +148,7 @@ export function focusRoutes(ctx: AppContext) {
           ctx.db,
           actor(request),
           toInput(request.body),
-          { minutes: request.body.minutes, listId: request.body.list_id.toLowerCase() },
+          { minutes: request.body.minutes, listId: request.body.list_id.toLowerCase(), planBlockId: request.body.plan_block_id?.toLowerCase() },
           new Date(),
         ),
     )

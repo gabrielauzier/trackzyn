@@ -161,7 +161,37 @@ export interface Subtask {
   position: number
 }
 
-export interface Task {
+/** How a series repeats (US-9): `weekdays` 1 (Monday) to 7 (Sunday) on weekly, `month_day` on monthly. */
+export interface RecurrenceRule {
+  freq: 'daily' | 'weekly' | 'monthly'
+  interval: number
+  weekdays: number[] | null
+  month_day: number | null
+  /** The last possible day, YYYY-MM-DD; never together with `count`. */
+  until: string | null
+  count: number | null
+}
+
+/** The series a task is the occurrence of: its rule and the next day it projects, null once it ends. */
+export interface TaskSeries {
+  id: string
+  rule: RecurrenceRule
+  next_on: string | null
+}
+
+/** This occurrence of a series alone, or this one and the next ones (D16). */
+export type SeriesScope = 'occurrence' | 'series'
+
+/** The schedule of a task, in the workspace's timezone (US-7). */
+export interface TaskSchedule {
+  /** YYYY-MM-DD, or null when the task is not scheduled. */
+  scheduled_on: string | null
+  /** HH:MM in steps of 15 minutes; only with a day. */
+  scheduled_time: string | null
+  series: TaskSeries | null
+}
+
+export interface Task extends TaskSchedule {
   id: string
   list_id: string
   title: string
@@ -176,7 +206,7 @@ export interface Task {
   created_via: string | null
 }
 
-export interface TaskCardView {
+export interface TaskCardView extends TaskSchedule {
   id: string
   title: string
   estimate_minutes: number | null
@@ -364,3 +394,97 @@ export interface AgendaSessionChanges {
   task_id?: string
   list_id?: string
 }
+
+/** A pending task scheduled in a period, as the Agenda draws it (US-5, US-14). */
+export interface ScheduledTask {
+  id: string
+  title: string
+  /** `color` is the index 1..8 into the `--chart-N` palette. */
+  list: { id: string; name: string; color: number }
+  column: 'backlog' | 'this_week' | 'today'
+  position: number
+  estimate_minutes: number | null
+  scheduled_on: string
+  scheduled_time: string | null
+  series: { id: string; rule: RecurrenceRule } | null
+}
+
+/** A future occurrence of a series, projected from its rule and never stored (US-11, D14). */
+export interface ProjectedOccurrence {
+  series_id: string
+  /** The open occurrence, which a click on the projection opens. */
+  task_id: string
+  title: string
+  list: { id: string; name: string; color: number }
+  on: string
+  time: string
+  estimate_minutes: number | null
+  /** The rule of the series, which the tooltip of the projection says (US-11). */
+  rule: RecurrenceRule
+}
+
+/** `GET /api/agenda/scheduled`: the scheduled tasks of the workspace in a period. */
+export interface ScheduledResponse {
+  timed: ScheduledTask[]
+  untimed: ScheduledTask[]
+  projected: ProjectedOccurrence[]
+}
+
+/** A list as a block of the day plan carries it; `color` is the index 1..8 into the `--chart-N` palette. */
+export interface PlanListRef {
+  id: string
+  name: string
+  color: number
+}
+
+/** The task of a planned block (PLAN-38, PLAN-39). */
+export interface PlanTaskRef {
+  id: string
+  title: string
+  list: PlanListRef
+  done: boolean
+  scheduled_on: string | null
+  estimate_minutes: number | null
+}
+
+/** A saved block of a day plan; `start` is `HH:MM` (planejamento-diario). */
+export type PlanBlock =
+  | { id: string; kind: 'task'; start: string; minutes: number; task: PlanTaskRef }
+  | { id: string; kind: 'break'; start: string; minutes: number; name: string; list: PlanListRef; started_at?: string | null }
+
+/** The user's working hours, `HH:MM`, with `end` after `start`; 09:00 to 18:00 when never set (PLAN-22). */
+export interface Workday {
+  start: string
+  end: string
+}
+
+/** `GET`/`PUT /api/plans/:day`: the logged-in user's plan of a day in the current workspace (PLAN-12). */
+export interface PlanRead {
+  day: string
+  /** 0 while nothing is saved for the day; `PUT` sends it back as `base_version` (PLAN-35). */
+  version: number
+  /** The day is today or later in the workspace's timezone (PLAN-34). */
+  editable: boolean
+  workday: Workday
+  blocks: PlanBlock[]
+}
+
+/** A pending task the plan of a day offers (`GET /api/plans/:day/candidates`, PLAN-02). */
+export interface PlanCandidate {
+  id: string
+  title: string
+  list: PlanListRef
+  column: 'backlog' | 'this_week' | 'today'
+  position: number
+  estimate_minutes: number | null
+  scheduled_on: string | null
+  scheduled_time: string | null
+}
+
+/** A saved block with its day, as the Agenda draws it (`GET /api/plans`, PLAN-24). */
+export type PlannedBlock = PlanBlock & { day: string }
+
+/** The body of a block for `PUT /api/plans/:day`; `start` is `HH:MM`. */
+export type PlanBlockInput =
+  | { kind: 'task'; task_id: string; start: string; minutes: number }
+  | { kind: 'break'; id?: string; name: string; list_id: string; start: string; minutes: number }

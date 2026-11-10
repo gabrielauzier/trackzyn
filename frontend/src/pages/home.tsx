@@ -1,9 +1,9 @@
 import { useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { CalendarCheck, Plus } from 'lucide-react'
 import {
   DndContext,
   KeyboardSensor,
@@ -28,7 +28,9 @@ import { PageHeader } from '@/components/page-header'
 import { greetingFor, hourIn } from '@/components/lists/greeting'
 import { ListCard } from '@/components/lists/list-card'
 import { ListDialog } from '@/components/lists/list-dialog'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { tomorrowPath } from '@/lib/plan/tomorrow'
 import { cn } from '@/lib/utils'
 import { useCardSelection } from '@/lib/use-card-selection'
 import type { ListCard as ListCardData, ListsResponse } from '@/types'
@@ -88,6 +90,7 @@ export default function HomePage() {
   const lists = (dropped && dropped.base === data ? dropped.lists : data?.lists) ?? []
   const name = user?.preferences?.display_name || user?.email?.split('@')[0] || ''
   const timeZone = data?.timezone ?? current?.timezone ?? undefined
+  const navigate = useNavigate()
   const period = greetingFor(hourIn(timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone))
 
   // The sidebar's "Create new list" lands here with ?new=1.
@@ -117,7 +120,19 @@ export default function HomePage() {
 
   return (
     <div>
-      <PageHeader section={current?.name ?? ''} title={t(`home.greeting.${period}`, { name })} />
+      <PageHeader
+        section={current?.name ?? ''}
+        title={t(`home.greeting.${period}`, { name })}
+        action={
+          // The plan of tomorrow in the workspace timezone (PLAN-01).
+          timeZone && (
+            <Button type="button" variant="outline" size="sm" onClick={() => navigate(tomorrowPath(timeZone))}>
+              <CalendarCheck size={14} />
+              {t('plan.agenda.planTomorrow')}
+            </Button>
+          )
+        }
+      />
       <p className="-mt-4 mb-8 text-sm text-muted-foreground">{t(`home.subtitle.${period}`)}</p>
 
       <h2 className="mb-3 text-sm font-semibold">{t('home.yourLists')}</h2>

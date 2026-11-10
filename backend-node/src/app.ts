@@ -20,7 +20,9 @@ import { listRoutes } from './routes/lists.ts'
 import { mcpRoutes } from './routes/mcp.ts'
 import { oidcRoutes } from './routes/oidc.ts'
 import { passkeyRoutes } from './routes/passkeys.ts'
+import { planRoutes } from './routes/plans.ts'
 import { reportRoutes } from './routes/reports.ts'
+import { scheduledRoutes } from './routes/scheduled.ts'
 import { sessionRoutes } from './routes/sessions.ts'
 import { setupRoutes } from './routes/setup.ts'
 import { taskRoutes } from './routes/tasks.ts'
@@ -87,6 +89,8 @@ export async function buildApp(
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
   await app.register(sessionRoutes(ctx))
+  await app.register(scheduledRoutes(ctx))
+  await app.register(planRoutes(ctx))
   if (ctx.config.personalTokensEnabled) await app.register(accessTokenRoutes(ctx))
   if (ctx.config.personalTokensEnabled) await app.register(mcpRoutes(ctx))
 

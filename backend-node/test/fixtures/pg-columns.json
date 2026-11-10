@@ -13,6 +13,100 @@
       "maxLength": 2000
     }
   ],
+  "day_plan_blocks": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "plan_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "kind",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 8
+    },
+    {
+      "column": "task_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "name",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 40
+    },
+    {
+      "column": "list_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "start_time",
+      "type": "time without time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "minutes",
+      "type": "smallint",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "started_at",
+      "maxLength": null,
+      "nullable": true,
+      "type": "timestamp with time zone"
+    }
+  ],
+  "day_plans": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "day",
+      "type": "date",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "version",
+      "type": "integer",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
   "files": [
     {
       "column": "id",
@@ -357,6 +451,80 @@
       "maxLength": null
     }
   ],
+  "task_series": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "freq",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 8
+    },
+    {
+      "column": "interval",
+      "type": "smallint",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "weekdays",
+      "type": "ARRAY",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "month_day",
+      "type": "smallint",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "until",
+      "type": "date",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "count",
+      "type": "smallint",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_count",
+      "type": "smallint",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "ended_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "time",
+      "type": "time without time zone",
+      "nullable": true,
+      "maxLength": null
+    }
+  ],
   "tasks": [
     {
       "column": "id",
@@ -435,6 +603,30 @@
       "type": "character varying",
       "nullable": true,
       "maxLength": 16
+    },
+    {
+      "column": "scheduled_on",
+      "type": "date",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "scheduled_time",
+      "type": "time without time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "schedule_applied_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "series_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
     }
   ],
   "user_passkeys": [

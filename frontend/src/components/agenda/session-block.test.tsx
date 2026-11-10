@@ -109,10 +109,10 @@ describe('SessionBlock', () => {
     expect(block.style.backgroundColor).toContain('var(--chart-5)')
   })
 
-  it('draws a break as Break in grey with a dashed border (AGENDA-04)', () => {
+  it('draws a break as Break in grey with a dashed border, as scheduled and planned blocks (AGENDA-04)', () => {
     renderWithProviders(<SessionBlock piece={laid({ kind: 'break', task_id: null, task_title: null })} pxPerMinute={1} timezone={SP} />)
     const block = screen.getByRole('button', { name: 'Break, 13:01 – 13:26' })
-    expect(block).toHaveClass('border-dashed', 'bg-muted')
+    expect(block).toHaveClass('border-2', 'border-dashed', 'bg-muted')
     expect(block.style.backgroundColor).toBe('')
   })
 

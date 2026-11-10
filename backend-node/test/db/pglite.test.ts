@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { connectPglite, type Database } from '../../src/db/client.ts'
 import { applyMigrations } from '../../src/db/migrate.ts'
 
-const TABLES = ['app_settings', 'files', 'focus_actions', 'focus_sessions', 'lists', 'personal_access_tokens', 'subtasks', 'task_idempotency_keys', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
+const TABLES = ['app_settings', 'day_plan_blocks', 'day_plans', 'files', 'focus_actions', 'focus_sessions', 'lists', 'personal_access_tokens', 'subtasks', 'task_idempotency_keys', 'task_series', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
   return ((await db.execute(query)) as unknown as { rows: T[] }).rows
@@ -29,9 +29,11 @@ describe('the Drizzle schema on PGlite', () => {
 
   it('matches the PostgreSQL column catalog', async () => {
     // pg-columns.json is information_schema.columns of a PostgreSQL 16 that ran the same migrations.
-    // Last read on 2026-11-05 from a PostgreSQL 16.15, through 0009_task_updated_and_origin, in a scratch
-    // database that got the drizzle/*.sql files in journal order: the only change from the reading through
-    // 0008 was tasks.updated_at (timestamptz, not null) and tasks.created_from (varchar 16, nullable).
+    // Last read on 2026-11-07 from a PostgreSQL 16.15, through 0012_task_series_time, in a scratch database that
+    // got the drizzle/*.sql files in journal order: the only change from the reading through 0011 was
+    // task_series.time (time, nullable). The tables day_plans and day_plan_blocks of 0014_day_plans were added on
+    // 2026-11-07 from the same catalog query on PGlite, as no PostgreSQL server was running; day_plan_blocks.started_at
+    // (timestamptz, nullable) of 0015_planned_break_started on 2026-11-10, the same way.
     const expected = JSON.parse(readFileSync(join(import.meta.dirname, '../fixtures/pg-columns.json'), 'utf8')) as Record<
       string,
       Array<{ column: string; type: string; nullable: boolean; maxLength: number | null }>

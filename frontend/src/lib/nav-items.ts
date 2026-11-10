@@ -1,4 +1,4 @@
-import { Archive, BarChart3, CalendarDays, Component, FolderOpen, LayoutGrid, Plus } from 'lucide-react'
+import { Archive, BarChart3, CalendarCheck, CalendarDays, Component, FolderOpen, LayoutGrid, Plus } from 'lucide-react'
 
 /**
  * Sidebar destinations. Lives outside `app-layout.tsx` so the filtering
@@ -24,6 +24,8 @@ export const navItems: NavItem[] = [
   { type: 'link', key: 'allLists', path: '/', icon: LayoutGrid },
   { type: 'link', key: 'archivedLists', path: '/lists/archived', icon: Archive },
   { type: 'link', key: 'agenda', path: '/agenda', icon: CalendarDays },
+  // `/planejar` opens the plan of today (PLAN-30).
+  { type: 'link', key: 'plan', path: '/planejar', icon: CalendarCheck },
   { type: 'link', key: 'reports', path: '/reports', icon: BarChart3 },
   { type: 'link', key: 'files', path: '/files', icon: FolderOpen, admin: true },
   { type: 'separator', labelKey: 'nav.groupDevelopers' },

@@ -69,7 +69,7 @@ Quem não trabalha no fim de semana vê na Agenda duas colunas sempre vazias, e 
 
 **Acceptance Criteria**:
 
-7. WHILE the Agenda is in the week view, the menu SHALL show `Dias da semana` with one checkbox per day, from `Segunda-feira` to `Domingo`, each checked when that day is shown.  <!-- state-driven -->
+7. WHILE the Agenda is in the week view, the menu SHALL show `Dias da semana` with one pill per day in a single row, from `Seg` to `Dom` (read as `Segunda-feira` to `Domingo`), each pressed when that day is shown: outlined in the primary colour with a soft fill when shown, gray outline when hidden. (Revised 2026-11-10: it was a list of checkboxes.)  <!-- state-driven -->
 8. WHILE the Agenda is in the day view, the menu SHALL not show `Dias da semana`.  <!-- state-driven -->
 9. WHEN a day is unchecked THEN the week grid SHALL leave out its header and its column at once, the remaining columns SHALL share the whole width, and the menu SHALL stay open.  <!-- event-driven -->
 10. WHEN a day is checked again THEN the week grid SHALL show it again at once, in its place in the week.  <!-- event-driven -->
@@ -77,7 +77,7 @@ Quem não trabalha no fim de semana vê na Agenda duas colunas sempre vazias, e 
 18. WHEN a zoom level is clicked in the menu THEN the grid SHALL change at once and the menu SHALL stay open.  <!-- event-driven -->
 11. WHEN `Seg – Sex` is clicked THEN the Agenda SHALL show Monday to Friday and hide Saturday and Sunday at once.  <!-- event-driven -->
 12. WHEN `Todos` is clicked THEN the Agenda SHALL show the seven days at once.  <!-- event-driven -->
-13. IF only one day is checked THEN its checkbox SHALL be disabled, so the week always shows at least one day.  <!-- unwanted-behavior -->
+13. IF only one day is shown THEN its pill SHALL be disabled, so the week always shows at least one day.  <!-- unwanted-behavior -->
 14. WHILE the Agenda is in the week view and at least one day is hidden, the button SHALL show a dot and be named `Opções de exibição, N de 7 dias`; in the day view, where the days are not filtered (DAYS-08), it SHALL show neither.  <!-- state-driven -->
 15. WHEN the Agenda opens THEN it SHALL show the days chosen last on this device, or the seven days the first time, or if storage holds no valid choice.  <!-- event-driven -->
 16. The Agenda SHALL keep the day total of each shown day, the week navigation by whole weeks, and the overlap warning (AGENDA-19) as they are, hidden days included in the warning.  <!-- ubiquitous -->

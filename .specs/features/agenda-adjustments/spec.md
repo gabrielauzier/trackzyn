@@ -120,13 +120,14 @@ A issue #29 junta sete ajustes da Agenda:
 **Acceptance Criteria**:
 
 20. The view options menu SHALL be 352 px wide, with at least 16 px between `Dias da semana` and its shortcuts.  <!-- ubiquitous -->
-21. The menu SHALL show, in both views, a switch named `Ocultar intervalos`, with the hint `Esconde as pausas da agenda`, between the week days and the zoom; it SHALL be off the first time.  <!-- ubiquitous -->
-22. WHEN `Ocultar intervalos` is turned on THEN the grid SHALL leave out every break block at once, open or closed, and the menu SHALL stay open; turned off, the breaks SHALL come back at once.  <!-- event-driven -->
+21. The menu SHALL show, in both views, a switch named `Exibir intervalos`, with the hint `Mostra as pausas na agenda`, between the week days and the zoom; it SHALL be on the first time. (Revised 2026-11-10: it was `Ocultar intervalos`, off by default; the choice stored on the device keeps its meaning.)  <!-- ubiquitous -->
+22. WHEN `Exibir intervalos` is turned off THEN the grid SHALL leave out every break block at once, open or closed, and the planned breaks, and the menu SHALL stay open; turned on, they SHALL come back at once.  <!-- event-driven -->
 23. WHILE breaks are hidden, the day totals SHALL not change, and the overlap warning SHALL not name a break.  <!-- state-driven -->
-24. WHILE breaks are hidden, the view options button SHALL show its dot, in both views.  <!-- state-driven -->
-25. WHEN the Agenda opens THEN `Ocultar intervalos` SHALL be as it was left last on this device, or off when storage holds no valid choice.  <!-- event-driven -->
+24. WHILE breaks or schedules are hidden, the view options button SHALL show its dot, in both views.  <!-- state-driven -->
+25. WHEN the Agenda opens THEN `Exibir intervalos` SHALL be as it was left last on this device, or on when storage holds no valid choice.  <!-- event-driven -->
+26. The menu SHALL show, under `Exibir intervalos`, a switch named `Exibir agendamentos`, with the hint `Mostra as tarefas agendadas e planejadas`, on the first time. WHEN it is turned off THEN the grid SHALL leave out the scheduled tasks (with a time, in the `Sem hora` row and the projected occurrences) and the planned tasks, keeping the sessions and the planned breaks; the choice SHALL be remembered on this device.  <!-- event-driven -->
 
-**Independent Test**: Ligar `Ocultar intervalos`: os blocos tracejados de intervalo somem, os totais continuam iguais e o botão ganha o ponto. Recarregar: os intervalos continuam escondidos.
+**Independent Test**: Desligar `Exibir intervalos`: os blocos tracejados de intervalo somem, os totais continuam iguais e o botão ganha o ponto. Recarregar: os intervalos continuam escondidos.
 
 ---
 
@@ -168,8 +169,9 @@ A issue #29 junta sete ajustes da Agenda:
 | ADJ-23 | P2: Menu | T2 | Verified |
 | ADJ-24 | P2: Menu | T1, T2 | Verified |
 | ADJ-25 | P2: Menu | T1, T2 | Verified |
+| ADJ-26 | P2: Menu | — | Implementing |
 
-**Coverage:** 25 total, 25 mapped to tasks, 25 verified (Verifier round 3 PASS)
+**Coverage:** 26 total. ADJ-01 a ADJ-25 mapped to tasks and verified (Verifier round 3 PASS); ADJ-26 came with the planejamento-diario changes, without a task, and is checked in that feature's `validation.md` (rounds 5 and 6)
 
 ---
 

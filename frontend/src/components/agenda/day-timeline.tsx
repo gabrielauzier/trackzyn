@@ -6,7 +6,7 @@ import { WeekGrid, type GridDrag } from '@/components/agenda/week-grid'
 import { Button } from '@/components/ui/button'
 import { dayOf, dayPieces, mondayOf, weekDays } from '@/lib/agenda/layout'
 import { cn } from '@/lib/utils'
-import type { AgendaSession } from '@/types'
+import type { AgendaSession, PlannedBlock, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 interface DayTimelineProps {
   /** The day shown, YYYY-MM-DD in the workspace timezone. */
@@ -40,6 +40,18 @@ interface DayTimelineProps {
   previewId?: string | null
   /** A control drawn in the first cell of the header, above the hour column (ADJ-15). */
   corner?: ReactNode
+  /** The scheduled tasks with a time and the projected occurrences of the week, as in the week view (US-5, US-11). */
+  timed?: ScheduledTask[]
+  projected?: ProjectedOccurrence[]
+  /** A click on a scheduled block opens its task. */
+  onOpenTask?: (taskId: string) => void
+  /** The tasks scheduled without a time, for the `Sem hora` row (US-14). */
+  untimed?: ScheduledTask[]
+  onShowDay?: (day: string) => void
+  /** The blocks of the user's saved plans, as in the week view (PLAN-24). */
+  planned?: PlannedBlock[]
+  onOpenPlanned?: (block: PlannedBlock) => void
+  onPlanDay?: (day: string) => void
 }
 
 const utc = (day: string) => new Date(`${day}T00:00:00Z`)
@@ -68,6 +80,14 @@ export function DayTimeline({
   selectedGroup = null,
   previewId = null,
   corner,
+  timed,
+  projected,
+  onOpenTask,
+  untimed,
+  onShowDay,
+  planned,
+  onOpenPlanned,
+  onPlanDay,
 }: DayTimelineProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -135,6 +155,14 @@ export function DayTimeline({
         onSelectGroup={onSelectGroup}
         selectedGroup={selectedGroup}
         previewId={previewId}
+        timed={timed}
+        projected={projected}
+        onOpenTask={onOpenTask}
+        untimed={untimed}
+        onShowDay={onShowDay}
+        planned={planned}
+        onOpenPlanned={onOpenPlanned}
+        onPlanDay={onPlanDay}
       />
 
       {/* A day that has not begun takes no session (AGENDA-23). */}
