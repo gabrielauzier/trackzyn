@@ -209,7 +209,9 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
       </header>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="lg:w-80 lg:shrink-0">
+        {/* Side by side, the list stays at the top of the window while the page scrolls the grid, and scrolls inside when
+            taller than the window (PLAN-03). */}
+        <div data-slot="plan-side" className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:w-80 lg:shrink-0 lg:overflow-y-auto">
           <PlanSidebar
             day={day}
             candidates={candidates}
@@ -220,7 +222,7 @@ function PlanDay({ day, today, activeLists, initial, planned }: PlanDayProps) {
             onFit={readOnly ? undefined : fitTasks}
           />
         </div>
-        <section className="flex h-[calc(100vh-16rem)] min-h-96 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card">
+        <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card">
           <PlanGrid
             day={day}
             blocks={draft.blocks}

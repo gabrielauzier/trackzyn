@@ -391,6 +391,15 @@ describe('PlanPage', () => {
     expect(screen.queryByRole('button', { name: 'Arrastar nova tarefa para a grade' })).toBeNull()
   })
 
+  it('PLAN-03 side by side, the list stays at the top of the window and the grid grows with the page, with no height of its own', async () => {
+    show()
+    await screen.findByRole('group', { name: 'Grade do dia' })
+    const side = document.querySelector<HTMLElement>('[data-slot="plan-side"]')!
+    expect(side).toHaveClass('lg:sticky', 'lg:top-6', 'lg:overflow-y-auto')
+    const section = document.querySelector<HTMLElement>('[data-plan-grid]')!.closest('section')!
+    expect(section.className).not.toMatch(/h-\[calc|overflow-y-auto/)
+  })
+
   it('PLAN-13 the arrows of the header open the plan of the next and the previous day', async () => {
     const { user } = show()
     await screen.findByRole('heading', { level: 1, name: 'Segunda-feira, 9 de novembro' })

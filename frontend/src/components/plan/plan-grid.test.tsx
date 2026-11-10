@@ -46,11 +46,21 @@ afterEach(() => {
 })
 
 describe('PlanGrid (PLAN-03)', () => {
-  it('draws the hours of the whole day and opens scrolled to the start of the workday', () => {
+  it('PLAN-03 draws the whole day with no scroll of its own, and side by side scrolls the page to the start of the workday', () => {
+    const wide = vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: query === '(min-width: 1024px)' }) as MediaQueryList)
+    vi.mocked(window.scrollTo).mockClear()
     show([])
-    const scroller = document.querySelector<HTMLElement>('[data-plan-scroll]')!
-    expect(scroller.firstElementChild).toHaveStyle({ height: '1440px' })
-    expect(scroller.scrollTop).toBe(540)
+    const grid = document.querySelector<HTMLElement>('[data-plan-grid]')!
+    expect(grid.firstElementChild).toHaveStyle({ height: '1440px' })
+    expect(grid).not.toHaveClass('overflow-y-auto')
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 540 })
+    wide.mockRestore()
+  })
+
+  it('PLAN-03 stacked on a narrow screen, does not scroll the page past the list', () => {
+    vi.mocked(window.scrollTo).mockClear()
+    show([])
+    expect(window.scrollTo).not.toHaveBeenCalled()
   })
 
   it('gives the blocks of the draft a bottom handle and the drag, and the fixed blocks neither', () => {

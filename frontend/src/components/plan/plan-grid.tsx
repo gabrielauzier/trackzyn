@@ -14,6 +14,9 @@ import { PlanBlock, type LaidPlanBlock } from './plan-block'
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 
+/** Where the plan's list and grid sit side by side (Tailwind's `lg`). */
+const WIDE = '(min-width: 1024px)'
+
 /** What the day already holds and the plan does not move: a task scheduled with a time (PLAN-03). */
 export interface FixedBlock {
   id: string
@@ -94,13 +97,15 @@ function FixedPiece({ piece, pxPerMinute }: { piece: LaidFixed; pxPerMinute: num
  */
 export function PlanGrid({ day, blocks, fixed, workday, pxPerMinute = PX_PER_MINUTE, drag, selectedKey = null, onOpen }: PlanGridProps) {
   const { t } = useTranslation()
-  const scroller = useRef<HTMLDivElement>(null)
+  const grid = useRef<HTMLDivElement>(null)
   const workStart = minuteOfClock(workday.start)
   const workEnd = minuteOfClock(workday.end)
 
-  // Opens at the start of the workday; a new workday or zoom scrolls there again.
+  // The grid has no scroll of its own: the page scrolls it (PLAN-03). Side by side with the list (wide screens), the page
+  // opens at the start of the workday, and a new workday or zoom scrolls there again; stacked, it opens at the top.
   useLayoutEffect(() => {
-    if (scroller.current) scroller.current.scrollTop = workStart * pxPerMinute
+    if (!grid.current || !window.matchMedia(WIDE).matches) return
+    window.scrollTo({ top: grid.current.getBoundingClientRect().top + window.scrollY + workStart * pxPerMinute })
   }, [workStart, pxPerMinute])
 
   const preview = drag?.preview ?? null
@@ -130,7 +135,7 @@ export function PlanGrid({ day, blocks, fixed, workday, pxPerMinute = PX_PER_MIN
     : 0
 
   return (
-    <div ref={scroller} data-plan-scroll className="relative min-h-80 overflow-y-auto">
+    <div ref={grid} data-plan-grid className="relative">
       <div className="relative flex" style={{ height: DAY_MINUTES * pxPerMinute }}>
         <div className="relative w-14 shrink-0" aria-hidden>
           {HOURS.map((hour) => (
