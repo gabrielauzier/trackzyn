@@ -2,7 +2,8 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
-import type { LaidOutPiece } from '@/lib/agenda/layout'
+import { joinPieces } from '@/lib/agenda/join'
+import { dayPieces, type LaidOutPiece } from '@/lib/agenda/layout'
 import { i18n, renderWithProviders } from '@/test/utils'
 import type { AgendaSession } from '@/types'
 import { SessionBlock } from './session-block'
@@ -208,5 +209,30 @@ describe('SessionBlock of a joined block (#23)', () => {
     } finally {
       await i18n.changeLanguage('en')
     }
+  })
+})
+
+describe('SessionBlock of a joined block in net hours (#42)', () => {
+  // Two sessions of Produto in São Paulo that overlap: 10:00–11:00 and 10:30–11:30, joined with a 15 min gap.
+  const overlapping: AgendaSession[] = [
+    laid({ id: 'a', list_name: 'Produto', started_at: '2026-11-02T13:00:00.000Z', ended_at: '2026-11-02T14:00:00.000Z' }).session,
+    laid({ id: 'b', list_name: 'Produto', started_at: '2026-11-02T13:30:00.000Z', ended_at: '2026-11-02T14:30:00.000Z' }).session,
+  ]
+  const block = (mode: 'gross' | 'net'): LaidOutPiece => {
+    const pieces = dayPieces(overlapping, ['2026-11-02'], SP, new Date('2026-11-03T12:00:00Z')).get('2026-11-02')!
+    const [joined] = joinPieces(pieces, 15, null, mode)
+    return { ...joined!, lane: 0, lanes: 1 }
+  }
+
+  it('HOURS-13 in net the tooltip shows the union of the sessions: 1hr 30min', async () => {
+    renderWithProviders(<SessionBlock piece={block('net')} pxPerMinute={1} timezone={SP} />)
+    await userEvent.hover(screen.getByRole('button'))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Produto · 2 sessions · 1hr 30min')
+  })
+
+  it('HOURS-13 in gross the same block keeps the sum of its sessions: 2hr', async () => {
+    renderWithProviders(<SessionBlock piece={block('gross')} pxPerMinute={1} timezone={SP} />)
+    await userEvent.hover(screen.getByRole('button'))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Produto · 2 sessions · 2hr')
   })
 })
