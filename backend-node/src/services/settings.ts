@@ -33,3 +33,16 @@ export const DATE_FORMATS = ['auto', 'dmy', 'mdy', 'ymd']
 
 export const getNumberFormat = (db: Database) => choice(db, 'number_format', NUMBER_FORMATS)
 export const getDateFormat = (db: Database) => choice(db, 'date_format', DATE_FORMATS)
+
+/**
+ * The desktop app's top bar, chosen by an admin for everyone: `contained` (the page in a card under a
+ * bar of the sidebar's colour, the default), `thin` (a bar with the page's name, only to drag the window),
+ * `search` (a bar with back, forward, the search and the eye and theme buttons) or `integrated` (no bar:
+ * the sidebar's top and a strip over the page drag the window).
+ */
+export const DESKTOP_TITLEBARS = ['contained', 'thin', 'search', 'integrated']
+
+export async function getDesktopTitlebar(db: Database): Promise<string> {
+  const saved = await getAppSetting(db, 'desktop_titlebar')
+  return saved !== null && DESKTOP_TITLEBARS.includes(saved) ? saved : 'contained'
+}

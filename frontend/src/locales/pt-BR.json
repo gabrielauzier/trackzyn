@@ -79,6 +79,18 @@
       "timezoneServerDefault": "Padrão do servidor ({{zone}})",
       "timezoneTitle": "Data e hora",
       "title": "Configurações Admin",
+      "titlebar": {
+        "contained": "Página num card",
+        "containedDesc": "Uma barra na cor da barra lateral com voltar e avançar, e a página num card de canto arredondado logo abaixo.",
+        "thin": "Barra fina",
+        "thinDesc": "Uma barra com o workspace e o nome da página, só para arrastar a janela.",
+        "search": "Barra com busca",
+        "searchDesc": "Voltar e avançar, a busca e os botões de privacidade e tema sobem para a barra.",
+        "integrated": "Sem barra",
+        "integratedDesc": "A barra lateral vai até o topo; o topo dela e o da página arrastam a janela."
+      },
+      "titlebarDesc": "Como fica o topo da janela do app desktop, para todos. No macOS a barra também arrasta a janela. A web não muda.",
+      "titlebarTitle": "Barra superior do app desktop",
       "updated": "Configuração atualizada"
     },
     "users": {

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { getDesktopApi, isDesktop } from '@/lib/platform'
 import { writesBlocked } from '@/lib/write-lock'
 import type { NumberFormat, DateFormat } from '@/lib/format'
+import type { DesktopTitlebar } from '@/lib/desktop-titlebar'
 import type {
   AccessToken,
   AgendaSession,
@@ -642,6 +643,10 @@ export const admin = {
   },
   defaultColors: async (): Promise<{ light: string | null; dark: string | null }> => {
     const { data } = await api.get('/admin/default-colors')
+    return data
+  },
+  desktopTitlebar: async (): Promise<{ style: DesktopTitlebar }> => {
+    const { data } = await api.get('/admin/desktop-titlebar')
     return data
   },
 }

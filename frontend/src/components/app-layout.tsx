@@ -28,6 +28,7 @@ import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
 import { useLocalAuthEnabled } from '@/hooks/use-local-auth'
 import { useHistorySteps } from '@/hooks/use-history-steps'
+import { useDesktopTitlebar } from '@/hooks/use-desktop-titlebar'
 
 /** Placeholder rows shown while the workspace list is in flight. */
 function NavSkeleton() {
@@ -71,7 +72,7 @@ export function AppLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
-  const { isLoading: workspaceLoading, canWrite } = useWorkspace()
+  const { isLoading: workspaceLoading, canWrite, current: workspace } = useWorkspace()
   const { user } = useAuth()
   const isSuperuser = !!user?.is_superuser
   const { isEnabled, updateCheckRepo } = useFeatureFlags()
@@ -116,6 +117,13 @@ export function AppLayout() {
   // the window on macOS, and the page in a card that scrolls by itself under it. Below that, and on the
   // web, the layout stays as it was.
   const desktopFrame = isDesktop()
+  // Which bar, an admin's choice: the page in a card under the bar (contained, the default), a bar with the
+  // page's name (thin), a bar with the search and the header's buttons (search), or no bar (integrated).
+  const titlebar = useDesktopTitlebar()
+  const contained = desktopFrame && titlebar === 'contained'
+  const searchBar = desktopFrame && titlebar === 'search'
+  const integrated = desktopFrame && titlebar === 'integrated'
+  const isActivePath = (path: string) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path))
   const isMac =
     typeof navigator !== 'undefined' &&
     /Mac|iPhone|iPad|iPod/.test(navigator.platform)
@@ -129,43 +137,96 @@ export function AppLayout() {
   const themeLabel = isDark ? t('settings.themeLight') : t('settings.themeDark')
   const privacyLabel = privacyMode ? t('privacy.show') : t('privacy.hide')
   const openUpdateDialog = updateCheckRepo ? () => setUpdateDialogOpen(true) : undefined
+  const activeItem = finalNavItems.find((item) => item.type === 'link' && item.path !== '/?new=1' && isActivePath(item.path))
+  const pageName = [workspace?.name, activeItem?.type === 'link' ? t(`nav.${activeItem.key}`) : null].filter(Boolean).join(' · ')
+  const historyButtons = (
+    <>
+      <button
+        type="button"
+        onClick={history.goBack}
+        disabled={!history.canGoBack}
+        className={cn(headerButton, 'disabled:pointer-events-none disabled:opacity-40', noDrag)}
+        title={t('nav.back')}
+        aria-label={t('nav.back')}
+      >
+        <ArrowLeft size={16} />
+      </button>
+      <button
+        type="button"
+        onClick={history.goForward}
+        disabled={!history.canGoForward}
+        className={cn(headerButton, 'disabled:pointer-events-none disabled:opacity-40', noDrag)}
+        title={t('nav.forward')}
+        aria-label={t('nav.forward')}
+      >
+        <ArrowRight size={16} />
+      </button>
+    </>
+  )
 
   return (
     <div className={cn('min-h-screen bg-background', desktopFrame && 'lg:bg-sidebar')}>
       {desktopFrame && (
         <div
           data-slot="desktop-titlebar"
-          className={cn('print-hidden fixed inset-x-0 top-0 z-40 hidden h-11 items-center bg-sidebar lg:flex', drag)}
+          data-titlebar={titlebar}
+          className={cn(
+            'print-hidden fixed top-0 z-40 hidden h-11 items-center lg:flex',
+            integrated
+              ? // No bar: a strip of the page's colour over the page, beside the sidebar, drags the window.
+                cn('right-0 bg-background transition-[left] duration-300 ease-in-out motion-reduce:transition-none', collapsed ? 'lg:left-16' : 'lg:left-60')
+              : cn('inset-x-0 bg-sidebar', !contained && 'border-b border-sidebar-border'),
+            drag,
+          )}
         >
           {/* Back and forward start where the page starts; collapsed on macOS, where the page starts
               under the window buttons (16 to 68 px), they keep 16 px clear of them instead. */}
-          <div
-            className={cn(
-              'absolute flex items-center gap-0.5 transition-[left] duration-300 ease-in-out motion-reduce:transition-none',
-              !collapsed ? 'lg:left-60' : dragHeader ? 'lg:left-21' : 'lg:left-16',
-            )}
-          >
-            <button
-              type="button"
-              onClick={history.goBack}
-              disabled={!history.canGoBack}
-              className={cn(headerButton, 'disabled:pointer-events-none disabled:opacity-40', noDrag)}
-              title={t('nav.back')}
-              aria-label={t('nav.back')}
+          {(contained || searchBar) && (
+            <div
+              className={cn(
+                'absolute flex items-center gap-0.5 transition-[left] duration-300 ease-in-out motion-reduce:transition-none',
+                !collapsed ? 'lg:left-60' : dragHeader ? 'lg:left-21' : 'lg:left-16',
+              )}
             >
-              <ArrowLeft size={16} />
-            </button>
-            <button
-              type="button"
-              onClick={history.goForward}
-              disabled={!history.canGoForward}
-              className={cn(headerButton, 'disabled:pointer-events-none disabled:opacity-40', noDrag)}
-              title={t('nav.forward')}
-              aria-label={t('nav.forward')}
+              {historyButtons}
+            </div>
+          )}
+          {titlebar === 'thin' && (
+            <span
+              data-slot="desktop-titlebar-title"
+              className="absolute left-1/2 max-w-[50%] -translate-x-1/2 truncate text-[13px] font-medium text-sidebar-muted"
             >
-              <ArrowRight size={16} />
-            </button>
-          </div>
+              {pageName || t('app.name')}
+            </span>
+          )}
+          {searchBar && (
+            <>
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                className={cn(
+                  'absolute left-1/2 flex h-[30px] w-[min(460px,36vw)] -translate-x-1/2 items-center gap-2 rounded-lg border border-sidebar-border bg-background px-3',
+                  'text-[12.5px] text-sidebar-muted transition-colors hover:text-sidebar-foreground',
+                  noDrag,
+                )}
+                aria-label={t('cmdk.triggerAria')}
+              >
+                <Search size={13} className="shrink-0" />
+                <span className="flex-1 truncate text-left">{t('cmdk.triggerLabel')}</span>
+                <kbd className="inline-flex h-[17px] items-center rounded border border-sidebar-border bg-sidebar px-1 font-mono text-[9.5px] font-semibold text-sidebar-muted/80">
+                  {isMac ? '⌘' : 'Ctrl'}&nbsp;K
+                </kbd>
+              </button>
+              <div className="absolute right-3 flex items-center gap-0.5">
+                <button onClick={togglePrivacyMode} className={cn(headerButton, noDrag)} title={privacyLabel} aria-label={privacyLabel}>
+                  {privacyMode ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+                <button onClick={toggleTheme} className={cn(headerButton, noDrag)} title={themeLabel} aria-label={themeLabel}>
+                  {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
       {/* Mobile header */}
@@ -214,11 +275,15 @@ export function AppLayout() {
             'print-hidden group/sidebar fixed inset-y-0 left-0 z-50 w-60 bg-sidebar border-r border-sidebar-border flex flex-col transform transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none lg:translate-x-0 shrink-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
             collapsed ? 'lg:w-16' : 'lg:w-60',
-            // Under the title bar, and no line beside the card: one surface with the bar.
-            desktopFrame && 'lg:top-11 lg:border-r-0',
+            // Under the title bar (none in the integrated one), and with the card no line beside it: one
+            // surface with the bar.
+            desktopFrame && !integrated && 'lg:top-11',
+            contained && 'lg:border-r-0',
           )}
         >
-          {dragHeader && <div aria-hidden className={cn('h-7 shrink-0', drag, desktopFrame && 'lg:hidden')} />}
+          {/* Room for the macOS window buttons: under a bar they sit in it, and with no bar they sit here,
+              centred in the same 44 px. */}
+          {dragHeader && <div aria-hidden className={cn('h-7 shrink-0', drag, desktopFrame && (integrated ? 'lg:h-11' : 'lg:hidden'))} />}
 
           {/* Collapsed on desktop, the header becomes a column: logo on
               top, then the same buttons stacked, so nothing the expanded
@@ -239,7 +304,8 @@ export function AppLayout() {
                 {t('app.name')}
               </span>
             </Link>
-            <div className={cn('flex items-center gap-0.5', collapsed && 'lg:flex-col lg:gap-1')}>
+            {/* With the search bar, the eye and the theme move up into it. */}
+            <div className={cn('flex items-center gap-0.5', collapsed && 'lg:flex-col lg:gap-1', searchBar && 'lg:hidden')}>
               <button
                 onClick={togglePrivacyMode}
                 className={cn(headerButton, collapsed && collapsedHeaderButton, noDrag)}
@@ -274,7 +340,7 @@ export function AppLayout() {
           </button>
 
           {/* Command palette trigger */}
-          <div className={cn('px-3 pt-3', collapsed && 'lg:px-2')}>
+          <div className={cn('px-3 pt-3', collapsed && 'lg:px-2', searchBar && 'lg:hidden')}>
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
@@ -311,10 +377,7 @@ export function AppLayout() {
                   )
                 }
 
-                const isActive =
-                  item.path === '/'
-                    ? location.pathname === '/'
-                    : location.pathname.startsWith(item.path)
+                const isActive = isActivePath(item.path)
                 const Icon = item.icon
                 // An admin link says so in its name and tip, which is all the collapsed sidebar shows (#32).
                 const label = item.admin
@@ -413,9 +476,10 @@ export function AppLayout() {
             'flex-1 min-h-screen min-w-0 overflow-x-clip transition-[margin] duration-300 ease-in-out motion-reduce:transition-none',
             desktopFrame
               ? cn(
-                  // To the window's right and bottom edges: only the top-left corner is rounded, with a
-                  // border on the top and the left alone.
-                  'lg:fixed lg:top-11 lg:right-0 lg:bottom-0 lg:min-h-0 lg:overflow-y-auto lg:rounded-tl-xl lg:border-t lg:border-l lg:border-border lg:bg-background',
+                  // Under the bar, to the window's right and bottom edges, scrolling by itself.
+                  'lg:fixed lg:top-11 lg:right-0 lg:bottom-0 lg:min-h-0 lg:overflow-y-auto lg:bg-background',
+                  // In a card: only the top-left corner is rounded, with a border on the top and the left alone.
+                  contained && 'lg:rounded-tl-xl lg:border-t lg:border-l lg:border-border',
                   'lg:transition-[left]',
                   collapsed ? 'lg:left-16' : 'lg:left-60',
                 )
