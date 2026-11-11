@@ -178,4 +178,30 @@ describe('time spent on a task in net hours (#42)', () => {
     // 3h of estimate, 2h spent gross: 1h left.
     expect(open!.deadlineAt).toEqual(at(T0, 180))
   })
+
+  it('HOURS-25 Estender follows the net time spent: 1h 30min of a 1h 40min estimate is refused in net, accepted in gross', async () => {
+    const taskId = await seed.addTask({ estimate: 100 })
+    await closed(taskId, 0, 60)
+    // The last session ran out on the estimate, so Estender would be offered once the estimate is used up.
+    await seed.addSession({ taskId, startedAt: at(T0, 30), endedAt: at(T0, 90), endReason: 'estimate' })
+    const extend = (minutes: number) =>
+      focus.extendFocus(
+        db,
+        { userId: seed.userId, workspaceId: seed.workspaceId },
+        { actionId: randomUUID(), occurredAt: at(T0, minutes), deviceId: 'A' },
+        { taskId },
+        at(T0, minutes),
+      )
+    const openSessions = async () => (await db.select().from(focusSessions).where(eq(focusSessions.taskId, taskId))).filter((row) => row.endedAt === null)
+
+    await setMode('net')
+    // 1h 30min spent net of 1h 40min: the estimate is not used up, so there is nothing to extend.
+    await expect(extend(120)).rejects.toThrow()
+    expect(await openSessions()).toHaveLength(0)
+
+    await setMode('gross')
+    // 2h spent gross of 1h 40min: the estimate is used up and Estender opens a session without deadline.
+    await extend(121)
+    expect(await openSessions()).toEqual([expect.objectContaining({ startedAt: at(T0, 121), deadlineAt: null })])
+  })
 })
