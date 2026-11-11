@@ -66,7 +66,7 @@ O que o código já fixa:
 **Acceptance Criteria**:
 
 1. The system SHALL guardar em cada workspace o modo de contagem, `gross` (`Horas totais`) ou `net` (`Horas líquidas`), com `gross` em todo workspace existente e em todo workspace novo. (HOURS-01)
-2. The system SHALL devolver o modo como `hours_count_mode` na leitura do workspace (`GET /api/workspaces`, `GET /api/workspaces/:id` e a resposta do `PATCH`). (HOURS-02)
+2. The system SHALL devolver o modo como `hours_count_mode` na leitura do workspace (`GET /api/workspaces`, `GET /api/workspaces/current` e a resposta do `PATCH`). (HOURS-02)
 3. WHEN o dono ou o gestor envia `hours_count_mode` igual a `gross` ou `net` em `PATCH /api/workspaces/:id` THEN o sistema SHALL gravar o valor; WHEN o campo não vem THEN o sistema SHALL manter o valor guardado. (HOURS-03)
 4. IF `hours_count_mode` vem com qualquer valor que não seja `gross` ou `net`, inclusive `null` THEN o sistema SHALL responder 422 e manter o valor guardado. (HOURS-04)
 5. IF um membro que não é dono nem gestor envia `hours_count_mode` THEN o sistema SHALL responder 403 e manter o valor guardado. (HOURS-05)
@@ -170,45 +170,45 @@ O que o código já fixa:
 
 | Requirement ID | Story | Task | Status |
 | --- | --- | --- | --- |
-| HOURS-01 | P1: Escolher o modo | T1 | Implementing |
-| HOURS-02 | P1: Escolher o modo | T1 | Implementing |
-| HOURS-03 | P1: Escolher o modo | T1 | Implementing |
-| HOURS-04 | P1: Escolher o modo | T1 | Implementing |
-| HOURS-05 | P1: Escolher o modo | T1 | Implementing |
-| HOURS-06 | P1: Escolher o modo | T2 | Implementing |
-| HOURS-07 | P1: Escolher o modo | T2 | Implementing |
-| HOURS-08 | P1: Escolher o modo | T2 | Implementing |
-| HOURS-09 | P1: Agenda | T6 | Implementing |
-| HOURS-10 | P1: Agenda | T6 | Implementing |
-| HOURS-11 | P1: Agenda | T6 | Implementing |
-| HOURS-12 | P1: Agenda | T6 | Implementing |
-| HOURS-13 | P1: Agenda | T6 | Implementing |
-| HOURS-14 | P1: Agenda | T6 | Implementing |
-| HOURS-15 | P1: Relatórios | T4 | Implementing |
-| HOURS-16 | P1: Relatórios | T4 | Implementing |
-| HOURS-17 | P1: Relatórios | T4 | Implementing |
-| HOURS-18 | P1: Relatórios | T8 | Implementing |
-| HOURS-19 | P1: Relatórios | T8 | Implementing |
-| HOURS-20 | P1: Relatórios | T4, T8 | Implementing |
-| HOURS-21 | P1: Relatórios | T4 | Implementing |
-| HOURS-22 | P1: Relatórios | T4 | Implementing |
-| HOURS-23 | P1: Tempo gasto | T3 | Implementing |
-| HOURS-24 | P1: Tempo gasto | T3 | Implementing |
-| HOURS-25 | P1: Tempo gasto | T3 | Implementing |
-| HOURS-26 | P1: Tempo gasto | T3 | Implementing |
-| HOURS-27 | P1: Capacidade do plano | T7 | Implementing |
-| HOURS-28 | P1: Capacidade do plano | T7 | Implementing |
-| HOURS-29 | P1: Capacidade do plano | T7 | Implementing |
-| HOURS-30 | P1: Capacidade do plano | T7 | Implementing |
-| HOURS-31 | P1: Capacidade do plano | T7 | Implementing |
-| HOURS-32 | Edge case | T3, T5 | Implementing |
-| HOURS-33 | Edge case | T3, T5 | Implementing |
-| HOURS-34 | Edge case | T3, T5 | Implementing |
-| HOURS-35 | Edge case | T3 | Implementing |
-| HOURS-36 | Edge case | T4 | Implementing |
-| HOURS-37 | Edge case | T4 | Implementing |
-| HOURS-38 | Edge case | T4 | Implementing |
-| HOURS-39 | Edge case | T4 | Implementing |
+| HOURS-01 | P1: Escolher o modo | T1 | Verified |
+| HOURS-02 | P1: Escolher o modo | T1 | Verified |
+| HOURS-03 | P1: Escolher o modo | T1 | Verified |
+| HOURS-04 | P1: Escolher o modo | T1 | Verified |
+| HOURS-05 | P1: Escolher o modo | T1 | Verified |
+| HOURS-06 | P1: Escolher o modo | T2 | Verified |
+| HOURS-07 | P1: Escolher o modo | T2 | Verified |
+| HOURS-08 | P1: Escolher o modo | T2 | Verified |
+| HOURS-09 | P1: Agenda | T6 | Verified |
+| HOURS-10 | P1: Agenda | T6 | Verified |
+| HOURS-11 | P1: Agenda | T6 | Verified |
+| HOURS-12 | P1: Agenda | T6 | Verified |
+| HOURS-13 | P1: Agenda | T6 | Verified |
+| HOURS-14 | P1: Agenda | T6 | Verified |
+| HOURS-15 | P1: Relatórios | T4 | Verified |
+| HOURS-16 | P1: Relatórios | T4 | Verified |
+| HOURS-17 | P1: Relatórios | T4 | Verified |
+| HOURS-18 | P1: Relatórios | T8 | Verified |
+| HOURS-19 | P1: Relatórios | T8 | Verified |
+| HOURS-20 | P1: Relatórios | T4, T8 | Verified |
+| HOURS-21 | P1: Relatórios | T4 | Verified |
+| HOURS-22 | P1: Relatórios | T4 | Verified |
+| HOURS-23 | P1: Tempo gasto | T3 | Verified |
+| HOURS-24 | P1: Tempo gasto | T3 | Verified |
+| HOURS-25 | P1: Tempo gasto | T3 | Verified |
+| HOURS-26 | P1: Tempo gasto | T3 | Verified |
+| HOURS-27 | P1: Capacidade do plano | T7 | Verified |
+| HOURS-28 | P1: Capacidade do plano | T7 | Verified |
+| HOURS-29 | P1: Capacidade do plano | T7 | Verified |
+| HOURS-30 | P1: Capacidade do plano | T7 | Verified |
+| HOURS-31 | P1: Capacidade do plano | T7 | Verified |
+| HOURS-32 | Edge case | T3, T5 | Verified |
+| HOURS-33 | Edge case | T3, T5 | Verified |
+| HOURS-34 | Edge case | T3, T5 | Verified |
+| HOURS-35 | Edge case | T3 | Verified |
+| HOURS-36 | Edge case | T4 | Verified |
+| HOURS-37 | Edge case | T4 | Verified |
+| HOURS-38 | Edge case | T4 | Verified |
+| HOURS-39 | Edge case | T4 | Verified |
 
 **Coverage:** 39 total, 39 mapped to tasks, 0 unmapped
 

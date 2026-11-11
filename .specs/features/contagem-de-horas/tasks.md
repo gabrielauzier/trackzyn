@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/contagem-de-horas/design.md`
-**Status**: Done (aguardando o Verifier)
+**Status**: Done (Verifier PASS, `validation.md`)
 **Base**: `main` (`0cfb40d`), issue #42.
 
 ---

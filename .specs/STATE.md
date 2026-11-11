@@ -85,9 +85,9 @@
 ## Handoff
 
 - **Feature**: `.specs/features/contagem-de-horas` (#42)
-- **Phase / Task**: Execute em andamento, a partir de T1
-- **Completed**: spec, context, design e tasks aprovados (2026-11-10); AD-010 registrada
+- **Phase / Task**: Execute concluído (T1–T8); Verifier PASS na iteração 1, ressalvas 1 e 2 resolvidas
+- **Completed**: as 12 features com Verifier PASS (as 11 anteriores e contagem-de-horas)
 - **In-progress** (file:line): none
-- **Next step**: T1 (coluna e API do modo)
+- **Next step**: testar no navegador (o card nas configurações, o tooltip do total na Agenda, a barra do plano e o aviso dos Relatórios em `Horas líquidas`); abrir o PR da branch `claude/issue-42-planning-c3b7c9`
 - **Blockers**: none
 - **Uncommitted files**: none
