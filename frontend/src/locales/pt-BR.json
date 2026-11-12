@@ -1145,6 +1145,13 @@
       "fits": "Cabe no dia: {{duration}} livre",
       "withoutEstimate_one": "{{count}} sem estimativa, contada como 0",
       "withoutEstimate_other": "{{count}} sem estimativa, contadas como 0"
+    },
+    "done": {
+      "title": "Feito hoje",
+      "summary_one": "{{duration}} em {{count}} tarefa",
+      "summary_other": "{{duration}} em {{count}} tarefas",
+      "spentOf": "{{spent}} de {{estimate}}",
+      "empty": "Nada concluído hoje ainda"
     }
   }
 }
