@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { type BlockInput, type PendingInput, capacity, groupPending, suggestedBlock } from './rules'
+import {
+  type BlockInput,
+  type PendingInput,
+  type SessionInput,
+  adherence,
+  capacity,
+  groupPending,
+  suggestedBlock,
+  switches,
+  timelineRange,
+} from './rules'
 
 const NOW = 14 * 60 + 20
 
@@ -159,5 +169,89 @@ describe('suggestedBlock (HOJE-11)', () => {
   it('answers null outside every block', () => {
     expect(suggestedBlock([block('morning', 9 * 60, 60)], NOW)).toBeNull()
     expect(suggestedBlock([], NOW)).toBeNull()
+  })
+})
+
+const hm = (h: number, m = 0) => h * 60 + m
+const planned = (taskId: string, start: number, end: number): BlockInput & { task_id: string | null } => ({
+  kind: 'task',
+  task_id: taskId,
+  start_minute: start,
+  minutes: end - start,
+  done: false,
+})
+const worked = (taskId: string | null, start: number, end: number, open = false): SessionInput => ({
+  kind: taskId === null ? 'break' : 'task',
+  task_id: taskId,
+  start_minute: start,
+  end_minute: end,
+  open,
+})
+
+describe('adherence (HOJE-52)', () => {
+  it('answers 64 for a 13:30-15:00 block and a session of the same task 13:48-14:20, at 14:20 (32 of 50 minutes)', () => {
+    expect(adherence([planned('a', hm(13, 30), hm(15))], [worked('a', hm(13, 48), hm(14, 20))], hm(14, 20))).toBe(64)
+  })
+
+  it('does not count a session of another task at the same time', () => {
+    expect(adherence([planned('a', hm(13, 30), hm(15))], [worked('b', hm(13, 48), hm(14, 20))], hm(14, 20))).toBe(0)
+  })
+
+  it('does not count a break at the time of a task block', () => {
+    expect(adherence([planned('a', hm(13, 30), hm(15))], [worked(null, hm(13, 30), hm(14, 20))], hm(14, 20))).toBe(0)
+  })
+
+  it('counts an open session of the block task until now', () => {
+    // Block 13:30-15:00, open session since 13:48 whose last read ended at 14:00: at 14:20, 32 of 50 minutes.
+    expect(adherence([planned('a', hm(13, 30), hm(15))], [worked('a', hm(13, 48), hm(14), true)], hm(14, 20))).toBe(64)
+  })
+
+  it('answers null when no task block has started yet', () => {
+    expect(adherence([planned('a', hm(15), hm(16))], [worked('a', hm(13), hm(14))], hm(14, 20))).toBeNull()
+  })
+
+  it('answers null without blocks, and a break block alone does not count', () => {
+    expect(adherence([], [], hm(14, 20))).toBeNull()
+    const lunch = { kind: 'break' as const, task_id: null, start_minute: hm(12), minutes: 60, done: true }
+    expect(adherence([lunch], [worked(null, hm(12), hm(13))], hm(14, 20))).toBeNull()
+  })
+})
+
+describe('switches (HOJE-53)', () => {
+  it('answers 2 for task sessions A, B, A and a break', () => {
+    expect(
+      switches([
+        worked('a', hm(9), hm(10)),
+        worked(null, hm(10), hm(10, 10)),
+        worked('b', hm(10, 10), hm(11)),
+        worked('a', hm(11), hm(12)),
+      ]),
+    ).toBe(2)
+  })
+
+  it('counts in order of start and not a pause on the same task', () => {
+    expect(switches([worked('a', hm(11), hm(12)), worked('a', hm(9), hm(10)), worked(null, hm(10), hm(10, 30))])).toBe(0)
+  })
+
+  it('answers 0 without sessions', () => {
+    expect(switches([])).toBe(0)
+  })
+})
+
+describe('timelineRange (HOJE-43)', () => {
+  it('goes from 08h to 19h for a 09:00-18:00 workday, a session at 08:40 and a block until 18:30', () => {
+    expect(
+      timelineRange({ start: '09:00', end: '18:00' }, [planned('a', hm(17, 30), hm(18, 30))], [worked('a', hm(8, 40), hm(9, 10))]),
+    ).toEqual({ from: hm(8), to: hm(19) })
+  })
+
+  it('answers the workday hours without blocks and sessions', () => {
+    expect(timelineRange({ start: '09:00', end: '18:00' }, [], [])).toEqual({ from: hm(9), to: hm(18) })
+  })
+
+  it('takes the full hour before the earliest block and after the latest session', () => {
+    expect(
+      timelineRange({ start: '09:30', end: '17:15' }, [planned('a', hm(9, 45), hm(10))], [worked('a', hm(16), hm(18, 5))]),
+    ).toEqual({ from: hm(9), to: hm(19) })
   })
 })

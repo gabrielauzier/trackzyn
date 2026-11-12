@@ -309,7 +309,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-40 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-41 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-42 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
-| HOJE-43 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
+| HOJE-43 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
 | HOJE-44 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
 | HOJE-45 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
 | HOJE-46 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
@@ -318,8 +318,8 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-49 | P2: Ver os números do dia | Tasks | In Tasks |
 | HOJE-50 | P2: Ver os números do dia | Tasks | In Tasks |
 | HOJE-51 | P2: Ver os números do dia | Tasks | In Tasks |
-| HOJE-52 | P2: Ver os números do dia | Tasks | In Tasks |
-| HOJE-53 | P2: Ver os números do dia | Tasks | In Tasks |
+| HOJE-52 | P2: Ver os números do dia | Tasks | Implementing |
+| HOJE-53 | P2: Ver os números do dia | Tasks | Implementing |
 | HOJE-54 | P2: Ver o que vem amanhã | Tasks | Implementing |
 | HOJE-55 | P2: Ver o que vem amanhã | Tasks | Implementing |
 | HOJE-56 | P2: Ver o que vem amanhã | Tasks | Implementing |

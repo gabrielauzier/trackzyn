@@ -101,3 +101,65 @@ export function suggestedBlock<T extends BlockInput>(blocks: T[], nowMinute: num
   }
   return found
 }
+
+/** What adherence, switches and the timeline read of a session of today, in minutes of the day. */
+export interface SessionInput {
+  kind: 'task' | 'break'
+  task_id: string | null
+  start_minute: number
+  end_minute: number
+  /** An open session goes until now, whatever its last read said. */
+  open: boolean
+}
+
+/**
+ * The minutes of today's task blocks until now that a session of the same task covers, over the minutes of those
+ * blocks until now, rounded; null when no task block has started yet (HOJE-52).
+ */
+export function adherence(
+  blocks: (BlockInput & { task_id: string | null })[],
+  sessions: SessionInput[],
+  nowMinute: number,
+): number | null {
+  let plannedMinutes = 0
+  let coveredMinutes = 0
+  for (const block of blocks) {
+    if (block.kind !== 'task') continue
+    const from = block.start_minute
+    const to = Math.min(block.start_minute + block.minutes, nowMinute)
+    if (to <= from) continue
+    plannedMinutes += to - from
+    for (const session of sessions) {
+      if (session.kind !== 'task' || session.task_id !== block.task_id) continue
+      const end = session.open ? nowMinute : session.end_minute
+      coveredMinutes += Math.max(0, Math.min(to, end) - Math.max(from, session.start_minute))
+    }
+  }
+  return plannedMinutes === 0 ? null : Math.round((coveredMinutes / plannedMinutes) * 100)
+}
+
+/** The task sessions of today, in order of start, whose task differs from the task session before (HOJE-53). */
+export function switches(sessions: SessionInput[]): number {
+  const tasks = sessions
+    .filter((session) => session.kind === 'task')
+    .sort((a, b) => a.start_minute - b.start_minute)
+    .map((session) => session.task_id)
+  return tasks.filter((taskId, index) => index > 0 && taskId !== tasks[index - 1]).length
+}
+
+const minuteOfClock = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5))
+
+/**
+ * The scale of `Plano × real` in minutes of the day, on full hours: from the full hour at or before the earliest of
+ * the workday start, the first block and the first session, to the full hour at or after the latest of their ends
+ * (HOJE-43).
+ */
+export function timelineRange(
+  workday: { start: string; end: string },
+  blocks: BlockInput[],
+  sessions: SessionInput[],
+): { from: number; to: number } {
+  const starts = [minuteOfClock(workday.start), ...blocks.map((b) => b.start_minute), ...sessions.map((s) => s.start_minute)]
+  const ends = [minuteOfClock(workday.end), ...blocks.map((b) => b.start_minute + b.minutes), ...sessions.map((s) => s.end_minute)]
+  return { from: Math.floor(Math.min(...starts) / 60) * 60, to: Math.ceil(Math.max(...ends) / 60) * 60 }
+}

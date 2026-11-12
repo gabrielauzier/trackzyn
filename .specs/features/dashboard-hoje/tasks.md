@@ -510,10 +510,10 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Bloco 13:30–15:00 e sessão da mesma tarefa 13:48–14:20, às 14:20: aderência 64% (32/50); sessão de outra tarefa no mesmo horário não conta; sem blocos até agora, `null`
-- [ ] Sessões A, B, A e um intervalo: 2 trocas
-- [ ] Jornada 09:00–18:00 com sessão 08:40 e bloco até 18:30: escala de 08h a 19h
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Bloco 13:30–15:00 e sessão da mesma tarefa 13:48–14:20, às 14:20: aderência 64% (32/50); sessão de outra tarefa no mesmo horário não conta; sem blocos até agora, `null`
+- [x] Sessões A, B, A e um intervalo: 2 trocas
+- [x] Jornada 09:00–18:00 com sessão 08:40 e bloco até 18:30: escala de 08h a 19h
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick
