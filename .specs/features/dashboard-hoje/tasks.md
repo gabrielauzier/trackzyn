@@ -765,9 +765,9 @@ T24 → T25 → T26 → T27 → T28 → T29
 
 **Done when**:
 
-- [ ] Com três movimentos válidos e uma falha injetada no terceiro, as três tarefas continuam na coluna e no dia de antes e a sessão aberta não foi pausada
-- [ ] O teste falha se `closeDay` passar `db` em vez do `tx` (conferido localmente trocando e desfazendo; não commitar a troca)
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Com três movimentos válidos e uma falha injetada no terceiro, as três tarefas continuam na coluna e no dia de antes e a sessão aberta não foi pausada
+- [x] O teste falha se `closeDay` passar `db` em vez do `tx` (conferido localmente trocando e desfazendo; não commitar a troca)
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full

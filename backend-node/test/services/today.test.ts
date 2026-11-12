@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { PGlite } from '@electric-sql/pglite'
 import { eq } from 'drizzle-orm'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
 import {
   type TaskColumn,
@@ -18,6 +18,20 @@ import {
 import { overview } from '../../src/services/reports.ts'
 import { closeDay, readToday } from '../../src/services/today.ts'
 import { migratedDb } from '../support/db.ts'
+
+// A failure injected in the middle of the moves of the close (HOJE-61, HOJE-65): `setSchedule` throws on the Nth call.
+const injected = vi.hoisted(() => ({ failOnCall: 0, calls: 0 }))
+vi.mock('../../src/services/schedule.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/services/schedule.ts')>()
+  return {
+    ...actual,
+    setSchedule: async (...args: Parameters<typeof actual.setSchedule>) => {
+      injected.calls += 1
+      if (injected.calls === injected.failOnCall) throw new Error('injected failure')
+      return actual.setSchedule(...args)
+    },
+  }
+})
 
 // Wednesday 2026-11-11, 14:20 in America/Sao_Paulo (UTC-3, no daylight saving time in 2026).
 const TZ = 'America/Sao_Paulo'
@@ -76,6 +90,8 @@ beforeEach(async () => {
   otherWorkspaceListId = await list(otherWorkspaceId, 'Theirs', 2)
 })
 afterEach(async () => {
+  injected.failOnCall = 0
+  injected.calls = 0
   await client.close()
 })
 
@@ -932,6 +948,32 @@ describe('closeDay (HOJE-61, HOJE-62, HOJE-65)', () => {
     expect(await state(id)).toMatchObject({ column: 'this_week', on: TOMORROW, time: null })
     expect((await series(seriesId)).endedAt).toBeNull()
     expect(await seriesOf(id)).toBe(seriesId)
+  })
+
+  it('HOJE-61 HOJE-65 rolls back every move and the pause when the third of three valid moves fails', async () => {
+    const a = await task('today', { title: 'A', on: TODAY })
+    const b = await task('today', { title: 'B', position: 1 })
+    const c = await task('today', { title: 'C', position: 2 })
+    const open = await session({ taskId: c, startedAt: SP('2026-11-11T13:48:00'), endedAt: null })
+    const before = [await state(a), await state(b), await state(c)]
+    injected.failOnCall = 3
+    await expect(
+      closeDay(
+        db,
+        actor(),
+        [
+          { task_id: a, to: 'tomorrow' },
+          { task_id: b, to: 'this_week' },
+          { task_id: c, to: 'backlog' },
+        ],
+        NOW,
+      ),
+    ).rejects.toThrow('injected failure')
+    expect(injected.calls).toBe(3)
+    expect([await state(a), await state(b), await state(c)]).toEqual(before)
+    const [row] = await db.select().from(focusSessions).where(eq(focusSessions.id, open))
+    expect(row!.endedAt).toBeNull()
+    expect(row!.endReason).toBeNull()
   })
 
   it('leaves everything as it was when the same close runs again', async () => {
