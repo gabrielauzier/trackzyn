@@ -1157,6 +1157,13 @@
       "fits": "Fits the day: {{duration}} free",
       "withoutEstimate_one": "{{count}} without an estimate, counted as 0",
       "withoutEstimate_other": "{{count}} without an estimate, counted as 0"
+    },
+    "done": {
+      "title": "Done today",
+      "summary_one": "{{duration}} in {{count}} task",
+      "summary_other": "{{duration}} in {{count}} tasks",
+      "spentOf": "{{spent}} of {{estimate}}",
+      "empty": "Nothing done today yet"
     }
   }
 }

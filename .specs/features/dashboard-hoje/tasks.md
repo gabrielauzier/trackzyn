@@ -340,10 +340,10 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Título soma o tempo das sessões de hoje do leitor nessas tarefas: `3h 22min em 4 tarefas`
-- [ ] Selos `No prazo`, `5min antes` (verde) e `40min depois` (vermelho); sem estimativa, só o tempo e nenhum selo
-- [ ] Vazio: `Nada concluído hoje ainda`
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Título soma o tempo das sessões de hoje do leitor nessas tarefas: `3h 22min em 4 tarefas`
+- [x] Selos `No prazo`, `5min antes` (verde) e `40min depois` (vermelho); sem estimativa, só o tempo e nenhum selo
+- [x] Vazio: `Nada concluído hoje ainda`
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

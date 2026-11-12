@@ -305,7 +305,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-36 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-37 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-38 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-39 | P1: Ver o que já foi feito | Tasks | In Tasks |
+| HOJE-39 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-40 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-41 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-42 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
