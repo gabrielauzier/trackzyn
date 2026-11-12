@@ -453,12 +453,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `/` mostra o dashboard e a barra lateral tem `Hoje` como primeiro item, marcado
-- [ ] Cabeçalho `Terça, 11 de novembro · 14:20 · 4h 40min até o fim do dia (19:00)`; depois do fim, `Jornada encerrada às 19:00`
-- [ ] `Planejar amanhã` abre `/planejar/<amanhã>`
-- [ ] Concluir pelo card invalida o dia e a tarefa passa para `Feito hoje` sem esperar 60 s
-- [ ] Erro de leitura mostra a faixa com `Tentar de novo` e mantém os cards
-- [ ] Gate check passes: Build
+- [x] `/` mostra o dashboard e a barra lateral tem `Hoje` como primeiro item, marcado
+- [x] Cabeçalho `Terça, 11 de novembro · 14:20 · 4h 40min até o fim do dia (19:00)`; depois do fim, `Jornada encerrada às 19:00`
+- [x] `Planejar amanhã` abre `/planejar/<amanhã>`
+- [x] Concluir pelo card invalida o dia e a tarefa passa para `Feito hoje` sem esperar 60 s
+- [x] Erro de leitura mostra a faixa com `Tentar de novo` e mantém os cards
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

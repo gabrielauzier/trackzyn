@@ -24,6 +24,20 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   info: { get: vi.fn(async () => ({ features: {} })) },
   lists: { list: vi.fn(async () => ({ timezone: 'UTC', lists: [] })), move: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(async () => ({ server_now: new Date().toISOString(), session: null, task: null, today: { pending: 0, done: 0, estimate_minutes: 0, tasks: [] }, stale: null })), send: vi.fn(), heartbeat: vi.fn() },
+  today: {
+    get: vi.fn(async () => ({
+      server_now: new Date().toISOString(),
+      day: '2026-11-11',
+      tomorrow: '2026-11-12',
+      timezone: 'UTC',
+      now_minute: 600,
+      workday: { start: '09:00', end: '18:00' },
+      pending: [],
+      done: [],
+      plan: { saved: false, blocks: [] },
+      sessions: [],
+    })),
+  },
   files: { list: vi.fn(async () => []), settings: vi.fn(async () => ({ max_file_size_mb: 10, allowed_extensions: ['.pdf'] })) },
 }))
 
@@ -123,7 +137,8 @@ describe('the app routes', () => {
       window.history.replaceState(null, '', path)
       const { unmount } = render(<App />)
 
-      expect(await screen.findByRole('heading', { name: 'Your lists' })).toBeInTheDocument()
+      // Home is the Hoje dashboard (HOJE-01).
+      expect(await screen.findByRole('heading', { name: 'Pending' })).toBeInTheDocument()
       expect(window.location.pathname, path).toBe('/')
       unmount()
     }

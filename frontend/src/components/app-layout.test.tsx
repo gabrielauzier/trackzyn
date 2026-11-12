@@ -206,6 +206,25 @@ describe('app layout sidebar', () => {
     expect(within(nav).queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
   })
 
+  it('offers Today first, leading to /, and marks it on the dashboard (HOJE-01)', () => {
+    state.canWrite = true
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const nav = screen.getByRole('navigation')
+    const links = within(nav).getAllByRole('link')
+    expect(links[0]).toHaveAccessibleName('Today')
+    expect(links[0]).toHaveAttribute('href', '/')
+    expect(links[0]).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'All my lists' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('does not mark Today on another page', () => {
+    state.canWrite = true
+    renderWithProviders(<AppLayout />, { route: '/lists' })
+
+    expect(within(screen.getByRole('navigation')).getByRole('link', { name: 'Today' })).not.toHaveAttribute('aria-current')
+  })
+
   it('offers Agenda, leading to /agenda, between the lists and Reports (AGENDA-13)', () => {
     state.canWrite = true
     renderWithProviders(<AppLayout />, { route: '/' })

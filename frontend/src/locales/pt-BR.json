@@ -339,7 +339,8 @@
     "archivedLists": "Listas arquivadas",
     "reports": "Relatórios",
     "agenda": "Agenda",
-    "plan": "Planejar"
+    "plan": "Planejar",
+    "today": "Hoje"
   },
   "privacy": {
     "hide": "Ocultar valores",
@@ -1194,6 +1195,12 @@
     "picker": {
       "search": "Buscar tarefas",
       "empty": "Nenhuma tarefa encontrada"
+    },
+    "header": {
+      "left": "{{duration}} até o fim do dia ({{time}})",
+      "ended": "Jornada encerrada às {{time}}",
+      "readFailed": "Não foi possível atualizar",
+      "retry": "Tentar de novo"
     }
   }
 }
