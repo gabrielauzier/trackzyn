@@ -268,81 +268,81 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| HOJE-01 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
-| HOJE-02 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
-| HOJE-03 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
-| HOJE-04 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
-| HOJE-05 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
-| HOJE-06 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
-| HOJE-07 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-08 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-09 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-10 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-11 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-12 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-13 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-14 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-15 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-16 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-17 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-18 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-19 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-20 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-21 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-22 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-23 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-24 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-25 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-26 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-27 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-28 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-29 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-30 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-31 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-32 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-33 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-34 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-35 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-36 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-37 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-38 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-39 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-40 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-41 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-42 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-43 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-44 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-45 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-46 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-47 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-48 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-49 | P2: Ver os números do dia | Tasks | Implementing |
-| HOJE-50 | P2: Ver os números do dia | Tasks | Implementing |
-| HOJE-51 | P2: Ver os números do dia | Tasks | Implementing |
-| HOJE-52 | P2: Ver os números do dia | Tasks | Implementing |
-| HOJE-53 | P2: Ver os números do dia | Tasks | Implementing |
-| HOJE-54 | P2: Ver o que vem amanhã | Tasks | Implementing |
-| HOJE-55 | P2: Ver o que vem amanhã | Tasks | Implementing |
-| HOJE-56 | P2: Ver o que vem amanhã | Tasks | Implementing |
-| HOJE-57 | P2: Ver o que vem amanhã | Tasks | Implementing |
-| HOJE-58 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-59 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-60 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-61 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-62 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-63 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-64 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-65 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-66 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-67 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-68 | Edge cases | Tasks | Implementing |
-| HOJE-69 | Edge cases | Tasks | Implementing |
-| HOJE-70 | Edge cases | Tasks | Implementing |
-| HOJE-71 | Edge cases | Tasks | Implementing |
-| HOJE-72 | Edge cases | Tasks | Implementing |
-| HOJE-73 | Edge cases | Tasks | Implementing |
-| HOJE-74 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-75 | P3: Fechar o dia | Tasks | Implementing |
+| HOJE-01 | P1: Ver o dia ao abrir o app | Tasks | Verified |
+| HOJE-02 | P1: Ver o dia ao abrir o app | Tasks | Verified |
+| HOJE-03 | P1: Ver o dia ao abrir o app | Tasks | Verified |
+| HOJE-04 | P1: Ver o dia ao abrir o app | Tasks | Verified |
+| HOJE-05 | P1: Ver o dia ao abrir o app | Tasks | Verified |
+| HOJE-06 | P1: Ver o dia ao abrir o app | Tasks | Verified |
+| HOJE-07 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-08 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-09 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-10 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-11 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-12 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-13 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-14 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-15 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-16 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-17 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-18 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-19 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-20 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-21 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-22 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-23 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-24 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-25 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-26 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-27 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-28 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-29 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-30 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-31 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-32 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-33 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-34 | P1: Ver o que falta e se cabe | Tasks | Verified |
+| HOJE-35 | P1: Ver o que já foi feito | Tasks | Verified |
+| HOJE-36 | P1: Ver o que já foi feito | Tasks | Verified |
+| HOJE-37 | P1: Ver o que já foi feito | Tasks | Verified |
+| HOJE-38 | P1: Ver o que já foi feito | Tasks | Verified |
+| HOJE-39 | P1: Ver o que já foi feito | Tasks | Verified |
+| HOJE-40 | P1: Ver o que já foi feito | Tasks | Verified |
+| HOJE-41 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-42 | P2: Comparar o plano com o que aconteceu | Tasks | Verified |
+| HOJE-43 | P2: Comparar o plano com o que aconteceu | Tasks | Verified |
+| HOJE-44 | P2: Comparar o plano com o que aconteceu | Tasks | Verified |
+| HOJE-45 | P2: Comparar o plano com o que aconteceu | Tasks | Verified |
+| HOJE-46 | P2: Comparar o plano com o que aconteceu | Tasks | Verified |
+| HOJE-47 | P2: Comparar o plano com o que aconteceu | Tasks | Verified |
+| HOJE-48 | P2: Comparar o plano com o que aconteceu | Tasks | Verified |
+| HOJE-49 | P2: Ver os números do dia | Tasks | Verified |
+| HOJE-50 | P2: Ver os números do dia | Tasks | Verified |
+| HOJE-51 | P2: Ver os números do dia | Tasks | Verified |
+| HOJE-52 | P2: Ver os números do dia | Tasks | Verified |
+| HOJE-53 | P2: Ver os números do dia | Tasks | Verified |
+| HOJE-54 | P2: Ver o que vem amanhã | Tasks | Verified |
+| HOJE-55 | P2: Ver o que vem amanhã | Tasks | Verified |
+| HOJE-56 | P2: Ver o que vem amanhã | Tasks | Verified |
+| HOJE-57 | P2: Ver o que vem amanhã | Tasks | Verified |
+| HOJE-58 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-59 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-60 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-61 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-62 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-63 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-64 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-65 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-66 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-67 | P3: Fechar o dia | Tasks | Verified |
+| HOJE-68 | Edge cases | Tasks | Verified |
+| HOJE-69 | Edge cases | Tasks | Verified |
+| HOJE-70 | Edge cases | Tasks | Verified |
+| HOJE-71 | Edge cases | Tasks | Verified |
+| HOJE-72 | Edge cases | Tasks | Verified |
+| HOJE-73 | Edge cases | Tasks | Verified |
+| HOJE-74 | P1: Saber o que está acontecendo agora | Tasks | Verified |
+| HOJE-75 | P3: Fechar o dia | Tasks | Verified |
 
 **Coverage:** 75 total, 75 mapped to tasks, 0 unmapped
 
