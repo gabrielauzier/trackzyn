@@ -1,9 +1,9 @@
 import { eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type Workspace, users } from '../db/schema.ts'
-import { settle } from './focus-settle.ts'
+import { settle, spentSeconds } from './focus-settle.ts'
 import { type Workday, listPlanned, workdayOf } from './plans.ts'
-import { clippedSessions, reportScope } from './reports.ts'
+import { type Verdict, clippedSessions, reportScope, verdictOf } from './reports.ts'
 import { applyDueSchedules, workspaceClock } from './schedule.ts'
 
 /** Who reads the day: the logged-in user in the current workspace (HOJE-06). */
@@ -34,6 +34,18 @@ export interface PendingTask extends TaskRef {
   /** Today minus `scheduled_on` in calendar days, when the day is before today (HOJE-28). */
   days_late: number | null
   subtasks: { done: number; total: number }
+}
+
+/** A task of `Feito hoje` (HOJE-35), with the badge of the reports (HOJE-37). */
+export interface DoneTask extends TaskRef {
+  completed_at: string
+  /** All the time of the task, of every member, as `verdictOf` reads it in the reports. */
+  spent_seconds: number
+  /** Null without an estimate (HOJE-38). */
+  verdict: Verdict | null
+  diff_seconds: number
+  /** The task is an occurrence of a series. */
+  series: boolean
 }
 
 export interface TodayPlanBlock {
@@ -74,6 +86,8 @@ export interface TodayRead {
   now_minute: number
   workday: Workday
   pending: PendingTask[]
+  /** Completed today by the reader, the most recent first. */
+  done: DoneTask[]
   plan: { saved: boolean; blocks: TodayPlanBlock[] }
   sessions: DaySession[]
 }
@@ -98,6 +112,17 @@ interface PendingRow {
   days_late: number | null
   subtasks_done: number
   subtasks_total: number
+}
+
+interface DoneRow {
+  id: string
+  title: string
+  estimate_minutes: number | null
+  completed_at: string | Date
+  list_id: string
+  list_name: string
+  list_color: number
+  series: boolean
 }
 
 interface SessionRow {
@@ -189,6 +214,37 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
     }
   })
 
+  // Only the reader's completions of today (HOJE-40, AD-006).
+  const doneRows = await rows<DoneRow>(
+    db,
+    sql`SELECT t.id, t.title, t.estimate_minutes, t.completed_at, t.series_id IS NOT NULL AS series,
+               l.id AS list_id, l.name AS list_name, l.color AS list_color
+        FROM tasks t JOIN lists l ON l.id = t.list_id
+        WHERE l.workspace_id = ${workspaceId} AND t.completed_by_user_id = ${actor.userId}
+          AND t.completed_at >= ${scope.lo} AND t.completed_at < ${scope.hi}
+        ORDER BY t.completed_at DESC, t.id`,
+  )
+  const spent = await spentSeconds(
+    db,
+    doneRows.map((row) => row.id),
+    now,
+  )
+  const done: DoneTask[] = doneRows.map((row) => {
+    const spentSecondsOfTask = spent.get(row.id) ?? 0
+    const { verdict, diff } = verdictOf(spentSecondsOfTask, row.estimate_minutes)
+    return {
+      id: row.id,
+      title: row.title,
+      list: { id: row.list_id, name: row.list_name, color: row.list_color },
+      estimate_minutes: row.estimate_minutes,
+      completed_at: new Date(row.completed_at).toISOString(),
+      spent_seconds: spentSecondsOfTask,
+      verdict,
+      diff_seconds: diff,
+      series: row.series,
+    }
+  })
+
   // The same cut as the reports (HOJE-68): the minutes are wall-clock minutes of the day, midnight after it is 1440.
   const sessions = await rows<SessionRow>(
     db,
@@ -218,6 +274,7 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
     now_minute: minuteOf(clock.time),
     workday: workdayOf(user?.preferences ?? null),
     pending,
+    done,
     plan: { saved: plan !== undefined, blocks },
     sessions,
   }

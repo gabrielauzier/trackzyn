@@ -301,12 +301,12 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-32 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-33 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-34 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
-| HOJE-35 | P1: Ver o que já foi feito | Tasks | In Tasks |
-| HOJE-36 | P1: Ver o que já foi feito | Tasks | In Tasks |
+| HOJE-35 | P1: Ver o que já foi feito | Tasks | Implementing |
+| HOJE-36 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-37 | P1: Ver o que já foi feito | Tasks | In Tasks |
-| HOJE-38 | P1: Ver o que já foi feito | Tasks | In Tasks |
+| HOJE-38 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-39 | P1: Ver o que já foi feito | Tasks | In Tasks |
-| HOJE-40 | P1: Ver o que já foi feito | Tasks | In Tasks |
+| HOJE-40 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-41 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-42 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
 | HOJE-43 | P2: Comparar o plano com o que aconteceu | Tasks | In Tasks |
