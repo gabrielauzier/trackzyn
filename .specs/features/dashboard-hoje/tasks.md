@@ -282,12 +282,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `pending`: borda de 1px, cantos de 8px, ponto da cor da lista, título, linha `<lista> · <detalhes>`, pílula de estimativa ou `Sem estimativa`
-- [ ] `late`: borda e hora em âmbar
-- [ ] `done`: fundo cinza claro, ícone de concluída no lugar do ponto, selo com o texto e a cor do veredito
-- [ ] `ghost`: borda tracejada, sem ponto colorido
-- [ ] É um botão acessível pelo teclado quando recebe `onOpen`
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] `pending`: borda de 1px, cantos de 8px, ponto da cor da lista, título, linha `<lista> · <detalhes>`, pílula de estimativa ou `Sem estimativa`
+- [x] `late`: borda e hora em âmbar
+- [x] `done`: fundo cinza claro, ícone de concluída no lugar do ponto, selo com o texto e a cor do veredito
+- [x] `ghost`: borda tracejada, sem ponto colorido
+- [x] É um botão acessível pelo teclado quando recebe `onOpen`
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

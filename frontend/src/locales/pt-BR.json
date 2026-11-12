@@ -1130,5 +1130,10 @@
     "newTask": {
       "hint": "Para o plano do dia."
     }
+  },
+  "today": {
+    "tile": {
+      "noEstimate": "Sem estimativa"
+    }
   }
 }
