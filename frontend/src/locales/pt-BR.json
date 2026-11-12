@@ -1179,6 +1179,10 @@
       "openFocus": "Abrir foco",
       "refused": "O servidor recusou: {{action}}",
       "progress": "Tempo contra a estimativa"
+    },
+    "picker": {
+      "search": "Buscar tarefas",
+      "empty": "Nenhuma tarefa encontrada"
     }
   }
 }

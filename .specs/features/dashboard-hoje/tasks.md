@@ -398,9 +398,9 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Lista as tarefas de `Pendente` na ordem dos grupos; a busca filtra pelo título
-- [ ] Escolher chama `onPick(task)` e fecha; Esc fecha sem escolher
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Lista as tarefas de `Pendente` na ordem dos grupos; a busca filtra pelo título
+- [x] Escolher chama `onPick(task)` e fecha; Esc fecha sem escolher
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

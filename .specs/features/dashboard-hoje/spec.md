@@ -281,7 +281,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-12 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-13 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-14 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-15 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-15 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-16 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-17 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-18 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
