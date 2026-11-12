@@ -835,6 +835,17 @@ describe('readToday: the task in focus for Fechar o dia (HOJE-59, HOJE-75)', () 
     await task('today', { title: 'Plain' })
     expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
   })
+
+  it('reads the series of the open session only, not of a closed session of today (L-048)', async () => {
+    const recurring = await task('today', { title: 'Standup' })
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', createdAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(eq(tasks.id, recurring))
+    await session({ taskId: recurring, startedAt: SP('2026-11-11T09:00:00'), endedAt: SP('2026-11-11T09:15:00') })
+    const plain = await task('today', { title: 'Plain', position: 1 })
+    await session({ taskId: plain, startedAt: SP('2026-11-11T14:00:00'), endedAt: null })
+    expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
+  })
 })
 
 describe('closeDay (HOJE-61, HOJE-62, HOJE-65)', () => {
