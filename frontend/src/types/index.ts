@@ -541,6 +541,12 @@ export interface TodaySession {
   open: boolean
 }
 
+/** A task already set for tomorrow (HOJE-54); `scheduled_minute` is null without a time. */
+export interface TodayTomorrowTask extends TodayTaskRef {
+  scheduled_minute: number | null
+  series: boolean
+}
+
 /** `GET /api/today`: the reader's day in the current workspace; minutes are minutes of the day in its timezone. */
 export interface TodayRead {
   server_now: string
@@ -553,6 +559,11 @@ export interface TodayRead {
   done: TodayDoneTask[]
   plan: { saved: boolean; blocks: TodayPlanBlock[] }
   sessions: TodaySession[]
+  /** The blocks of the reader's plan of tomorrow; 0 without a plan. */
+  tomorrow_plan_blocks: number
+  tomorrow_tasks: TodayTomorrowTask[]
+  /** `This week` tasks without a day. */
+  week_unscheduled: number
 }
 
 /** The body of a block for `PUT /api/plans/:day`; `start` is `HH:MM`. */

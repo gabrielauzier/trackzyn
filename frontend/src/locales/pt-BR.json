@@ -1215,6 +1215,17 @@
       "noBlocks": "sem blocos até agora",
       "switches": "Trocas de tarefa",
       "average": "sessão média de {{duration}}"
+    },
+    "tomorrow": {
+      "title": "Amanhã",
+      "scheduled": "agendada",
+      "recurring": "recorrente",
+      "weekUnscheduled_one": "{{count}} tarefa em Esta semana sem dia",
+      "weekUnscheduled_other": "{{count}} tarefas em Esta semana sem dia",
+      "noPlan": "Amanhã ainda não tem plano",
+      "planBlocks_one": "Plano de amanhã: {{count}} bloco",
+      "planBlocks_other": "Plano de amanhã: {{count}} blocos",
+      "empty": "Nada marcado para amanhã"
     }
   }
 }

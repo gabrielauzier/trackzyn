@@ -39,6 +39,9 @@ vi.mock('@/lib/api', async (importOriginal) => ({
       done: [],
       plan: { saved: false, blocks: [] },
       sessions: [],
+      tomorrow_plan_blocks: 0,
+      tomorrow_tasks: [],
+      week_unscheduled: 0,
     })),
   },
 }))
