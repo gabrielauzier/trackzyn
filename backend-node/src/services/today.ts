@@ -38,6 +38,8 @@ export interface PendingTask extends TaskRef {
   /** Today minus `scheduled_on` in calendar days, when the day is before today (HOJE-28). */
   days_late: number | null
   subtasks: { done: number; total: number }
+  /** The task is an occurrence of a series: `Fechar o dia` only sends it to tomorrow (HOJE-75). */
+  series: boolean
 }
 
 /** A task of `Feito hoje` (HOJE-35), with the badge of the reports (HOJE-37). */
@@ -129,6 +131,7 @@ interface PendingRow {
   days_late: number | null
   subtasks_done: number
   subtasks_total: number
+  series: boolean
 }
 
 interface DoneRow {
@@ -212,6 +215,7 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
     db,
     sql`SELECT t.id, t.title, t.estimate_minutes, t.position, t.scheduled_on::text AS scheduled_on,
                to_char(t.scheduled_time, 'HH24:MI') AS scheduled_time,
+               t.series_id IS NOT NULL AS series,
                l.id AS list_id, l.name AS list_name, l.color AS list_color,
                EXISTS (SELECT 1 FROM focus_sessions fs
                        WHERE fs.task_id = t.id AND fs.user_id = ${actor.userId} AND fs.kind = 'task'
@@ -239,6 +243,7 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
       has_session_today: row.has_session_today,
       days_late: row.days_late,
       subtasks: { done: row.subtasks_done, total: row.subtasks_total },
+      series: row.series,
     }
   })
 
@@ -345,12 +350,14 @@ export interface CloseMove {
 
 const notPending = () =>
   new HttpError(422, 'Only pending tasks of the workspace can be moved', {}, { code: 'close_task_not_pending' })
+const seriesNeedsTomorrow = () =>
+  new HttpError(422, 'An occurrence of a series can only go to tomorrow', {}, { code: 'close_series_needs_tomorrow' })
 
 /**
  * `Fechar o dia` in one write (HOJE-61): settles (AD-001), pauses the reader's open task session (HOJE-62), checks that
  * every task is a pending task of the workspace (HOJE-65), then moves each one. `tomorrow` is `This week` scheduled for
  * tomorrow without a time, so the schedule brings it back to Today tomorrow (D21); `this_week` and `backlog` lose
- * their day. `moveTask` and `setSchedule` get the transaction, so their own transactions become savepoints of it and
+ * their day, which an occurrence of a series refuses (HOJE-75). `moveTask` and `setSchedule` get the transaction, so their own transactions become savepoints of it and
  * a refusal leaves every task where it was. Answers the day read after the close.
  */
 export async function closeDay(db: Database, actor: TodayActor, moves: CloseMove[], now: Date): Promise<TodayRead> {
@@ -366,12 +373,15 @@ export async function closeDay(db: Database, actor: TodayActor, moves: CloseMove
       ids.length === 0
         ? []
         : await tx
-            .select({ id: tasks.id, column: tasks.column })
+            .select({ id: tasks.id, column: tasks.column, seriesId: tasks.seriesId })
             .from(tasks)
             .innerJoin(lists, eq(lists.id, tasks.listId))
             .where(and(eq(lists.workspaceId, workspaceId), inArray(tasks.id, ids), ne(tasks.column, 'done')))
     const columns = new Map(found.map((row) => [row.id, row.column]))
     if (ids.some((id) => !columns.has(id))) throw notPending()
+    // Clearing the day of an occurrence would end its series (D29), so it only goes to tomorrow (HOJE-75).
+    const occurrences = new Set(found.filter((row) => row.seriesId !== null).map((row) => row.id))
+    if (moves.some((move) => move.to !== 'tomorrow' && occurrences.has(move.task_id))) throw seriesNeedsTomorrow()
 
     const { today } = await workspaceClock(tx, workspaceId, now)
     const [{ tomorrow }] = (await rows<{ tomorrow: string }>(tx, sql`SELECT (${today}::date + 1)::text AS tomorrow`)) as [

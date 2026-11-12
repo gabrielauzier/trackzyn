@@ -23,6 +23,7 @@ const pendingSchema = z.object({
   has_session_today: z.boolean(),
   days_late: z.number().nullable(),
   subtasks: z.object({ done: z.number(), total: z.number() }),
+  series: z.boolean(),
 })
 const doneSchema = z.object({
   ...taskRef,

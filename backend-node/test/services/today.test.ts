@@ -237,8 +237,19 @@ describe('readToday: Pendente (HOJE-23, HOJE-25, HOJE-28, HOJE-06)', () => {
         has_session_today: false,
         days_late: null,
         subtasks: { done: 1, total: 2 },
+        series: false,
       },
     ])
+  })
+
+  it('HOJE-75 answers series true for a pending occurrence of a series and false for a plain task', async () => {
+    const occurrence = await task('today', { title: 'Standup' })
+    const plain = await task('today', { title: 'Plain', position: 1 })
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', createdAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(eq(tasks.id, occurrence))
+    const pending = (await readToday(db, actor(), NOW)).pending
+    expect(Object.fromEntries(pending.map((item) => [item.id, item.series]))).toEqual({ [occurrence]: true, [plain]: false })
   })
 
   it('leaves out the tasks of the other columns and the done ones', async () => {
@@ -874,6 +885,53 @@ describe('closeDay (HOJE-61, HOJE-62, HOJE-65)', () => {
     expect((await state(theirs)).column).toBe('today')
     const [row] = await db.select().from(focusSessions).where(eq(focusSessions.id, open))
     expect(row!.endedAt).toBeNull()
+  })
+
+  /** An occurrence of an open daily series, in Today. */
+  async function occurrence(title = 'Standup', position = 0) {
+    const id = await task('today', { title, on: TODAY, position })
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', createdAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(eq(tasks.id, id))
+    return { id, seriesId }
+  }
+  const series = async (id: string) => {
+    const [row] = await db.select({ endedAt: taskSeries.endedAt }).from(taskSeries).where(eq(taskSeries.id, id))
+    return row!
+  }
+  const seriesOf = async (id: string) => {
+    const [row] = await db.select({ seriesId: tasks.seriesId }).from(tasks).where(eq(tasks.id, id))
+    return row!.seriesId
+  }
+
+  for (const to of ['this_week', 'backlog'] as const) {
+    it(`HOJE-75 refuses ${to} for an occurrence of a series with 422 close_series_needs_tomorrow, moves nothing and keeps the series open`, async () => {
+      const plain = await task('today', { title: 'Plain', position: 1 })
+      const { id, seriesId } = await occurrence()
+      const before = [await state(plain), await state(id)]
+      await expect(
+        closeDay(
+          db,
+          actor(),
+          [
+            { task_id: plain, to: 'backlog' },
+            { task_id: id, to },
+          ],
+          NOW,
+        ),
+      ).rejects.toMatchObject({ statusCode: 422, extra: { code: 'close_series_needs_tomorrow' } })
+      expect([await state(plain), await state(id)]).toEqual(before)
+      expect((await series(seriesId)).endedAt).toBeNull()
+      expect(await seriesOf(id)).toBe(seriesId)
+    })
+  }
+
+  it('HOJE-75 sends an occurrence of a series to tomorrow and keeps the series open', async () => {
+    const { id, seriesId } = await occurrence()
+    await closeDay(db, actor(), [{ task_id: id, to: 'tomorrow' }], NOW)
+    expect(await state(id)).toMatchObject({ column: 'this_week', on: TOMORROW, time: null })
+    expect((await series(seriesId)).endedAt).toBeNull()
+    expect(await seriesOf(id)).toBe(seriesId)
   })
 
   it('leaves everything as it was when the same close runs again', async () => {

@@ -59,6 +59,7 @@ describe('GET /api/today (HOJE-06)', () => {
         has_session_today: false,
         days_late: null,
         subtasks: { done: 0, total: 0 },
+        series: false,
       },
     ])
     expect(body.done).toEqual([
@@ -173,6 +174,19 @@ describe('POST /api/today/close (HOJE-61, HOJE-67)', () => {
     const reply = await close(owner.token, workspaceId, [{ task_id: doneId, to: 'backlog' }])
     expect(reply.statusCode).toBe(422)
     expect(reply.json().code).toBe('close_task_not_pending')
+  })
+
+  it('HOJE-75 answers 422 close_series_needs_tomorrow for an occurrence of a series sent to Backlog, and moves nothing', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const today = new Date().toISOString().slice(0, 10)
+    await call('PATCH', `/api/tasks/${pendingId}`, owner.token, workspaceId, { scheduled_on: today })
+    await call('PATCH', `/api/tasks/${pendingId}`, owner.token, workspaceId, { recurrence: { freq: 'daily', interval: 1 } })
+    const read = (await call('GET', '/api/today', owner.token, workspaceId)).json()
+    expect(read.pending.find((task: { id: string }) => task.id === pendingId).series).toBe(true)
+    const reply = await close(owner.token, workspaceId, [{ task_id: pendingId, to: 'backlog' }])
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json().code).toBe('close_series_needs_tomorrow')
+    expect((await call('GET', `/api/tasks/${pendingId}`, owner.token, workspaceId)).json().column).toBe('today')
   })
 
   it('answers 200 to an empty close', async () => {

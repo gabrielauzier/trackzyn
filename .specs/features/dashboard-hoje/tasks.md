@@ -738,10 +738,10 @@ T24 → T25 → T26 → T27 → T28 → T29
 
 **Done when**:
 
-- [ ] `pending[].series` verdadeiro para ocorrência de série e falso para tarefa comum
-- [ ] `this_week` e `backlog` para uma ocorrência de série: 422 `close_series_needs_tomorrow`, nenhuma tarefa movida e a série continua aberta (`task_series.ended_at` nulo); um teste para cada destino (L-044)
-- [ ] `tomorrow` para a mesma ocorrência continua funcionando e a série continua aberta
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] `pending[].series` verdadeiro para ocorrência de série e falso para tarefa comum
+- [x] `this_week` e `backlog` para uma ocorrência de série: 422 `close_series_needs_tomorrow`, nenhuma tarefa movida e a série continua aberta (`task_series.ended_at` nulo); um teste para cada destino (L-044)
+- [x] `tomorrow` para a mesma ocorrência continua funcionando e a série continua aberta
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full
