@@ -339,7 +339,8 @@
     "archivedLists": "Archived lists",
     "reports": "Reports",
     "agenda": "Agenda",
-    "plan": "Plan"
+    "plan": "Plan",
+    "today": "Today"
   },
   "privacy": {
     "hide": "Hide values",
@@ -1182,6 +1183,12 @@
     "picker": {
       "search": "Search tasks",
       "empty": "No task found"
+    },
+    "header": {
+      "left": "{{duration}} until the end of the day ({{time}})",
+      "ended": "Workday ended at {{time}}",
+      "readFailed": "Couldn't update",
+      "retry": "Try again"
     }
   }
 }

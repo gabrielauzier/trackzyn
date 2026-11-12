@@ -17,6 +17,7 @@ const SetupPage = lazy(() => import('@/pages/setup'))
 const LoginPage = lazy(() => import('@/pages/login'))
 const RegisterPage = lazy(() => import('@/pages/register'))
 const OIDCCallbackPage = lazy(() => import('@/pages/oidc-callback'))
+const TodayPage = lazy(() => import('@/pages/today'))
 const ListsPage = lazy(() => import('@/pages/lists'))
 const ArchivedListsPage = lazy(() => import('@/pages/archived-lists'))
 const ListBoardPage = lazy(() => import('@/pages/list-board'))
@@ -83,8 +84,8 @@ function App() {
                           </ProtectedRoute>
                         }
                       >
-                        {/* The Hoje dashboard takes `/` (HOJE-01); until then it shows the lists too. */}
-                        <Route path="/" element={<ListsPage />} />
+                        {/* The app opens on the Hoje dashboard (HOJE-01); the grid of lists is at `/lists` (HOJE-02). */}
+                        <Route path="/" element={<TodayPage />} />
                         <Route path="/lists" element={<ListsPage />} />
                         <Route path="/lists/archived" element={<ArchivedListsPage />} />
                         <Route path="/lists/:listId" element={<ListBoardPage />} />

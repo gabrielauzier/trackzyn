@@ -27,6 +27,20 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   info: { get: vi.fn(async () => ({ features: {} })) },
   lists: { list: vi.fn(), move: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
+  today: {
+    get: vi.fn(async () => ({
+      server_now: new Date().toISOString(),
+      day: '2026-11-11',
+      tomorrow: '2026-11-12',
+      timezone: 'America/Sao_Paulo',
+      now_minute: 600,
+      workday: { start: '09:00', end: '18:00' },
+      pending: [],
+      done: [],
+      plan: { saved: false, blocks: [] },
+      sessions: [],
+    })),
+  },
 }))
 
 const LIST = '11111111-1111-4111-8111-111111111111'
@@ -65,8 +79,9 @@ describe('Reopening the app (SYNC-12)', () => {
 
     render(<App />)
 
-    expect(await screen.findByRole('heading', { name: 'Your lists' })).toBeInTheDocument()
-    expect(await screen.findByText('Week')).toBeInTheDocument()
+    // The home is the Hoje dashboard (HOJE-01).
+    expect(await screen.findByRole('heading', { name: 'Pending' })).toBeInTheDocument()
+    expect(await screen.findByText('Now · nothing in focus')).toBeInTheDocument()
     await waitFor(() => expect(focus.get).toHaveBeenCalled())
     expect(window.location.pathname).toBe('/')
     expect(screen.queryByRole('heading', { level: 1, name: 'Today' })).not.toBeInTheDocument()

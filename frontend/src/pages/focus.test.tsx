@@ -116,7 +116,7 @@ function listCard(id: string, name: string): ListCard {
 function renderFocus(route: string | { pathname: string; state: unknown } = `/focus/${LIST}`) {
   return renderWithProviders(
     <Routes>
-      <Route path="/" element={<ListsPage />} />
+      <Route path="/lists" element={<ListsPage />} />
       <Route path="/lists/:listId" element={<p>Board page</p>} />
       <Route path="/focus/:listId" element={<FocusPage />} />
     </Routes>,
