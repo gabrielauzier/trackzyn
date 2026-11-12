@@ -1167,6 +1167,10 @@
       "openFocus": "Open focus",
       "refused": "The server refused: {{action}}",
       "progress": "Time against the estimate"
+    },
+    "picker": {
+      "search": "Search tasks",
+      "empty": "No task found"
     }
   }
 }
