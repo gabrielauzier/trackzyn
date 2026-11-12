@@ -90,13 +90,13 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `pending` traz só tarefas não concluídas da coluna `Hoje` de listas não arquivadas do workspace, sem a tarefa da sessão aberta; uma tarefa de `Hoje` de lista arquivada e uma de outro workspace ficam de fora (testes próprios, L-048)
-- [ ] `scheduled_minute` só existe quando `scheduled_on` é hoje; `plan_minute` é o início do primeiro bloco da tarefa; `has_session_today` e `days_late` (hoje − `scheduled_on`) conferidos com valores concretos
-- [ ] Uma tarefa agendada para hoje ainda em `Esta semana` aparece em `pending` depois da leitura (AD-009)
-- [ ] `sessions` traz só sessões do leitor no workspace; a de outro membro no mesmo dia fica de fora (L-048); uma sessão de 23:30 a 00:30 vira 00:00–00:30 (HOJE-68); a soma bate com `overview` dos Relatórios de hoje
-- [ ] Trocar o fuso do workspace muda `day` e `now_minute` na leitura seguinte (HOJE-69)
-- [ ] `plan.saved` é `false` sem plano salvo
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] `pending` traz só tarefas não concluídas da coluna `Hoje` de listas não arquivadas do workspace, sem a tarefa da sessão aberta; uma tarefa de `Hoje` de lista arquivada e uma de outro workspace ficam de fora (testes próprios, L-048)
+- [x] `scheduled_minute` só existe quando `scheduled_on` é hoje; `plan_minute` é o início do primeiro bloco da tarefa; `has_session_today` e `days_late` (hoje − `scheduled_on`) conferidos com valores concretos
+- [x] Uma tarefa agendada para hoje ainda em `Esta semana` aparece em `pending` depois da leitura (AD-009)
+- [x] `sessions` traz só sessões do leitor no workspace; a de outro membro no mesmo dia fica de fora (L-048); uma sessão de 23:30 a 00:30 vira 00:00–00:30 (HOJE-68); a soma bate com `overview` dos Relatórios de hoje
+- [x] Trocar o fuso do workspace muda `day` e `now_minute` na leitura seguinte (HOJE-69)
+- [x] `plan.saved` é `false` sem plano salvo
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full
