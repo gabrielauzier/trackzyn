@@ -566,11 +566,11 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `Tempo focado` soma sessões de tarefa com a aberta até agora, e `intervalos` à parte
-- [ ] `4 de 9 no plano` com um segmento por tarefa planejada (verde feita, índigo em foco, cinza); sem plano, `sem plano hoje`
-- [ ] Aderência `—` com `sem blocos até agora`
-- [ ] Trocas e a duração média das sessões de tarefa
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] `Tempo focado` soma sessões de tarefa com a aberta até agora, e `intervalos` à parte
+- [x] `4 de 9 no plano` com um segmento por tarefa planejada (verde feita, índigo em foco, cinza); sem plano, `sem plano hoje`
+- [x] Aderência `—` com `sem blocos até agora`
+- [x] Trocas e a duração média das sessões de tarefa
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

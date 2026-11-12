@@ -7,6 +7,7 @@ import { CalendarCheck } from 'lucide-react'
 import { formatDuration } from '@/components/board/format-duration'
 import { greetingFor } from '@/components/lists/greeting'
 import { PageHeader } from '@/components/page-header'
+import { DayStats } from '@/components/today/day-stats'
 import { DoneCard } from '@/components/today/done-card'
 import { NowCard } from '@/components/today/now-card'
 import { PendingCard } from '@/components/today/pending-card'
@@ -105,16 +106,26 @@ export default function TodayPage() {
 
       {data ? (
         <>
-          <NowCard
-            focus={focus}
-            canWrite={canWrite}
-            nowMinute={now.minute}
-            day={data.day}
-            lists={lists}
-            sessions={data.sessions}
-            blocks={data.plan.blocks}
-            pending={data.pending}
-          />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <NowCard
+              focus={focus}
+              canWrite={canWrite}
+              nowMinute={now.minute}
+              day={data.day}
+              lists={lists}
+              sessions={data.sessions}
+              blocks={data.plan.blocks}
+              pending={data.pending}
+            />
+            <DayStats
+              planSaved={data.plan.saved}
+              blocks={data.plan.blocks}
+              sessions={data.sessions}
+              done={data.done}
+              focusTaskId={focus.state?.session?.kind === 'task' ? focus.state.session.task_id : null}
+              nowMinute={now.minute}
+            />
+          </div>
           <PlanVsReal
             day={data.day}
             workday={data.workday}

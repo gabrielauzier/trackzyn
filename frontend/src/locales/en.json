@@ -1203,6 +1203,18 @@
       "breakTitle": "Break",
       "noPlan": "No plan for today",
       "planToday": "Plan today"
+    },
+    "stats": {
+      "focused": "Focused time",
+      "breaks": "breaks {{duration}}",
+      "completed": "Completed",
+      "ofPlanned": "of {{count}} in the plan",
+      "noPlan": "no plan today",
+      "adherence": "Plan adherence",
+      "adherenceHint": "of the planned time so far became a session of the same task",
+      "noBlocks": "no blocks so far",
+      "switches": "Task switches",
+      "average": "average session {{duration}}"
     }
   }
 }

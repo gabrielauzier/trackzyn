@@ -1203,6 +1203,18 @@
       "breakTitle": "Intervalo",
       "noPlan": "Sem plano para hoje",
       "planToday": "Planejar hoje"
+    },
+    "stats": {
+      "focused": "Tempo focado",
+      "breaks": "intervalos {{duration}}",
+      "completed": "Concluídas",
+      "ofPlanned": "de {{count}} no plano",
+      "noPlan": "sem plano hoje",
+      "adherence": "Aderência ao plano",
+      "adherenceHint": "do tempo planejado até agora virou sessão da mesma tarefa",
+      "noBlocks": "sem blocos até agora",
+      "switches": "Trocas de tarefa",
+      "average": "sessão média de {{duration}}"
     }
   }
 }
