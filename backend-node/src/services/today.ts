@@ -78,6 +78,9 @@ export interface DaySession {
   list_color: number
   start_minute: number
   end_minute: number
+  /** The instants cut to today, the open session until `server_now`, so the client sums seconds (HOJE-49). */
+  started_at: string
+  ended_at: string
   open: boolean
 }
 
@@ -165,6 +168,8 @@ interface SessionRow {
   list_color: number
   start_minute: number
   end_minute: number
+  started_at: string | Date
+  ended_at: string | Date
   open: boolean
 }
 
@@ -286,7 +291,7 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
                (extract(hour FROM s.a AT TIME ZONE ${tz}) * 60 + extract(minute FROM s.a AT TIME ZONE ${tz}))::int AS start_minute,
                CASE WHEN s.z >= ${scope.hi} THEN 1440
                     ELSE (extract(hour FROM s.z AT TIME ZONE ${tz}) * 60 + extract(minute FROM s.z AT TIME ZONE ${tz}))::int END AS end_minute,
-               s.ended_at IS NULL AS open
+               s.a AS started_at, s.z AS ended_at, s.ended_at IS NULL AS open
         FROM s JOIN lists l ON l.id = s.list_id
         LEFT JOIN tasks t ON t.id = s.task_id
         LEFT JOIN LATERAL (
@@ -335,7 +340,11 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
     pending,
     done,
     plan: { saved: plan !== undefined, blocks },
-    sessions,
+    sessions: sessions.map((row) => ({
+      ...row,
+      started_at: new Date(row.started_at).toISOString(),
+      ended_at: new Date(row.ended_at).toISOString(),
+    })),
     tomorrow_plan_blocks: tomorrowBlocks.length,
     tomorrow_tasks: tomorrowTasks,
     week_unscheduled: weekUnscheduled,

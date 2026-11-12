@@ -791,9 +791,9 @@ T24 → T25 → T26 → T27 → T28 → T29
 
 **Done when**:
 
-- [ ] Sessões que começam e terminam no meio do minuto (ex.: 09:00:40–09:30:20 e 10:10:50–10:40:10) somadas em segundos dão o mesmo total, truncado uma vez, que `/api/reports/overview` de hoje
-- [ ] O schema da rota devolve os campos novos
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Sessões que começam e terminam no meio do minuto (ex.: 09:00:40–09:30:20 e 10:10:50–10:40:10) somadas em segundos dão o mesmo total, truncado uma vez, que `/api/reports/overview` de hoje
+- [x] O schema da rota devolve os campos novos
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full
