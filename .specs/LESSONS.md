@@ -456,6 +456,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: frontend/src/components/today/close-day-dialog.tsx:105 (HOJE-75, G6 round 2) (frontend)
 - last seen: 2026-11-12T03:50:11Z
 
+### L-075 - When a read selects the open session, test it with a closed session beside the open one so the open-only filter is pinned
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-services` · harmful: 0
+- features: dashboard-hoje
+- evidence: backend-node/src/services/today.ts:337 (mutant B4, validation.md round 3) (backend-services)
+- last seen: 2026-11-12T04:09:21Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

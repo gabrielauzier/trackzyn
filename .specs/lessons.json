@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 75,
+  "next_id": 76,
   "lessons": [
     {
       "id": "L-001",
@@ -1342,6 +1342,24 @@
       ],
       "created": "2026-11-12T03:50:11Z",
       "last_seen": "2026-11-12T03:50:11Z"
+    },
+    {
+      "id": "L-075",
+      "key": "surviving_mutant::when a read selects the open session test it with a closed session beside the open one so the open only filter is pinned",
+      "text": "When a read selects the open session, test it with a closed session beside the open one so the open-only filter is pinned",
+      "signal": "surviving_mutant",
+      "scope": "backend-services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/services/today.ts:337 (mutant B4, validation.md round 3) (backend-services)"
+      ],
+      "created": "2026-11-12T04:09:21Z",
+      "last_seen": "2026-11-12T04:09:21Z"
     }
   ]
 }
