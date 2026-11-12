@@ -27,6 +27,7 @@ function pending(overrides: Partial<TodayPendingTask>): TodayPendingTask {
     has_session_today: false,
     days_late: null,
     subtasks: { done: 0, total: 0 },
+    series: false,
     ...overrides,
   }
 }
@@ -230,6 +231,38 @@ describe('CloseDayDialog (HOJE-41 to HOJE-66)', () => {
     expect(onClose).not.toHaveBeenCalled()
     expect(pressed('Read chapter 4')).toBe('Backlog')
     expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it('HOJE-75 offers only Tomorrow to an occurrence of a series, and all three to a plain task of the same list (L-048)', () => {
+    const data = {
+      ...day,
+      pending: [pending({ id: 'standup', title: 'Daily standup', series: true }), pending({ id: 'read', title: 'Read chapter 4' })],
+    }
+    draw({ data, focusTask: null })
+    const occurrence = destination('Daily standup')
+    expect(within(occurrence).getByRole('button', { name: 'Tomorrow' })).toBeEnabled()
+    expect(pressed('Daily standup')).toBe('Tomorrow')
+    for (const name of ['This week', 'Backlog']) {
+      const button = within(occurrence).getByRole('button', { name })
+      expect(button).toBeDisabled()
+      expect(button).toHaveAttribute('title', 'Would end the recurrence')
+    }
+    for (const name of ['Tomorrow', 'This week', 'Backlog']) {
+      const button = within(destination('Read chapter 4')).getByRole('button', { name })
+      expect(button).toBeEnabled()
+      expect(button).not.toHaveAttribute('title')
+    }
+  })
+
+  it('HOJE-75 keeps the dialog open with the error when the server answers 422 close_series_needs_tomorrow', async () => {
+    vi.mocked(today.close).mockRejectedValue({
+      isAxiosError: true,
+      response: { status: 422, data: { detail: 'An occurrence of a series can only go to tomorrow', code: 'close_series_needs_tomorrow' } },
+    })
+    const { user, onClose } = draw()
+    await user.click(within(dialog()).getByRole('button', { name: 'Close the day' }))
+    expect(await within(dialog()).findByRole('alert')).toHaveTextContent('An occurrence of a series can only go to tomorrow')
+    expect(onClose).not.toHaveBeenCalled()
   })
 
   it('HOJE-66 closes the day when the clipboard refuses, and offers Copy again', async () => {

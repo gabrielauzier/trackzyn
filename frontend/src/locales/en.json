@@ -1262,6 +1262,7 @@
         "this_week": "This week",
         "backlog": "Backlog"
       },
+      "endsSeries": "Would end the recurrence",
       "postponed_one": "Postponed {{count}} day in a row",
       "postponed_other": "Postponed {{count}} days in a row",
       "note": "Note of the day",

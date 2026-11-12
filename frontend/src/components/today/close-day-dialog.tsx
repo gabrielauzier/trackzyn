@@ -48,6 +48,8 @@ interface OpenTask {
   list: PlanListRef
   estimate_minutes: number | null
   days_late: number | null
+  /** An occurrence of a series only goes to tomorrow (HOJE-75). */
+  series: boolean
 }
 
 /** `Quarta, 11 de novembro` / `Wednesday, November 11`. */
@@ -100,7 +102,9 @@ export function CloseDayDialog({ onClose, workspaceId, workspaceName, data, nowM
   const listName = (id: string) => lists.find((list) => list.id === id)?.name ?? ''
 
   const open: OpenTask[] = [
-    ...(focusTask ? [{ ...focusTask, days_late: null }] : []),
+    // SPEC_DEVIATION: HOJE-75 disables This week and Backlog for an occurrence; the task in focus keeps all three.
+    // Reason: the focus state does not say whether its task is an occurrence; the server still refuses it (422).
+    ...(focusTask ? [{ ...focusTask, days_late: null, series: false }] : []),
     ...data.pending.filter((task) => task.id !== focusTask?.id),
   ]
   const destinationOf = (id: string) => destinations[id] ?? 'tomorrow'
@@ -229,20 +233,26 @@ export function CloseDayDialog({ onClose, workspaceId, workspaceName, data, nowM
                     )}
                   </div>
                   <div role="group" aria-label={t('today.close.destination', { title: task.title })} className="inline-flex gap-0.5 rounded-lg bg-muted p-0.5">
-                    {DESTINATIONS.map((to) => (
-                      <button
-                        key={to}
-                        type="button"
-                        aria-pressed={destinationOf(task.id) === to}
-                        onClick={() => setDestinations((all) => ({ ...all, [task.id]: to }))}
-                        className={cn(
-                          'h-7 rounded-md px-2.5 text-xs font-medium text-muted-foreground',
-                          destinationOf(task.id) === to && 'bg-background text-foreground shadow-sm',
-                        )}
-                      >
-                        {t(`today.close.to.${to}`)}
-                      </button>
-                    ))}
+                    {DESTINATIONS.map((to) => {
+                      // Clearing the day of an occurrence would end its series (D29): it only goes to tomorrow.
+                      const endsSeries = task.series && to !== 'tomorrow'
+                      return (
+                        <button
+                          key={to}
+                          type="button"
+                          aria-pressed={destinationOf(task.id) === to}
+                          disabled={endsSeries}
+                          title={endsSeries ? t('today.close.endsSeries') : undefined}
+                          onClick={() => setDestinations((all) => ({ ...all, [task.id]: to }))}
+                          className={cn(
+                            'h-7 rounded-md px-2.5 text-xs font-medium text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+                            destinationOf(task.id) === to && 'bg-background text-foreground shadow-sm',
+                          )}
+                        >
+                          {t(`today.close.to.${to}`)}
+                        </button>
+                      )
+                    })}
                   </div>
                 </li>
               ))}

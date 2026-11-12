@@ -869,10 +869,10 @@ T24 → T25 → T26 → T27 → T28 → T29
 
 **Done when**:
 
-- [ ] Ocorrência de série: `Esta semana` e `Backlog` desabilitados com a dica `Encerraria a recorrência`; tarefa comum na mesma lista continua com os três destinos (L-048)
-- [ ] Um 422 `close_series_needs_tomorrow` do servidor mantém o diálogo aberto com o erro
-- [ ] No estado `elsewhere`, nenhum link `Abrir foco`
-- [ ] Gate check passes: Build
+- [x] Ocorrência de série: `Esta semana` e `Backlog` desabilitados com a dica `Encerraria a recorrência`; tarefa comum na mesma lista continua com os três destinos (L-048)
+- [x] Um 422 `close_series_needs_tomorrow` do servidor mantém o diálogo aberto com o erro
+- [x] No estado `elsewhere`, nenhum link `Abrir foco`
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build
