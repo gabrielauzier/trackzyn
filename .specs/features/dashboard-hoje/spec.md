@@ -315,9 +315,9 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-46 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
 | HOJE-47 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
 | HOJE-48 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
-| HOJE-49 | P2: Ver os números do dia | Tasks | In Tasks |
-| HOJE-50 | P2: Ver os números do dia | Tasks | In Tasks |
-| HOJE-51 | P2: Ver os números do dia | Tasks | In Tasks |
+| HOJE-49 | P2: Ver os números do dia | Tasks | Implementing |
+| HOJE-50 | P2: Ver os números do dia | Tasks | Implementing |
+| HOJE-51 | P2: Ver os números do dia | Tasks | Implementing |
 | HOJE-52 | P2: Ver os números do dia | Tasks | Implementing |
 | HOJE-53 | P2: Ver os números do dia | Tasks | Implementing |
 | HOJE-54 | P2: Ver o que vem amanhã | Tasks | Implementing |

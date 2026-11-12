@@ -147,6 +147,22 @@ describe('TodayPage', () => {
     expect(within(within(card).getByRole('list', { name: 'Plan' })).getByText('Review the PR')).toBeInTheDocument()
   })
 
+  it('shows the numbers of the day beside the Now card (HOJE-49)', async () => {
+    vi.mocked(today.get).mockResolvedValue(
+      day({
+        sessions: [
+          { id: 's1', kind: 'task', task_id: 'task-a', title: 'Review the PR', list_id: LIST, list_color: 2, start_minute: 540, end_minute: 600, open: false },
+        ],
+      }),
+    )
+    show()
+    const focused = await screen.findByRole('group', { name: 'Focused time' })
+    expect(within(focused).getByText('1hr')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Completed' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Plan adherence' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Task switches' })).toBeInTheDocument()
+  })
+
   it('reads the day again when the card completes the task, so it shows in Done today without waiting 60 s (HOJE-71)', async () => {
     vi.mocked(focus.get).mockResolvedValue(focusing())
     vi.mocked(focus.send).mockResolvedValue(completed())
