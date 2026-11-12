@@ -47,6 +47,9 @@ function day(overrides: Partial<TodayRead> = {}): TodayRead {
     done: [],
     plan: { saved: false, blocks: [] },
     sessions: [],
+    tomorrow_plan_blocks: 0,
+    tomorrow_tasks: [],
+    week_unscheduled: 0,
     ...overrides,
   }
 }
@@ -161,6 +164,18 @@ describe('TodayPage', () => {
     expect(screen.getByRole('group', { name: 'Completed' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Plan adherence' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Task switches' })).toBeInTheDocument()
+  })
+
+  it('shows Tomorrow under Done today, with the tasks set for tomorrow (HOJE-54)', async () => {
+    vi.mocked(today.get).mockResolvedValue(
+      day({ tomorrow_tasks: [{ id: 'fiap', title: 'Hand in the work', list: work, estimate_minutes: 60, scheduled_minute: 600, series: false }] }),
+    )
+    show()
+    const tomorrow = (await screen.findByRole('heading', { name: 'Tomorrow' })).closest('section')!
+    expect(within(tomorrow).getByText('Work · 10:00 · scheduled')).toBeInTheDocument()
+    const done = screen.getByRole('heading', { name: 'Done today' }).closest('section')!
+    expect(done.parentElement).toBe(tomorrow.parentElement)
+    expect(done.compareDocumentPosition(tomorrow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('reads the day again when the card completes the task, so it shows in Done today without waiting 60 s (HOJE-71)', async () => {

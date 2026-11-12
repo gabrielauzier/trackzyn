@@ -12,6 +12,7 @@ import { DoneCard } from '@/components/today/done-card'
 import { NowCard } from '@/components/today/now-card'
 import { PendingCard } from '@/components/today/pending-card'
 import { PlanVsReal } from '@/components/today/plan-vs-real'
+import { TomorrowCard } from '@/components/today/tomorrow-card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/contexts/auth-context'
@@ -144,7 +145,17 @@ export default function TodayPage() {
               timeZone={data.timezone}
               noLists={listsQuery.data !== undefined && listsQuery.data.lists.length === 0}
             />
-            <DoneCard done={data.done} sessions={data.sessions} canWrite={canWrite} timeZone={data.timezone} />
+            <div className="flex flex-col gap-4">
+              <DoneCard done={data.done} sessions={data.sessions} canWrite={canWrite} timeZone={data.timezone} />
+              <TomorrowCard
+                tomorrow={data.tomorrow}
+                tasks={data.tomorrow_tasks}
+                weekUnscheduled={data.week_unscheduled}
+                planBlocks={data.tomorrow_plan_blocks}
+                canWrite={canWrite}
+                timeZone={data.timezone}
+              />
+            </div>
           </div>
         </>
       ) : (

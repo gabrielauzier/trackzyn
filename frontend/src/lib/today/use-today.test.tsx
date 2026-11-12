@@ -21,6 +21,9 @@ const day = (nowMinute: number): TodayRead => ({
   done: [],
   plan: { saved: false, blocks: [] },
   sessions: [],
+  tomorrow_plan_blocks: 0,
+  tomorrow_tasks: [],
+  week_unscheduled: 0,
 })
 
 function setup(workspace: Workspace) {

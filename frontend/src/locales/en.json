@@ -1227,6 +1227,17 @@
       "noBlocks": "no blocks so far",
       "switches": "Task switches",
       "average": "average session {{duration}}"
+    },
+    "tomorrow": {
+      "title": "Tomorrow",
+      "scheduled": "scheduled",
+      "recurring": "recurring",
+      "weekUnscheduled_one": "{{count}} task in This week without a day",
+      "weekUnscheduled_other": "{{count}} tasks in This week without a day",
+      "noPlan": "Tomorrow has no plan yet",
+      "planBlocks_one": "Plan for tomorrow: {{count}} block",
+      "planBlocks_other": "Plan for tomorrow: {{count}} blocks",
+      "empty": "Nothing set for tomorrow"
     }
   }
 }

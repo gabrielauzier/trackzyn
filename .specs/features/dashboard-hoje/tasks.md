@@ -594,11 +594,11 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `quarta, 12 de novembro`; `FIAP · 10:00 · agendada` e `Frete · 09:30 · recorrente`
-- [ ] `3 tarefas em Esta semana sem dia` tracejada
-- [ ] `Amanhã ainda não tem plano` ou `Plano de amanhã: 4 blocos`, e `Planejar amanhã`
-- [ ] Vazio: `Nada marcado para amanhã`
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] `quarta, 12 de novembro`; `FIAP · 10:00 · agendada` e `Frete · 09:30 · recorrente`
+- [x] `3 tarefas em Esta semana sem dia` tracejada
+- [x] `Amanhã ainda não tem plano` ou `Plano de amanhã: 4 blocos`, e `Planejar amanhã`
+- [x] Vazio: `Nada marcado para amanhã`
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick
