@@ -82,7 +82,7 @@ describe('the offline focus queue', () => {
     await flush(async () => Promise.reject(refusal(status, code)), NOW)
 
     expect(pending()).toEqual([])
-    expect(conflicts()).toEqual([{ ...refused, status, code }])
+    expect(conflicts()).toEqual([{ ...refused, status, code, message: 'refused' }])
 
     retry(refused.action_id, NOW)
     expect(conflicts()).toEqual([])
@@ -158,6 +158,22 @@ describe('the offline focus queue', () => {
     expect(back.mock.calls.map(([entry]) => entry)).toEqual(actions)
   })
 
+  it('HOJE-22 a conflict keeps the message of the API answer', async () => {
+    const refused = enqueue(pause(MIN))
+    const answer = Object.assign(new Error('HTTP 409'), {
+      response: { status: 409, data: { detail: 'The task is already done', code: 'invalid_transition' } },
+    })
+    await flush(async () => Promise.reject(answer), NOW)
+    expect(conflicts()).toEqual([{ ...refused, status: 409, code: 'invalid_transition', message: 'The task is already done' }])
+  })
+
+  it('HOJE-22 a conflict stored before the message was kept still loads, without a message', () => {
+    const old = { action_id: 'old', action: pause(MIN), status: 409, code: 'invalid_transition' }
+    localStorage.setItem('trackzyn.focus.queue', JSON.stringify({ pending: [], conflicts: [old] }))
+    expect(conflicts()).toEqual([old])
+    expect(conflicts()[0]!.message).toBeUndefined()
+  })
+
   it('SYNC-05 the queue and its conflicts survive a page reload', async () => {
     const refused = enqueue(pause(2 * MIN))
     const kept = enqueue(pause(MIN))
@@ -171,6 +187,6 @@ describe('the offline focus queue', () => {
     const reloaded = await import('@/lib/focus/queue')
 
     expect(reloaded.pending()).toEqual([kept])
-    expect(reloaded.conflicts()).toEqual([{ ...refused, status: 409, code: 'invalid_transition' }])
+    expect(reloaded.conflicts()).toEqual([{ ...refused, status: 409, code: 'invalid_transition', message: 'refused' }])
   })
 })

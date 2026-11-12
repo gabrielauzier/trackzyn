@@ -842,10 +842,10 @@ T24 → T25 → T26 → T27 → T28 → T29
 
 **Done when**:
 
-- [ ] Um conflito guarda `message` com o texto da API; conflitos antigos sem `message` continuam carregando da área de armazenamento
-- [ ] O toast do card mostra exatamente a mensagem da API de uma ação recusada; sem mensagem, usa o texto genérico de antes
-- [ ] Os testes existentes do foco continuam passando sem mudança de asserção
-- [ ] Gate check passes: Build
+- [x] Um conflito guarda `message` com o texto da API; conflitos antigos sem `message` continuam carregando da área de armazenamento
+- [x] O toast do card mostra exatamente a mensagem da API de uma ação recusada; sem mensagem, usa o texto genérico de antes
+- [x] Os testes existentes do foco continuam passando sem mudança de asserção
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

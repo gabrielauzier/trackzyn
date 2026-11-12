@@ -316,9 +316,8 @@ function useRefusalToasts(conflicts: FocusConflict[]) {
     if (fresh.length === 0) return
     for (const conflict of fresh) {
       seen.current.add(conflict.action_id)
-      // SPEC_DEVIATION: HOJE-22 asks for the API's error message; the toast names the refused action instead.
-      // Reason: the focus queue (AD-002) keeps a refusal's status and code only, not the message of the answer.
-      toast.error(t('today.now.refused', { action: t(`focus.conflicts.types.${conflict.action.type.replace('/', '_')}`) }))
+      // The API's message (HOJE-22); a conflict without one names the refused action.
+      toast.error(conflict.message ?? t('today.now.refused', { action: t(`focus.conflicts.types.${conflict.action.type.replace('/', '_')}`) }))
     }
     void queryClient.invalidateQueries({ queryKey: ['focus'] })
   }, [conflicts, queryClient, t])
