@@ -102,9 +102,7 @@ export function CloseDayDialog({ onClose, workspaceId, workspaceName, data, nowM
   const listName = (id: string) => lists.find((list) => list.id === id)?.name ?? ''
 
   const open: OpenTask[] = [
-    // SPEC_DEVIATION: HOJE-75 disables This week and Backlog for an occurrence; the task in focus keeps all three.
-    // Reason: the focus state does not say whether its task is an occurrence; the server still refuses it (422).
-    ...(focusTask ? [{ ...focusTask, days_late: null, series: false }] : []),
+    ...(focusTask ? [{ ...focusTask, days_late: null, series: data.focus_task_series }] : []),
     ...data.pending.filter((task) => task.id !== focusTask?.id),
   ]
   const destinationOf = (id: string) => destinations[id] ?? 'tomorrow'

@@ -42,6 +42,7 @@ vi.mock('@/lib/api', async (importOriginal) => ({
       tomorrow_plan_blocks: 0,
       tomorrow_tasks: [],
       week_unscheduled: 0,
+      focus_task_series: false,
     })),
   },
 }))

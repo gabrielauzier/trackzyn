@@ -103,6 +103,7 @@ const day: TodayRead = {
   tomorrow_plan_blocks: 0,
   tomorrow_tasks: [],
   week_unscheduled: 0,
+  focus_task_series: false,
 }
 
 const focusTask: CloseFocusTask = { id: 'focus', title: 'Write the spec', estimate_minutes: 90, list: frete }
@@ -249,6 +250,27 @@ describe('CloseDayDialog (HOJE-41 to HOJE-66)', () => {
     }
     for (const name of ['Tomorrow', 'This week', 'Backlog']) {
       const button = within(destination('Read chapter 4')).getByRole('button', { name })
+      expect(button).toBeEnabled()
+      expect(button).not.toHaveAttribute('title')
+    }
+  })
+
+  it('HOJE-75 offers only Tomorrow to a task in focus that is an occurrence of a series', () => {
+    draw({ data: { ...day, focus_task_series: true } })
+    const focus = destination('Write the spec')
+    expect(within(focus).getByRole('button', { name: 'Tomorrow' })).toBeEnabled()
+    expect(pressed('Write the spec')).toBe('Tomorrow')
+    for (const name of ['This week', 'Backlog']) {
+      const button = within(focus).getByRole('button', { name })
+      expect(button).toBeDisabled()
+      expect(button).toHaveAttribute('title', 'Would end the recurrence')
+    }
+  })
+
+  it('HOJE-75 offers all three destinations to a task in focus that is not an occurrence of a series (L-048)', () => {
+    draw({ data: { ...day, focus_task_series: false } })
+    for (const name of ['Tomorrow', 'This week', 'Backlog']) {
+      const button = within(destination('Write the spec')).getByRole('button', { name })
       expect(button).toBeEnabled()
       expect(button).not.toHaveAttribute('title')
     }

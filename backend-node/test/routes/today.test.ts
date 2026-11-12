@@ -41,6 +41,7 @@ describe('GET /api/today (HOJE-06)', () => {
       workday: { start: '09:00', end: '18:00' },
       plan: { saved: false, blocks: [] },
       sessions: [],
+      focus_task_series: false,
     })
     // The day may turn while the request runs, a few milliseconds before midnight UTC.
     expect([today, new Date(Date.now() - 60_000).toISOString().slice(0, 10)]).toContain(body.day)
@@ -91,6 +92,20 @@ describe('GET /api/today (HOJE-06)', () => {
     expect(open).toMatchObject({ task_id: pendingId, open: true, ended_at: body.server_now })
     // A UTC midnight between the start and the read cuts the start at the day.
     expect([startedAt.toISOString(), `${body.day}T00:00:00.000Z`]).toContain(open.started_at)
+  })
+
+  it('HOJE-75 answers focus_task_series true while the open task session is on an occurrence of a series', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const today = new Date().toISOString().slice(0, 10)
+    await call('PATCH', `/api/tasks/${pendingId}`, owner.token, workspaceId, { scheduled_on: today })
+    await call('PATCH', `/api/tasks/${pendingId}`, owner.token, workspaceId, { recurrence: { freq: 'daily', interval: 1 } })
+    await call('POST', '/api/focus/start', owner.token, workspaceId, {
+      action_id: randomUUID(),
+      occurred_at: new Date().toISOString(),
+      device_id: 'A',
+      task_id: pendingId,
+    })
+    expect((await call('GET', '/api/today', owner.token, workspaceId)).json().focus_task_series).toBe(true)
   })
 
   it("answers 200 to a viewer, with the workspace's Pendente and none of the owner's completions", async () => {
