@@ -456,6 +456,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: validation.md mutant B5 (backend-node/src/services/today.ts:337) (backend-services)
 - last seen: 2026-11-12T04:37:35Z
 
+### L-075 - When a test relies on which row an unordered query returns first, fix the sort key the plan uses, such as an id that sorts lowest, instead of relying on insertion order.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-services` · harmful: 0
+- features: dashboard-hoje
+- evidence: mutant B5 backend-node/src/services/today.ts:337; backend-node/test/services/today.test.ts:860-875 (backend-services)
+- last seen: 2026-11-12T05:04:36Z
+
+### L-076 - When the spec gives a threshold such as N or more, test the value exactly at N, not only values above and below it.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-components` · harmful: 0
+- features: dashboard-hoje
+- evidence: mutant F4 frontend/src/components/today/close-day-dialog.tsx:225; HOJE-60 (frontend-components)
+- last seen: 2026-11-12T05:05:55Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
