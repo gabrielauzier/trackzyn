@@ -482,6 +482,8 @@ describe('readToday: the sessions of today (HOJE-06, HOJE-68)', () => {
         list_color: 3,
         start_minute: 540,
         end_minute: 630,
+        started_at: SP('2026-11-11T09:00:00').toISOString(),
+        ended_at: SP('2026-11-11T10:30:00').toISOString(),
         open: false,
       },
       {
@@ -493,6 +495,8 @@ describe('readToday: the sessions of today (HOJE-06, HOJE-68)', () => {
         list_color: 3,
         start_minute: 725,
         end_minute: 800,
+        started_at: SP('2026-11-11T12:05:00').toISOString(),
+        ended_at: SP('2026-11-11T13:20:00').toISOString(),
         open: false,
       },
       {
@@ -504,6 +508,9 @@ describe('readToday: the sessions of today (HOJE-06, HOJE-68)', () => {
         list_color: 3,
         start_minute: 828,
         end_minute: 860,
+        started_at: SP('2026-11-11T13:48:00').toISOString(),
+        // The open session runs until the server's now.
+        ended_at: NOW.toISOString(),
         open: true,
       },
     ])
@@ -568,6 +575,8 @@ describe('readToday: the sessions of today (HOJE-06, HOJE-68)', () => {
         id: crossing,
         start_minute: 0,
         end_minute: 30,
+        started_at: SP('2026-11-11T00:00:00').toISOString(),
+        ended_at: SP('2026-11-11T00:30:00').toISOString(),
       }),
     ])
   })
@@ -589,6 +598,23 @@ describe('readToday: the sessions of today (HOJE-06, HOJE-68)', () => {
       }),
     ])
     expect(read.pending.map((item) => item.id)).toEqual([id])
+  })
+
+  it('HOJE-49 the instants of sessions off the whole minute add up, in seconds truncated once, to the reports of today', async () => {
+    const a = await task('today', { position: 0 })
+    const b = await task('today', { position: 1 })
+    await session({ taskId: a, startedAt: SP('2026-11-11T09:00:40'), endedAt: SP('2026-11-11T09:30:20') })
+    await session({ taskId: b, startedAt: SP('2026-11-11T10:10:50'), endedAt: SP('2026-11-11T10:40:10') })
+    const read = await readToday(db, actor(), NOW)
+    const report = await overview(db, userId, { id: workspaceId, timezone: TZ }, { from: TODAY, to: TODAY, listId: null }, NOW)
+    expect(read.sessions.map((item) => [item.started_at, item.ended_at])).toEqual([
+      [SP('2026-11-11T09:00:40').toISOString(), SP('2026-11-11T09:30:20').toISOString()],
+      [SP('2026-11-11T10:10:50').toISOString(), SP('2026-11-11T10:40:10').toISOString()],
+    ])
+    const seconds = Math.floor(read.sessions.reduce((sum, item) => sum + (Date.parse(item.ended_at) - Date.parse(item.started_at)) / 1000, 0))
+    // 29min 40s + 29min 20s = 59min, where the wall-clock minutes (30 + 30) would say 1h.
+    expect(seconds).toBe(59 * 60)
+    expect(seconds).toBe(report.tiles.task_seconds)
   })
 
   it('the task time of the sessions adds up to the task time of the reports for today (HOJE-49)', async () => {

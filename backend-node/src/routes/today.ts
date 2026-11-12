@@ -52,6 +52,8 @@ const sessionSchema = z.object({
   list_color: z.number(),
   start_minute: z.number(),
   end_minute: z.number(),
+  started_at: z.string(),
+  ended_at: z.string(),
   open: z.boolean(),
 })
 const tomorrowSchema = z.object({

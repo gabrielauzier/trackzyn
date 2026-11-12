@@ -77,6 +77,22 @@ describe('GET /api/today (HOJE-06)', () => {
     ])
   })
 
+  it('HOJE-49 answers the instants of each session of today, the open one until the server now', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const startedAt = new Date(Date.now() - 1_000)
+    await call('POST', '/api/focus/start', owner.token, workspaceId, {
+      action_id: randomUUID(),
+      occurred_at: startedAt.toISOString(),
+      device_id: 'A',
+      task_id: pendingId,
+    })
+    const body = (await call('GET', '/api/today', owner.token, workspaceId)).json()
+    const [open] = body.sessions
+    expect(open).toMatchObject({ task_id: pendingId, open: true, ended_at: body.server_now })
+    // A UTC midnight between the start and the read cuts the start at the day.
+    expect([startedAt.toISOString(), `${body.day}T00:00:00.000Z`]).toContain(open.started_at)
+  })
+
   it("answers 200 to a viewer, with the workspace's Pendente and none of the owner's completions", async () => {
     const { viewer, workspaceId, pendingId } = await setup()
     const reply = await call('GET', '/api/today', viewer.token, workspaceId)
