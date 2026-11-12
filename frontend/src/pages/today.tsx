@@ -1,12 +1,13 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarCheck } from 'lucide-react'
+import { CalendarCheck, Moon } from 'lucide-react'
 
 import { formatDuration } from '@/components/board/format-duration'
 import { greetingFor } from '@/components/lists/greeting'
 import { PageHeader } from '@/components/page-header'
+import { CloseDayDialog } from '@/components/today/close-day-dialog'
 import { DayStats } from '@/components/today/day-stats'
 import { DoneCard } from '@/components/today/done-card'
 import { NowCard } from '@/components/today/now-card'
@@ -47,6 +48,7 @@ export default function TodayPage() {
   const { data, isError, refetch } = useToday()
   const listsQuery = useQuery({ queryKey: ['lists', { archived: false }], queryFn: () => listsApi.list({ archived: false }) })
   const focus = useFocus()
+  const [closing, setClosing] = useState(false)
 
   const timeZone = data?.timezone ?? current?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   const now = useNowMinute(timeZone, () => void refetch())
@@ -66,6 +68,12 @@ export default function TodayPage() {
   const period = greetingFor(Math.floor(now.minute / 60))
   const workdayEnd = data ? (clockMinutes(data.workday.end) ?? 0) : 0
   const lists = (listsQuery.data?.lists ?? []).map(({ id, name: listName, color }) => ({ id, name: listName, color }))
+  const session = focus.state?.session
+  const focusList = session?.kind === 'task' ? lists.find((list) => list.id === session.list_id) : undefined
+  const focusTask =
+    focus.state?.task && focusList
+      ? { id: focus.state.task.id, title: focus.state.task.title, estimate_minutes: focus.state.task.estimate_minutes, list: focusList }
+      : null
   const focusLeftSeconds = focus.state?.session?.kind === 'task' && focus.display?.mode === 'countdown' ? focus.display.seconds : 0
 
   return (
@@ -75,12 +83,21 @@ export default function TodayPage() {
         title={t(`home.greeting.${period}`, { name })}
         action={
           data && (
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/planejar/${data.tomorrow}`}>
-                <CalendarCheck size={14} />
-                {t('plan.agenda.planTomorrow')}
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/planejar/${data.tomorrow}`}>
+                  <CalendarCheck size={14} />
+                  {t('plan.agenda.planTomorrow')}
+                </Link>
+              </Button>
+              {/* A viewer cannot move tasks, so it cannot close the day (HOJE-67). */}
+              {canWrite && (
+                <Button size="sm" onClick={() => setClosing(true)}>
+                  <Moon size={14} />
+                  {t('today.close.button')}
+                </Button>
+              )}
+            </div>
           )
         }
       />
@@ -160,6 +177,18 @@ export default function TodayPage() {
         </>
       ) : (
         !isError && <Skeleton className="h-64 w-full" />
+      )}
+
+      {closing && data && (
+        <CloseDayDialog
+          onClose={() => setClosing(false)}
+          workspaceId={current?.id ?? null}
+          workspaceName={current?.name ?? ''}
+          data={data}
+          nowMinute={now.minute}
+          lists={lists}
+          focusTask={focusTask}
+        />
       )}
     </div>
   )

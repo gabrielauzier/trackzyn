@@ -307,7 +307,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-38 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-39 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-40 | P1: Ver o que já foi feito | Tasks | Implementing |
-| HOJE-41 | P3: Fechar o dia | Tasks | In Tasks |
+| HOJE-41 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-42 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
 | HOJE-43 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
 | HOJE-44 | P2: Comparar o plano com o que aconteceu | Tasks | Implementing |
@@ -324,15 +324,15 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-55 | P2: Ver o que vem amanhã | Tasks | Implementing |
 | HOJE-56 | P2: Ver o que vem amanhã | Tasks | Implementing |
 | HOJE-57 | P2: Ver o que vem amanhã | Tasks | Implementing |
-| HOJE-58 | P3: Fechar o dia | Tasks | In Tasks |
-| HOJE-59 | P3: Fechar o dia | Tasks | In Tasks |
-| HOJE-60 | P3: Fechar o dia | Tasks | In Tasks |
+| HOJE-58 | P3: Fechar o dia | Tasks | Implementing |
+| HOJE-59 | P3: Fechar o dia | Tasks | Implementing |
+| HOJE-60 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-61 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-62 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-63 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-64 | P3: Fechar o dia | Tasks | In Tasks |
+| HOJE-64 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-65 | P3: Fechar o dia | Tasks | Implementing |
-| HOJE-66 | P3: Fechar o dia | Tasks | In Tasks |
+| HOJE-66 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-67 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-68 | Edge cases | Tasks | Implementing |
 | HOJE-69 | Edge cases | Tasks | Implementing |

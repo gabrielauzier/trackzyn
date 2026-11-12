@@ -1255,6 +1255,37 @@
         "this_week": "this week",
         "backlog": "backlog"
       }
+    },
+    "close": {
+      "button": "Close the day",
+      "title": "Close the day",
+      "focused": "Focused",
+      "completed": "Completed",
+      "adherence": "Plan adherence",
+      "onTime": "On time",
+      "of": "of {{count}}",
+      "byList": "Time by list",
+      "open": "What is still open",
+      "openHint": "where each one goes",
+      "nothingOpen": "Nothing left open",
+      "destination": "Destination of {{title}}",
+      "to": {
+        "tomorrow": "Tomorrow",
+        "this_week": "This week",
+        "backlog": "Backlog"
+      },
+      "postponed_one": "Postponed {{count}} day in a row",
+      "postponed_other": "Postponed {{count}} days in a row",
+      "note": "Note of the day",
+      "optional": "(optional)",
+      "notePlaceholder": "What got stuck, what you learned, what to remember tomorrow",
+      "summary": "Summary in Markdown",
+      "copy": "Copy on close",
+      "back": "Back",
+      "failed": "Couldn't close the day",
+      "copied": "Summary copied",
+      "copyFailed": "Couldn't copy the summary",
+      "copyAgain": "Copy again"
     }
   }
 }

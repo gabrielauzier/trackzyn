@@ -1255,6 +1255,37 @@
         "this_week": "esta semana",
         "backlog": "backlog"
       }
+    },
+    "close": {
+      "button": "Fechar o dia",
+      "title": "Fechar o dia",
+      "focused": "Focado",
+      "completed": "Concluídas",
+      "adherence": "Aderência ao plano",
+      "onTime": "No prazo",
+      "of": "de {{count}}",
+      "byList": "Tempo por lista",
+      "open": "O que ficou aberto",
+      "openHint": "para onde vai cada uma",
+      "nothingOpen": "Nada ficou aberto",
+      "destination": "Destino de {{title}}",
+      "to": {
+        "tomorrow": "Amanhã",
+        "this_week": "Esta semana",
+        "backlog": "Backlog"
+      },
+      "postponed_one": "Adiada {{count}} dia seguido",
+      "postponed_other": "Adiada {{count}} dias seguidos",
+      "note": "Nota do dia",
+      "optional": "(opcional)",
+      "notePlaceholder": "O que travou, o que aprendeu, o que lembrar amanhã",
+      "summary": "Resumo em Markdown",
+      "copy": "Copiar ao fechar",
+      "back": "Voltar",
+      "failed": "Não foi possível fechar o dia",
+      "copied": "Resumo copiado",
+      "copyFailed": "Não foi possível copiar o resumo",
+      "copyAgain": "Copiar de novo"
     }
   }
 }

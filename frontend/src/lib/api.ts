@@ -37,6 +37,7 @@ import type {
   Task,
   TaskColumn,
   TaskList,
+  TodayCloseMove,
   TodayRead,
   StoredFile,
   Workday,
@@ -498,6 +499,11 @@ export const plans = {
 export const today = {
   get: async (): Promise<TodayRead> => {
     const { data } = await api.get('/today')
+    return data
+  },
+  /** `Fechar o dia` (HOJE-61): moves the pending tasks in one write and answers the day after it. */
+  close: async (moves: TodayCloseMove[]): Promise<TodayRead> => {
+    const { data } = await api.post('/today/close', { moves })
     return data
   },
 }

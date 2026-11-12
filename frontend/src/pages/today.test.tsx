@@ -15,11 +15,12 @@ vi.mock('@/lib/api', () => ({
   tasks: { get: vi.fn(), move: vi.fn() },
   authHeaders: () => ({}),
 }))
+const role = vi.hoisted(() => ({ canWrite: true }))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({
     current: { id: 'ws', name: 'Synthetic workspace', timezone: 'America/Sao_Paulo' },
     workspaces: [{ id: 'ws', name: 'Synthetic workspace' }],
-    canWrite: true,
+    canWrite: role.canWrite,
   }),
 }))
 vi.mock('@/contexts/auth-context', () => ({
@@ -96,6 +97,7 @@ function show() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  role.canWrite = true
   localStorage.clear()
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(AT_1420)
@@ -176,6 +178,24 @@ describe('TodayPage', () => {
     const done = screen.getByRole('heading', { name: 'Done today' }).closest('section')!
     expect(done.parentElement).toBe(tomorrow.parentElement)
     expect(done.compareDocumentPosition(tomorrow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('opens Close the day from the header, beside Plan tomorrow, with the task in focus to place (HOJE-41, HOJE-59)', async () => {
+    vi.mocked(focus.get).mockResolvedValue(focusing())
+    vi.mocked(today.get).mockResolvedValue(day({ pending: [] }))
+    const { user } = show()
+    const button = await screen.findByRole('button', { name: 'Close the day' })
+    expect(button.parentElement).toBe(screen.getByRole('link', { name: 'Plan tomorrow' }).parentElement)
+    await user.click(button)
+    const dialog = await screen.findByRole('dialog', { name: 'Close the day' })
+    expect(await within(dialog).findByRole('group', { name: 'Destination of Review the PR' })).toBeInTheDocument()
+  })
+
+  it('hides Close the day from a viewer (HOJE-67)', async () => {
+    role.canWrite = false
+    show()
+    expect(await screen.findByRole('link', { name: 'Plan tomorrow' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Close the day' })).toBeNull()
   })
 
   it('reads the day again when the card completes the task, so it shows in Done today without waiting 60 s (HOJE-71)', async () => {
