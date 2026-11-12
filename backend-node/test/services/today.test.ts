@@ -846,6 +846,33 @@ describe('readToday: the task in focus for Fechar o dia (HOJE-59, HOJE-75)', () 
     await session({ taskId: plain, startedAt: SP('2026-11-11T14:00:00'), endedAt: null })
     expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
   })
+
+  // Each member has one open session at most (SYNC-01); the two tests together pin the reader filter whichever
+  // open session the database returns first.
+  const occurrence = async (title: string, position: number) => {
+    const id = await task('today', { title, position })
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', createdAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(eq(tasks.id, id))
+    return id
+  }
+
+  it("ignores another member's open session on an occurrence beside the reader's on a plain task (L-048)", async () => {
+    const recurring = await occurrence('Standup', 0)
+    const plain = await task('today', { title: 'Plain', position: 1 })
+    // The reader's session goes in first here and last in the mirror test, so no row order passes both without the filter.
+    await session({ taskId: plain, startedAt: SP('2026-11-11T14:05:00'), endedAt: null })
+    await session({ taskId: recurring, startedAt: SP('2026-11-11T14:00:00'), endedAt: null, user: otherUserId })
+    expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
+  })
+
+  it("reads the reader's open session on an occurrence beside another member's on a plain task (L-048)", async () => {
+    const recurring = await occurrence('Standup', 0)
+    const plain = await task('today', { title: 'Plain', position: 1 })
+    await session({ taskId: plain, startedAt: SP('2026-11-11T14:00:00'), endedAt: null, user: otherUserId })
+    await session({ taskId: recurring, startedAt: SP('2026-11-11T14:05:00'), endedAt: null })
+    expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(true)
+  })
 })
 
 describe('closeDay (HOJE-61, HOJE-62, HOJE-65)', () => {

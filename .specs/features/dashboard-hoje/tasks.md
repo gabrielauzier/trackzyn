@@ -89,6 +89,12 @@ T30
 T31
 ```
 
+### Phase 9: Correção da verificação final
+
+```
+T32
+```
+
 ---
 
 ## Task Breakdown
@@ -944,10 +950,35 @@ T31
 
 ---
 
+### T32: Série só da sessão do leitor
+
+**What**: Dois testes de serviço que provam que `focus_task_series` lê só a sessão aberta do leitor: a de outro membro numa ocorrência ao lado da do leitor numa tarefa comum dá `false`, e o espelho dá `true`, com as sessões inseridas em ordens opostas (mutante B5 da verificação final).
+**Where**: `backend-node/test/services/today.test.ts` (modify)
+**Depends on**: None (fases anteriores)
+**Reuses**: fixtures do próprio arquivo
+**Requirement**: HOJE-75
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Os dois testes passam no código atual, e sem o filtro `s.user_id` ao menos um falha em 6 de 6 execuções (conferido localmente e desfeito)
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): pin the focus task series to the reader`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7
@@ -957,6 +988,7 @@ Phase 5:  T20 → T21 → T22 → T23
 Phase 6:  T24 → T25 → T26 → T27 → T28 → T29
 Phase 7:  T30
 Phase 8:  T31
+Phase 9:  T32
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism.
@@ -1028,6 +1060,7 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T29 | T28 | T28 → T29 | ✅ Match |
 | T30 | None | início da Phase 7 (após T29) | ✅ Match |
 | T31 | None | início da Phase 8 (após T30) | ✅ Match |
+| T32 | None | início da Phase 9 (após T31) | ✅ Match |
 
 ---
 
@@ -1035,7 +1068,7 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | ---- | --------------------------- | --------------- | --------- | ------ |
-| T1, T2, T15, T20, T24, T25, T26, T31 | Serviços do backend | integration | integration | ✅ OK |
+| T1, T2, T15, T20, T24, T25, T26, T31, T32 | Serviços do backend | integration | integration | ✅ OK |
 | T3, T21 | Rotas do backend | integration | integration | ✅ OK |
 | T4, T5, T6, T16, T22, T28 | Funções puras e hooks do frontend | unit | unit | ✅ OK |
 | T7, T8, T9, T10, T11, T12, T13, T14, T17, T18, T19, T23, T27, T29, T30 | Componentes e páginas do frontend | unit | unit | ✅ OK |
