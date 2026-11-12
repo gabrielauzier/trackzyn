@@ -75,6 +75,7 @@ const todaySchema = z.object({
   tomorrow_plan_blocks: z.number(),
   tomorrow_tasks: z.array(tomorrowSchema),
   week_unscheduled: z.number(),
+  focus_task_series: z.boolean(),
 })
 
 const MAX_CLOSE_MOVES = 500

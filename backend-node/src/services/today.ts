@@ -112,6 +112,8 @@ export interface TodayRead {
   tomorrow_tasks: TomorrowTask[]
   /** `This week` tasks without a day (HOJE-55). */
   week_unscheduled: number
+  /** The task of the reader's open task session is an occurrence of a series; false without one (HOJE-75). */
+  focus_task_series: boolean
 }
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
@@ -329,6 +331,11 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
           AND t."column" = 'this_week' AND t.scheduled_on IS NULL`,
   )) as [{ count: number }]
   const tomorrowBlocks = await listPlanned(db, { userId: actor.userId, workspaceId }, tomorrow, tomorrow)
+  const [focus] = await rows<{ series: boolean }>(
+    db,
+    sql`SELECT t.series_id IS NOT NULL AS series FROM focus_sessions s JOIN tasks t ON t.id = s.task_id
+        WHERE s.user_id = ${actor.userId} AND s.ended_at IS NULL AND s.kind = 'task'`,
+  )
 
   return {
     server_now: now.toISOString(),
@@ -348,6 +355,7 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
     tomorrow_plan_blocks: tomorrowBlocks.length,
     tomorrow_tasks: tomorrowTasks,
     week_unscheduled: weekUnscheduled,
+    focus_task_series: focus?.series ?? false,
   }
 }
 

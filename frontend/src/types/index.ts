@@ -583,6 +583,8 @@ export interface TodayRead {
   tomorrow_tasks: TodayTomorrowTask[]
   /** `This week` tasks without a day. */
   week_unscheduled: number
+  /** The task of the open task session is an occurrence of a series (HOJE-75). */
+  focus_task_series: boolean
 }
 
 /** The body of a block for `PUT /api/plans/:day`; `start` is `HH:MM`. */

@@ -815,6 +815,28 @@ describe('readToday: Amanhã (HOJE-54, HOJE-55, HOJE-56)', () => {
   })
 })
 
+describe('readToday: the task in focus for Fechar o dia (HOJE-59, HOJE-75)', () => {
+  it('answers focus_task_series true when the open task session is on an occurrence of a series', async () => {
+    const id = await task('today', { title: 'Standup' })
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', createdAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(eq(tasks.id, id))
+    await session({ taskId: id, startedAt: SP('2026-11-11T14:00:00'), endedAt: null })
+    expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(true)
+  })
+
+  it('answers focus_task_series false when the open task session is on a plain task', async () => {
+    const id = await task('today', { title: 'Plain' })
+    await session({ taskId: id, startedAt: SP('2026-11-11T14:00:00'), endedAt: null })
+    expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
+  })
+
+  it('answers focus_task_series false without an open session', async () => {
+    await task('today', { title: 'Plain' })
+    expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
+  })
+})
+
 describe('closeDay (HOJE-61, HOJE-62, HOJE-65)', () => {
   const TOMORROW = '2026-11-12'
   const state = async (id: string) => {

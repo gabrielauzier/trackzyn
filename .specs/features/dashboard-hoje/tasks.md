@@ -902,9 +902,9 @@ T30
 
 **Done when**:
 
-- [ ] Backend: `focus_task_series` verdadeiro com sessão aberta numa ocorrência de série, falso numa tarefa comum e sem sessão; o schema da rota devolve o campo
-- [ ] Dialog: tarefa em foco recorrente com `Esta semana` e `Backlog` desabilitados e a dica `Encerraria a recorrência`; tarefa em foco comum com os três destinos (L-048)
-- [ ] Gate check passes: Build
+- [x] Backend: `focus_task_series` verdadeiro com sessão aberta numa ocorrência de série, falso numa tarefa comum e sem sessão; o schema da rota devolve o campo
+- [x] Dialog: tarefa em foco recorrente com `Esta semana` e `Backlog` desabilitados e a dica `Encerraria a recorrência`; tarefa em foco comum com os três destinos (L-048)
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build
