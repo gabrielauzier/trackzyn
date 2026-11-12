@@ -484,6 +484,77 @@ export interface PlanCandidate {
 /** A saved block with its day, as the Agenda draws it (`GET /api/plans`, PLAN-24). */
 export type PlannedBlock = PlanBlock & { day: string }
 
+/** A task as the Hoje dashboard shows it (dashboard-hoje). */
+export interface TodayTaskRef {
+  id: string
+  title: string
+  list: PlanListRef
+  estimate_minutes: number | null
+}
+
+/** A task of `Pendente`: the Today column of the active lists, minus the task in focus (HOJE-23). */
+export interface TodayPendingTask extends TodayTaskRef {
+  position: number
+  scheduled_on: string | null
+  /** The minute of `scheduled_time` when the task is scheduled for today. */
+  scheduled_minute: number | null
+  /** The start of the task's first block in today's plan. */
+  plan_minute: number | null
+  has_session_today: boolean
+  /** Today minus `scheduled_on` in calendar days, when that day is before today (HOJE-28). */
+  days_late: number | null
+  subtasks: { done: number; total: number }
+}
+
+/** A task the reader completed today (HOJE-35), with the badge of the reports. */
+export interface TodayDoneTask extends TodayTaskRef {
+  completed_at: string
+  /** All the time of the task, of every member. */
+  spent_seconds: number
+  verdict: 'early' | 'on_time' | 'late' | null
+  diff_seconds: number
+  series: boolean
+}
+
+/** A block of today's plan, in minutes of the day; `done` is a done task or a break already started. */
+export interface TodayPlanBlock {
+  id: string
+  kind: 'task' | 'break'
+  task_id: string | null
+  title: string
+  list_color: number | null
+  start_minute: number
+  minutes: number
+  done: boolean
+}
+
+/** A session of the reader cut to today (HOJE-68); `end_minute` is 1440 at midnight. A break may have no name. */
+export interface TodaySession {
+  id: string
+  kind: 'task' | 'break'
+  task_id: string | null
+  title: string | null
+  list_id: string
+  list_color: number
+  start_minute: number
+  end_minute: number
+  open: boolean
+}
+
+/** `GET /api/today`: the reader's day in the current workspace; minutes are minutes of the day in its timezone. */
+export interface TodayRead {
+  server_now: string
+  day: string
+  tomorrow: string
+  timezone: string
+  now_minute: number
+  workday: Workday
+  pending: TodayPendingTask[]
+  done: TodayDoneTask[]
+  plan: { saved: boolean; blocks: TodayPlanBlock[] }
+  sessions: TodaySession[]
+}
+
 /** The body of a block for `PUT /api/plans/:day`; `start` is `HH:MM`. */
 export type PlanBlockInput =
   | { kind: 'task'; task_id: string; start: string; minutes: number }

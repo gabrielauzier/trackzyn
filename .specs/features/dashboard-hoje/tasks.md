@@ -202,10 +202,10 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] O hook relê ao ganhar o foco da janela e a cada 60 s (testado com timers falsos)
-- [ ] Uma leitura que falha depois de uma boa expõe `isError` e mantém os dados anteriores
-- [ ] A chave muda com o workspace atual
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] O hook relê ao ganhar o foco da janela e a cada 60 s (testado com timers falsos)
+- [x] Uma leitura que falha depois de uma boa expõe `isError` e mantém os dados anteriores
+- [x] A chave muda com o workspace atual
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

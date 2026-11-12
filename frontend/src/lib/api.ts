@@ -36,6 +36,7 @@ import type {
   Task,
   TaskColumn,
   TaskList,
+  TodayRead,
   StoredFile,
   Workday,
   Workspace,
@@ -486,6 +487,14 @@ export const plans = {
   /** Keeps the workday in the user's preferences; answers 422 when the end is not after the start (PLAN-22, PLAN-23). */
   setWorkday: async (workday: Workday): Promise<Workday> => {
     const { data } = await api.put('/users/me/workday', workday)
+    return data
+  },
+}
+
+// Today: the logged-in user's day in the current workspace (dashboard-hoje)
+export const today = {
+  get: async (): Promise<TodayRead> => {
+    const { data } = await api.get('/today')
     return data
   },
 }
