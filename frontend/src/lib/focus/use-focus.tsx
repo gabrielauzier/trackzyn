@@ -106,7 +106,9 @@ export function useFocus(listId?: string) {
     (payload: FocusActionPayload) => {
       const now = serverNow()
       const current = queryClient.getQueryData<FocusState>(key)
-      const list = listId ?? current?.session?.list_id ?? ''
+      // A break given its list opens there; the Hoje dashboard follows no list (dashboard-hoje, HOJE-09).
+      const breakList = payload.type === 'break' && payload.list_id ? payload.list_id : undefined
+      const list = listId ?? breakList ?? current?.session?.list_id ?? ''
       const action = { ...payload, occurred_at: new Date(now).toISOString(), device_id: deviceId(), list_id: list } as FocusAction
       if (current) {
         try {
@@ -129,9 +131,10 @@ export function useFocus(listId?: string) {
       skip: (taskId: string) => act({ type: 'skip', task_id: taskId }),
       complete: (taskId: string) => act({ type: 'complete', task_id: taskId }),
       extend: (taskId: string) => act({ type: 'extend', task_id: taskId }),
-      // From a break of the plan, its id goes along and the server marks it started (PLAN-49).
-      takeBreak: (minutes: number, planBlockId?: string) =>
-        act({ type: 'break', minutes, list_id: listId ?? '', ...(planBlockId ? { plan_block_id: planBlockId } : {}) }),
+      // From a break of the plan, its id goes along and the server marks it started (PLAN-49). Without a list of its
+      // own, the hook opens the break on `breakListId`.
+      takeBreak: (minutes: number, planBlockId?: string, breakListId?: string) =>
+        act({ type: 'break', minutes, list_id: listId ?? breakListId ?? '', ...(planBlockId ? { plan_block_id: planBlockId } : {}) }),
       endBreak: () => act({ type: 'break/end' }),
       recover: (decision: 'keep' | 'cut') => act({ type: 'recover', decision }),
       retry: (actionId: string) => {

@@ -1164,6 +1164,21 @@
       "summary_other": "{{duration}} in {{count}} tasks",
       "spentOf": "{{spent}} of {{estimate}}",
       "empty": "Nothing done today yet"
+    },
+    "now": {
+      "focusLabel": "Now · in focus",
+      "breakLabel": "Now · on a break",
+      "idleLabel": "Now · nothing in focus",
+      "spentOf": "{{spent}} of {{estimate}}",
+      "left": "{{duration}} left · ends at {{time}}",
+      "breakLeft": "{{duration}} left",
+      "elapsed": "{{duration}} elapsed",
+      "extendLabel": "Estimate used up",
+      "spent": "{{duration}} spent",
+      "elsewhere": "In focus in another workspace: {{name}}",
+      "openFocus": "Open focus",
+      "refused": "The server refused: {{action}}",
+      "progress": "Time against the estimate"
     }
   }
 }

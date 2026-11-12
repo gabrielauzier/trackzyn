@@ -1164,6 +1164,21 @@
       "summary_other": "{{duration}} em {{count}} tarefas",
       "spentOf": "{{spent}} de {{estimate}}",
       "empty": "Nada concluído hoje ainda"
+    },
+    "now": {
+      "focusLabel": "Agora · em foco",
+      "breakLabel": "Agora · intervalo",
+      "idleLabel": "Agora · nada em foco",
+      "spentOf": "{{spent}} de {{estimate}}",
+      "left": "faltam {{duration}} · termina às {{time}}",
+      "breakLeft": "faltam {{duration}}",
+      "elapsed": "{{duration}} decorridos",
+      "extendLabel": "Estimativa esgotada",
+      "spent": "{{duration}} gastos",
+      "elsewhere": "Em foco em outro workspace: {{name}}",
+      "openFocus": "Abrir foco",
+      "refused": "O servidor recusou: {{action}}",
+      "progress": "Tempo contra a estimativa"
     }
   }
 }
