@@ -272,7 +272,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-03 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
 | HOJE-04 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
 | HOJE-05 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
-| HOJE-06 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
+| HOJE-06 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
 | HOJE-07 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-08 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-09 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
@@ -289,12 +289,12 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-20 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-21 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-22 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-23 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
+| HOJE-23 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-24 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
-| HOJE-25 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
+| HOJE-25 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-26 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-27 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
-| HOJE-28 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
+| HOJE-28 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-29 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-30 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-31 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
@@ -334,8 +334,8 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-65 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-66 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-67 | P3: Fechar o dia | Tasks | In Tasks |
-| HOJE-68 | Edge cases | Tasks | In Tasks |
-| HOJE-69 | Edge cases | Tasks | In Tasks |
+| HOJE-68 | Edge cases | Tasks | Implementing |
+| HOJE-69 | Edge cases | Tasks | Implementing |
 | HOJE-70 | Edge cases | Tasks | In Tasks |
 | HOJE-71 | Edge cases | Tasks | In Tasks |
 | HOJE-72 | Edge cases | Tasks | In Tasks |
