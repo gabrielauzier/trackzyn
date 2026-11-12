@@ -1,57 +1,47 @@
-# Dashboard Hoje Validation (round 2) - FAIL ❌
+# Dashboard Hoje Validation (round 3) - FAIL ❌
 
-**Verdict**: FAIL ❌
-**Date**: 2026-11-11
-**Spec**: `.specs/features/dashboard-hoje/spec.md` (amended in `fcf0929`: HOJE-20, HOJE-49, HOJE-61, new HOJE-75)
-**Diff range**: whole feature `d2005a9..HEAD` (`c72bf0e`); fix round `fcf0929..HEAD` (T24–T29, 6 commits)
-**Verifier**: independent sub-agent (author ≠ verifier), round 2 of 3
+**Verdict**: FAIL ❌ (one Minor gap; round 3 of 3, so it goes to the user)
+**Date**: 2026-11-12
+**Spec**: `.specs/features/dashboard-hoje/spec.md` (HOJE-01..75)
+**Diff range**: whole feature `d2005a9..HEAD` (`b54da12`); this fix round `c05c54c..HEAD` (T30, commit `b54da12`)
+**Verifier**: independent sub-agent (author ≠ verifier), round 3 of 3
 
-The build gate is green. All 75 ACs have `file:line` evidence, and 11 of 12 mutations were killed. The one survivor makes no difference to any outcome the spec defines. Every round-1 gap is closed. The verdict is FAIL for one reason. T29 left an unapproved `SPEC_DEVIATION` (`close-day-dialog.tsx:105-107`): when the task in focus is an occurrence of a series, the close dialog still offers `Esta semana` and `Backlog`. HOJE-75 says the dialog SHALL offer only `Amanhã` for such a task. The server's 422 protects the data, so the gap is Minor. It still needs a fix or an amendment the user approves.
+The round-2 gap G6 is closed. The task in focus now gets its series flag from the day read (`focus_task_series`), and the dialog disables `Esta semana` and `Backlog` for it. The `SPEC_DEVIATION` at `close-day-dialog.tsx:105-107` is gone. The build gate is green, and all 75 ACs have `file:line` evidence that matches the spec outcome.
+
+The verdict is FAIL for one reason: a sensor mutant survived. If `readToday` drops `s.ended_at IS NULL` from the `focus_task_series` query (`backend-node/src/services/today.ts:337`), every test still passes. A probe in scratch shows the effect. When a closed session today was on an occurrence and the open session is on a plain task, the mutant answers `true`. The plain task in focus would then lose `Esta semana` and `Backlog` in the dialog, which breaks HOJE-59 and HOJE-75 for that task. The shipped code is correct. The weak spot is the tests: none has a closed session next to the open one. The fix is one backend test.
 
 ---
 
-## Round 1 gaps → resolution
+## Round 2 gap → resolution
 
-| Gap | Round 1 | Resolution | Evidence |
+| Gap | Round 2 | Resolution | Evidence |
 | --- | ------- | ---------- | -------- |
-| G1 | `Fechar o dia` ended the series of a recurring task (D29) | ✅ Closed by choosing option (c), now HOJE-75. The server refuses `this_week`/`backlog` for an occurrence with 422 `close_series_needs_tomorrow` before any move (`backend-node/src/services/today.ts:391-393`). `tomorrow` keeps the series. The dialog disables the two destinations for a pending occurrence. | `BE/services/today.test.ts:950-968` (one test per destination: 422, nothing moved, `ended_at` null, `series_id` kept); `:971-976`; `BE/routes/today.test.ts:195-206`; `FE/components/today/close-day-dialog.test.tsx:236-256` |
-| G2 | HOJE-22 toasted the action name, not the API message (`SPEC_DEVIATION`) | ✅ Closed. The queue stores `message` from `extractApiError` (`frontend/src/lib/focus/queue.ts:125-126`), and the toast uses it (`now-card.tsx:320`). The `SPEC_DEVIATION` is gone. | `FE/lib/focus/queue.test.ts:161-168` (`message: 'The task is already done'`), `:170-175` (old conflicts load); `FE/components/today/now-card.test.tsx:300-301` (`toast.error('The task is already done')`, called once) |
-| G3 | `Abrir foco` hidden in the elsewhere state, which the spec didn't say and no test asserted | ✅ Closed. HOJE-20 was amended, and the test asserts that the link is absent. | `FE/components/today/now-card.test.tsx:231` - `queryByRole('link',{name:'Open focus'})).toBeNull()` |
-| G4 | Atomicity under a failure in the middle of the moves was never exercised | ✅ Closed. `setSchedule` is mocked to throw on its 3rd call. All three tasks and the pause roll back. Mutant M2 (no outer transaction) is now killed by this assertion, not by a crash. | `BE/services/today.test.ts:22-34`, `:979-1003` - `injected.calls toBe(3)`, `toEqual(before)`, `endedAt/endReason toBeNull()` |
-| G5 | Focused time counted whole wall-clock minutes | ✅ Closed. `DaySession` now carries `started_at`/`ended_at`, and `sessionSeconds` sums milliseconds and truncates once (`frontend/src/lib/today/rules.ts:145-157`). | `BE/services/today.test.ts:603-618` (09:00:40–09:30:20 + 10:10:50–10:40:10 = `59*60` = `report.tiles.task_seconds`); `FE/components/today/day-stats.test.tsx:72-79` and `close-day-dialog.test.tsx:147-153` (`59min`) |
+| G6 | HOJE-75 not met for the **task in focus**: unapproved `SPEC_DEVIATION`, hard-coded `series: false` at `frontend/src/components/today/close-day-dialog.tsx:105-107` | ✅ Closed. `readToday` computes `focus_task_series` from the reader's open task session (`backend-node/src/services/today.ts:334-338`, returned at `:358`, typed at `:115-116`). The route schema exposes it (`backend-node/src/routes/today.ts:78`), and so does the client type (`frontend/src/types/index.ts:578-579`). The dialog uses it for the focus row (`close-day-dialog.tsx:105`), and the existing `endsSeries` rule (`:236`) disables the other two destinations. The `SPEC_DEVIATION` comment is removed. | Service: `backend-node/test/services/today.test.ts:819-826` (open session on an occurrence → `toBe(true)`), `:828-832` (plain task → `toBe(false)`), `:834-837` (no session → `toBe(false)`). Route: `backend-node/test/routes/today.test.ts:97-109` (`focus_task_series toBe(true)` over HTTP), `:44` (`false` in the exact owner shape). Dialog: `frontend/src/components/today/close-day-dialog.test.tsx:258-268` (recurring focus task: `Tomorrow` enabled and pressed; `This week`/`Backlog` `toBeDisabled()` with `title 'Would end the recurrence'`), `:270-277` (plain focus task: all three enabled, no `title`) |
 
-### Fix-round notes judged
-
-**(a) T28 changed three exact-shape assertions in `queue.test.ts`.** These are line 85, which runs twice through `it.each` (409 and 422), and line 190 (SYNC-05 reload). Each `toEqual` still checks the exact shape. The only change is the extra `message: 'refused'`, which matches the fixture's `detail: 'refused'` (line 19). Exact equality over a larger object is stricter than before, so nothing was weakened. Mutant M8 (message not persisted) fails all three. One thing doesn't fit the task: T28's Done-when says "Os testes existentes do foco continuam passando sem mudança de asserção". That can't hold when the stored shape grows, and the change is the right one. Cosmetic.
-
-**(b) T29 `SPEC_DEVIATION`: the task in focus keeps all three destinations.** This is a blocking gap (G6, Minor).
-- HOJE-75 applies to "a pendência". In P3 the dialog's pendências include the task in focus. HOJE-59 lists "as tarefas de `Pendente` e a tarefa em foco", and HOJE-63 writes "o destino de cada pendência", which covers it. The dialog half of HOJE-75 is therefore unmet whenever the task in focus is an occurrence. That case is realistic, since occurrences reach `Hoje` through the schedule and focus starts there.
-- The stated reason is that the focus state lacks a series flag. That is true of `FocusState.task` (`frontend/src/types/index.ts:262-270`). But the feature's own read can supply the flag. `readToday` already finds the open session and removes its task from `pending`, and the same query computes `t.series_id IS NOT NULL AS series` (`backend-node/src/services/today.ts:223`). The fix is small and stays inside the feature.
-- The server half holds. The 422 rejects the whole close before any move (M1 killed), and the dialog stays open with the error (`close-day-dialog.test.tsx:258-266`). No data can be lost. But the user hits an error the dialog promised to prevent, and the alert does not say which task caused it.
-- The rule round 1 applied to the HOJE-22 deviation applies here too: an unapproved `SPEC_DEVIATION` on an AC is a gap. No test covers the dialog with a series task in focus.
+**SPEC_DEVIATION grep** (`grep -rn SPEC_DEVIATION backend-node/src frontend/src`): no marker remains on any acceptance criterion of this feature. One marker added by the feature remains: `backend-node/src/services/today.ts:74` (from `0285293`, T1). It records that `DaySession.title` is typed `string | null` instead of the design's `string`, because a break has no name of its own. That is a design-typing note, not an AC deviation, and rounds 1 and 2 accepted it. The other hits (`services/scheduled.ts:9,38`, `routes/lists.ts:113`, `components/plan/block-editor.tsx:86`) are not in `d2005a9..HEAD`.
 
 ---
 
 ## Task Completion
 
-T1–T29 are marked `[x]` in `tasks.md`. Each of T24–T29 has its own commit (`8c310b6`, `1fef1ca`, `8d0d88c`, `8ff605a`, `65ceb43`, `c72bf0e`). None is blocked or partial.
+T1–T30 are marked `[x]` in `tasks.md`. T30 has its own commit (`b54da12`), and its Done-when items are checked (`tasks.md:905-907`). None is blocked or partial.
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in English (`en.json` text for the pt-BR copy in the spec). Line numbers are those at `c72bf0e`.
+Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in English (the `en.json` text for the spec's pt-BR copy). Line numbers are those at `b54da12`. ACs whose code and tests did not change in `c05c54c..HEAD` keep the round-2 evidence, re-checked here. T30 added fixture lines, so some citations moved: `FE/pages/today.test.tsx`, `FE/lib/today/use-today.test.tsx` and `FE/App.test.tsx` by +1 line, and the files T30 changed as shown below.
 
 ### P1: Ver o dia ao abrir o app
 
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
-| HOJE-01 | `/` is the dashboard; `Hoje` is the first sidebar item, marked | `FE/components/app-layout.test.tsx:209-217` - `links[0]` name `'Today'`, `href '/'`, `aria-current 'page'`; `FE/App.test.tsx:85-89` | ✅ |
-| HOJE-02 | Grid at `/lists`; `Criar nova lista` → `/lists?new=1` | `FE/App.test.tsx:100-111`; `FE/components/app-layout.test.tsx:194-199` - `href '/lists?new=1'` | ✅ |
-| HOJE-03 | Greeting, day in full, time, `4h 40min até o fim do dia (19:00)` | `FE/pages/today.test.tsx:114-117` | ✅ |
-| HOJE-04 | `Jornada encerrada às <HH:MM>` after the workday | `FE/pages/today.test.tsx:120-124` | ✅ |
-| HOJE-05 | `Planejar amanhã` → `/planejar/<amanhã>` | `FE/pages/today.test.tsx:127-129` - `href '/planejar/2026-11-12'` | ✅ |
-| HOJE-06 | Reader's sessions/completions/plan; workspace Pendente | `BE/services/today.test.ts:232`, `:449`; `BE/routes/today.test.ts:32`, viewer test `:96-100` | ✅ |
+| HOJE-01 | `/` is the dashboard; `Hoje` is the first sidebar item, marked | `FE/components/app-layout.test.tsx:209-217` - `links[0]` name `'Today'`, `href '/'`, `aria-current 'page'`; `FE/App.test.tsx:86-90` | ✅ |
+| HOJE-02 | Grid at `/lists`; `Criar nova lista` → `/lists?new=1` | `FE/App.test.tsx:101-112`; `FE/components/app-layout.test.tsx:194-199` - `href '/lists?new=1'` | ✅ |
+| HOJE-03 | Greeting, day in full, time, `4h 40min até o fim do dia (19:00)` | `FE/pages/today.test.tsx:115-118` | ✅ |
+| HOJE-04 | `Jornada encerrada às <HH:MM>` after the workday | `FE/pages/today.test.tsx:121-125` | ✅ |
+| HOJE-05 | `Planejar amanhã` → `/planejar/<amanhã>` | `FE/pages/today.test.tsx:128-130` - `href '/planejar/2026-11-12'` | ✅ |
+| HOJE-06 | Reader's sessions, completions and plan; the workspace's Pendente | `BE/services/today.test.ts:232`, `:449`; `BE/routes/today.test.ts:33-45` (exact shape, now with `focus_task_series: false`), viewer `:111-117` | ✅ |
 
 ### P1: Saber o que está acontecendo agora
 
@@ -60,32 +50,32 @@ Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in En
 | HOJE-07 | `Agora · em foco`, `32min de 1h 30min`, time left and end, 3 buttons | `FE/components/today/now-card.test.tsx:136-142` | ✅ |
 | HOJE-08 | No estimate: elapsed only, no bar, no end | `now-card.test.tsx:148-151` | ✅ |
 | HOJE-09 | Same focus actions | `now-card.test.tsx:157-175` | ✅ |
-| HOJE-10 | `Agora · intervalo`, name, left, `Encerrar intervalo` | `now-card.test.tsx:195-200` | ✅ |
+| HOJE-10 | `Agora · intervalo`, name, time left, `Encerrar intervalo` | `now-card.test.tsx:195-200` | ✅ |
 | HOJE-11 | Dashed 2px suggested block, time, started ago, 3 buttons | `now-card.test.tsx:373-382`; `FE/lib/today/rules.test.ts:137-171` | ✅ |
 | HOJE-12 | `Nada planejado para agora`, count + sum, 2 buttons | `now-card.test.tsx:444-450` | ✅ |
 | HOJE-13 | `Sem foco há 1h · última sessão: …` / `Nenhuma sessão hoje` | `now-card.test.tsx:468-482` | ✅ |
-| HOJE-14 | Move to top of `Hoje`, then start | `now-card.test.tsx:387-405` - `move(…,{column:'today',before_task_id})`, order `['move','start']` | ✅ |
+| HOJE-14 | Move to the top of `Hoje`, then start | `now-card.test.tsx:387-405` - `move(…,{column:'today',before_task_id})`, order `['move','start']` | ✅ |
 | HOJE-15 | Picker of Pendente, then start | `FE/components/today/task-picker.test.tsx:48-72`; `now-card.test.tsx:427`, `:459` | ✅ |
 | HOJE-16 | `Planejar hoje` → `/planejar/<hoje>` | `now-card.test.tsx:450` | ✅ |
-| HOJE-17 | `Abrir foco` → session / suggested / first Pendente list | `now-card.test.tsx:212`, `:495-505` | ✅ |
+| HOJE-17 | `Abrir foco` → session / suggested block / first Pendente list | `now-card.test.tsx:212`, `:495-505` | ✅ |
 | HOJE-18 | No session, suggestion or Pendente → no link | `now-card.test.tsx:514` - `queryByRole('link',{name:'Open focus'})).toBeNull()` | ✅ |
-| HOJE-19 | Title links to the same place | `now-card.test.tsx:212` | ✅ |
-| HOJE-20 | `Em foco em outro workspace: <nome>`, no buttons, **no `Abrir foco`** | `now-card.test.tsx:229-231` - text, `queryByRole('button')` null, `Open focus` link null | ✅ (G3 closed; M12 killed) |
-| HOJE-21 | Viewer sees no action button | `now-card.test.tsx:235-245`, `:518-525` | ✅ |
-| HOJE-22 | **The API message** in a toast; the card returns to the server state | `now-card.test.tsx:300-301` - `toast.error('The task is already done')`, once; `:275` - invalidate `['focus']`; `FE/lib/focus/queue.test.ts:167` | ✅ (G2 closed; M8, M9 killed) |
+| HOJE-19 | The title links to the same place | `now-card.test.tsx:212` | ✅ |
+| HOJE-20 | `Em foco em outro workspace: <nome>`, no buttons, no `Abrir foco` | `now-card.test.tsx:229-231` | ✅ |
+| HOJE-21 | A viewer sees no action button | `now-card.test.tsx:235-245`, `:518-525` | ✅ |
+| HOJE-22 | The API message in a toast; the card returns to the server state | `now-card.test.tsx:300-301` - `toast.error('The task is already done')`; `:275`; `FE/lib/focus/queue.test.ts:167` | ✅ |
 | HOJE-74 | `Estimativa esgotada`, time spent, Estender/Concluir | `now-card.test.tsx:181-188` | ✅ |
 
 ### P1: Ver o que falta e se cabe
 
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
-| HOJE-23 | Hoje column, active lists, minus open task; `5 tarefas · 4h 58min estimadas` | `BE/services/today.test.ts:232-300`; `FE/components/today/pending-card.test.tsx:66-68` | ✅ |
+| HOJE-23 | Hoje column, active lists, minus the open task; `5 tarefas · 4h 58min estimadas` | `BE/services/today.test.ts:232-300`; `FE/components/today/pending-card.test.tsx:66-68` | ✅ |
 | HOJE-24 | 1px border, 8px corners, dot, meta, pill / `Sem estimativa` | `FE/components/today/task-tile.test.tsx:14-27`; `pending-card.test.tsx:110` | ✅ |
-| HOJE-25 | First group in order, empty groups hidden | `FE/lib/today/rules.test.ts:30-86`; `pending-card.test.tsx:72-84` | ✅ |
-| HOJE-26 | Count per group; order by start then position | `pending-card.test.tsx:72`, `:88-94`; `rules.test.ts:90-98` | ✅ |
-| HOJE-27 | `13:00 · passou há 1h 20min` amber, amber border | `pending-card.test.tsx:98-101`; `task-tile.test.tsx:36` | ✅ |
-| HOJE-28 | `há N dias` | `BE/services/today.test.ts:232` (days_late); `pending-card.test.tsx:105-106` - `'3 days ago'` | ✅ |
-| HOJE-29 | Estimates + focus remainder vs time to end (0 after) | `rules.test.ts:102-122`; `pending-card.test.tsx:117`, `:134` | ✅ |
+| HOJE-25 | First matching group in order; empty groups hidden | `FE/lib/today/rules.test.ts:30-86`; `pending-card.test.tsx:72-84` | ✅ |
+| HOJE-26 | Count per group; order by start, then position | `pending-card.test.tsx:72`, `:88-94`; `rules.test.ts:90-98` | ✅ |
+| HOJE-27 | `13:00 · passou há 1h 20min` in amber, amber border | `pending-card.test.tsx:98-101`; `task-tile.test.tsx:36` | ✅ |
+| HOJE-28 | `há N dias` | `BE/services/today.test.ts:232`; `pending-card.test.tsx:105-106` - `'3 days ago'` | ✅ |
+| HOJE-29 | Estimates + focus remainder vs time to the end (0 after) | `rules.test.ts:102-122`; `pending-card.test.tsx:117`, `:134` | ✅ |
 | HOJE-30 | Amber, `Não cabe no dia: sobram <diff> de tarefa`, hatched | `pending-card.test.tsx:120-123` | ✅ |
 | HOJE-31 | `Cabe no dia: <diff> livre`, no alert color | `pending-card.test.tsx:127-130` | ✅ |
 | HOJE-32 | `N sem estimativa, contadas como 0` | `pending-card.test.tsx:139-140`; `rules.test.ts:133` | ✅ |
@@ -96,25 +86,25 @@ Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in En
 
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
-| HOJE-35 | Reader's completions today, newest first | `BE/services/today.test.ts:662-700`; `FE/components/today/done-card.test.tsx:80` | ✅ |
+| HOJE-35 | The reader's completions today, newest first | `BE/services/today.test.ts:662-700`; `FE/components/today/done-card.test.tsx:80` | ✅ |
 | HOJE-36 | `3h 22min em 4 tarefas` | `done-card.test.tsx:74` | ✅ |
 | HOJE-37 | Gray card, done icon, `<lista> · <tempo> de <estimativa>`, badge colors | `done-card.test.tsx:90-96`; `task-tile.test.tsx:47-70` | ✅ |
 | HOJE-38 | No estimate: time only, no badge | `done-card.test.tsx:100-102`; `BE/services/today.test.ts:713` | ✅ |
 | HOJE-39 | `Nada concluído hoje ainda` | `done-card.test.tsx:108` | ✅ |
-| HOJE-40 | Other member's / yesterday's completion left out | `BE/services/today.test.ts:681`, `:687` | ✅ |
+| HOJE-40 | Another member's or yesterday's completion is left out | `BE/services/today.test.ts:681`, `:687` | ✅ |
 
 ### P2: Plano × real, números, Amanhã
 
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
-| HOJE-42 | Plan and Actual rows, same scale | `FE/components/today/plan-vs-real.test.tsx:64-68` | ✅ |
-| HOJE-43 | Full hour before earliest to full hour after latest, one tick per hour | `plan-vs-real.test.tsx:75-103`; `rules.test.ts:241-253` | ✅ |
+| HOJE-42 | Plan and Actual rows on the same scale | `FE/components/today/plan-vs-real.test.tsx:64-68` | ✅ |
+| HOJE-43 | Whole hour before the earliest to whole hour after the latest; one tick per hour | `plan-vs-real.test.tsx:75-103`; `rules.test.ts:241-253` | ✅ |
 | HOJE-44 | Dashed blocks, solid sessions with white text, gray breaks | `plan-vs-real.test.tsx:110-132` | ✅ |
 | HOJE-45 | Open session to now; `agora` line | `plan-vs-real.test.tsx:140-144` | ✅ |
 | HOJE-46 | Hover: title, start–end | `plan-vs-real.test.tsx:151-158` | ✅ |
 | HOJE-47 | `Sem plano para hoje` + link | `plan-vs-real.test.tsx:165-172` | ✅ |
-| HOJE-48 | Horizontal scroll in the card | `plan-vs-real.test.tsx:177` - `overflow-x-auto`, `min-w-[720px]` | ✅ (classes only, jsdom) |
-| HOJE-49 | Reports total for today, **seconds summed and truncated once**, off-minute sessions too; `intervalos` | `BE/services/today.test.ts:616-617` - `toBe(59*60)`, `toBe(report.tiles.task_seconds)`; `BE/routes/today.test.ts:91`; `FE/components/today/day-stats.test.tsx:78` - `'59min'`; `close-day-dialog.test.tsx:152`; `day-stats.test.tsx:64-65` (open session to now, breaks) | ✅ (G5 closed; M3, M5, M7 killed, M6 equivalent) |
+| HOJE-48 | Horizontal scroll inside the card | `plan-vs-real.test.tsx:177` - `overflow-x-auto`, `min-w-[720px]` | ✅ (classes only, jsdom) |
+| HOJE-49 | Reports total for today, seconds summed and truncated once; `intervalos` | `BE/services/today.test.ts:616-617` - `toBe(59*60)`; `BE/routes/today.test.ts:81-95`; `FE/components/today/day-stats.test.tsx:78` - `'59min'`; `close-day-dialog.test.tsx:148-153`; `day-stats.test.tsx:64-65` | ✅ |
 | HOJE-50 | `<feitas> de <planejadas> no plano`; segment colors | `day-stats.test.tsx:81-92` | ✅ |
 | HOJE-51 | No plan: Feito hoje count + `sem plano hoje` | `day-stats.test.tsx:95-100` | ✅ |
 | HOJE-52 | Adherence %; `—` + `sem blocos até agora` | `rules.test.ts:191-216`; `day-stats.test.tsx:104-112` | ✅ |
@@ -124,60 +114,56 @@ Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in En
 | HOJE-56 | `Amanhã ainda não tem plano` / `Plano de amanhã: N blocos`, button | `BE/services/today.test.ts:799`, `:811`; `tomorrow-card.test.tsx:84-100` | ✅ |
 | HOJE-57 | `Nada marcado para amanhã` | `tomorrow-card.test.tsx:103-112` | ✅ |
 
-### P3: Fechar o dia
+### P3: Fechar o dia (rows re-checked: T30 touched the dialog and the day read)
 
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
-| HOJE-41 | Button beside Planejar amanhã; dialog with day, time, Focado, Concluídas, Aderência, No prazo | `FE/pages/today.test.tsx:183-191`; `FE/components/today/close-day-dialog.test.tsx:134-144` | ✅ |
-| HOJE-58 | Focused by list, stacked bar + legend | `close-day-dialog.test.tsx:155-161` | ✅ |
-| HOJE-59 | Pendente + task in focus, each starting at `Amanhã` | `close-day-dialog.test.tsx:167-170`; `today.test.tsx:191` | ✅ |
-| HOJE-60 | `Adiada N dias seguidos` from 3 days | `close-day-dialog.test.tsx:175-178` | ✅ |
-| HOJE-61 | One write; tomorrow → `this_week` + tomorrow, no time; this_week/backlog without a day; **a failure in the middle rolls back the earlier moves** | `BE/services/today.test.ts:828-860` (destinations, D21); `:979-1003` - failure on the 3rd `setSchedule`, `toEqual(before)` | ✅ (G4 closed; M2 killed by this assertion) |
-| HOJE-75 | Occurrence: dialog offers only `Amanhã`, others disabled with `Encerraria a recorrência`; server 422 `close_series_needs_tomorrow` for this_week/backlog, nothing moved | Server: `BE/services/today.test.ts:950-968` (`statusCode 422`, `code`, `toEqual(before)`, series `endedAt` null), `:971-976` (tomorrow keeps the series), `:261-268` (`series` flag); `BE/routes/today.test.ts:195-206`. Dialog, pending occurrence: `close-day-dialog.test.tsx:236-256` (`toBeDisabled`, `title 'Would end the recurrence'`, plain task enabled), `:258-266` (422 keeps the dialog open) | ❌ GAP (G6): the dialog half is unmet for the **task in focus**, an unapproved `SPEC_DEVIATION` at `frontend/src/components/today/close-day-dialog.tsx:105-107` with no test |
-| HOJE-62 | Pause the open session before moving | `BE/services/today.test.ts:865-888` | ✅ |
-| HOJE-63 | Markdown summary, note at the end | `FE/lib/today/summary.test.ts:32-34`; `close-day-dialog.test.tsx:182-188` | ✅ |
-| HOJE-64 | Copy + `Resumo copiado` | `close-day-dialog.test.tsx:193-211` | ✅ |
-| HOJE-65 | Error, nothing moved, dialog keeps choices | `BE/services/today.test.ts:891-929`, `:979-1003`; `close-day-dialog.test.tsx:222-231` | ✅ |
-| HOJE-66 | Closes anyway; `Não foi possível copiar o resumo` + `Copiar de novo` | `close-day-dialog.test.tsx:268-280` | ✅ |
-| HOJE-67 | Viewer: no button (403 on the route) | `FE/pages/today.test.tsx:194-198`; `BE/routes/today.test.ts:144` | ✅ |
+| HOJE-41 | Button beside Planejar amanhã; dialog with the day, time, Focado, Concluídas, Aderência, No prazo | `FE/pages/today.test.tsx:184-193`; `FE/components/today/close-day-dialog.test.tsx:136-146` | ✅ |
+| HOJE-58 | Focused time by list, stacked bar + legend | `close-day-dialog.test.tsx:156-166` | ✅ |
+| HOJE-59 | Pendente + the task in focus, each starting at `Amanhã`, with the three-way selector | `close-day-dialog.test.tsx:168-174`; `:270-277` (plain focus task: `Tomorrow`, `This week`, `Backlog` all `toBeEnabled()`); `FE/pages/today.test.tsx:184-193` | ✅ (but see G7: the backend flag for a plain focus task is not pinned against a closed series session) |
+| HOJE-60 | `Adiada N dias seguidos` from 3 days | `close-day-dialog.test.tsx:176-181` | ✅ |
+| HOJE-61 | One write; tomorrow → `this_week` + tomorrow, no time; this_week/backlog without a day; a failure in the middle rolls back the earlier moves | `BE/services/today.test.ts:850-867` (destinations), `:878` (D21), `:1001-1025` (failure on the 3rd `setSchedule`, `toEqual(before)`); `close-day-dialog.test.tsx:194-210` | ✅ |
+| HOJE-75 | Occurrence: the dialog offers only `Amanhã`, the others disabled with `Encerraria a recorrência`; the server answers 422 `close_series_needs_tomorrow` for this_week/backlog and moves nothing | Server: `BE/services/today.test.ts:971-991` (one test per destination: `statusCode 422`, `code`, `toEqual(before)`, series `endedAt` null), `:993-998` (tomorrow keeps the series), `:261-268` (`series` flag on Pendente), `:819-837` (`focus_task_series` true/false/false); `BE/routes/today.test.ts:97-109`, `:210-221`. Dialog: pending occurrence `close-day-dialog.test.tsx:237-256`; **task in focus that is an occurrence `:258-268`** (`toBeDisabled()`, `title 'Would end the recurrence'`, `pressed` = `'Tomorrow'`); plain task in focus `:270-277`; 422 keeps the dialog open `:279-288` | ✅ (G6 closed; see G7 for a weak test) |
+| HOJE-62 | Pause the open session before moving | `BE/services/today.test.ts:887-903` | ✅ |
+| HOJE-63 | Markdown summary, note at the end | `FE/lib/today/summary.test.ts:32-34`; `close-day-dialog.test.tsx:183-192` | ✅ |
+| HOJE-64 | Copy + `Resumo copiado` | `close-day-dialog.test.tsx:194-221` | ✅ |
+| HOJE-65 | Error, nothing moved, the dialog keeps the choices | `BE/services/today.test.ts:913-951`, `:1001-1025`; `close-day-dialog.test.tsx:223-235` | ✅ |
+| HOJE-66 | Closes anyway; `Não foi possível copiar o resumo` + `Copiar de novo` | `close-day-dialog.test.tsx:290-305` | ✅ |
+| HOJE-67 | Viewer: no button (403 on the route) | `FE/pages/today.test.tsx:195-200`; `BE/routes/today.test.ts:159-164` | ✅ |
 
 ### Edge cases
 
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
-| HOJE-68 | 23:30–00:30 counts as 00:00–00:30 (instants too) | `BE/services/today.test.ts:566-582` - `start_minute 0`, `started_at SP('…T00:00:00')` | ✅ |
-| HOJE-69 | New timezone → new day on next read | `BE/services/today.test.ts:215-224` | ✅ |
+| HOJE-68 | 23:30–00:30 counts as 00:00–00:30 (instants too) | `BE/services/today.test.ts:566-582` | ✅ |
+| HOJE-69 | A new timezone gives a new day on the next read | `BE/services/today.test.ts:215-224` | ✅ |
 | HOJE-70 | Switch to the new day at midnight | `FE/lib/today/use-now-minute.test.tsx:65-78` | ✅ |
-| HOJE-71 | Re-read within 60 s or on focus | `FE/lib/today/use-today.test.tsx:94-122`; `today.test.tsx:201-211` | ✅ |
-| HOJE-72 | Empty cards + `Criar lista` | `pending-card.test.tsx:166-168`; `today.test.tsx:233-236` | ✅ |
-| HOJE-73 | Keep last data; `Não foi possível atualizar` + `Tentar de novo` | `use-today.test.tsx:125-133`; `today.test.tsx:214-230` | ✅ |
+| HOJE-71 | Re-read within 60 s or on focus | `FE/lib/today/use-today.test.tsx:95-123`; `FE/pages/today.test.tsx:202-213` | ✅ |
+| HOJE-72 | Empty cards + `Criar lista` | `pending-card.test.tsx:166-168`; `FE/pages/today.test.tsx:234-237` | ✅ |
+| HOJE-73 | Keep the last data; `Não foi possível atualizar` + `Tentar de novo` | `use-today.test.tsx:126-134`; `FE/pages/today.test.tsx:215-232` | ✅ |
 
-**Status**: ❌ 74/75 ACs match the spec outcome. HOJE-75 is partly unmet (G6). There are no spec-precision gaps left: HOJE-17/20, HOJE-49 and HOJE-61/65 were made precise and are now asserted.
+**Status**: 75/75 ACs have `file:line` evidence that matches the spec outcome. There are no spec-precision gaps. One test is weak (G7, from the sensor): the backend never checks that `focus_task_series` describes the *open* session.
 
 ---
 
 ## Discrimination Sensor
 
-The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/sensor HEAD`, with `node_modules` symlinked from the real tree. It never used `git stash`. Before any mutation, the scratch passed the targeted suites (backend `today` service + route 70/70, frontend `components/today`, `lib/today`, `lib/focus`, `pages/today` 288/288). Each mutant was applied, the targeted suites ran, and the file was reverted with `git checkout --`. Mutations target the fix round.
+The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/sensor HEAD`, with `node_modules` symlinked from the real tree. It never used `git stash`. Before any mutation, the scratch passed the targeted suites: backend `test/services/today.test.ts` + `test/routes/today.test.ts` 74/74, and frontend `close-day-dialog.test.tsx` 15/15. A script applied each mutant (it asserts exactly one match). The tests ran: the backend files filtered to `focus_task_series|HOJE-06|owner's day`, and the whole dialog file. Then `git checkout --` reverted the mutant. All mutants target T30.
 
 | # | File:line | Mutation | Killed? | Killed by |
 | - | --------- | -------- | ------- | --------- |
-| M1 | `backend-node/src/services/today.ts:393` | closeDay: series guard removed | ✅ | 3 tests: service HOJE-75 this_week + backlog, route HOJE-75 |
-| M2 | `today.ts:374` | closeDay: no outer transaction | ✅ | HOJE-61/65 mid-move rollback (`today.test.ts:999`) + HOJE-65 pause rollback |
-| M3 | `today.ts:294` | readToday: instants truncated to the minute | ✅ | service HOJE-49 seconds test, route HOJE-49 |
-| M4 | `today.ts:223` | readToday: `pending.series` always false | ✅ | service `series` flag test, route HOJE-75 |
-| M5 | `frontend/src/lib/today/rules.ts:154` | sessionSeconds: wall-clock minutes instead of instants | ✅ | DayStats + CloseDayDialog `59min` |
-| M6 | `rules.ts:156` | sessionSeconds: `floor(ms/60000)*60` instead of `floor(ms/1000)` | ⚪ Survived (equivalent) | `formatDuration` floors to whole minutes (`format-duration.ts:7`), so every displayed total is the same. Only the unspecified rounding of the HOJE-53 average could move by a minute in rare cases. No spec outcome changes, so no fix task. |
-| M7 | `rules.ts:153` | sessionSeconds: open session not carried to now | ✅ | 4 tests (DayStats HOJE-49/53, dialog HOJE-41/63) |
-| M8 | `frontend/src/lib/focus/queue.ts:126` | queue: `message` not persisted | ✅ | 4 tests (HOJE-22 queue, SYNC-07 ×2, SYNC-05) |
-| M9 | `frontend/src/components/today/now-card.tsx:320` | toast ignores `conflict.message` | ✅ | NowCard "shows exactly the API message" |
-| M10 | `frontend/src/components/today/close-day-dialog.tsx:244` | series destinations not disabled | ✅ | dialog HOJE-75 |
-| M11 | `close-day-dialog.tsx:238` | only `Backlog` disabled for a series | ✅ | dialog HOJE-75 |
-| M12 | `now-card.tsx:233` | `Abrir foco` shown in the elsewhere state | ✅ | NowCard HOJE-20 |
+| B1 | `backend-node/src/services/today.ts:358` | `focus_task_series` forced `false` | ✅ | service `:819` (true for an occurrence), route `:97` |
+| B2 | `today.ts:358` | `focus_task_series` forced `true` | ✅ | service `:828` (plain → false), `:834` (no session → false), route `:33` (exact shape) |
+| B3 | `today.ts:337` | session kind ignored (drop `s.kind = 'task'`) | ⚪ Survived (equivalent) | A break always has `task_id` null (`backend-node/src/services/focus.ts:321-322`), so the inner `JOIN tasks` already drops it. No reachable state tells the two apart, and the test helper derives `kind` from `taskId` (`BE/services/today.test.ts:139`). No fix task. |
+| B4 | `today.ts:337` | "open" ignored (drop `s.ended_at IS NULL`) | ❌ **Survived** | No test has a closed session. A scratch probe (closed session today on an occurrence, then an open session on a plain task, expecting `false`) passes on the real code and fails on B4, so the fault is visible: the plain task in focus would lose `Esta semana`/`Backlog` (HOJE-59). → **G7** |
+| B5 | `today.ts:337` | reader ignored (drop `s.user_id = …`) | ✅ | route `:97` |
+| F1 | `frontend/src/components/today/close-day-dialog.tsx:105` | the dialog ignores the flag (`series: false`, the round-2 code) | ✅ | dialog `:258` |
+| F2 | `close-day-dialog.tsx:236` | only `Backlog` disabled for a series (`to === 'backlog'`) | ✅ | dialog `:237`, `:258` |
+| F3 | `close-day-dialog.tsx:105` | the focus task is always a series (`series: true`) | ✅ | dialog `:270` |
 
-**Sensor depth**: expanded (12 manual mutations over the fix round: series guard, rollback, seconds in the service and the client, queue message, toast, dialog destinations, elsewhere link).
-**Sensor outcome**: 11/12 killed. 1 survived as an equivalent mutant (M6), with no effect on a spec outcome.
-**Isolation**: the scratch worktree was removed (`git worktree remove --force` + `git worktree prune`). The real tree's `git status --porcelain` matches the pre-sensor baseline (empty).
+**Sensor depth**: expanded (8 manual mutations over T30: the flag value both ways, each WHERE condition of the query, and the dialog's use of the flag and its disabling rule).
+**Sensor outcome**: 6/8 killed. 1 survivor is equivalent (B3). 1 real survivor (B4), now G7.
+**Isolation**: the scratch worktree was removed (`git worktree remove --force` + `git worktree prune`), and `git worktree list` no longer shows it. The real tree's `git status --porcelain` matches the pre-sensor baseline (empty).
 
 ---
 
@@ -185,23 +171,23 @@ The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/s
 
 | Principle | Status |
 | --------- | ------ |
-| Minimum code | ✅ |
-| Surgical changes | ✅ (fixture helpers gained `started_at`/`ended_at`/`series`; no unrelated edits) |
+| Minimum code | ✅ (one query, one field, a one-line dialog change) |
+| Surgical changes | ✅ (the other `+1` lines in `App.test.tsx`, `admin-route.test.tsx`, `use-today.test.tsx` and `pages/today.test.tsx` only add the new required field to `TodayRead` fixtures) |
 | No scope creep | ✅ |
-| Matches patterns | ✅ (`extractApiError`, `HttpError` with `code`, `vi.mock` partial of `schedule.ts`) |
-| Spec-anchored outcome check | ❌ HOJE-75 dialog half not met for the task in focus (G6) |
-| Per-layer coverage (domain 1:1, routes happy + edge + error) | ✅ (route 422 `close_series_needs_tomorrow` added) |
+| Matches patterns | ✅ (`rows<T>` + `sql`, a zod field on the route schema, the existing `endsSeries` rule) |
+| Spec-anchored outcome check | ✅ |
+| Per-layer coverage (domain 1:1, routes happy + edge + error) | ⚠️ The service covers true, false and none for the flag, but not "closed session ≠ open" (G7) |
 | Every test maps to a spec requirement | ✅ |
-| Documented guidelines followed: `.specs/STATE.md` ADs, lessons L-044/L-048 (one test per destination, plain task beside the occurrence) | ✅ |
+| Documented guidelines followed: `.specs/STATE.md` ADs, lessons L-044/L-048 (L-048 applied: plain task beside the occurrence, in the dialog) | ✅ |
 
 ---
 
 ## Edge Cases
 
 - [x] HOJE-68 to HOJE-73 are handled and tested.
-- [x] A pending occurrence cannot be sent to `Esta semana`/`Backlog`, in the UI or on the server.
-- [x] Sessions off the whole minute are summed in seconds.
-- [ ] A task in focus that is an occurrence is still offered `Esta semana`/`Backlog` in the dialog. The server refuses it, and the dialog error does not say which task (G6).
+- [x] A pending occurrence and a task in focus that is an occurrence both get only `Amanhã` in the dialog, and the server refuses the other two.
+- [x] The task in focus in another workspace is not listed in the dialog. `focusTask` needs the session's list among this workspace's lists (`frontend/src/pages/today.tsx:72-76`), so a flag computed across workspaces cannot reach a row.
+- [ ] Earlier closed sessions today next to the open one: correct in the code, but no test guards it (G7).
 
 ---
 
@@ -209,11 +195,11 @@ The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/s
 
 - **Gate command**: Build = `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test && npm --prefix frontend run lint && npm --prefix frontend run typecheck && npm --prefix frontend test && npm --prefix frontend run build && npm --prefix backend-node run build`
 - **Outcome**: exit 0 on the first run.
-  - backend: 1107 passed, 9 skipped (1116); 79 files passed, 1 skipped
-  - frontend: 2139 passed (192 files)
+  - backend: 1111 passed, 9 skipped (1120); 79 files passed, 1 skipped
+  - frontend: 2141 passed (192 files)
   - lint, typecheck and both builds OK
-- **Known flaky test** (`focus-widget.test.tsx` "a second click on Notes closes…"): passed, so no rerun was needed.
-- **Test count delta vs round 1**: backend 1099 → 1107 (+8), frontend 2132 → 2139 (+7). No test was removed. The changed assertions in `queue.test.ts` are stricter (see note a).
+- **Known flaky test** (`focus-widget.test.tsx` "a second click on Notes closes…"): it passed, so no rerun was needed.
+- **Test count delta vs round 2**: backend 1107 → 1111 (+4: three service tests and one route test), frontend 2139 → 2141 (+2 dialog tests). No test was removed or weakened. The route's exact-shape assertion gained a field, which makes it stricter.
 - **Skipped tests**: the 9 backend skips are pre-existing and outside the feature.
 - **Failures**: none.
 
@@ -221,13 +207,11 @@ The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/s
 
 ## Fix Plans
 
-### G6: HOJE-75 for the task in focus (Minor; unapproved `SPEC_DEVIATION`)
+### G7: `focus_task_series` is not pinned to the open session (Minor; surviving mutant B4)
 
-- **Root cause**: `CloseDayDialog` builds the task in focus from `FocusState.task`, which has no series flag, and hard-codes `series: false` (`frontend/src/components/today/close-day-dialog.tsx:105-107`).
-- **Fix task** (either one):
-  - (preferred) Send the flag from the day read. `readToday` already finds the open session and removes its task from `pending`, so it can add `focus_task_series: boolean`, or keep `series` for the open task's id. The dialog then uses it for `focusTask`, and the `SPEC_DEVIATION` comes out. Add a backend test (an open session on an occurrence → flag true, and false for a plain task) and a dialog test (task in focus that is an occurrence → `This week`/`Backlog` disabled with `Would end the recurrence`).
-  - (alternative) The user approves narrowing HOJE-75 to the tasks of `Pendente` and accepts that the server 422 covers the task in focus. Amend the spec. The verifier does not take the code comment as approval.
-- **Priority**: Minor. No data loss is possible, because the 422 rejects the whole close. The cost is UX: the dialog offers a choice the server refuses.
+- **Root cause**: the T30 service tests cover an open session on an occurrence, an open session on a plain task, and no session. None has a closed session, so the `s.ended_at IS NULL` condition at `backend-node/src/services/today.ts:337` is untested.
+- **Fix task**: add one service test to `backend-node/test/services/today.test.ts` in `readToday: the task in focus for Fechar o dia`. Set up a closed session today (for example 09:00–09:30) on an occurrence of a series, then an open session on a plain task. Expect `focus_task_series` `toBe(false)`. (The same test with the plain task closed and the occurrence open, expecting `true`, would also pin the row choice.) No production code changes. Run the Full gate.
+- **Priority**: Minor. The shipped behavior is correct; only a regression would go unseen.
 
 ---
 
@@ -236,7 +220,7 @@ The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/s
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
 | HOJE-01 to HOJE-74 | Implementing | ✅ Verified |
-| HOJE-75 | Implementing | ❌ Needs fix / spec decision (G6) |
+| HOJE-75 | ❌ Needs fix (G6) | ✅ Verified (behavior); G7 strengthens its backend test |
 
 The verifier does not edit `spec.md`. The orchestrator applies these statuses.
 
@@ -244,14 +228,14 @@ The verifier does not edit `spec.md`. The orchestrator applies these statuses.
 
 ## Summary
 
-**Overall**: ❌ Not Ready (one Minor gap)
+**Overall**: ❌ Not Ready (one Minor test gap). This was the last of 3 rounds, so it goes to the user.
 
-**Spec-anchored check**: 75/75 ACs have `file:line` evidence, and 74/75 match the spec outcome. HOJE-75 is partly unmet for the task in focus. There are 0 spec-precision gaps.
-**Sensor**: 12 injected, 11 killed, 1 survived as an equivalent mutant (M6, no spec-visible effect).
-**Gate**: all green (backend 1107 passed / 9 skipped, frontend 2139 passed, lint, typecheck and builds OK).
+**Spec-anchored check**: 75/75 ACs match the spec outcome with `file:line` evidence; 0 spec-precision gaps.
+**Sensor**: 8 injected, 6 killed, 1 equivalent (B3), 1 survived (B4 → G7).
+**Gate**: all green (backend 1111 passed / 9 skipped, frontend 2141 passed, lint, typecheck and builds OK).
 
-**What works**: every round-1 gap is closed (G1 series, G2 API message, G3 elsewhere link, G4 rollback, G5 seconds), and the fix round is strongly tested.
+**What works**: G6 is closed end to end (service, route, type, dialog). The `SPEC_DEVIATION` on HOJE-75 is gone, and the dialog tests cover both the recurring and the plain task in focus.
 
-**Issues found**: G6. The close dialog still offers `Esta semana`/`Backlog` to a task in focus that is an occurrence of a series.
+**Issues found**: G7. No test fails if the `focus_task_series` query stops requiring an open session.
 
-**Next steps**: fix G6, or get the user to approve narrowing HOJE-75. Then run round 3, the last before escalation.
+**Next steps**: the user decides whether to add the one-test fix (G7) and accept without another round, or to accept the feature as is.
