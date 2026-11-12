@@ -1178,7 +1178,18 @@
       "elsewhere": "In focus in another workspace: {{name}}",
       "openFocus": "Open focus",
       "refused": "The server refused: {{action}}",
-      "progress": "Time against the estimate"
+      "progress": "Time against the estimate",
+      "byThePlan": "By the plan, now would be",
+      "blockTime": "{{start}}–{{end}} · started {{duration}} ago",
+      "startFocus": "Start focus",
+      "anotherTask": "Another task",
+      "chooseTask": "Choose a task",
+      "planToday": "Plan today",
+      "nothingPlanned": "Nothing planned for now",
+      "pendingCount_one": "{{count}} task pending · {{duration}} estimated",
+      "pendingCount_other": "{{count}} tasks pending · {{duration}} estimated",
+      "noSession": "No session today",
+      "sinceLast": "No focus for {{duration}} · last session: {{name}}, until {{time}}"
     },
     "picker": {
       "search": "Search tasks",

@@ -278,13 +278,13 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-09 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-10 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-11 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-12 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-13 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-14 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-12 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-13 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-14 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-15 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-16 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-16 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-17 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
-| HOJE-18 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-18 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-19 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-20 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-21 | P1: Saber o que está acontecendo agora | Tasks | Implementing |

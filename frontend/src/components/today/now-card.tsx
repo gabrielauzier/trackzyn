@@ -1,20 +1,26 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowUpRight } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { formatDuration } from '@/components/board/format-duration'
+import { taskKey } from '@/components/board/use-task'
 import { BreakPicker } from '@/components/focus/break-picker'
 import { Button } from '@/components/ui/button'
 import { minuteClock } from '@/lib/agenda/format'
+import { scheduledColors } from '@/lib/agenda/scheduled-colors'
+import { tasks as tasksApi } from '@/lib/api'
+import { extractApiError } from '@/lib/api-errors'
 import { serverNow } from '@/lib/focus/clock'
 import type { Display } from '@/lib/focus/display'
 import type { FocusConflict } from '@/lib/focus/queue'
 import type { useFocus } from '@/lib/focus/use-focus'
+import { groupPending, suggestedBlock } from '@/lib/today/rules'
 import { useSessionWorkspace } from '@/lib/today/use-session-workspace'
-import type { FocusState, PlanListRef, TodaySession } from '@/types'
+import type { FocusState, PlanListRef, TodayPendingTask, TodayPlanBlock, TodaySession } from '@/types'
+import { TaskPicker } from './task-picker'
 
 const DAY_MINUTES = 24 * 60
 
@@ -34,16 +40,24 @@ interface NowCardProps {
   nowMinute: number
   /** The workspace's active lists, to name the list of the session. */
   lists: PlanListRef[]
-  /** The reader's sessions of today: the name of an open break comes from them. */
+  /** The reader's sessions of today: the name of an open break and the last session of the day come from them. */
   sessions: TodaySession[]
+  /** Today, `YYYY-MM-DD` in the workspace timezone, for `Planejar hoje` (HOJE-16). */
+  day: string
+  /** The blocks of today's plan: the one that holds now suggests a task (HOJE-11). */
+  blocks: TodayPlanBlock[]
+  /** The tasks of `Pendente`, for the picker and the count of HOJE-12. */
+  pending: TodayPendingTask[]
 }
 
 /**
  * `Agora`: what the user is doing now (HOJE-07 to HOJE-10, HOJE-74), with `Abrir foco` to the list of the session
  * (HOJE-17, HOJE-19). It follows the focus of the user wherever it is open; a session of another workspace is only
- * named (HOJE-20). The actions are the focus screen's, and a refusal shows in a toast (HOJE-22).
+ * named (HOJE-20). The actions are the focus screen's, and a refusal shows in a toast (HOJE-22). With nothing open,
+ * it suggests the task the plan holds for now (HOJE-11) or offers to choose one (HOJE-12), over the time without
+ * focus (HOJE-13).
  */
-export function NowCard({ focus, canWrite, nowMinute, lists, sessions }: NowCardProps) {
+export function NowCard({ focus, canWrite, nowMinute, lists, sessions, day, blocks, pending }: NowCardProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const duration = (seconds: number) => formatDuration(Math.max(0, seconds), language)
@@ -56,7 +70,8 @@ export function NowCard({ focus, canWrite, nowMinute, lists, sessions }: NowCard
   let label: string
   let body: ReactNode = null
   let buttons: ReactNode = null
-  const focusPath = session ? `/focus/${session.list_id}` : null
+  const idle = useIdle({ focus, nowMinute, lists, blocks, pending })
+  const focusPath = session ? `/focus/${session.list_id}` : idle.listId ? `/focus/${idle.listId}` : null
 
   if (session && elsewhere) {
     label = t('today.now.focusLabel')
@@ -155,6 +170,58 @@ export function NowCard({ focus, canWrite, nowMinute, lists, sessions }: NowCard
     }
   } else {
     label = t('today.now.idleLabel')
+    const picker = (text: string) =>
+      canWrite && <TaskPicker label={text} pending={pending} nowMinute={nowMinute} onPick={(task) => void idle.start(task.id)} />
+    if (idle.block) {
+      const block = idle.block
+      body = (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm text-muted-foreground">{t('today.now.byThePlan')}</span>
+          <div
+            data-slot="suggested-task"
+            className="flex flex-col gap-0.5 rounded-md border-2 border-dashed px-3 py-2"
+            style={block.list_color === null ? undefined : scheduledColors(block.list_color)}
+          >
+            <span className="text-lg font-semibold">{block.title}</span>
+            {idle.listName && <span className="text-xs text-muted-foreground">{idle.listName}</span>}
+          </div>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {t('today.now.blockTime', {
+              start: minuteClock(block.start_minute),
+              end: minuteClock((block.start_minute + block.minutes) % DAY_MINUTES),
+              duration: duration((nowMinute - block.start_minute) * 60),
+            })}
+          </span>
+        </div>
+      )
+      if (canWrite) {
+        buttons = (
+          <>
+            <Button onClick={() => void idle.start(block.task_id!)}>{t('today.now.startFocus')}</Button>
+            {picker(t('today.now.anotherTask'))}
+            <BreakPicker onPick={(minutes) => void actions.takeBreak(minutes, undefined, idle.listId ?? undefined)} />
+          </>
+        )
+      }
+    } else {
+      const estimated = pending.reduce((sum, task) => sum + (task.estimate_minutes ?? 0) * 60, 0)
+      body = (
+        <div className="flex flex-col gap-1">
+          <span className="text-lg font-semibold">{t('today.now.nothingPlanned')}</span>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {t('today.now.pendingCount', { count: pending.length, duration: duration(estimated) })}
+          </span>
+        </div>
+      )
+      buttons = (
+        <>
+          {picker(t('today.now.chooseTask'))}
+          <Button variant="outline" asChild>
+            <Link to={`/planejar/${day}`}>{t('today.now.planToday')}</Link>
+          </Button>
+        </>
+      )
+    }
   }
 
   return (
@@ -172,7 +239,66 @@ export function NowCard({ focus, canWrite, nowMinute, lists, sessions }: NowCard
       </div>
       {body}
       {buttons && <div className="flex flex-wrap gap-2">{buttons}</div>}
+      {!session && <IdleFooter sessions={sessions} nowMinute={nowMinute} />}
     </section>
+  )
+}
+
+/**
+ * With nothing open: the block of the plan that holds now and its task's list, the list `Abrir foco` goes to, and
+ * `Começar foco`, which first brings a task of another column to the top of Today (HOJE-14).
+ */
+function useIdle({ focus, nowMinute, lists, blocks, pending }: Pick<NowCardProps, 'focus' | 'nowMinute' | 'lists' | 'blocks' | 'pending'>) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const open = focus.state?.session != null
+  const block = open ? null : suggestedBlock(blocks, nowMinute)
+  const inPending = block ? pending.find((task) => task.id === block.task_id) : undefined
+  // A suggested task out of Today is not in `Pendente`: its list comes from the task itself.
+  const outside = useQuery({
+    queryKey: taskKey(block?.task_id ?? ''),
+    queryFn: () => tasksApi.get(block!.task_id!),
+    enabled: block !== null && block.task_id !== null && inPending === undefined,
+  })
+  const first = groupPending(pending, nowMinute)[0]?.tasks[0]
+  const suggestedList = inPending?.list ?? lists.find((list) => list.id === outside.data?.list_id)
+  const listId = open ? null : block ? (inPending?.list.id ?? outside.data?.list_id ?? null) : (first?.list.id ?? null)
+
+  const start = async (taskId: string) => {
+    if (!pending.some((task) => task.id === taskId)) {
+      try {
+        const task = await queryClient.fetchQuery({ queryKey: taskKey(taskId), queryFn: () => tasksApi.get(taskId) })
+        // The focus only starts in Today: to the top of the Today of its own list.
+        const top = pending
+          .filter((item) => item.list.id === task.list_id)
+          .sort((a, b) => a.position - b.position)[0]
+        await tasksApi.move(taskId, { column: 'today', before_task_id: top?.id ?? null })
+      } catch (error) {
+        toast.error(extractApiError(error, t('common.error')))
+        return
+      }
+    }
+    await focus.actions.start(taskId)
+  }
+
+  return { block, listId, listName: suggestedList?.name, start }
+}
+
+/** `Sem foco há <tempo> · última sessão: <nome>, até <HH:MM>`, or `Nenhuma sessão hoje` (HOJE-13). */
+function IdleFooter({ sessions, nowMinute }: { sessions: TodaySession[]; nowMinute: number }) {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
+  const last = sessions.reduce<TodaySession | null>((latest, session) => (latest === null || session.end_minute > latest.end_minute ? session : latest), null)
+  return (
+    <p className="border-t pt-3 text-xs text-muted-foreground">
+      {last === null
+        ? t('today.now.noSession')
+        : t('today.now.sinceLast', {
+            duration: formatDuration(Math.max(0, nowMinute - last.end_minute) * 60, language),
+            name: last.title ?? t('focus.break.open'),
+            time: minuteClock(last.end_minute % DAY_MINUTES),
+          })}
+    </p>
   )
 }
 

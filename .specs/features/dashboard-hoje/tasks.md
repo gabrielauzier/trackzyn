@@ -424,12 +424,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `suggested`: `Pelo plano, agora seria`, tarefa com borda tracejada na cor fraca da lista, `13:30–15:00`, `começou há 50min`
-- [ ] `empty`: `Nada planejado para agora`, `5 tarefas`, `4h 58min`, `Escolher tarefa` e `Planejar hoje` (`/planejar/<hoje>`)
-- [ ] Rodapé `Sem foco há 1h · última sessão: Almoço, até 13:20`; sem sessões, `Nenhuma sessão hoje`
-- [ ] `Começar foco` numa tarefa de `Esta semana` chama `tasks.move` para o topo de `Hoje` e só então `start`; se o `move` falha, `start` não é chamado e aparece o toast
-- [ ] `Abrir foco` vai à lista da tarefa sugerida; sem sugerida, à da primeira de `Pendente`; sem nenhuma, some
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] `suggested`: `Pelo plano, agora seria`, tarefa com borda tracejada na cor fraca da lista, `13:30–15:00`, `começou há 50min`
+- [x] `empty`: `Nada planejado para agora`, `5 tarefas`, `4h 58min`, `Escolher tarefa` e `Planejar hoje` (`/planejar/<hoje>`)
+- [x] Rodapé `Sem foco há 1h · última sessão: Almoço, até 13:20`; sem sessões, `Nenhuma sessão hoje`
+- [x] `Começar foco` numa tarefa de `Esta semana` chama `tasks.move` para o topo de `Hoje` e só então `start`; se o `move` falha, `start` não é chamado e aparece o toast
+- [x] `Abrir foco` vai à lista da tarefa sugerida; sem sugerida, à da primeira de `Pendente`; sem nenhuma, some
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

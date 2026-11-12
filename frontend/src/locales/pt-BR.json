@@ -1178,7 +1178,18 @@
       "elsewhere": "Em foco em outro workspace: {{name}}",
       "openFocus": "Abrir foco",
       "refused": "O servidor recusou: {{action}}",
-      "progress": "Tempo contra a estimativa"
+      "progress": "Tempo contra a estimativa",
+      "byThePlan": "Pelo plano, agora seria",
+      "blockTime": "{{start}}–{{end}} · começou há {{duration}}",
+      "startFocus": "Começar foco",
+      "anotherTask": "Outra tarefa",
+      "chooseTask": "Escolher tarefa",
+      "planToday": "Planejar hoje",
+      "nothingPlanned": "Nada planejado para agora",
+      "pendingCount_one": "{{count}} tarefa em Pendente · {{duration}} estimadas",
+      "pendingCount_other": "{{count}} tarefas em Pendente · {{duration}} estimadas",
+      "noSession": "Nenhuma sessão hoje",
+      "sinceLast": "Sem foco há {{duration}} · última sessão: {{name}}, até {{time}}"
     },
     "picker": {
       "search": "Buscar tarefas",
