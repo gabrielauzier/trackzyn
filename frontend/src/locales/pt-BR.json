@@ -1122,6 +1122,29 @@
   "today": {
     "tile": {
       "noEstimate": "Sem estimativa"
+    },
+    "pending": {
+      "title": "Pendente",
+      "summary_one": "{{count}} tarefa · {{duration}} estimadas",
+      "summary_other": "{{count}} tarefas · {{duration}} estimadas",
+      "empty": "Nada pendente para hoje",
+      "groups": {
+        "late": "Atrasada",
+        "timed": "Com horário",
+        "planned": "No plano",
+        "carried": "Veio de dias anteriores",
+        "unplanned": "Sem plano"
+      },
+      "passed": "{{time}} · passou há {{duration}}",
+      "daysAgo_one": "há {{count}} dia",
+      "daysAgo_other": "há {{count}} dias",
+      "subtasks": "{{done}}/{{total}} subtarefas"
+    },
+    "capacity": {
+      "over": "Não cabe no dia: sobram {{duration}} de tarefa",
+      "fits": "Cabe no dia: {{duration}} livre",
+      "withoutEstimate_one": "{{count}} sem estimativa, contada como 0",
+      "withoutEstimate_other": "{{count}} sem estimativa, contadas como 0"
     }
   }
 }
