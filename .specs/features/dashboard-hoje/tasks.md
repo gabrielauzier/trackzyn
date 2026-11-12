@@ -147,9 +147,9 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Owner e `viewer` recebem 200 com o dia; sem `X-Workspace-Id` de um workspace do usuário, 403/404 como as outras rotas
-- [ ] Um token `tkz_` recebe 403 e `token-scopes.test.ts` passa com a rota na lista fechada (AD-007)
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Owner e `viewer` recebem 200 com o dia; sem `X-Workspace-Id` de um workspace do usuário, 403/404 como as outras rotas
+- [x] Um token `tkz_` recebe 403 e `token-scopes.test.ts` passa com a rota na lista fechada (AD-007)
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full

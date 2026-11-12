@@ -26,6 +26,7 @@ import { scheduledRoutes } from './routes/scheduled.ts'
 import { sessionRoutes } from './routes/sessions.ts'
 import { setupRoutes } from './routes/setup.ts'
 import { taskRoutes } from './routes/tasks.ts'
+import { todayRoutes } from './routes/today.ts'
 import { twoFactorRoutes } from './routes/two-factor.ts'
 import { userRoutes } from './routes/users.ts'
 import { workspaceRoutes } from './routes/workspaces.ts'
@@ -91,6 +92,7 @@ export async function buildApp(
   await app.register(sessionRoutes(ctx))
   await app.register(scheduledRoutes(ctx))
   await app.register(planRoutes(ctx))
+  await app.register(todayRoutes(ctx))
   if (ctx.config.personalTokensEnabled) await app.register(accessTokenRoutes(ctx))
   if (ctx.config.personalTokensEnabled) await app.register(mcpRoutes(ctx))
 
