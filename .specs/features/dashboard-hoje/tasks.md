@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/dashboard-hoje/design.md`
-**Status**: Approved (2026-11-11)
+**Status**: Done (2026-11-12)
 
 ---
 
