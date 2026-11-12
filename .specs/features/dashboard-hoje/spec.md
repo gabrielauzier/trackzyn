@@ -270,7 +270,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-01 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
 | HOJE-02 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
 | HOJE-03 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
-| HOJE-04 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
+| HOJE-04 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
 | HOJE-05 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
 | HOJE-06 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
 | HOJE-07 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
@@ -336,7 +336,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-67 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-68 | Edge cases | Tasks | Implementing |
 | HOJE-69 | Edge cases | Tasks | Implementing |
-| HOJE-70 | Edge cases | Tasks | In Tasks |
+| HOJE-70 | Edge cases | Tasks | Implementing |
 | HOJE-71 | Edge cases | Tasks | Implementing |
 | HOJE-72 | Edge cases | Tasks | In Tasks |
 | HOJE-73 | Edge cases | Tasks | Implementing |
