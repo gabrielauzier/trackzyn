@@ -482,11 +482,11 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Tarefa agendada para amanhã às 10:00 vem com `scheduled_minute` 600; a de depois de amanhã e a concluída ficam de fora
-- [ ] Ordem: com hora, por hora; depois as sem hora
-- [ ] `series` verdadeiro para ocorrência de série
-- [ ] `week_unscheduled` conta só `Esta semana` sem dia e não concluídas; `tomorrow_plan_blocks` conta os blocos do plano de amanhã do leitor, não os de outro membro (L-048)
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Tarefa agendada para amanhã às 10:00 vem com `scheduled_minute` 600; a de depois de amanhã e a concluída ficam de fora
+- [x] Ordem: com hora, por hora; depois as sem hora
+- [x] `series` verdadeiro para ocorrência de série
+- [x] `week_unscheduled` conta só `Esta semana` sem dia e não concluídas; `tomorrow_plan_blocks` conta os blocos do plano de amanhã do leitor, não os de outro membro (L-048)
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full

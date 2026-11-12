@@ -686,3 +686,78 @@ describe('readToday: Feito hoje (HOJE-35, HOJE-36, HOJE-38, HOJE-40)', () => {
     expect((await readToday(db, actor(), NOW)).done).toEqual([])
   })
 })
+
+describe('readToday: Amanhã (HOJE-54, HOJE-55, HOJE-56)', () => {
+  const TOMORROW = '2026-11-12'
+
+  it('answers a task scheduled for tomorrow at 10:00 with scheduled_minute 600, and leaves out the day after and the done one', async () => {
+    const id = await task('this_week', { title: 'Prova', estimate: 45, on: TOMORROW, time: '10:00' })
+    await task('this_week', { on: '2026-11-13', time: '10:00' })
+    const doneTomorrow = await task('done', { on: TOMORROW })
+    await db.update(tasks).set({ completedByUserId: userId }).where(eq(tasks.id, doneTomorrow))
+    expect((await readToday(db, actor(), NOW)).tomorrow_tasks).toEqual([
+      {
+        id,
+        title: 'Prova',
+        list: { id: listId, name: 'Frete', color: 3 },
+        estimate_minutes: 45,
+        scheduled_minute: 600,
+        series: false,
+      },
+    ])
+  })
+
+  it('leaves out a task scheduled for tomorrow in another workspace and in an archived list', async () => {
+    const mine = await task('backlog', { on: TOMORROW })
+    await task('backlog', { on: TOMORROW, list: otherWorkspaceListId })
+    await task('backlog', { on: TOMORROW, list: await list(workspaceId, 'Old', 1, 5, true) })
+    expect((await readToday(db, actor(), NOW)).tomorrow_tasks.map((item) => item.id)).toEqual([mine])
+  })
+
+  it('answers the tasks with a time first, in order of time, then the ones without a time', async () => {
+    const untimed = await task('this_week', { on: TOMORROW, position: 0 })
+    const late = await task('this_week', { on: TOMORROW, time: '15:30', position: 1 })
+    const early = await task('this_week', { on: TOMORROW, time: '09:30', position: 2 })
+    const read = await readToday(db, actor(), NOW)
+    expect(read.tomorrow_tasks.map((item) => item.id)).toEqual([early, late, untimed])
+    expect(read.tomorrow_tasks.map((item) => item.scheduled_minute)).toEqual([570, 930, null])
+  })
+
+  it('answers series true for an occurrence of a series', async () => {
+    const id = await task('this_week', { on: TOMORROW, time: '09:30' })
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', createdAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(eq(tasks.id, id))
+    expect((await readToday(db, actor(), NOW)).tomorrow_tasks[0]!.series).toBe(true)
+  })
+
+  it('HOJE-55 counts only the This week tasks without a day of the active lists of the workspace', async () => {
+    await task('this_week')
+    await task('this_week', { position: 1 })
+    await task('this_week', { on: TOMORROW })
+    await task('backlog')
+    await task('today')
+    await task('done')
+    await task('this_week', { list: otherWorkspaceListId })
+    await task('this_week', { list: await list(workspaceId, 'Old', 1, 5, true) })
+    expect((await readToday(db, actor(), NOW)).week_unscheduled).toBe(2)
+  })
+
+  it("HOJE-56 counts the blocks of the reader's plan of tomorrow, not another member's (L-048)", async () => {
+    const a = await task('this_week', { on: TOMORROW })
+    const b = await task('this_week', { on: TOMORROW, position: 1 })
+    await plan(TOMORROW, [
+      { kind: 'task', taskId: a, start: '09:00', minutes: 60 },
+      { kind: 'task', taskId: b, start: '10:00', minutes: 30 },
+      { kind: 'break', name: 'Almoço', start: '12:00', minutes: 60 },
+    ])
+    await plan(TOMORROW, [{ kind: 'task', taskId: a, start: '14:00', minutes: 30 }], { userId: otherUserId, workspaceId })
+    expect((await readToday(db, actor(), NOW)).tomorrow_plan_blocks).toBe(3)
+  })
+
+  it('HOJE-56 answers 0 blocks without a plan for tomorrow, even with a plan of today', async () => {
+    const a = await task('today')
+    await plan(TODAY, [{ kind: 'task', taskId: a, start: '09:00', minutes: 60 }])
+    expect((await readToday(db, actor(), NOW)).tomorrow_plan_blocks).toBe(0)
+  })
+})
