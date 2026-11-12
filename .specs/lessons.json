@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 74,
+  "next_id": 75,
   "lessons": [
     {
       "id": "L-001",
@@ -1324,6 +1324,24 @@
       ],
       "created": "2026-11-12T02:07:34Z",
       "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-074",
+      "key": "spec_deviation::when a ui rule depends on a flag of a task send that flag for every place the task appears including the task in focus",
+      "text": "When a UI rule depends on a flag of a task, send that flag for every place the task appears, including the task in focus",
+      "signal": "spec_deviation",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/components/today/close-day-dialog.tsx:105 (HOJE-75, G6 round 2) (frontend)"
+      ],
+      "created": "2026-11-12T03:50:11Z",
+      "last_seen": "2026-11-12T03:50:11Z"
     }
   ]
 }

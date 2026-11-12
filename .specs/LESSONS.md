@@ -450,6 +450,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: HOJE-49; backend-node/test/services/today.test.ts:567
 - last seen: 2026-11-12T02:07:34Z
 
+### L-074 - When a UI rule depends on a flag of a task, send that flag for every place the task appears, including the task in focus
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: dashboard-hoje
+- evidence: frontend/src/components/today/close-day-dialog.tsx:105 (HOJE-75, G6 round 2) (frontend)
+- last seen: 2026-11-12T03:50:11Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
