@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 74,
+  "next_id": 75,
   "lessons": [
     {
       "id": "L-001",
@@ -1324,6 +1324,24 @@
       ],
       "created": "2026-11-12T04:09:21Z",
       "last_seen": "2026-11-12T04:09:21Z"
+    },
+    {
+      "id": "L-074",
+      "key": "surviving_mutant::when a read narrows open sessions to the reader test it with another member s open session beside the reader s so the reader filter is pinned",
+      "text": "When a read narrows open sessions to the reader, test it with another member's open session beside the reader's so the reader filter is pinned",
+      "signal": "surviving_mutant",
+      "scope": "backend-services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md mutant B5 (backend-node/src/services/today.ts:337) (backend-services)"
+      ],
+      "created": "2026-11-12T04:37:35Z",
+      "last_seen": "2026-11-12T04:37:35Z"
     }
   ]
 }

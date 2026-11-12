@@ -450,6 +450,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: backend-node/src/services/today.ts:337 (mutant B4, validation.md round 3) (backend-services)
 - last seen: 2026-11-12T04:09:21Z
 
+### L-074 - When a read narrows open sessions to the reader, test it with another member's open session beside the reader's so the reader filter is pinned
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-services` · harmful: 0
+- features: dashboard-hoje
+- evidence: validation.md mutant B5 (backend-node/src/services/today.ts:337) (backend-services)
+- last seen: 2026-11-12T04:37:35Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
