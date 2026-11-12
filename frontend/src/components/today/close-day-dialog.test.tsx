@@ -180,6 +180,11 @@ describe('CloseDayDialog (HOJE-41 to HOJE-66)', () => {
     expect(within(dialog()).getAllByText(/Postponed/)).toHaveLength(1)
   })
 
+  it('HOJE-60 says a task carried exactly 3 days was postponed 3 days in a row, the threshold included', () => {
+    draw({ data: { ...day, pending: [pending({ id: 'three', title: 'Carried three days', days_late: 3 })] } })
+    expect(within(dialog()).getByText('Postponed 3 days in a row')).toBeInTheDocument()
+  })
+
   it('HOJE-63 shows the summary in Markdown with the chosen destinations and the note at the end', async () => {
     const { user } = draw()
     await user.click(within(destination('Read chapter 4')).getByRole('button', { name: 'This week' }))
