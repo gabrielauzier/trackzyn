@@ -337,9 +337,9 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-68 | Edge cases | Tasks | Implementing |
 | HOJE-69 | Edge cases | Tasks | Implementing |
 | HOJE-70 | Edge cases | Tasks | In Tasks |
-| HOJE-71 | Edge cases | Tasks | In Tasks |
+| HOJE-71 | Edge cases | Tasks | Implementing |
 | HOJE-72 | Edge cases | Tasks | In Tasks |
-| HOJE-73 | Edge cases | Tasks | In Tasks |
+| HOJE-73 | Edge cases | Tasks | Implementing |
 | HOJE-74 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 
 **Coverage:** 74 total, 74 mapped to tasks, 0 unmapped
