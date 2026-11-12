@@ -52,6 +52,11 @@ const sessionSchema = z.object({
   end_minute: z.number(),
   open: z.boolean(),
 })
+const tomorrowSchema = z.object({
+  ...taskRef,
+  scheduled_minute: z.number().nullable(),
+  series: z.boolean(),
+})
 const todaySchema = z.object({
   server_now: z.string(),
   day: z.string(),
@@ -63,6 +68,9 @@ const todaySchema = z.object({
   done: z.array(doneSchema),
   plan: z.object({ saved: z.boolean(), blocks: z.array(blockSchema) }),
   sessions: z.array(sessionSchema),
+  tomorrow_plan_blocks: z.number(),
+  tomorrow_tasks: z.array(tomorrowSchema),
+  week_unscheduled: z.number(),
 })
 
 /** The logged-in user's day in the current workspace (dashboard-hoje); closed to access tokens (AD-007). */

@@ -320,9 +320,9 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-51 | P2: Ver os números do dia | Tasks | In Tasks |
 | HOJE-52 | P2: Ver os números do dia | Tasks | In Tasks |
 | HOJE-53 | P2: Ver os números do dia | Tasks | In Tasks |
-| HOJE-54 | P2: Ver o que vem amanhã | Tasks | In Tasks |
-| HOJE-55 | P2: Ver o que vem amanhã | Tasks | In Tasks |
-| HOJE-56 | P2: Ver o que vem amanhã | Tasks | In Tasks |
+| HOJE-54 | P2: Ver o que vem amanhã | Tasks | Implementing |
+| HOJE-55 | P2: Ver o que vem amanhã | Tasks | Implementing |
+| HOJE-56 | P2: Ver o que vem amanhã | Tasks | Implementing |
 | HOJE-57 | P2: Ver o que vem amanhã | Tasks | In Tasks |
 | HOJE-58 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-59 | P3: Fechar o dia | Tasks | In Tasks |

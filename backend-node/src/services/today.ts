@@ -75,6 +75,13 @@ export interface DaySession {
   open: boolean
 }
 
+/** A task already set for tomorrow (HOJE-54). */
+export interface TomorrowTask extends TaskRef {
+  /** The minute of `scheduled_time`; null for a task without a time. */
+  scheduled_minute: number | null
+  series: boolean
+}
+
 /** GET /api/today: the reader's day in the workspace, as raw data the client counts minute by minute. */
 export interface TodayRead {
   server_now: string
@@ -90,6 +97,12 @@ export interface TodayRead {
   done: DoneTask[]
   plan: { saved: boolean; blocks: TodayPlanBlock[] }
   sessions: DaySession[]
+  /** The number of blocks of the reader's plan of tomorrow; 0 without a plan (HOJE-56). */
+  tomorrow_plan_blocks: number
+  /** Not done, `scheduled_on` tomorrow, the ones with a time first in order of time (HOJE-54). */
+  tomorrow_tasks: TomorrowTask[]
+  /** `This week` tasks without a day (HOJE-55). */
+  week_unscheduled: number
 }
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
@@ -119,6 +132,17 @@ interface DoneRow {
   title: string
   estimate_minutes: number | null
   completed_at: string | Date
+  list_id: string
+  list_name: string
+  list_color: number
+  series: boolean
+}
+
+interface TomorrowRow {
+  id: string
+  title: string
+  estimate_minutes: number | null
+  scheduled_time: string | null
   list_id: string
   list_name: string
   list_color: number
@@ -266,6 +290,32 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
         ORDER BY s.a, s.id`,
   )
 
+  // What is already set for tomorrow (HOJE-54 to HOJE-56): the existing tasks only, no series projection.
+  const tomorrowRows = await rows<TomorrowRow>(
+    db,
+    sql`SELECT t.id, t.title, t.estimate_minutes, to_char(t.scheduled_time, 'HH24:MI') AS scheduled_time,
+               t.series_id IS NOT NULL AS series, l.id AS list_id, l.name AS list_name, l.color AS list_color
+        FROM tasks t JOIN lists l ON l.id = t.list_id
+        WHERE l.workspace_id = ${workspaceId} AND NOT l.is_archived AND t."column" <> 'done'
+          AND t.scheduled_on = ${tomorrow}::date
+        ORDER BY t.scheduled_time NULLS LAST, l.position, t.position, t.id`,
+  )
+  const tomorrowTasks: TomorrowTask[] = tomorrowRows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    list: { id: row.list_id, name: row.list_name, color: row.list_color },
+    estimate_minutes: row.estimate_minutes,
+    scheduled_minute: row.scheduled_time === null ? null : minuteOf(row.scheduled_time),
+    series: row.series,
+  }))
+  const [{ count: weekUnscheduled }] = (await rows<{ count: number }>(
+    db,
+    sql`SELECT count(*)::int AS count FROM tasks t JOIN lists l ON l.id = t.list_id
+        WHERE l.workspace_id = ${workspaceId} AND NOT l.is_archived
+          AND t."column" = 'this_week' AND t.scheduled_on IS NULL`,
+  )) as [{ count: number }]
+  const tomorrowBlocks = await listPlanned(db, { userId: actor.userId, workspaceId }, tomorrow, tomorrow)
+
   return {
     server_now: now.toISOString(),
     day,
@@ -277,5 +327,8 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
     done,
     plan: { saved: plan !== undefined, blocks },
     sessions,
+    tomorrow_plan_blocks: tomorrowBlocks.length,
+    tomorrow_tasks: tomorrowTasks,
+    week_unscheduled: weekUnscheduled,
   }
 }
