@@ -1201,6 +1201,20 @@
       "ended": "Jornada encerrada às {{time}}",
       "readFailed": "Não foi possível atualizar",
       "retry": "Tentar de novo"
+    },
+    "timeline": {
+      "title": "Plano × real",
+      "planned": "planejado",
+      "logged": "registrado",
+      "break": "intervalo",
+      "plan": "Plano",
+      "real": "Real",
+      "now": "agora",
+      "hour": "{{hour}}h",
+      "item": "{{title}} · {{start}}–{{end}}",
+      "breakTitle": "Intervalo",
+      "noPlan": "Sem plano para hoje",
+      "planToday": "Planejar hoje"
     }
   }
 }

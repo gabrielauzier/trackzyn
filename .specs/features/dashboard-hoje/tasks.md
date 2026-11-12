@@ -537,12 +537,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Bloco de tarefa tracejado, sessão sólida com texto branco, pausa cinza; a posição em `%` bate com a escala
-- [ ] Sessão aberta vai até agora; a linha `agora` fica no minuto certo
-- [ ] Passar o mouse mostra título e horário
-- [ ] Sem plano: `Sem plano para hoje` com link para `/planejar/<hoje>`
-- [ ] O conteúdo tem largura mínima dentro de um contêiner com `overflow-x: auto`
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Bloco de tarefa tracejado, sessão sólida com texto branco, pausa cinza; a posição em `%` bate com a escala
+- [x] Sessão aberta vai até agora; a linha `agora` fica no minuto certo
+- [x] Passar o mouse mostra título e horário
+- [x] Sem plano: `Sem plano para hoje` com link para `/planejar/<hoje>`
+- [x] O conteúdo tem largura mínima dentro de um contêiner com `overflow-x: auto`
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

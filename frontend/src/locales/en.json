@@ -1201,6 +1201,20 @@
       "ended": "Workday ended at {{time}}",
       "readFailed": "Couldn't update",
       "retry": "Try again"
+    },
+    "timeline": {
+      "title": "Plan × actual",
+      "planned": "planned",
+      "logged": "logged",
+      "break": "break",
+      "plan": "Plan",
+      "real": "Actual",
+      "now": "now",
+      "hour": "{{hour}}h",
+      "item": "{{title}} · {{start}}–{{end}}",
+      "breakTitle": "Break",
+      "noPlan": "No plan for today",
+      "planToday": "Plan today"
     }
   }
 }

@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/page-header'
 import { DoneCard } from '@/components/today/done-card'
 import { NowCard } from '@/components/today/now-card'
 import { PendingCard } from '@/components/today/pending-card'
+import { PlanVsReal } from '@/components/today/plan-vs-real'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/contexts/auth-context'
@@ -113,6 +114,14 @@ export default function TodayPage() {
             sessions={data.sessions}
             blocks={data.plan.blocks}
             pending={data.pending}
+          />
+          <PlanVsReal
+            day={data.day}
+            workday={data.workday}
+            planSaved={data.plan.saved}
+            blocks={data.plan.blocks}
+            sessions={data.sessions}
+            nowMinute={now.minute}
           />
           <div className="grid gap-4 lg:grid-cols-2">
             <PendingCard
