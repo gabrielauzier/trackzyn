@@ -138,6 +138,24 @@ export function adherence(
   return plannedMinutes === 0 ? null : Math.round((coveredMinutes / plannedMinutes) * 100)
 }
 
+/**
+ * The seconds of today's sessions of one kind, summed from their instants and truncated once, as the reports count
+ * them (HOJE-49). An open session goes on from its last read by the minutes of the day passed since.
+ */
+export function sessionSeconds(
+  sessions: (SessionInput & { started_at: string; ended_at: string })[],
+  kind: SessionInput['kind'],
+  nowMinute: number,
+): number {
+  const ms = sessions
+    .filter((session) => session.kind === kind)
+    .reduce((sum, session) => {
+      const since = session.open ? Math.max(0, nowMinute - session.end_minute) * 60_000 : 0
+      return sum + Date.parse(session.ended_at) + since - Date.parse(session.started_at)
+    }, 0)
+  return Math.floor(ms / 1000)
+}
+
 /** The task sessions of today, in order of start, whose task differs from the task session before (HOJE-53). */
 export function switches(sessions: SessionInput[]): number {
   const tasks = sessions

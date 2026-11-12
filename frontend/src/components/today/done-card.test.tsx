@@ -26,8 +26,11 @@ function done(overrides: Partial<TodayDoneTask>): TodayDoneTask {
   }
 }
 
+/** The instant of a minute of 2026-11-11 in America/Sao_Paulo (UTC-3). */
+const atMinute = (minute: number) => new Date(Date.UTC(2026, 10, 11, 3) + minute * 60_000).toISOString()
+
 function session(overrides: Partial<TodaySession>): TodaySession {
-  return {
+  const base: Omit<TodaySession, 'started_at' | 'ended_at'> & Partial<TodaySession> = {
     id: 's',
     kind: 'task',
     task_id: null,
@@ -39,6 +42,7 @@ function session(overrides: Partial<TodaySession>): TodaySession {
     open: false,
     ...overrides,
   }
+  return { started_at: atMinute(base.start_minute), ended_at: atMinute(base.end_minute), ...base }
 }
 
 const tasks: TodayDoneTask[] = [

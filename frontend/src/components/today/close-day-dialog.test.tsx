@@ -46,8 +46,11 @@ function done(overrides: Partial<TodayDoneTask>): TodayDoneTask {
   }
 }
 
+/** The instant of a minute of 2026-11-11 in America/Sao_Paulo (UTC-3). */
+const atMinute = (minute: number) => new Date(Date.UTC(2026, 10, 11, 3) + minute * 60_000).toISOString()
+
 function session(overrides: Partial<TodaySession>): TodaySession {
-  return {
+  const base: Omit<TodaySession, 'started_at' | 'ended_at'> & Partial<TodaySession> = {
     id: 's',
     kind: 'task',
     task_id: 'x',
@@ -59,6 +62,7 @@ function session(overrides: Partial<TodaySession>): TodaySession {
     open: false,
     ...overrides,
   }
+  return { started_at: atMinute(base.start_minute), ended_at: atMinute(base.end_minute), ...base }
 }
 
 const day: TodayRead = {
@@ -137,6 +141,14 @@ describe('CloseDayDialog (HOJE-41 to HOJE-66)', () => {
     expect(within(within(dialog()).getByRole('group', { name: 'Plan adherence' })).getByText('89%')).toBeInTheDocument()
     // Of the done tasks with an estimate, one on time and one late; the one without an estimate does not count.
     expect(within(dialog()).getByRole('group', { name: 'On time' })).toHaveTextContent('1 of 2')
+  })
+
+  it('HOJE-49 sums the Focused seconds of sessions off the whole minute and truncates once: 29min 40s + 29min 20s is 59min', () => {
+    draw({ data: { ...day, sessions: [
+        session({ id: 'x1', task_id: 'a', start_minute: hm(9), end_minute: hm(9, 30), started_at: '2026-11-11T12:00:40.000Z', ended_at: '2026-11-11T12:30:20.000Z' }),
+        session({ id: 'x2', task_id: 'b', start_minute: hm(10, 10), end_minute: hm(10, 40), started_at: '2026-11-11T13:10:50.000Z', ended_at: '2026-11-11T13:40:10.000Z' }),
+      ] }, focusTask: null })
+    expect(within(within(dialog()).getByRole('group', { name: 'Focused' })).getByText('59min')).toBeInTheDocument()
   })
 
   it('HOJE-58 shows the focused time by list in a stacked bar with a legend, in the list colours', () => {
