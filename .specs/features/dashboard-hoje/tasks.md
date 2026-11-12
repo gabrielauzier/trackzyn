@@ -173,12 +173,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Uma tarefa que vale para dois grupos cai só no primeiro da ordem `Atrasada`, `Com horário`, `No plano`, `Veio de dias anteriores`, `Sem plano`; grupos vazios não voltam
-- [ ] `Atrasada` exige início anterior a agora e nenhuma sessão hoje: um teste com sessão hoje mostra a mesma tarefa em `Com horário`
-- [ ] Ordem dentro do grupo: início de hoje, depois `position`
-- [ ] `capacity` às 14:20 com fim 19:00, 4h estimadas e 58 min de foco restante dá `over` de 18 min; com fim 18:00 depois das 18:00, `left` é 0; tarefas sem estimativa contam 0 e saem em `withoutEstimate`
-- [ ] `suggestedBlock` ignora bloco de pausa e de tarefa feita; com dois blocos sobrepostos, pega o que começou mais tarde; fora de blocos, `null`
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Uma tarefa que vale para dois grupos cai só no primeiro da ordem `Atrasada`, `Com horário`, `No plano`, `Veio de dias anteriores`, `Sem plano`; grupos vazios não voltam
+- [x] `Atrasada` exige início anterior a agora e nenhuma sessão hoje: um teste com sessão hoje mostra a mesma tarefa em `Com horário`
+- [x] Ordem dentro do grupo: início de hoje, depois `position`
+- [x] `capacity` às 14:20 com fim 19:00, 4h estimadas e 58 min de foco restante dá `over` de 18 min; com fim 18:00 depois das 18:00, `left` é 0; tarefas sem estimativa contam 0 e saem em `withoutEstimate`
+- [x] `suggestedBlock` ignora bloco de pausa e de tarefa feita; com dois blocos sobrepostos, pega o que começou mais tarde; fora de blocos, `null`
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

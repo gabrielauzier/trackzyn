@@ -277,7 +277,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-08 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-09 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-10 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-11 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-11 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-12 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-13 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-14 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
@@ -292,13 +292,13 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-23 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-24 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-25 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-26 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
+| HOJE-26 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-27 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-28 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-29 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
-| HOJE-30 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
-| HOJE-31 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
-| HOJE-32 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
+| HOJE-29 | P1: Ver o que falta e se cabe | Tasks | Implementing |
+| HOJE-30 | P1: Ver o que falta e se cabe | Tasks | Implementing |
+| HOJE-31 | P1: Ver o que falta e se cabe | Tasks | Implementing |
+| HOJE-32 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-33 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-34 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
 | HOJE-35 | P1: Ver o que já foi feito | Tasks | Implementing |
