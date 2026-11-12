@@ -229,9 +229,9 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Às 14:19:59 em `America/Sao_Paulo`, um segundo depois o minuto é 860
-- [ ] Passar de 23:59 para 00:00 chama `onDayChange` uma vez com o novo dia
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Às 14:19:59 em `America/Sao_Paulo`, um segundo depois o minuto é 860
+- [x] Passar de 23:59 para 00:00 chama `onDayChange` uma vez com o novo dia
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick
