@@ -20,6 +20,7 @@ function task(overrides: Partial<TodayPendingTask>): TodayPendingTask {
     has_session_today: false,
     days_late: null,
     subtasks: { done: 0, total: 0 },
+    series: false,
     ...overrides,
   }
 }

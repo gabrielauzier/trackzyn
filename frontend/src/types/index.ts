@@ -512,6 +512,8 @@ export interface TodayPendingTask extends TodayTaskRef {
   /** Today minus `scheduled_on` in calendar days, when that day is before today (HOJE-28). */
   days_late: number | null
   subtasks: { done: number; total: number }
+  /** An occurrence of a series: `Fechar o dia` only sends it to tomorrow (HOJE-75). */
+  series: boolean
 }
 
 /** A task the reader completed today (HOJE-35), with the badge of the reports. */

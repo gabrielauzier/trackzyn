@@ -1274,6 +1274,7 @@
         "this_week": "Esta semana",
         "backlog": "Backlog"
       },
+      "endsSeries": "Encerraria a recorrência",
       "postponed_one": "Adiada {{count}} dia seguido",
       "postponed_other": "Adiada {{count}} dias seguidos",
       "note": "Nota do dia",

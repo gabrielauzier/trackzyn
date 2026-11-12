@@ -228,6 +228,7 @@ describe('NowCard with an open session', () => {
       show(focusOf({ ...focused, session: { ...focused.session!, list_id: 'list-elsewhere' } }))
       expect(screen.getByText('In focus in another workspace: Client work')).toBeInTheDocument()
       expect(screen.queryByRole('button')).toBeNull()
+      expect(screen.queryByRole('link', { name: 'Open focus' })).toBeNull()
     })
   })
 
@@ -326,6 +327,7 @@ function pendingTask(overrides: Partial<TodayPendingTask>): TodayPendingTask {
     has_session_today: false,
     days_late: null,
     subtasks: { done: 0, total: 0 },
+    series: false,
     ...overrides,
   }
 }
