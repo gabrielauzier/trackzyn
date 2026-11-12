@@ -274,6 +274,32 @@ describe('NowCard with an open session', () => {
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ['focus'] })
     })
 
+    it('shows exactly the API message of a refused action of the card', () => {
+      const focus = focusOf(focused)
+      const { rerender } = show(focus)
+      const refused: FocusConflict = {
+        action_id: 'a2',
+        action: { type: 'complete', task_id: 'task-a', occurred_at: iso(NOW), device_id: 'device', list_id: work.id },
+        status: 409,
+        code: 'invalid_transition',
+        message: 'The task is already done',
+      }
+      rerender(
+        <NowCard
+          focus={{ ...focus, conflicts: [refused] }}
+          canWrite
+          nowMinute={NOW_MINUTE}
+          day={DAY}
+          lists={[work, home]}
+          sessions={[]}
+          blocks={[]}
+          pending={[]}
+        />,
+      )
+      expect(toast.error).toHaveBeenCalledWith('The task is already done')
+      expect(toast.error).toHaveBeenCalledTimes(1)
+    })
+
     it('does not toast a refusal that was already there when the card opened', () => {
       const old: FocusConflict = {
         action_id: 'old',

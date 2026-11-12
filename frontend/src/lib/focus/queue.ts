@@ -1,3 +1,4 @@
+import { extractApiError } from '@/lib/api-errors'
 import { serverNow } from '@/lib/focus/clock'
 import type { FocusAction } from '@/lib/focus/optimistic'
 import { uuid } from '@/lib/focus/uuid'
@@ -16,6 +17,8 @@ export interface QueuedAction {
 export interface FocusConflict extends QueuedAction {
   status: number
   code: string | undefined
+  /** The API's error message (HOJE-22); absent without one, and on a conflict stored before it was kept. */
+  message?: string
 }
 
 interface Stored {
@@ -119,7 +122,8 @@ export async function flush(send: (entry: QueuedAction) => Promise<FocusState>, 
       }
       const stored = remove()
       const code = (error as { response?: { data?: { code?: string } } }).response?.data?.code
-      stored.conflicts.push({ ...entry, status, code })
+      const message = extractApiError(error, '')
+      stored.conflicts.push({ ...entry, status, code, ...(message ? { message } : {}) })
       save(stored)
     }
   }
