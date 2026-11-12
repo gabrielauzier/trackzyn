@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 67,
+  "next_id": 72,
   "lessons": [
     {
       "id": "L-001",
@@ -1198,6 +1198,96 @@
       ],
       "created": "2026-11-10T18:48:13Z",
       "last_seen": "2026-11-10T18:48:13Z"
+    },
+    {
+      "id": "L-067",
+      "key": "spec_precision_gap::when a feature reuses an existing write path list that path s side effects series end column moves in the spec and test each one the new flow triggers",
+      "text": "When a feature reuses an existing write path, list that path's side effects (series end, column moves) in the spec and test each one the new flow triggers",
+      "signal": "spec_precision_gap",
+      "scope": "services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-61; backend-node/src/services/schedule.ts:92-99 (services)"
+      ],
+      "created": "2026-11-12T02:07:33Z",
+      "last_seen": "2026-11-12T02:07:33Z"
+    },
+    {
+      "id": "L-068",
+      "key": "spec_deviation::before specifying a ui message from the api check that the data path keeps that message the offline focus queue keeps only status and code",
+      "text": "Before specifying a UI message from the API, check that the data path keeps that message; the offline focus queue keeps only status and code",
+      "signal": "spec_deviation",
+      "scope": "frontend-focus",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-22; frontend/src/components/today/now-card.tsx:319 (frontend-focus)"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-069",
+      "key": "spec_precision_gap::prove transaction atomicity with a failure injected after the first write not with a validation that rejects before any write",
+      "text": "Prove transaction atomicity with a failure injected after the first write, not with a validation that rejects before any write",
+      "signal": "spec_precision_gap",
+      "scope": "services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-65; backend-node/test/services/today.test.ts:838 (services)"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-070",
+      "key": "spec_precision_gap::when two acs govern the same element in one state the spec must say which wins and a test must assert it",
+      "text": "When two ACs govern the same element in one state, the spec must say which wins and a test must assert it",
+      "signal": "spec_precision_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-17/HOJE-20; frontend/src/components/today/now-card.tsx:233"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-071",
+      "key": "spec_precision_gap::when a number must match the reports exactly test it with sessions that do not start or end on a whole minute",
+      "text": "When a number must match the reports exactly, test it with sessions that do not start or end on a whole minute",
+      "signal": "spec_precision_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-49; backend-node/test/services/today.test.ts:567"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
     }
   ]
 }

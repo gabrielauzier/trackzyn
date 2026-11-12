@@ -408,6 +408,36 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: frontend/src/pages/agenda.tsx:251 (round-4 S4) (frontend-pages)
 - last seen: 2026-11-10T18:48:13Z
 
+### L-067 - When a feature reuses an existing write path, list that path's side effects (series end, column moves) in the spec and test each one the new flow triggers
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `services` · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-61; backend-node/src/services/schedule.ts:92-99 (services)
+- last seen: 2026-11-12T02:07:33Z
+
+### L-068 - Before specifying a UI message from the API, check that the data path keeps that message; the offline focus queue keeps only status and code
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `frontend-focus` · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-22; frontend/src/components/today/now-card.tsx:319 (frontend-focus)
+- last seen: 2026-11-12T02:07:34Z
+
+### L-069 - Prove transaction atomicity with a failure injected after the first write, not with a validation that rejects before any write
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `services` · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-65; backend-node/test/services/today.test.ts:838 (services)
+- last seen: 2026-11-12T02:07:34Z
+
+### L-070 - When two ACs govern the same element in one state, the spec must say which wins and a test must assert it
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-17/HOJE-20; frontend/src/components/today/now-card.tsx:233
+- last seen: 2026-11-12T02:07:34Z
+
+### L-071 - When a number must match the reports exactly, test it with sessions that do not start or end on a whole minute
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-49; backend-node/test/services/today.test.ts:567
+- last seen: 2026-11-12T02:07:34Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
