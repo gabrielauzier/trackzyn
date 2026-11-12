@@ -622,12 +622,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Os três destinos deixam cada tarefa na coluna e no dia esperados; no dia seguinte, a de `tomorrow` volta para `Hoje` na leitura
-- [ ] Com sessão de tarefa aberta, ela termina com `end_reason = 'pause'` antes de mover
-- [ ] Três movimentos com o terceiro numa tarefa concluída: 422 `close_task_not_pending` e as duas primeiras continuam onde estavam
-- [ ] Tarefa de outro workspace: 422 e nada se move
-- [ ] Repetir o mesmo fechamento deixa tudo igual
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Os três destinos deixam cada tarefa na coluna e no dia esperados; no dia seguinte, a de `tomorrow` volta para `Hoje` na leitura
+- [x] Com sessão de tarefa aberta, ela termina com `end_reason = 'pause'` antes de mover
+- [x] Três movimentos com o terceiro numa tarefa concluída: 422 `close_task_not_pending` e as duas primeiras continuam onde estavam
+- [x] Tarefa de outro workspace: 422 e nada se move
+- [x] Repetir o mesmo fechamento deixa tudo igual
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full

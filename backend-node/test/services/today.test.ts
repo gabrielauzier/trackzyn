@@ -16,7 +16,7 @@ import {
   workspaces,
 } from '../../src/db/schema.ts'
 import { overview } from '../../src/services/reports.ts'
-import { readToday } from '../../src/services/today.ts'
+import { closeDay, readToday } from '../../src/services/today.ts'
 import { migratedDb } from '../support/db.ts'
 
 // Wednesday 2026-11-11, 14:20 in America/Sao_Paulo (UTC-3, no daylight saving time in 2026).
@@ -759,5 +759,134 @@ describe('readToday: Amanhã (HOJE-54, HOJE-55, HOJE-56)', () => {
     const a = await task('today')
     await plan(TODAY, [{ kind: 'task', taskId: a, start: '09:00', minutes: 60 }])
     expect((await readToday(db, actor(), NOW)).tomorrow_plan_blocks).toBe(0)
+  })
+})
+
+describe('closeDay (HOJE-61, HOJE-62, HOJE-65)', () => {
+  const TOMORROW = '2026-11-12'
+  const state = async (id: string) => {
+    const [row] = await db
+      .select({ column: tasks.column, on: tasks.scheduledOn, time: tasks.scheduledTime, position: tasks.position })
+      .from(tasks)
+      .where(eq(tasks.id, id))
+    return row!
+  }
+
+  it('HOJE-61 moves each task to its destination: tomorrow, This week without a day, Backlog without a day', async () => {
+    const a = await task('today', { title: 'A', on: TODAY, time: '10:00' })
+    const b = await task('today', { title: 'B', on: '2026-11-09', position: 1 })
+    const c = await task('today', { title: 'C', position: 2 })
+    await closeDay(
+      db,
+      actor(),
+      [
+        { task_id: a, to: 'tomorrow' },
+        { task_id: b, to: 'this_week' },
+        { task_id: c, to: 'backlog' },
+      ],
+      NOW,
+    )
+    expect(await state(a)).toMatchObject({ column: 'this_week', on: TOMORROW, time: null })
+    expect(await state(b)).toMatchObject({ column: 'this_week', on: null, time: null })
+    expect(await state(c)).toMatchObject({ column: 'backlog', on: null, time: null })
+  })
+
+  it('answers the day read after the close, without the moved tasks in Pendente and with the one for tomorrow in Amanhã', async () => {
+    const a = await task('today', { title: 'A' })
+    const kept = await task('today', { title: 'Kept', position: 1 })
+    const read = await closeDay(db, actor(), [{ task_id: a, to: 'tomorrow' }], NOW)
+    expect(read.day).toBe(TODAY)
+    expect(read.pending.map((item) => item.id)).toEqual([kept])
+    expect(read.tomorrow_tasks.map((item) => item.id)).toEqual([a])
+  })
+
+  it('HOJE-61 brings the task sent to tomorrow back to Today on the read of the next day (D21)', async () => {
+    const a = await task('today', { title: 'A' })
+    await closeDay(db, actor(), [{ task_id: a, to: 'tomorrow' }], NOW)
+    const next = await readToday(db, actor(), SP('2026-11-12T09:00:00'))
+    expect(next.day).toBe(TOMORROW)
+    expect(next.pending.map((item) => item.id)).toEqual([a])
+    expect((await state(a)).column).toBe('today')
+  })
+
+  it('HOJE-62 pauses the open task session at the close before moving its task', async () => {
+    const a = await task('today', { title: 'A' })
+    const open = await session({ taskId: a, startedAt: SP('2026-11-11T13:48:00'), endedAt: null })
+    await closeDay(db, actor(), [{ task_id: a, to: 'tomorrow' }], NOW)
+    const [row] = await db.select().from(focusSessions).where(eq(focusSessions.id, open))
+    expect(row!.endedAt).toEqual(NOW)
+    expect(row!.endReason).toBe('pause')
+  })
+
+  it('HOJE-62 pauses the open task session even with no task to move', async () => {
+    const a = await task('today', { title: 'A' })
+    const open = await session({ taskId: a, startedAt: SP('2026-11-11T13:48:00'), endedAt: null })
+    await closeDay(db, actor(), [], NOW)
+    const [row] = await db.select().from(focusSessions).where(eq(focusSessions.id, open))
+    expect(row!.endReason).toBe('pause')
+    expect((await state(a)).column).toBe('today')
+  })
+
+  it("does not end another member's open session (L-048)", async () => {
+    const a = await task('today', { title: 'A' })
+    const theirs = await session({ taskId: a, startedAt: SP('2026-11-11T13:48:00'), endedAt: null, user: otherUserId })
+    await closeDay(db, actor(), [], NOW)
+    const [row] = await db.select().from(focusSessions).where(eq(focusSessions.id, theirs))
+    expect(row!.endedAt).toBeNull()
+  })
+
+  it('HOJE-65 refuses with 422 close_task_not_pending when the third task is done, and the first two stay where they were', async () => {
+    const a = await task('today', { title: 'A', on: TODAY })
+    const b = await task('today', { title: 'B', position: 1 })
+    const finished = await task('done', { title: 'Done' })
+    const before = [await state(a), await state(b), await state(finished)]
+    await expect(
+      closeDay(
+        db,
+        actor(),
+        [
+          { task_id: a, to: 'tomorrow' },
+          { task_id: b, to: 'backlog' },
+          { task_id: finished, to: 'this_week' },
+        ],
+        NOW,
+      ),
+    ).rejects.toMatchObject({ statusCode: 422, extra: { code: 'close_task_not_pending' } })
+    expect([await state(a), await state(b), await state(finished)]).toEqual(before)
+  })
+
+  it('HOJE-65 refuses with 422 a task of another workspace and moves nothing, nor pauses the open session', async () => {
+    const mine = await task('today', { title: 'Mine' })
+    const theirs = await task('today', { title: 'Theirs', list: otherWorkspaceListId })
+    const open = await session({ taskId: mine, startedAt: SP('2026-11-11T13:48:00'), endedAt: null })
+    await expect(
+      closeDay(
+        db,
+        actor(),
+        [
+          { task_id: mine, to: 'backlog' },
+          { task_id: theirs, to: 'backlog' },
+        ],
+        NOW,
+      ),
+    ).rejects.toMatchObject({ statusCode: 422, extra: { code: 'close_task_not_pending' } })
+    expect((await state(mine)).column).toBe('today')
+    expect((await state(theirs)).column).toBe('today')
+    const [row] = await db.select().from(focusSessions).where(eq(focusSessions.id, open))
+    expect(row!.endedAt).toBeNull()
+  })
+
+  it('leaves everything as it was when the same close runs again', async () => {
+    const other = await task('this_week', { title: 'Other' })
+    const a = await task('today', { title: 'A' })
+    const b = await task('today', { title: 'B', position: 1 })
+    const moves = [
+      { task_id: a, to: 'tomorrow' as const },
+      { task_id: b, to: 'this_week' as const },
+    ]
+    await closeDay(db, actor(), moves, NOW)
+    const first = [await state(other), await state(a), await state(b)]
+    await closeDay(db, actor(), moves, new Date(NOW.getTime() + 60_000))
+    expect([await state(other), await state(a), await state(b)]).toEqual(first)
   })
 })

@@ -1,10 +1,14 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, ne, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type Workspace, users } from '../db/schema.ts'
+import { type TaskColumn, type Workspace, lists, tasks, users } from '../db/schema.ts'
+import { HttpError } from '../http/http-error.ts'
 import { settle, spentSeconds } from './focus-settle.ts'
+import { openSession } from './focus-state.ts'
+import { endSession } from './focus.ts'
 import { type Workday, listPlanned, workdayOf } from './plans.ts'
 import { type Verdict, clippedSessions, reportScope, verdictOf } from './reports.ts'
-import { applyDueSchedules, workspaceClock } from './schedule.ts'
+import { applyDueSchedules, setSchedule, workspaceClock } from './schedule.ts'
+import { moveTask } from './tasks.ts'
 
 /** Who reads the day: the logged-in user in the current workspace (HOJE-06). */
 export interface TodayActor {
@@ -331,4 +335,56 @@ export async function readToday(db: Database, actor: TodayActor, now: Date): Pro
     tomorrow_tasks: tomorrowTasks,
     week_unscheduled: weekUnscheduled,
   }
+}
+
+/** Where `Fechar o dia` sends a pending task (HOJE-59). */
+export interface CloseMove {
+  task_id: string
+  to: 'tomorrow' | 'this_week' | 'backlog'
+}
+
+const notPending = () =>
+  new HttpError(422, 'Only pending tasks of the workspace can be moved', {}, { code: 'close_task_not_pending' })
+
+/**
+ * `Fechar o dia` in one write (HOJE-61): settles (AD-001), pauses the reader's open task session (HOJE-62), checks that
+ * every task is a pending task of the workspace (HOJE-65), then moves each one. `tomorrow` is `This week` scheduled for
+ * tomorrow without a time, so the schedule brings it back to Today tomorrow (D21); `this_week` and `backlog` lose
+ * their day. `moveTask` and `setSchedule` get the transaction, so their own transactions become savepoints of it and
+ * a refusal leaves every task where it was. Answers the day read after the close.
+ */
+export async function closeDay(db: Database, actor: TodayActor, moves: CloseMove[], now: Date): Promise<TodayRead> {
+  const workspaceId = actor.workspace.id
+  await db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    await settle(tx, actor.userId, now)
+    const open = await openSession(tx, actor.userId)
+    if (open && open.kind === 'task') await endSession(tx, open, now, 'pause')
+
+    const ids = moves.map((move) => move.task_id)
+    const found =
+      ids.length === 0
+        ? []
+        : await tx
+            .select({ id: tasks.id, column: tasks.column })
+            .from(tasks)
+            .innerJoin(lists, eq(lists.id, tasks.listId))
+            .where(and(eq(lists.workspaceId, workspaceId), inArray(tasks.id, ids), ne(tasks.column, 'done')))
+    const columns = new Map(found.map((row) => [row.id, row.column]))
+    if (ids.some((id) => !columns.has(id))) throw notPending()
+
+    const { today } = await workspaceClock(tx, workspaceId, now)
+    const [{ tomorrow }] = (await rows<{ tomorrow: string }>(tx, sql`SELECT (${today}::date + 1)::text AS tomorrow`)) as [
+      { tomorrow: string },
+    ]
+    for (const move of moves) {
+      const column: TaskColumn = move.to === 'backlog' ? 'backlog' : 'this_week'
+      // A task already in its column stays in its place, so the same close twice changes nothing.
+      if (columns.get(move.task_id) !== column) {
+        await moveTask(tx, move.task_id, workspaceId, { column, beforeTaskId: null, byUserId: actor.userId }, now)
+      }
+      await setSchedule(tx, move.task_id, workspaceId, { on: move.to === 'tomorrow' ? tomorrow : null, time: null }, actor.userId, now)
+    }
+  })
+  return readToday(db, actor, now)
 }
