@@ -703,12 +703,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Números `Focado`, `Concluídas`, `Aderência ao plano`, `No prazo`; barra por lista com legenda
-- [ ] Cada pendência e a tarefa em foco começam em `Amanhã`; `Adiada 4 dias seguidos` com `days_late` 4, e nada com 2
-- [ ] Confirmar envia os movimentos escolhidos, copia o resumo e mostra `Resumo copiado`
-- [ ] Erro da API mantém o diálogo aberto com as escolhas; cópia recusada fecha o dia e mostra `Não foi possível copiar o resumo` com `Copiar de novo`
-- [ ] `viewer` não vê o botão
-- [ ] Gate check passes: Build
+- [x] Números `Focado`, `Concluídas`, `Aderência ao plano`, `No prazo`; barra por lista com legenda
+- [x] Cada pendência e a tarefa em foco começam em `Amanhã`; `Adiada 4 dias seguidos` com `days_late` 4, e nada com 2
+- [x] Confirmar envia os movimentos escolhidos, copia o resumo e mostra `Resumo copiado`
+- [x] Erro da API mantém o diálogo aberto com as escolhas; cópia recusada fecha o dia e mostra `Não foi possível copiar o resumo` com `Copiar de novo`
+- [x] `viewer` não vê o botão
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

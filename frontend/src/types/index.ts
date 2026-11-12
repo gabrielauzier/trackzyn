@@ -547,6 +547,12 @@ export interface TodayTomorrowTask extends TodayTaskRef {
   series: boolean
 }
 
+/** Where `Fechar o dia` sends a pending task (HOJE-59). */
+export interface TodayCloseMove {
+  task_id: string
+  to: 'tomorrow' | 'this_week' | 'backlog'
+}
+
 /** `GET /api/today`: the reader's day in the current workspace; minutes are minutes of the day in its timezone. */
 export interface TodayRead {
   server_now: string
