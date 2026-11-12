@@ -1,36 +1,37 @@
-# Dashboard Hoje Validation (final) - FAIL ❌
+# Dashboard Hoje Validation (final 2) - FAIL ❌
 
-**Verdict**: FAIL ❌ (one Minor test gap, G8; this was the approved extra round after round 3, so it goes to the user)
+**Verdict**: FAIL ❌ (G8 is not closed: mutant B5 still survives 15 of 32 runs)
 **Date**: 2026-11-12
 **Spec**: `.specs/features/dashboard-hoje/spec.md` (HOJE-01..75)
-**Diff range**: whole feature `d2005a9..HEAD` (`e374343`); this fix round `d561248..HEAD` (T31, commit `e374343`, test and `tasks.md` only; `git diff d561248..HEAD --stat` shows no production file)
-**Verifier**: independent sub-agent (author ≠ verifier), final confirmation round
+**Diff range**: whole feature `d2005a9..HEAD` (`4f919e4`); this fix round `5bf05c4..HEAD` (T32, commit `4f919e4`, test and `tasks.md` only; `git diff 5bf05c4..HEAD --stat` shows no production file)
+**Verifier**: independent sub-agent (author ≠ verifier), confirmation round after the G8 fix
 
-G7 is closed. The T31 test (`backend-node/test/services/today.test.ts:839-848`) kills mutant B4 deterministically: 10 of 10 runs fail on it. The build gate is green on the first run, and all 75 ACs have `file:line` evidence that matches the spec outcome.
+The shipped behavior meets all 75 ACs, and the build gate is green on the first run. The two T32 tests assert the spec outcome: a plain task in focus gives `false`, so all three destinations stay (HOJE-59), and an occurrence in focus gives `true`, so only `Amanhã` is offered (HOJE-75).
 
-The verdict is FAIL because a sensor mutant survives. If the `focus_task_series` query drops the reader filter `s.user_id = ${actor.userId}` (`backend-node/src/services/today.ts:337`), the whole backend suite still passes (1112 passed, 9 skipped). The fault is visible to users. Say another member has an open session on an occurrence and the reader has an open session on a plain task. The mutant query then returns two rows with no `ORDER BY`, and `[focus]` can take the other member's row and answer `true`. The reader's plain task in focus would then lose `Esta semana` and `Backlog` in the dialog, which breaks HOJE-59 and HOJE-75. A scratch probe of that exact state failed on the mutant in 2 of 6 runs, because the row order varies, and passed on the real code in all runs. The shipped code is correct. The weak spot is the tests: the only test with another member's open session is in `closeDay` (`:916`), not in the `readToday` flag tests.
+The verdict is FAIL because the T32 tests do not kill B5 every time. With the reader filter `s.user_id = ${actor.userId}` dropped (`backend-node/src/services/today.ts:337`), the two-file run still passed in 1 of 12 runs, and the two T32 tests alone passed in 6 of 20. Both tests insert the sessions in opposite orders and assume the database returns them in insertion order. It does not. `EXPLAIN` of the mutant query in the scratch shows `Index Scan using ix_focus_sessions_open_user on focus_sessions s`, then a nested loop on `tasks_pkey`. That index is on `user_id`, so the rows come back sorted by user id. `userId` and `otherUserId` are fresh `randomUUID()` values in `beforeEach` (`backend-node/test/services/today.test.ts:79-80`). Each test therefore passes on the mutant whenever the reader's id sorts first, which is 1 time in 2. Both pass together about 1 time in 4, which matches the 6 of 20 measured.
 
-Round 3 recorded B5 as killed by the route test `backend-node/test/routes/today.test.ts:97`. That test has only the owner's session, so it cannot tell the two queries apart. Re-run here, B5 survives the two targeted files (75/75) and the full backend suite.
+A scratch probe proved the fix: give the other member a fixed id that sorts lowest (`00000000-0000-4000-8000-000000000000`) and insert that member's session first. The probe then failed on B5 in 10 of 10 runs and passed on the real code. With that setup the other member's row comes first under both index order and insertion order.
 
 ---
 
-## Round 3 gap → resolution
+## Previous gap → resolution
 
-| Gap | Round 3 | Resolution | Evidence |
-| --- | ------- | ---------- | -------- |
-| G7 | Surviving mutant B4: drop `s.ended_at IS NULL` from the `focus_task_series` query (`backend-node/src/services/today.ts:337`); no test had a closed session | ✅ Closed by T31 (`e374343`). The new service test sets a closed session today (09:00–09:15) on an occurrence of a series, then an open session on a plain task, and expects `focus_task_series` `toBe(false)`. That is the spec outcome: a plain task in focus keeps all three destinations (HOJE-59), and only an occurrence is limited to `Amanhã` (HOJE-75). No production code changed. | `backend-node/test/services/today.test.ts:839-848`, assertion `:847` - `expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)`. Sensor: B4 fails this test in 10/10 runs. The kill is deterministic because the user filter stays, so the reader's sessions come back in `ix_focus_sessions_user_started` / insertion order, and the closed 09:00 session comes first. |
+| Gap | Previous report | Resolution | Evidence |
+| --- | --------------- | ---------- | -------- |
+| G7 | Surviving mutant B4 (drop `s.ended_at IS NULL`) | ✅ Still closed. B4 failed in this round's run. | `BE/services/today.test.ts:839-848`, assertion `:847` |
+| G8 | Surviving mutant B5 (drop `s.user_id = ${actor.userId}`, `backend-node/src/services/today.ts:337`); no `readToday` flag test had another member's open session | ⚠️ **Partly closed.** T32 (`4f919e4`) adds the right scenario and the right assertions, but B5 survives some runs. The tests rely on insertion order, and the mutant query returns rows in `user_id` order (random UUIDs). | `BE/services/today.test.ts:860-867` (`toBe(false)` at `:866`), `:869-875` (`toBe(true)` at `:874`). B5: 11 of 12 two-file runs killed; T32 pair alone 14 of 20 killed; 17 of 32 kills in total. `EXPLAIN`: `Index Scan using ix_focus_sessions_open_user`. |
 
 ---
 
 ## Task Completion
 
-T1–T31 are marked `[x]` in `tasks.md`. T31 has its own commit (`e374343`), and its Done-when items are checked (`tasks.md` T31 section). None is blocked or partial.
+T1–T32 are marked `[x]` in `tasks.md`. T32 has its own commit (`4f919e4`). Its first Done-when item ("without the `s.user_id` filter at least one fails in 6 of 6 runs") does not hold: this round measured 17 kills in 32 runs (see Sensor). None is blocked or partial.
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
-Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in English (the `en.json` text for the spec's pt-BR copy). Rows carry over from round 3. T31 added 11 lines after `BE/services/today.test.ts:838`, so the service citations after that line moved by +11. They were re-checked against `e374343`. No other test file changed.
+Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in English (the `en.json` text for the spec's pt-BR copy). Rows carry over from the previous report. T32 added 27 lines after `BE/services/today.test.ts:848`, so the service citations after that line moved by +27 to +28. They were re-checked against `4f919e4`. No other test file changed (`git diff 5bf05c4..HEAD --stat`: `today.test.ts` and `tasks.md` only).
 
 ### P1: Ver o dia ao abrir o app
 
@@ -114,20 +115,20 @@ Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in En
 | HOJE-56 | `Amanhã ainda não tem plano` / `Plano de amanhã: N blocos`, button | `BE/services/today.test.ts:799`, `:811`; `tomorrow-card.test.tsx:84-100` | ✅ |
 | HOJE-57 | `Nada marcado para amanhã` | `tomorrow-card.test.tsx:103-112` | ✅ |
 
-### P3: Fechar o dia (service-test citations after line 838 moved +11 with the T31 test)
+### P3: Fechar o dia (service-test citations re-checked against `4f919e4`)
 
 | AC | Spec-defined outcome | `file:line` + assertion | Result |
 | -- | -------------------- | ----------------------- | ------ |
 | HOJE-41 | Button beside Planejar amanhã; dialog with the day, time, Focado, Concluídas, Aderência, No prazo | `FE/pages/today.test.tsx:184-193`; `FE/components/today/close-day-dialog.test.tsx:136-146` | ✅ |
 | HOJE-58 | Focused time by list, stacked bar + legend | `close-day-dialog.test.tsx:156-166` | ✅ |
-| HOJE-59 | Pendente + the task in focus, each starting at `Amanhã`, with the three-way selector | `close-day-dialog.test.tsx:168-174`; `:270-277` (plain focus task: `Tomorrow`, `This week`, `Backlog` all `toBeEnabled()`); `FE/pages/today.test.tsx:184-193`; backend flag for a plain focus task: `BE/services/today.test.ts:828-832`, `:839-848` (closed session today on an occurrence + open session on a plain task → `focus_task_series` `toBe(false)` at `:847`) | ✅ (G7 closed; see G8: another member's open session is not pinned) |
+| HOJE-59 | Pendente + the task in focus, each starting at `Amanhã`, with the three-way selector | `close-day-dialog.test.tsx:168-174`; `:270-277` (plain focus task: `Tomorrow`, `This week`, `Backlog` all `toBeEnabled()`); `FE/pages/today.test.tsx:184-193`; backend flag for a plain focus task: `BE/services/today.test.ts:828-832`, `:839-848` (`:847` `toBe(false)`), T32 `:860-867` (another member's open session on an occurrence beside the reader's on a plain task → `expect(...focus_task_series).toBe(false)` at `:866`) | ✅ (outcome matches the spec; G8 still open: the T32 pair does not kill B5 every run) |
 | HOJE-60 | `Adiada N dias seguidos` from 3 days | `close-day-dialog.test.tsx:176-181` | ✅ |
-| HOJE-61 | One write; tomorrow → `this_week` + tomorrow, no time; this_week/backlog without a day; a failure in the middle rolls back the earlier moves | `BE/services/today.test.ts:850-867` (destinations), `:889` (D21), `:1012-1036` (failure on the 3rd `setSchedule`, `toEqual(before)`); `close-day-dialog.test.tsx:194-210` | ✅ |
-| HOJE-75 | Occurrence: the dialog offers only `Amanhã`, the others disabled with `Encerraria a recorrência`; the server answers 422 `close_series_needs_tomorrow` for this_week/backlog and moves nothing | Server: `BE/services/today.test.ts:982-1002` (one test per destination: `statusCode 422`, `code`, `toEqual(before)`, series `endedAt` null), `:1004-1009` (tomorrow keeps the series), `:261-268` (`series` flag on Pendente), `:819-826` (open session on an occurrence → `focus_task_series` `toBe(true)`), `:828-832` (plain → `false`), `:834-837` (no session → `false`), **`:839-848` (T31: closed session today on an occurrence beside an open session on a plain task → `expect(...focus_task_series).toBe(false)` at `:847`)**; `BE/routes/today.test.ts:97-109`, `:210-221`. Dialog: pending occurrence `close-day-dialog.test.tsx:237-256`; task in focus that is an occurrence `:258-268` (`toBeDisabled()`, `title 'Would end the recurrence'`, `pressed` = `'Tomorrow'`); plain task in focus `:270-277`; 422 keeps the dialog open `:279-288` | ✅ (G7 closed by T31; G8 open: the reader filter of the flag is not pinned) |
-| HOJE-62 | Pause the open session before moving | `BE/services/today.test.ts:898-914` | ✅ |
+| HOJE-61 | One write; tomorrow → `this_week` + tomorrow, no time; this_week/backlog without a day; a failure in the middle rolls back the earlier moves | `BE/services/today.test.ts:888-906` (destinations), `:916` (D21), `:1039-1063` (failure on the 3rd `setSchedule`, `toEqual(before)`); `close-day-dialog.test.tsx:194-210` | ✅ |
+| HOJE-75 | Occurrence: the dialog offers only `Amanhã`, the others disabled with `Encerraria a recorrência`; the server answers 422 `close_series_needs_tomorrow` for this_week/backlog and moves nothing | Server: `BE/services/today.test.ts:1009-1029` (one test per destination: `statusCode 422`, `code`, `toEqual(before)`, series `endedAt` null), `:1031-1037` (tomorrow keeps the series), `:261-268` (`series` flag on Pendente), `:819-826` (open session on an occurrence → `focus_task_series` `toBe(true)`), `:828-832` (plain → `false`), `:834-837` (no session → `false`), `:839-848` (T31, `:847` `toBe(false)`), **T32 `:860-867` (another member's open session on an occurrence beside the reader's on a plain task → `toBe(false)` at `:866`) and `:869-875` (the reader's open session on an occurrence beside another member's on a plain task → `toBe(true)` at `:874`)**; `BE/routes/today.test.ts:97-109`, `:210-221`. Dialog: pending occurrence `close-day-dialog.test.tsx:237-256`; task in focus that is an occurrence `:258-268` (`toBeDisabled()`, `title 'Would end the recurrence'`, `pressed` = `'Tomorrow'`); plain task in focus `:270-277`; 422 keeps the dialog open `:279-288` | ✅ outcome matches the spec (G8 open: the T32 pair kills B5 in only 17 of 32 runs) |
+| HOJE-62 | Pause the open session before moving | `BE/services/today.test.ts:925-941`; another member's session untouched `:943` | ✅ |
 | HOJE-63 | Markdown summary, note at the end | `FE/lib/today/summary.test.ts:32-34`; `close-day-dialog.test.tsx:183-192` | ✅ |
 | HOJE-64 | Copy + `Resumo copiado` | `close-day-dialog.test.tsx:194-221` | ✅ |
-| HOJE-65 | Error, nothing moved, the dialog keeps the choices | `BE/services/today.test.ts:913-951`, `:1012-1036`; `close-day-dialog.test.tsx:223-235` | ✅ |
+| HOJE-65 | Error, nothing moved, the dialog keeps the choices | `BE/services/today.test.ts:951-1007`, `:1039-1063`; `close-day-dialog.test.tsx:223-235` | ✅ |
 | HOJE-66 | Closes anyway; `Não foi possível copiar o resumo` + `Copiar de novo` | `close-day-dialog.test.tsx:290-305` | ✅ |
 | HOJE-67 | Viewer: no button (403 on the route) | `FE/pages/today.test.tsx:195-200`; `BE/routes/today.test.ts:159-164` | ✅ |
 
@@ -142,26 +143,28 @@ Paths: `BE` = `backend-node/test`, `FE` = `frontend/src`. The tests render in En
 | HOJE-72 | Empty cards + `Criar lista` | `pending-card.test.tsx:166-168`; `FE/pages/today.test.tsx:234-237` | ✅ |
 | HOJE-73 | Keep the last data; `Não foi possível atualizar` + `Tentar de novo` | `use-today.test.tsx:126-134`; `FE/pages/today.test.tsx:215-232` | ✅ |
 
-**Status**: 75/75 ACs have `file:line` evidence that matches the spec outcome. There are no spec-precision gaps. One test gap remains (G8, from the sensor): no test has another member's open session beside the reader's, so the reader filter of `focus_task_series` is not pinned.
+**Status**: 75/75 ACs have `file:line` evidence that matches the spec outcome. There are no spec-precision gaps. One test gap remains (G8): the T32 tests that pin the reader filter of `focus_task_series` kill B5 only some of the time.
 
 ---
 
 ## Discrimination Sensor
 
-The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/sensor HEAD`, with `backend-node/node_modules` symlinked from the real tree. It never used `git stash`. The real tree's `git status --porcelain` baseline was empty. Before any mutation, the scratch passed `test/services/today.test.ts` + `test/routes/today.test.ts` 75/75. A script applied each mutant (it asserts exactly one match), the two files ran, and `git checkout --` reverted the mutant. Probes went into a copy of the test file in the scratch only.
+The sensor ran in an isolated scratch: `git worktree add --detach <scratchpad>/sensor HEAD` (`4f919e4`), with `backend-node/node_modules` and `frontend/node_modules` symlinked from the real tree. It never used `git stash`. The real tree's `git status --porcelain` baseline was empty. Before any mutation, the scratch passed `test/services/today.test.ts` + `test/routes/today.test.ts` 77/77. A script applied each mutant (it asserts exactly one match), the tests ran, and `git checkout --` reverted the file. The probes went into the scratch's copy of the test file only.
 
 | # | File:line | Mutation | Killed? | Killed by |
 | - | --------- | -------- | ------- | --------- |
-| B4 | `backend-node/src/services/today.ts:337` | "open" ignored (drop `s.ended_at IS NULL`) | ✅ Killed (10/10 runs) | T31 `BE/services/today.test.ts:839-848` |
-| B1 | `today.ts:358` | `focus_task_series` forced `false` | ✅ Killed | service `:819-826`, route `BE/routes/today.test.ts:97-109` |
-| B2 | `today.ts:358` | `focus_task_series` forced `true` | ✅ Killed | service `:828-832`, `:834-837`, `:839-848`; route `:33-45` (exact shape) |
-| B5 | `today.ts:337` | reader ignored (drop `s.user_id = ${actor.userId}`) | ❌ **Survived** | Nothing. The targeted files pass 75/75 and the full backend suite passes 1112/9 skipped. Probe (another member's open session on an occurrence, then the reader's open session on a plain task, expect `false`): fails on B5 in 2 of 6 runs, passes on the real code in 3 of 3. → **G8** |
+| B5 | `backend-node/src/services/today.ts:337` | reader ignored (drop `s.user_id = ${actor.userId}`) | ❌ **Survived 1 of 12** two-file runs (runs 1–5 and 7–12 killed, run 6 passed 77/77). The T32 pair alone (`-t beside`): 14 of 20 killed, 6 survived. | When killed: T32 `:860-867` or `:869-875`, sometimes also `:819-826` and the route test. → **G8 open** |
+| B4 | `today.ts:337` | "open" ignored (drop `s.ended_at IS NULL`) | ✅ Killed | T31 `BE/services/today.test.ts:839-848` |
+| B1 | `today.ts:358` | `focus_task_series` forced `false` | ✅ Killed (3 tests) | service `:819-826`, `:869-875`; route `BE/routes/today.test.ts:97-109` |
+| B2 | `today.ts:358` | `focus_task_series` forced `true` | ✅ Killed (5 tests) | service `:828-832`, `:834-837`, `:839-848`, `:860-867`; route `:33-45` |
+| F4 (own) | `frontend/src/components/today/close-day-dialog.tsx:225` | HOJE-60 threshold `days_late >= POSTPONED_FROM` → `>` (a task carried exactly 3 days loses `Adiada 3 dias seguidos`) | ❌ **Survived** (`src/components/today` 113/113) | Nothing. `close-day-dialog.test.tsx:176-181` uses 4 and 2 days only, so the boundary of "3 dias ou mais" is untested. → **G9** |
+| Probe | scratch copy of `today.test.ts` | B5 with the other member's id fixed to `00000000-0000-4000-8000-000000000000` and that session inserted first, expect `false` | ✅ Killed 10/10; passes on the real code | Proves the G8 fix |
 
-Carried over from round 3, not re-run because their code did not change: B3 (drop `s.kind = 'task'`) is equivalent, because a break always has `task_id` null and the inner `JOIN tasks` drops it. F1–F3 (the dialog's use of the flag and its disabling rule, `frontend/src/components/today/close-day-dialog.tsx:105`, `:236`) were killed.
+Carried over, not re-run because their code did not change: B3 (drop `s.kind = 'task'`) is equivalent; F1–F3 (the dialog's use of the flag, `close-day-dialog.tsx:105`, `:236`) were killed.
 
-**Sensor depth**: targeted (the four mutants the round asked for over T30/T31, plus a probe for the survivor). B4 was repeated 10 times and the B5 probe 6 times, because the mutated query has no `ORDER BY`.
-**Sensor outcome**: 3/4 killed (B4, B1, B2). 1 real survivor (B5 → G8).
-**Isolation**: the scratch worktree was removed (`git worktree remove --force` + `git worktree prune`), and `git worktree list` no longer shows it. The real tree's `git status --porcelain` matches the baseline (empty), and `backend-node/node_modules` is intact.
+**Sensor depth**: targeted. B5 ran 32 times in total (12 two-file runs plus 20 runs of the T32 pair), because the mutant query has no `ORDER BY`.
+**Sensor outcome**: 3/5 killed (B4, B1, B2). B5 survives intermittently (G8); F4 survives (G9).
+**Isolation**: the scratch worktree was removed (`git worktree remove --force` + `git worktree prune`; `git worktree list` no longer shows it). The real tree's `git status --porcelain` matched the empty baseline after cleanup, and both `node_modules` folders are intact. The only later changes to the real tree are this report and the lesson store (`.specs/lessons.json`, `.specs/LESSONS.md`, L-077 and L-078).
 
 ---
 
@@ -169,14 +172,14 @@ Carried over from round 3, not re-run because their code did not change: B3 (dro
 
 | Principle | Status |
 | --------- | ------ |
-| Minimum code | ✅ (T31 adds one test and its task entry, with no production change) |
+| Minimum code | ✅ (T32 adds two tests, a small fixture and its task entry, with no production change) |
 | Surgical changes | ✅ |
 | No scope creep | ✅ |
 | Matches patterns | ✅ (the file's own `task`, `session` and `taskSeries` fixtures) |
-| Spec-anchored outcome check | ✅ (`:847` asserts the spec outcome for a plain task in focus: `false`, so all destinations stay) |
-| Per-layer coverage (domain 1:1, routes happy + edge + error) | ⚠️ The flag's open-only filter is now pinned; its reader filter is not (G8) |
-| Every test maps to a spec requirement | ✅ (T31 → HOJE-59/HOJE-75) |
-| Documented guidelines followed: `.specs/STATE.md` ADs, lessons L-048/L-075 | ⚠️ L-048 ("a different item in the same state") was applied to the closed session but not to another member's open session |
+| Spec-anchored outcome check | ✅ (`:866` `false` for a plain task in focus, HOJE-59; `:874` `true` for an occurrence in focus, HOJE-75) |
+| Per-layer coverage (domain 1:1, routes happy + edge + error) | ⚠️ The flag's reader filter is pinned only some of the time (G8). The HOJE-60 boundary is not tested (G9). |
+| Every test maps to a spec requirement | ✅ (T32 → HOJE-59/HOJE-75) |
+| Documented guidelines followed: `.specs/STATE.md` ADs, lessons L-048/L-076 | ⚠️ L-076 was applied, but the tests rely on insertion order, which the query does not follow |
 
 ---
 
@@ -185,7 +188,8 @@ Carried over from round 3, not re-run because their code did not change: B3 (dro
 - [x] HOJE-68 to HOJE-73 are handled and tested.
 - [x] A pending occurrence and a task in focus that is an occurrence both get only `Amanhã` in the dialog, and the server refuses the other two.
 - [x] Earlier closed sessions today next to the open one: pinned by T31 (`BE/services/today.test.ts:839-848`).
-- [ ] Another member's open session on an occurrence next to the reader's open session on a plain task: correct in the code, but no test guards it (G8).
+- [ ] Another member's open session beside the reader's: the code is correct and T32 covers the scenario, but the kill depends on random UUID order (G8).
+- [ ] A task carried exactly 3 days (the HOJE-60 boundary): no test (G9).
 
 ---
 
@@ -193,11 +197,11 @@ Carried over from round 3, not re-run because their code did not change: B3 (dro
 
 - **Gate command**: Build = `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test && npm --prefix frontend run lint && npm --prefix frontend run typecheck && npm --prefix frontend test && npm --prefix frontend run build && npm --prefix backend-node run build`
 - **Outcome**: exit 0 on the first run.
-  - backend: 1112 passed, 9 skipped (1121); 79 files passed, 1 skipped
+  - backend: 1114 passed, 9 skipped (1123); 79 files passed, 1 skipped
   - frontend: 2141 passed (192 files)
   - lint, typecheck and both builds OK
 - **Known flaky test** (`focus-widget.test.tsx` "a second click on Notes closes…"): it passed, so no rerun was needed.
-- **Test count delta vs round 3**: backend 1111 → 1112 (+1, the T31 test); frontend 2141 → 2141. No test was removed or weakened.
+- **Test count delta vs the previous report**: backend 1112 → 1114 (+2, the T32 tests); frontend 2141 → 2141. No test was removed or weakened.
 - **Skipped tests**: the 9 backend skips are pre-existing and outside the feature.
 - **Failures**: none.
 
@@ -205,11 +209,17 @@ Carried over from round 3, not re-run because their code did not change: B3 (dro
 
 ## Fix Plans
 
-### G8: `focus_task_series` is not pinned to the reader (Minor; surviving mutant B5)
+### G8: the T32 tests rely on insertion order (Minor; B5 survives some runs)
 
-- **Root cause**: the `readToday` flag tests (`BE/services/today.test.ts:819-848`) only have the reader's sessions. None has another member's open session, so the `s.user_id = ${actor.userId}` condition at `backend-node/src/services/today.ts:337` is untested. The query also has no `ORDER BY`, so with the filter gone the wrong row is picked only some of the time.
-- **Fix task**: add one service test to `readToday: the task in focus for Fechar o dia`. Set up another member's (`otherUserId`) open session on an occurrence of a series, then the reader's open session on a plain task, and expect `focus_task_series` `toBe(false)`. Because the mutant's row order varies, the test should not depend on it. Add the mirror case too: the reader's session on the occurrence and the other member's on a plain task, expecting `true`. One of the two always fails on B5 whatever row comes first. No production code changes. Run the Full gate, then confirm B5 fails in repeated runs.
-- **Priority**: Minor. The shipped behavior is correct; only a regression would go unseen.
+- **Root cause**: with the reader filter gone, the planner reads `ix_focus_sessions_open_user`, so the rows come back in `user_id` order. `userId` and `otherUserId` are random per test (`BE/services/today.test.ts:79-80`), so the order of the sessions is random too. Inserting them in opposite orders does not change that.
+- **Fix task**: in the two T32 tests (`BE/services/today.test.ts:860-875`), use another member whose id sorts lowest (for example `00000000-0000-4000-8000-000000000000`, added with `member(...)`), and insert that member's session first. The other member's row then comes first under both index order and insertion order, so each test fails on B5 every time. Keep the assertions (`:866` `false`, `:874` `true`). No production code changes. Run the Full gate, then confirm B5 fails in at least 10 of 10 runs of the T32 pair. The scratch probe already showed 10 of 10 for the first test.
+- **Priority**: Minor. The shipped behavior is correct; only a regression would sometimes go unseen.
+
+### G9: the HOJE-60 boundary at 3 days is not tested (Minor; F4 survives)
+
+- **Root cause**: `close-day-dialog.test.tsx:176-181` checks 4 days (shown) and 2 days (hidden), so `>=` → `>` at `close-day-dialog.tsx:225` survives. The spec says "3 dias ou mais".
+- **Fix task**: in that test (or a new one), give a pending task `days_late: 3` and expect `Postponed 3 days in a row`. Run the Quick gate and confirm F4 fails.
+- **Priority**: Minor. The shipped behavior is correct.
 
 ---
 
@@ -217,8 +227,9 @@ Carried over from round 3, not re-run because their code did not change: B3 (dro
 
 | Requirement | Previous Status | New Status |
 | ----------- | --------------- | ---------- |
-| HOJE-01 to HOJE-74 | Implementing | ✅ Verified |
-| HOJE-75 | ✅ Verified (behavior); G7 open | ✅ Verified (behavior); G7 closed, G8 strengthens its backend test |
+| HOJE-01 to HOJE-59, HOJE-61 to HOJE-74 | Implementing | ✅ Verified |
+| HOJE-60 | Implementing | ✅ Verified (behavior); G9 adds the 3-day boundary test |
+| HOJE-75 | ✅ Verified (behavior); G8 open | ✅ Verified (behavior); G8 still open (its tests kill B5 in 17 of 32 runs) |
 
 The verifier does not edit `spec.md`. The orchestrator applies these statuses.
 
@@ -226,14 +237,16 @@ The verifier does not edit `spec.md`. The orchestrator applies these statuses.
 
 ## Summary
 
-**Overall**: ❌ Not Ready (one Minor test gap, G8). The shipped behavior meets all 75 ACs.
+**Overall**: ❌ Not Ready (two Minor test gaps, G8 and G9). The shipped behavior meets all 75 ACs.
 
 **Spec-anchored check**: 75/75 ACs match the spec outcome with `file:line` evidence; 0 spec-precision gaps.
-**Sensor**: 4 injected, 3 killed, 1 survived (B5 → G8). B4 (G7) is now killed 10/10.
-**Gate**: all green (backend 1112 passed / 9 skipped, frontend 2141 passed, lint, typecheck and builds OK).
+**Sensor**: 5 injected, 3 killed (B4, B1, B2), 2 survived: B5 some of the time (G8), F4 every time (G9).
+**Gate**: all green (backend 1114 passed / 9 skipped, frontend 2141 passed, lint, typecheck and builds OK).
 
-**What works**: G7 is closed. T31 pins the flag to the open session with the spec outcome for a plain task in focus.
+**What works**: T32 adds the right scenario with the spec outcome. G7 stays closed.
 
-**Issues found**: G8. No test fails if the `focus_task_series` query stops filtering by the reader. Round 3 wrongly recorded this mutant (B5) as killed.
+**Issues found**: G8. The T32 tests rely on insertion order, but the mutant query returns rows in random `user_id` order, so B5 survives about 1 run in 4 of the pair. G9. No test covers a task carried exactly 3 days.
 
-**Next steps**: the user decides whether to add the two-test fix for G8 or accept the feature as is.
+**Next steps**: fix G8 with a fixed lowest-sorting id for the other member (the probe killed B5 10/10). Fix G9 with a 3-day case. Re-verify. This is past the 3-iteration bound, so the user decides.
+
+**Lessons recorded**: L-077 (candidate, `surviving_mutant`, source B5): when a test relies on which row an unordered query returns first, fix the sort key the plan uses instead of relying on insertion order. L-078 (candidate, `surviving_mutant`, source F4): when the spec gives a threshold such as N or more, test the value exactly at N.

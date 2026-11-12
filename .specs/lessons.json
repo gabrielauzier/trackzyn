@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 77,
+  "next_id": 79,
   "lessons": [
     {
       "id": "L-001",
@@ -1378,6 +1378,42 @@
       ],
       "created": "2026-11-12T04:37:35Z",
       "last_seen": "2026-11-12T04:37:35Z"
+    },
+    {
+      "id": "L-077",
+      "key": "surviving_mutant::when a test relies on which row an unordered query returns first fix the sort key the plan uses such as an id that sorts lowest instead of relying on insertion order",
+      "text": "When a test relies on which row an unordered query returns first, fix the sort key the plan uses, such as an id that sorts lowest, instead of relying on insertion order.",
+      "signal": "surviving_mutant",
+      "scope": "backend-services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant B5 backend-node/src/services/today.ts:337; backend-node/test/services/today.test.ts:860-875 (backend-services)"
+      ],
+      "created": "2026-11-12T05:04:36Z",
+      "last_seen": "2026-11-12T05:04:36Z"
+    },
+    {
+      "id": "L-078",
+      "key": "surviving_mutant::when the spec gives a threshold such as n or more test the value exactly at n not only values above and below it",
+      "text": "When the spec gives a threshold such as N or more, test the value exactly at N, not only values above and below it.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-components",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant F4 frontend/src/components/today/close-day-dialog.tsx:225; HOJE-60 (frontend-components)"
+      ],
+      "created": "2026-11-12T05:05:55Z",
+      "last_seen": "2026-11-12T05:05:55Z"
     }
   ]
 }
