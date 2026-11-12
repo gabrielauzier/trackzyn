@@ -71,6 +71,12 @@ T15 → T16 → T17 → T18 → T19
 T20 → T21 → T22 → T23
 ```
 
+### Phase 6: Correções da verificação 1
+
+```
+T24 → T25 → T26 → T27 → T28 → T29
+```
+
 ---
 
 ## Task Breakdown
@@ -717,16 +723,175 @@ T20 → T21 → T22 → T23
 
 ---
 
+### T24: Recorrente só vai para amanhã ao fechar o dia
+
+**What**: Somar `series` a cada tarefa de `pending` em `readToday` e fazer `closeDay` recusar `this_week` ou `backlog` para uma ocorrência de série com 422 `close_series_needs_tomorrow`, antes de qualquer movimento.
+**Where**: `backend-node/src/services/today.ts` (modify)
+**Depends on**: None (fases anteriores)
+**Reuses**: `closeDay`, `readToday`
+**Requirement**: HOJE-75
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `pending[].series` verdadeiro para ocorrência de série e falso para tarefa comum
+- [ ] `this_week` e `backlog` para uma ocorrência de série: 422 `close_series_needs_tomorrow`, nenhuma tarefa movida e a série continua aberta (`task_series.ended_at` nulo); um teste para cada destino (L-044)
+- [ ] `tomorrow` para a mesma ocorrência continua funcionando e a série continua aberta
+- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): keep a series open when the day is closed`
+
+---
+
+### T25: Atomicidade do fechamento provada
+
+**What**: Escrever o teste que força uma falha no meio dos movimentos de `closeDay` (por exemplo, `vi.spyOn` em `setSchedule` ou `moveTask` lançando no terceiro movimento) e prova que os dois primeiros não ficam gravados.
+**Where**: `backend-node/test/services/today.test.ts` (modify)
+**Depends on**: T24
+**Reuses**: fixtures do próprio arquivo
+**Requirement**: HOJE-61, HOJE-65
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com três movimentos válidos e uma falha injetada no terceiro, as três tarefas continuam na coluna e no dia de antes e a sessão aberta não foi pausada
+- [ ] O teste falha se `closeDay` passar `db` em vez do `tx` (conferido localmente trocando e desfazendo; não commitar a troca)
+- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): prove the close of the day rolls back a failed move`
+
+---
+
+### T26: Segundos nas sessões do dia
+
+**What**: Somar a cada `DaySession` os instantes `started_at` e `ended_at` (ISO, recortados ao dia; a aberta até `server_now`), mantendo `start_minute` e `end_minute` para a linha do tempo.
+**Where**: `backend-node/src/services/today.ts` (modify)
+**Depends on**: T25
+**Reuses**: o recorte de `clippedSessions`
+**Requirement**: HOJE-49
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Sessões que começam e terminam no meio do minuto (ex.: 09:00:40–09:30:20 e 10:10:50–10:40:10) somadas em segundos dão o mesmo total, truncado uma vez, que `/api/reports/overview` de hoje
+- [ ] O schema da rota devolve os campos novos
+- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `feat(backend): send the session instants of the day`
+
+---
+
+### T27: `Tempo focado` em segundos
+
+**What**: Fazer `DayStats` e o `Focado` do diálogo somarem os segundos das sessões (a aberta até agora) e truncarem uma vez, usando os campos de T26.
+**Where**: `frontend/src/components/today/day-stats.tsx` (modify)
+**Depends on**: T26
+**Reuses**: `formatDuration`
+**Requirement**: HOJE-49
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Duas sessões de 29min 40s e 29min 20s mostram `59min`, não `58min` nem `1h`; o mesmo no `Focado` do `CloseDayDialog`
+- [ ] Gate check passes: `npm --prefix frontend test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `fix(frontend): sum the focused time in seconds`
+
+---
+
+### T28: Mensagem da API na fila do foco
+
+**What**: Fazer a fila offline do foco guardar a mensagem de erro da API em cada conflito, e o card `Agora` mostrar essa mensagem no toast de uma ação recusada (tirando o `SPEC_DEVIATION`).
+**Where**: `frontend/src/lib/focus/queue.ts` (modify)
+**Depends on**: T27
+**Reuses**: `extractApiError`
+**Requirement**: HOJE-22
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Um conflito guarda `message` com o texto da API; conflitos antigos sem `message` continuam carregando da área de armazenamento
+- [ ] O toast do card mostra exatamente a mensagem da API de uma ação recusada; sem mensagem, usa o texto genérico de antes
+- [ ] Os testes existentes do foco continuam passando sem mudança de asserção
+- [ ] Gate check passes: Build
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): keep the API message of a refused focus action`
+
+---
+
+### T29: Destinos da recorrente e `Abrir foco` em outro workspace
+
+**What**: No `CloseDayDialog`, deixar só `Amanhã` habilitado para uma ocorrência de série, com `Esta semana` e `Backlog` desabilitados e a dica `Encerraria a recorrência`; e somar ao teste do `NowCard` a asserção de que `Abrir foco` não aparece no estado `elsewhere`.
+**Where**: `frontend/src/components/today/close-day-dialog.tsx` (modify)
+**Depends on**: T28
+**Reuses**: `pending[].series` de T24
+**Requirement**: HOJE-75, HOJE-20
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Ocorrência de série: `Esta semana` e `Backlog` desabilitados com a dica `Encerraria a recorrência`; tarefa comum na mesma lista continua com os três destinos (L-048)
+- [ ] Um 422 `close_series_needs_tomorrow` do servidor mantém o diálogo aberto com o erro
+- [ ] No estado `elsewhere`, nenhum link `Abrir foco`
+- [ ] Gate check passes: Build
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(frontend): offer only tomorrow to a recurring task when closing the day`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7
 Phase 3:  T8 → T9 → T10 → T11 → T12 → T13 → T14
 Phase 4:  T15 → T16 → T17 → T18 → T19
 Phase 5:  T20 → T21 → T22 → T23
+Phase 6:  T24 → T25 → T26 → T27 → T28 → T29
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism.
@@ -790,6 +955,12 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T21 | T20 | T20 → T21 | ✅ Match |
 | T22 | T21 | T21 → T22 | ✅ Match |
 | T23 | T22 | T22 → T23 | ✅ Match |
+| T24 | None | início da Phase 6 (após T23) | ✅ Match |
+| T25 | T24 | T24 → T25 | ✅ Match |
+| T26 | T25 | T25 → T26 | ✅ Match |
+| T27 | T26 | T26 → T27 | ✅ Match |
+| T28 | T27 | T27 → T28 | ✅ Match |
+| T29 | T28 | T28 → T29 | ✅ Match |
 
 ---
 
@@ -797,10 +968,10 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | ---- | --------------------------- | --------------- | --------- | ------ |
-| T1, T2, T15, T20 | Serviços do backend | integration | integration | ✅ OK |
+| T1, T2, T15, T20, T24, T25, T26 | Serviços do backend | integration | integration | ✅ OK |
 | T3, T21 | Rotas do backend | integration | integration | ✅ OK |
-| T4, T5, T6, T16, T22 | Funções puras e hooks do frontend | unit | unit | ✅ OK |
-| T7, T8, T9, T10, T11, T12, T13, T14, T17, T18, T19, T23 | Componentes e páginas do frontend | unit | unit | ✅ OK |
+| T4, T5, T6, T16, T22, T28 | Funções puras e hooks do frontend | unit | unit | ✅ OK |
+| T7, T8, T9, T10, T11, T12, T13, T14, T17, T18, T19, T23, T27, T29 | Componentes e páginas do frontend | unit | unit | ✅ OK |
 
 ---
 

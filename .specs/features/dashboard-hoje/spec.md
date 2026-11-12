@@ -104,7 +104,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 11. The system SHALL mostrar no canto do card o link `Abrir foco` com o ícone de seta para fora, que leva a `/focus/<lista>`: a lista da sessão aberta; sem sessão, a lista da tarefa sugerida; sem tarefa sugerida, a lista da primeira tarefa de `Pendente`. (HOJE-17)
 12. IF não há sessão aberta, nem tarefa sugerida, nem tarefa em `Pendente` THEN o card SHALL não mostrar `Abrir foco`. (HOJE-18)
 13. WHILE há uma sessão aberta, o título da tarefa no card SHALL ser um link para o mesmo destino de `Abrir foco`. (HOJE-19)
-14. WHILE a sessão aberta do usuário é de outro workspace, o card SHALL mostrar `Em foco em outro workspace: <nome>` e nenhum botão de ação. (HOJE-20)
+14. WHILE a sessão aberta do usuário é de outro workspace, o card SHALL mostrar `Em foco em outro workspace: <nome>`, nenhum botão de ação e nenhum `Abrir foco`, porque a lista não abre a partir deste workspace. (HOJE-20)
 15. WHILE o usuário é `viewer` do workspace, o card SHALL não mostrar `Concluir`, `Pausar`, `Intervalo`, `Começar foco`, `Outra tarefa` nem `Escolher tarefa`. (HOJE-21)
 16. IF uma ação do card é recusada pelo servidor THEN o sistema SHALL mostrar a mensagem de erro da API num toast e o card SHALL voltar ao estado que o servidor devolver na leitura seguinte. (HOJE-22)
 17. WHILE a estimativa da tarefa em foco acabou e o foco espera `Estender` (`awaiting_extend`), o card SHALL mostrar `Estimativa esgotada`, o tempo gasto e os botões `Estender` e `Concluir` do Foco. (HOJE-74)
@@ -185,7 +185,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 
 **Acceptance Criteria**:
 
-1. The system SHALL mostrar `Tempo focado`: a soma das sessões de tarefa de hoje do usuário no workspace, a sessão aberta até agora, e abaixo `intervalos <soma dos intervalos>`, com o mesmo total que os Relatórios mostram para hoje. (HOJE-49)
+1. The system SHALL mostrar `Tempo focado`: a soma das sessões de tarefa de hoje do usuário no workspace, a sessão aberta até agora, e abaixo `intervalos <soma dos intervalos>`, com o mesmo total que os Relatórios mostram para hoje, somando segundos e truncando uma vez, também quando as sessões não começam nem terminam em minuto cheio. (HOJE-49)
 2. The system SHALL mostrar `Concluídas`: `<feitas> de <planejadas> no plano`, onde planejadas são as tarefas com bloco no plano de hoje e feitas são as dessas concluídas pelo usuário, com um segmento por tarefa planejada (verde se feita, índigo se em foco, cinza se não). (HOJE-50)
 3. IF não há plano salvo para hoje THEN `Concluídas` SHALL mostrar só o número de `Feito hoje` e `sem plano hoje`. (HOJE-51)
 4. The system SHALL mostrar `Aderência ao plano` como a porcentagem definida nas suposições, e `—` com `sem blocos até agora` quando nenhum bloco de tarefa começou. (HOJE-52)
@@ -224,13 +224,14 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 2. The system SHALL mostrar no diálogo o tempo focado de hoje por lista numa barra empilhada com legenda, nas cores das listas. (HOJE-58)
 3. The system SHALL listar no diálogo as tarefas de `Pendente` e a tarefa em foco, cada uma com o seletor `Amanhã`, `Esta semana`, `Backlog`, começando em `Amanhã`. (HOJE-59)
 4. The system SHALL mostrar abaixo de uma tarefa de `Veio de dias anteriores` com 3 dias ou mais `Adiada N dias seguidos`. (HOJE-60)
-5. WHEN o usuário confirma `Fechar o dia` THEN o sistema SHALL, numa única gravação, mover para `Esta semana` e agendar para amanhã sem hora as tarefas em `Amanhã` (o agendamento as traz de volta para `Hoje` amanhã, D21), mover para `Esta semana` sem dia as tarefas em `Esta semana`, e mover para `Backlog` sem dia as tarefas em `Backlog`. (HOJE-61)
-6. WHILE há uma sessão aberta quando o usuário confirma, o sistema SHALL pausá-la antes de mover as tarefas. (HOJE-62)
-7. The system SHALL mostrar no diálogo o resumo do dia em Markdown (título com o workspace e a data, os números, `### Feito` com tempo, desvio e lista de cada tarefa, `### Ficou para depois` com o destino de cada pendência) e o campo opcional `Nota do dia`, que entra no fim do resumo. (HOJE-63)
-8. WHERE `Copiar ao fechar` está marcado (o padrão), WHEN o usuário confirma THEN o sistema SHALL copiar o resumo para a área de transferência e mostrar `Resumo copiado`. (HOJE-64)
-9. IF a gravação falha THEN o sistema SHALL mostrar o erro, não mover nenhuma tarefa e manter o diálogo aberto com as escolhas. (HOJE-65)
-10. IF a área de transferência recusa a cópia THEN o sistema SHALL fechar o dia mesmo assim e mostrar `Não foi possível copiar o resumo` com o botão `Copiar de novo`. (HOJE-66)
-11. WHILE o usuário é `viewer`, o botão `Fechar o dia` SHALL não aparecer. (HOJE-67)
+5. WHEN o usuário confirma `Fechar o dia` THEN o sistema SHALL, numa única gravação, mover para `Esta semana` e agendar para amanhã sem hora as tarefas em `Amanhã` (o agendamento as traz de volta para `Hoje` amanhã, D21), mover para `Esta semana` sem dia as tarefas em `Esta semana`, e mover para `Backlog` sem dia as tarefas em `Backlog`. IF um movimento falha no meio THEN nenhum dos movimentos anteriores SHALL ficar gravado. (HOJE-61)
+6. WHERE a pendência é uma ocorrência de série (recorrente), o diálogo SHALL oferecer só `Amanhã`, com `Esta semana` e `Backlog` desabilitados e a dica `Encerraria a recorrência`; IF o servidor recebe `this_week` ou `backlog` para uma ocorrência de série THEN SHALL responder 422 `close_series_needs_tomorrow` e não mover nada. (HOJE-75)
+7. WHILE há uma sessão aberta quando o usuário confirma, o sistema SHALL pausá-la antes de mover as tarefas. (HOJE-62)
+8. The system SHALL mostrar no diálogo o resumo do dia em Markdown (título com o workspace e a data, os números, `### Feito` com tempo, desvio e lista de cada tarefa, `### Ficou para depois` com o destino de cada pendência) e o campo opcional `Nota do dia`, que entra no fim do resumo. (HOJE-63)
+9. WHERE `Copiar ao fechar` está marcado (o padrão), WHEN o usuário confirma THEN o sistema SHALL copiar o resumo para a área de transferência e mostrar `Resumo copiado`. (HOJE-64)
+10. IF a gravação falha THEN o sistema SHALL mostrar o erro, não mover nenhuma tarefa e manter o diálogo aberto com as escolhas. (HOJE-65)
+11. IF a área de transferência recusa a cópia THEN o sistema SHALL fechar o dia mesmo assim e mostrar `Não foi possível copiar o resumo` com o botão `Copiar de novo`. (HOJE-66)
+12. WHILE o usuário é `viewer`, o botão `Fechar o dia` SHALL não aparecer. (HOJE-67)
 
 **Independent Test**: Com três pendências, escolher `Amanhã`, `Esta semana` e `Backlog`, confirmar e ver cada tarefa no destino no quadro, com o resumo na área de transferência.
 
@@ -341,8 +342,9 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-72 | Edge cases | Tasks | Implementing |
 | HOJE-73 | Edge cases | Tasks | Implementing |
 | HOJE-74 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-75 | P3: Fechar o dia | Tasks | In Tasks |
 
-**Coverage:** 74 total, 74 mapped to tasks, 0 unmapped
+**Coverage:** 75 total, 75 mapped to tasks, 0 unmapped
 
 ---
 
