@@ -1238,6 +1238,23 @@
       "planBlocks_one": "Plan for tomorrow: {{count}} block",
       "planBlocks_other": "Plan for tomorrow: {{count}} blocks",
       "empty": "Nothing set for tomorrow"
+    },
+    "summary": {
+      "title": "## {{workspace}} · {{date}}",
+      "focused": "Focused {{duration}}",
+      "doneOfPlanned": "{{done}} of {{planned}} done",
+      "doneCount_one": "{{count}} done",
+      "doneCount_other": "{{count}} done",
+      "adherence": "adherence {{percent}}%",
+      "done": "### Done",
+      "later": "### Left for later",
+      "nothingDone": "- nothing done",
+      "nothingLeft": "- nothing left open",
+      "to": {
+        "tomorrow": "tomorrow",
+        "this_week": "this week",
+        "backlog": "backlog"
+      }
     }
   }
 }

@@ -677,9 +677,9 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Saída exata para o exemplo do mockup (snapshot em texto)
-- [ ] Sem feitas, `### Feito` diz `- nada concluído`; sem nota, nada depois de `### Ficou para depois`
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Saída exata para o exemplo do mockup (snapshot em texto)
+- [x] Sem feitas, `### Feito` diz `- nada concluído`; sem nota, nada depois de `### Ficou para depois`
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick
