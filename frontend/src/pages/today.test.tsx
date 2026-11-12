@@ -133,6 +133,20 @@ describe('TodayPage', () => {
     expect(screen.getByText('Nothing done today yet')).toBeInTheDocument()
   })
 
+  it('shows Plan × actual below the Now card, with the plan of today (HOJE-42)', async () => {
+    vi.mocked(today.get).mockResolvedValue(
+      day({
+        plan: {
+          saved: true,
+          blocks: [{ id: 'b1', kind: 'task', task_id: 'task-a', title: 'Review the PR', list_color: 2, start_minute: 810, minutes: 90, done: false }],
+        },
+      }),
+    )
+    show()
+    const card = (await screen.findByRole('heading', { name: 'Plan × actual' })).closest('section')!
+    expect(within(within(card).getByRole('list', { name: 'Plan' })).getByText('Review the PR')).toBeInTheDocument()
+  })
+
   it('reads the day again when the card completes the task, so it shows in Done today without waiting 60 s (HOJE-71)', async () => {
     vi.mocked(focus.get).mockResolvedValue(focusing())
     vi.mocked(focus.send).mockResolvedValue(completed())
