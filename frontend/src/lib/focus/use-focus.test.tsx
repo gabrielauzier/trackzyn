@@ -188,4 +188,44 @@ describe('useFocus', () => {
     expect(queued.action).toMatchObject({ type: 'start', task_id: 'task-a', occurred_at: iso(server) })
     expect(result.current.state?.session).toMatchObject({ started_at: iso(server) })
   })
+
+  // dashboard-hoje (HOJE-09, HOJE-11): the Hoje card has no list of its own, so a break names the list it opens on.
+  it('sends a break on the list it is given when the hook follows no list and nothing is open', async () => {
+    focus.get.mockImplementation(async () => paused())
+    focus.send.mockRejectedValue(offline())
+    const { result } = renderHook(() => useFocus(), { wrapper })
+    await advance(0)
+
+    await act(async () => {
+      await result.current.actions.takeBreak(10, undefined, 'list-2')
+    })
+
+    expect(pending()[0].action).toMatchObject({ type: 'break', minutes: 10, list_id: 'list-2' })
+  })
+
+  it('sends a break on the list it is given rather than the open session’s', async () => {
+    focus.get.mockImplementation(async () => counting(deviceId()))
+    focus.send.mockRejectedValue(offline())
+    const { result } = renderHook(() => useFocus(), { wrapper })
+    await advance(0)
+
+    await act(async () => {
+      await result.current.actions.takeBreak(5, undefined, 'list-2')
+    })
+
+    expect(pending()[0].action).toMatchObject({ type: 'break', minutes: 5, list_id: 'list-2' })
+  })
+
+  it('still sends a break on the focus screen’s list when no list is given', async () => {
+    focus.get.mockImplementation(async () => paused())
+    focus.send.mockRejectedValue(offline())
+    const { result } = renderHook(() => useFocus(LIST), { wrapper })
+    await advance(0)
+
+    await act(async () => {
+      await result.current.actions.takeBreak(15)
+    })
+
+    expect(pending()[0].action).toMatchObject({ type: 'break', minutes: 15, list_id: LIST })
+  })
 })

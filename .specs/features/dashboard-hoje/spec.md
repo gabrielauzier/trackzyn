@@ -273,22 +273,22 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-04 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
 | HOJE-05 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
 | HOJE-06 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
-| HOJE-07 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-08 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-09 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-10 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-07 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-08 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-09 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-10 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-11 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-12 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-13 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-14 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-15 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 | HOJE-16 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-17 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-17 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-18 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-19 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-20 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-21 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
-| HOJE-22 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-19 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-20 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-21 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
+| HOJE-22 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 | HOJE-23 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-24 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-25 | P1: Ver o que falta e se cabe | Tasks | Implementing |
@@ -340,7 +340,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-71 | Edge cases | Tasks | Implementing |
 | HOJE-72 | Edge cases | Tasks | Implementing |
 | HOJE-73 | Edge cases | Tasks | Implementing |
-| HOJE-74 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
+| HOJE-74 | P1: Saber o que está acontecendo agora | Tasks | Implementing |
 
 **Coverage:** 74 total, 74 mapped to tasks, 0 unmapped
 

@@ -367,14 +367,14 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `focus`: `32min de 1h 30min`, `faltam 58min · termina às 15:18`, `Concluir`, `Pausar`, `Intervalo`; sem estimativa, só o decorrido
-- [ ] `Concluir`, `Pausar` e a escolha do `Intervalo` chamam a ação certa do `useFocus` (com a lista da sessão no intervalo)
-- [ ] `extend`: `Estimativa esgotada`, `Estender` e `Concluir`
-- [ ] `break`: `Agora · intervalo`, nome, tempo restante e `Encerrar intervalo`
-- [ ] `elsewhere`: `Em foco em outro workspace: <nome>` sem botões
-- [ ] `Abrir foco` e o título levam a `/focus/<lista da sessão>`
-- [ ] `viewer` não vê nenhum botão de ação; um conflito do servidor vira toast
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] `focus`: `32min de 1h 30min`, `faltam 58min · termina às 15:18`, `Concluir`, `Pausar`, `Intervalo`; sem estimativa, só o decorrido
+- [x] `Concluir`, `Pausar` e a escolha do `Intervalo` chamam a ação certa do `useFocus` (com a lista da sessão no intervalo)
+- [x] `extend`: `Estimativa esgotada`, `Estender` e `Concluir`
+- [x] `break`: `Agora · intervalo`, nome, tempo restante e `Encerrar intervalo`
+- [x] `elsewhere`: `Em foco em outro workspace: <nome>` sem botões
+- [x] `Abrir foco` e o título levam a `/focus/<lista da sessão>`
+- [x] `viewer` não vê nenhum botão de ação; um conflito do servidor vira toast
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick
