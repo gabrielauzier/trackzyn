@@ -1021,8 +1021,8 @@ T33 → T34
 
 **Done when**:
 
-- [ ] O teste passa e falha em 10 de 10 execuções com `>=` trocado por `>` (conferido localmente e desfeito)
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] O teste passa e falha em 10 de 10 execuções com `>=` trocado por `>` (conferido localmente e desfeito)
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick
