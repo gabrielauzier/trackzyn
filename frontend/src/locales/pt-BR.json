@@ -1226,6 +1226,23 @@
       "planBlocks_one": "Plano de amanhã: {{count}} bloco",
       "planBlocks_other": "Plano de amanhã: {{count}} blocos",
       "empty": "Nada marcado para amanhã"
+    },
+    "summary": {
+      "title": "## {{workspace}} · {{date}}",
+      "focused": "Focado {{duration}}",
+      "doneOfPlanned": "{{done}} de {{planned}} concluídas",
+      "doneCount_one": "{{count}} concluída",
+      "doneCount_other": "{{count}} concluídas",
+      "adherence": "aderência {{percent}}%",
+      "done": "### Feito",
+      "later": "### Ficou para depois",
+      "nothingDone": "- nada concluído",
+      "nothingLeft": "- nada ficou aberto",
+      "to": {
+        "tomorrow": "amanhã",
+        "this_week": "esta semana",
+        "backlog": "backlog"
+      }
     }
   }
 }
