@@ -651,9 +651,9 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Owner recebe 200 com o dia novo; `viewer` recebe 403; token recebe 403
-- [ ] `to` inválido, `task_id` repetido e 501 itens recebem 422
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Owner recebe 200 com o dia novo; `viewer` recebe 403; token recebe 403
+- [x] `to` inválido, `task_id` repetido e 501 itens recebem 422
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full

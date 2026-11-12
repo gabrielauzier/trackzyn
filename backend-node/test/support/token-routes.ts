@@ -42,6 +42,7 @@ export const CLOSED_AGENDA_ROUTES: ReadonlyArray<{ method: string; url: string }
   { method: 'GET', url: '/api/plans/:day/candidates' },
   { method: 'PUT', url: '/api/users/me/workday' },
   { method: 'GET', url: '/api/today' },
+  { method: 'POST', url: '/api/today/close' },
 ]
 
 export const routeKey = (route: { method: string; url: string }) => `${route.method} ${route.url}`

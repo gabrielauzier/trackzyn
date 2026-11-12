@@ -103,3 +103,82 @@ describe('GET /api/today (HOJE-06)', () => {
     expect(reply.json().detail).toBe('Route not available for tokens')
   })
 })
+
+describe('POST /api/today/close (HOJE-61, HOJE-67)', () => {
+  const close = (token: string, workspaceId: string, moves: unknown) =>
+    call('POST', '/api/today/close', token, workspaceId, { moves })
+
+  it('answers the owner 200 with the new day: the task sent to Backlog leaves Pendente', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const reply = await close(owner.token, workspaceId, [{ task_id: pendingId, to: 'backlog' }])
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json().pending).toEqual([])
+    const task = (await call('GET', `/api/tasks/${pendingId}`, owner.token, workspaceId)).json()
+    expect(task.column).toBe('backlog')
+  })
+
+  it('answers the owner 200 with the task sent to tomorrow in Amanhã', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const reply = await close(owner.token, workspaceId, [{ task_id: pendingId, to: 'tomorrow' }])
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json().tomorrow_tasks.map((task: { id: string }) => task.id)).toEqual([pendingId])
+  })
+
+  it('answers 403 to a viewer and moves nothing (HOJE-67)', async () => {
+    const { owner, viewer, workspaceId, pendingId } = await setup()
+    expect((await close(viewer.token, workspaceId, [{ task_id: pendingId, to: 'backlog' }])).statusCode).toBe(403)
+    expect((await call('GET', `/api/tasks/${pendingId}`, owner.token, workspaceId)).json().column).toBe('today')
+  })
+
+  it('answers 403 to an access token, whatever its scopes (AD-007)', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const token = await mintToken(t, owner.token, workspaceId)
+    const reply = await t.app.inject({
+      method: 'POST',
+      url: '/api/today/close',
+      headers: bearer(token.value),
+      payload: { moves: [{ task_id: pendingId, to: 'backlog' }] },
+    })
+    expect(reply.statusCode).toBe(403)
+    expect(reply.json().detail).toBe('Route not available for tokens')
+  })
+
+  it('answers 422 for a destination out of the three', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    expect((await close(owner.token, workspaceId, [{ task_id: pendingId, to: 'today' }])).statusCode).toBe(422)
+  })
+
+  it('answers 422 for a task moved twice and moves nothing', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const reply = await close(owner.token, workspaceId, [
+      { task_id: pendingId, to: 'backlog' },
+      { task_id: pendingId, to: 'tomorrow' },
+    ])
+    expect(reply.statusCode).toBe(422)
+    expect((await call('GET', `/api/tasks/${pendingId}`, owner.token, workspaceId)).json().column).toBe('today')
+  })
+
+  it('answers 422 for 501 moves, and accepts 500', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const many = (count: number) => Array.from({ length: count }, () => ({ task_id: randomUUID(), to: 'backlog' }))
+    expect((await close(owner.token, workspaceId, many(501))).statusCode).toBe(422)
+    // 500 moves pass the body check; unknown tasks are then refused by the close itself.
+    const reply = await close(owner.token, workspaceId, [{ task_id: pendingId, to: 'backlog' }, ...many(499)])
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json().code).toBe('close_task_not_pending')
+  })
+
+  it('answers 422 close_task_not_pending for a done task', async () => {
+    const { owner, workspaceId, doneId } = await setup()
+    const reply = await close(owner.token, workspaceId, [{ task_id: doneId, to: 'backlog' }])
+    expect(reply.statusCode).toBe(422)
+    expect(reply.json().code).toBe('close_task_not_pending')
+  })
+
+  it('answers 200 to an empty close', async () => {
+    const { owner, workspaceId, pendingId } = await setup()
+    const reply = await close(owner.token, workspaceId, [])
+    expect(reply.statusCode).toBe(200)
+    expect(reply.json().pending.map((task: { id: string }) => task.id)).toEqual([pendingId])
+  })
+})
