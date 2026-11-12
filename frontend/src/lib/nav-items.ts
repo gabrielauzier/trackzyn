@@ -20,8 +20,8 @@ export type NavItem =
 
 export const navItems: NavItem[] = [
   { type: 'separator', labelKey: 'nav.groupWorkspace' },
-  { type: 'link', key: 'newList', path: '/?new=1', icon: Plus, write: true },
-  { type: 'link', key: 'allLists', path: '/', icon: LayoutGrid },
+  { type: 'link', key: 'newList', path: '/lists?new=1', icon: Plus, write: true },
+  { type: 'link', key: 'allLists', path: '/lists', icon: LayoutGrid },
   { type: 'link', key: 'archivedLists', path: '/lists/archived', icon: Archive },
   { type: 'link', key: 'agenda', path: '/agenda', icon: CalendarDays },
   // `/planejar` opens the plan of today (PLAN-30).

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 
 import ArchivedListsPage from '@/pages/archived-lists'
-import HomePage from '@/pages/home'
+import ListsPage from '@/pages/lists'
 import { lists } from '@/lib/api'
 import { renderWithProviders } from '@/test/utils'
 import type { ListCard } from '@/types'
@@ -56,7 +56,7 @@ describe('ArchivedListsPage', () => {
   })
 
   it('leaves the archived list off the home', async () => {
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     expect(await screen.findByRole('link', { name: 'Current work' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Old project' })).not.toBeInTheDocument()

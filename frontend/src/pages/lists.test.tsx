@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 
 import { Route, Routes, useLocation } from 'react-router-dom'
-import HomePage from '@/pages/home'
+import ListsPage from '@/pages/lists'
 import { lists } from '@/lib/api'
 import { renderWithProviders } from '@/test/utils'
 import type { ListCard, ListsResponse } from '@/types'
@@ -73,9 +73,9 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('HomePage', () => {
+describe('ListsPage', () => {
   it('shows only the Create list card in an empty workspace', async () => {
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     expect(await screen.findByRole('button', { name: 'Create list' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Your lists' })).toBeInTheDocument()
@@ -84,7 +84,7 @@ describe('HomePage', () => {
   })
 
   it('opens the create dialog from the Create list card', async () => {
-    const { user } = renderWithProviders(<HomePage />)
+    const { user } = renderWithProviders(<ListsPage />)
 
     await user.click(await screen.findByRole('button', { name: 'Create list' }))
 
@@ -92,7 +92,7 @@ describe('HomePage', () => {
   })
 
   it('opens the create dialog when the sidebar sends ?new=1', async () => {
-    renderWithProviders(<HomePage />, { route: '/?new=1' })
+    renderWithProviders(<ListsPage />, { route: '/lists?new=1' })
 
     expect(await screen.findByRole('dialog', { name: 'Create list' })).toBeInTheDocument()
   })
@@ -102,7 +102,7 @@ describe('HomePage', () => {
     // 02:00 UTC is still the previous evening, 23:00, in São Paulo.
     vi.setSystemTime(new Date('2026-10-24T02:00:00Z'))
 
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Good evening, Ana' })).toBeInTheDocument()
     expect(screen.getByText('Time to wrap up the day calmly.')).toBeInTheDocument()
@@ -113,7 +113,7 @@ describe('HomePage', () => {
     vi.setSystemTime(new Date('2026-10-24T13:00:00Z')) // 10:00 in São Paulo
     state.user = { email: 'joao.silva@example.com', preferences: {} }
 
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Good morning, joao.silva' })).toBeInTheDocument()
     expect(screen.getByText('Start with what matters most.')).toBeInTheDocument()
@@ -121,7 +121,7 @@ describe('HomePage', () => {
 
   it('shows the cards in server order before the Create list card', async () => {
     respond([card(A, 'Alpha', 0), card(B, 'Beta', 1)])
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Alpha', 'Beta'])
@@ -138,7 +138,7 @@ describe('HomePage', () => {
       const index = order.indexOf(this.dataset.listId ?? '')
       return index < 0 ? original.call(this) : DOMRect.fromRect({ x: index * 300, y: 0, width: 280, height: 200 })
     })
-    const { user } = renderWithProviders(<HomePage />)
+    const { user } = renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     const alpha = document.querySelector<HTMLElement>(`[data-list-id="${A}"]`)!
@@ -158,7 +158,7 @@ describe('HomePage', () => {
       const index = order.indexOf(this.dataset.listId ?? '')
       return index < 0 ? original.call(this) : DOMRect.fromRect({ x: index * 300, y: 0, width: 280, height: 200 })
     })
-    const { user } = renderWithProviders(<HomePage />)
+    const { user } = renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     const alpha = wrapperOf(A)
@@ -178,7 +178,7 @@ describe('HomePage', () => {
   it('lets a viewer neither create nor drag', async () => {
     state.canWrite = false
     respond([card(A, 'Alpha', 0)])
-    renderWithProviders(<HomePage />, { route: '/?new=1' })
+    renderWithProviders(<ListsPage />, { route: '/lists?new=1' })
 
     await screen.findByRole('link', { name: 'Alpha' })
     expect(screen.queryByRole('button', { name: 'Create list' })).not.toBeInTheDocument()
@@ -191,7 +191,7 @@ describe('HomePage', () => {
 
   it('a writer sees the grab cursor on the list card', async () => {
     respond([card(A, 'Alpha', 0)])
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     const wrapper = wrapperOf(A)
@@ -207,7 +207,7 @@ describe('HomePage', () => {
 
   it('a clicked list card keeps its accent border, through its menu, until a click outside the cards', async () => {
     respond([card(A, 'Alpha', 0), card(B, 'Beta', 1)])
-    const { user } = renderWithProviders(<HomePage />)
+    const { user } = renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     const selected = (id: string) => wrapperOf(id).querySelector('[data-slot="card"]')!.classList.contains('border-primary')
@@ -234,7 +234,7 @@ describe('HomePage', () => {
 
   it('a dragged list card shows an accent border, and keeps it after the drop as the card pressed last', async () => {
     respond([card(A, 'Alpha', 0)])
-    const { user } = renderWithProviders(<HomePage />)
+    const { user } = renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     const wrapper = wrapperOf(A)
@@ -256,7 +256,7 @@ describe('HomePage', () => {
 
   it('dragging from the list title does not move the card', async () => {
     respond([card(A, 'Alpha', 0), card(B, 'Beta', 1)])
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     const title = await screen.findByRole('link', { name: 'Alpha' })
     expect(title).toHaveAttribute('href', `/lists/${A}`)
@@ -272,7 +272,7 @@ describe('HomePage', () => {
 
   it('dragging from the actions menu does not move the card', async () => {
     respond([card(A, 'Alpha', 0), card(B, 'Beta', 1)])
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     const wrapper = wrapperOf(A)
@@ -297,7 +297,7 @@ describe('HomePage', () => {
   it('a viewer sees no grab cursor', async () => {
     state.canWrite = false
     respond([card(A, 'Alpha', 0)])
-    renderWithProviders(<HomePage />)
+    renderWithProviders(<ListsPage />)
 
     await screen.findByRole('link', { name: 'Alpha' })
     const wrapper = wrapperOf(A)
@@ -315,16 +315,17 @@ function Where() {
   return <span data-testid="where">{useLocation().pathname}</span>
 }
 
-describe('HomePage: Planejar amanhã (PLAN-01)', () => {
+describe('ListsPage: Planejar amanhã (PLAN-01)', () => {
   it('leads to the plan of tomorrow in the workspace timezone', async () => {
     // Sunday 8 November 2026, 23:30 in São Paulo: already Monday in UTC.
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-11-09T02:30:00.000Z'))
     const { user } = renderWithProviders(
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/lists" element={<ListsPage />} />
         <Route path="/planejar/:day" element={<Where />} />
       </Routes>,
+      { route: '/lists' },
     )
 
     await user.click(await screen.findByRole('button', { name: 'Plan tomorrow' }))

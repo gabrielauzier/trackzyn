@@ -79,6 +79,33 @@ describe('Reopening the app (SYNC-12)', () => {
   })
 })
 
+describe('The list grid at /lists (HOJE-02)', () => {
+  it('/lists shows the grid of lists', async () => {
+    localStorage.setItem('token', 'token-123')
+    vi.mocked(lists.list).mockResolvedValue({ timezone: 'America/Sao_Paulo', lists: [week] })
+    vi.mocked(focus.get).mockImplementation(async (listId) => paused(listId))
+    window.history.replaceState(null, '', '/lists')
+
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: 'Your lists' })).toBeInTheDocument()
+    expect(await screen.findByText('Week')).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/lists')
+  })
+
+  it('/lists?new=1 opens the dialog of a new list', async () => {
+    localStorage.setItem('token', 'token-123')
+    vi.mocked(lists.list).mockResolvedValue({ timezone: 'America/Sao_Paulo', lists: [week] })
+    vi.mocked(focus.get).mockImplementation(async (listId) => paused(listId))
+    window.history.replaceState(null, '', '/lists?new=1')
+
+    render(<App />)
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/lists')
+  })
+})
+
 describe('The focus widget route (WIDGET-06)', () => {
   it('/widget shows the widget alone, without the sidebar or the app guard', async () => {
     localStorage.setItem('token', 'token-123')

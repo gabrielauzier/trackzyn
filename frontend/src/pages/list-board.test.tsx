@@ -86,7 +86,7 @@ const fullTask: Task = {
 function renderBoard(listId = WEEK) {
   return renderWithProviders(
     <Routes>
-      <Route path="/" element={<p>Home page</p>} />
+      <Route path="/lists" element={<p>Lists page</p>} />
       <Route path="/lists/:listId" element={<ListBoardPage />} />
       <Route path="/focus/:listId" element={<p>Focus page</p>} />
     </Routes>,
@@ -222,7 +222,7 @@ describe('ListBoardPage', () => {
     const badge = within(selector).getByText('W')
     expect(badge).toHaveAttribute('data-slot', 'list-badge')
     expect(badge.style.backgroundColor).toBe('var(--chart-3)')
-    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/lists')
     expect(screen.getByText('This list has 1 pending task, Est.: 1hr')).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
       'Backlog',
@@ -1079,10 +1079,10 @@ describe('ListBoardPage', () => {
     expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
   })
 
-  it('goes back home when the list does not exist', async () => {
+  it('goes back to the lists when the list does not exist (HOJE-02)', async () => {
     vi.mocked(lists.board).mockRejectedValue({ response: { status: 404, data: { detail: 'Not found' } } })
     renderBoard()
 
-    expect(await screen.findByText('Home page')).toBeInTheDocument()
+    expect(await screen.findByText('Lists page')).toBeInTheDocument()
   })
 })

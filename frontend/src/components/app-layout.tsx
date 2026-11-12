@@ -263,9 +263,10 @@ export function AppLayout() {
                   )
                 }
 
+                // `/lists` is a prefix of the archived lists and of each board, which mark nothing else.
                 const isActive =
-                  item.path === '/'
-                    ? location.pathname === '/'
+                  item.path === '/' || item.path === '/lists'
+                    ? location.pathname === item.path
                     : location.pathname.startsWith(item.path)
                 const Icon = item.icon
                 // An admin link says so in its name and tip, which is all the collapsed sidebar shows (#32).
