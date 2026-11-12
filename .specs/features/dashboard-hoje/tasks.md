@@ -311,12 +311,12 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Título `5 tarefas · 4h 58min estimadas` com os dados de exemplo do mockup
-- [ ] `Não cabe no dia: sobram 18min de tarefa` com a parte listrada; `Cabe no dia: 40min livre` quando cabe; `2 sem estimativa, contadas como 0`
-- [ ] `13:00 · passou há 1h 20min` às 14:20; `há 3 dias` com `days_late` 3
-- [ ] Clique abre o `TaskDialog` da tarefa
-- [ ] Vazio: `Nada pendente para hoje`, sem capacidade; sem listas ativas, o link `Criar lista` (HOJE-72)
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Título `5 tarefas · 4h 58min estimadas` com os dados de exemplo do mockup
+- [x] `Não cabe no dia: sobram 18min de tarefa` com a parte listrada; `Cabe no dia: 40min livre` quando cabe; `2 sem estimativa, contadas como 0`
+- [x] `13:00 · passou há 1h 20min` às 14:20; `há 3 dias` com `days_late` 3
+- [x] Clique abre o `TaskDialog` da tarefa
+- [x] Vazio: `Nada pendente para hoje`, sem capacidade; sem listas ativas, o link `Criar lista` (HOJE-72)
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

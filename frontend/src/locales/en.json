@@ -1134,6 +1134,29 @@
   "today": {
     "tile": {
       "noEstimate": "No estimate"
+    },
+    "pending": {
+      "title": "Pending",
+      "summary_one": "{{count}} task · {{duration}} estimated",
+      "summary_other": "{{count}} tasks · {{duration}} estimated",
+      "empty": "Nothing pending for today",
+      "groups": {
+        "late": "Late",
+        "timed": "Timed",
+        "planned": "In the plan",
+        "carried": "From earlier days",
+        "unplanned": "No plan"
+      },
+      "passed": "{{time}} · passed {{duration}} ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago",
+      "subtasks": "{{done}}/{{total}} subtasks"
+    },
+    "capacity": {
+      "over": "Doesn't fit the day: {{duration}} of tasks left over",
+      "fits": "Fits the day: {{duration}} free",
+      "withoutEstimate_one": "{{count}} without an estimate, counted as 0",
+      "withoutEstimate_other": "{{count}} without an estimate, counted as 0"
     }
   }
 }

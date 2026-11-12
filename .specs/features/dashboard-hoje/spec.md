@@ -299,8 +299,8 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-30 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-31 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-32 | P1: Ver o que falta e se cabe | Tasks | Implementing |
-| HOJE-33 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
-| HOJE-34 | P1: Ver o que falta e se cabe | Tasks | In Tasks |
+| HOJE-33 | P1: Ver o que falta e se cabe | Tasks | Implementing |
+| HOJE-34 | P1: Ver o que falta e se cabe | Tasks | Implementing |
 | HOJE-35 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-36 | P1: Ver o que já foi feito | Tasks | Implementing |
 | HOJE-37 | P1: Ver o que já foi feito | Tasks | Implementing |
@@ -338,7 +338,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-69 | Edge cases | Tasks | Implementing |
 | HOJE-70 | Edge cases | Tasks | Implementing |
 | HOJE-71 | Edge cases | Tasks | Implementing |
-| HOJE-72 | Edge cases | Tasks | In Tasks |
+| HOJE-72 | Edge cases | Tasks | Implementing |
 | HOJE-73 | Edge cases | Tasks | Implementing |
 | HOJE-74 | P1: Saber o que está acontecendo agora | Tasks | In Tasks |
 
