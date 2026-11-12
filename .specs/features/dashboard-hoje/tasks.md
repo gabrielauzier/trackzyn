@@ -83,6 +83,12 @@ T24 → T25 → T26 → T27 → T28 → T29
 T30
 ```
 
+### Phase 8: Correção da verificação 3
+
+```
+T31
+```
+
 ---
 
 ## Task Breakdown
@@ -913,10 +919,35 @@ T30
 
 ---
 
+### T31: Série só da sessão aberta
+
+**What**: Teste de serviço que prova que `focus_task_series` lê só a sessão aberta: sessão fechada hoje numa ocorrência de série e sessão aberta numa tarefa comum dão `false` (mutante B4 da verificação 3).
+**Where**: `backend-node/test/services/today.test.ts` (modify)
+**Depends on**: None (fases anteriores)
+**Reuses**: fixtures do próprio arquivo
+**Requirement**: HOJE-75
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] O teste passa no código atual e falha sem `s.ended_at IS NULL` (conferido localmente e desfeito)
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): pin the focus task series to the open session`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7
@@ -925,6 +956,7 @@ Phase 4:  T15 → T16 → T17 → T18 → T19
 Phase 5:  T20 → T21 → T22 → T23
 Phase 6:  T24 → T25 → T26 → T27 → T28 → T29
 Phase 7:  T30
+Phase 8:  T31
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism.
@@ -995,6 +1027,7 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T28 | T27 | T27 → T28 | ✅ Match |
 | T29 | T28 | T28 → T29 | ✅ Match |
 | T30 | None | início da Phase 7 (após T29) | ✅ Match |
+| T31 | None | início da Phase 8 (após T30) | ✅ Match |
 
 ---
 
@@ -1002,7 +1035,7 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | ---- | --------------------------- | --------------- | --------- | ------ |
-| T1, T2, T15, T20, T24, T25, T26 | Serviços do backend | integration | integration | ✅ OK |
+| T1, T2, T15, T20, T24, T25, T26, T31 | Serviços do backend | integration | integration | ✅ OK |
 | T3, T21 | Rotas do backend | integration | integration | ✅ OK |
 | T4, T5, T6, T16, T22, T28 | Funções puras e hooks do frontend | unit | unit | ✅ OK |
 | T7, T8, T9, T10, T11, T12, T13, T14, T17, T18, T19, T23, T27, T29, T30 | Componentes e páginas do frontend | unit | unit | ✅ OK |
