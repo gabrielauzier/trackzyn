@@ -847,8 +847,10 @@ describe('readToday: the task in focus for Fechar o dia (HOJE-59, HOJE-75)', () 
     expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
   })
 
-  // Each member has one open session at most (SYNC-01); the two tests together pin the reader filter whichever
-  // open session the database returns first.
+  // Each member has one open session at most (SYNC-01). The other member's id sorts before any random id, and their
+  // session goes in first, so without the reader filter the database returns their row first whether it reads the
+  // open-session index (ordered by user) or the table (in insertion order): both tests then fail.
+  const FIRST_USER_ID = '00000000-0000-4000-8000-000000000000'
   const occurrence = async (title: string, position: number) => {
     const id = await task('today', { title, position })
     const seriesId = randomUUID()
@@ -858,18 +860,19 @@ describe('readToday: the task in focus for Fechar o dia (HOJE-59, HOJE-75)', () 
   }
 
   it("ignores another member's open session on an occurrence beside the reader's on a plain task (L-048)", async () => {
+    await member(FIRST_USER_ID, 'first@b.c')
     const recurring = await occurrence('Standup', 0)
     const plain = await task('today', { title: 'Plain', position: 1 })
-    // The reader's session goes in first here and last in the mirror test, so no row order passes both without the filter.
+    await session({ taskId: recurring, startedAt: SP('2026-11-11T14:00:00'), endedAt: null, user: FIRST_USER_ID })
     await session({ taskId: plain, startedAt: SP('2026-11-11T14:05:00'), endedAt: null })
-    await session({ taskId: recurring, startedAt: SP('2026-11-11T14:00:00'), endedAt: null, user: otherUserId })
     expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(false)
   })
 
   it("reads the reader's open session on an occurrence beside another member's on a plain task (L-048)", async () => {
+    await member(FIRST_USER_ID, 'first@b.c')
     const recurring = await occurrence('Standup', 0)
     const plain = await task('today', { title: 'Plain', position: 1 })
-    await session({ taskId: plain, startedAt: SP('2026-11-11T14:00:00'), endedAt: null, user: otherUserId })
+    await session({ taskId: plain, startedAt: SP('2026-11-11T14:00:00'), endedAt: null, user: FIRST_USER_ID })
     await session({ taskId: recurring, startedAt: SP('2026-11-11T14:05:00'), endedAt: null })
     expect((await readToday(db, actor(), NOW)).focus_task_series).toBe(true)
   })

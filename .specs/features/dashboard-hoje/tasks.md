@@ -95,6 +95,12 @@ T31
 T32
 ```
 
+### Phase 10: Correções da segunda verificação final
+
+```
+T33 → T34
+```
+
 ---
 
 ## Task Breakdown
@@ -975,10 +981,60 @@ T32
 
 ---
 
+### T33: Filtro do leitor provado sem depender da ordem
+
+**What**: Nos dois testes do outro membro, usar um membro de id fixo que vem antes de qualquer id aleatório e inserir a sessão dele primeiro, para que, sem o filtro `s.user_id`, o banco devolva a linha dele primeiro tanto pelo índice quanto pela tabela.
+**Where**: `backend-node/test/services/today.test.ts` (modify)
+**Depends on**: None (fases anteriores)
+**Reuses**: `member`, `session`
+**Requirement**: HOJE-75
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] Sem o filtro `s.user_id`, os dois testes falham em 12 de 12 execuções do bloco e em 6 de 6 dos dois arquivos de teste do dia (conferido localmente e desfeito)
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): pin the reader filter regardless of row order`
+
+---
+
+### T34: Limite exato de 3 dias em `Adiada`
+
+**What**: Teste do `CloseDayDialog` com uma pendência de `days_late` 3 que espera `Adiada 3 dias seguidos`.
+**Where**: `frontend/src/components/today/close-day-dialog.test.tsx` (modify)
+**Depends on**: T33
+**Reuses**: `draw`, `pending`
+**Requirement**: HOJE-60
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O teste passa e falha em 10 de 10 execuções com `>=` trocado por `>` (conferido localmente e desfeito)
+- [ ] Gate check passes: `npm --prefix frontend test`
+
+**Tests**: unit
+**Gate**: quick
+
+**Commit**: `test(frontend): cover the 3-day threshold of a postponed task`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8 → Phase 9 → Phase 10
 
 Phase 1:  T1 → T2 → T3
 Phase 2:  T4 → T5 → T6 → T7
@@ -989,6 +1045,7 @@ Phase 6:  T24 → T25 → T26 → T27 → T28 → T29
 Phase 7:  T30
 Phase 8:  T31
 Phase 9:  T32
+Phase 10: T33 → T34
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism.
@@ -1061,6 +1118,8 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 | T30 | None | início da Phase 7 (após T29) | ✅ Match |
 | T31 | None | início da Phase 8 (após T30) | ✅ Match |
 | T32 | None | início da Phase 9 (após T31) | ✅ Match |
+| T33 | None | início da Phase 10 (após T32) | ✅ Match |
+| T34 | T33 | T33 → T34 | ✅ Match |
 
 ---
 
@@ -1068,10 +1127,10 @@ Execution is strictly sequential - there is no intra-phase parallelism.
 
 | Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
 | ---- | --------------------------- | --------------- | --------- | ------ |
-| T1, T2, T15, T20, T24, T25, T26, T31, T32 | Serviços do backend | integration | integration | ✅ OK |
+| T1, T2, T15, T20, T24, T25, T26, T31, T32, T33 | Serviços do backend | integration | integration | ✅ OK |
 | T3, T21 | Rotas do backend | integration | integration | ✅ OK |
 | T4, T5, T6, T16, T22, T28 | Funções puras e hooks do frontend | unit | unit | ✅ OK |
-| T7, T8, T9, T10, T11, T12, T13, T14, T17, T18, T19, T23, T27, T29, T30 | Componentes e páginas do frontend | unit | unit | ✅ OK |
+| T7, T8, T9, T10, T11, T12, T13, T14, T17, T18, T19, T23, T27, T29, T30, T34 | Componentes e páginas do frontend | unit | unit | ✅ OK |
 
 ---
 
