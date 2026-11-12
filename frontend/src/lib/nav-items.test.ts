@@ -61,8 +61,8 @@ describe('visibleNavItems', () => {
   it('opens the workspace section with the three list entries', () => {
     const lists = navItems.filter((item) => item.type === 'link').slice(0, 3)
     expect(lists.map((item) => item.type === 'link' && [item.key, item.path])).toEqual([
-      ['newList', '/?new=1'],
-      ['allLists', '/'],
+      ['newList', '/lists?new=1'],
+      ['allLists', '/lists'],
       ['archivedLists', '/lists/archived'],
     ])
   })

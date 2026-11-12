@@ -255,10 +255,10 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] `/lists` mostra a grade com arrastar, renomear e criar; `/lists?new=1` abre o diálogo de nova lista (testes de `home.test.tsx` movidos para `lists.test.tsx` sem perder nenhum)
-- [ ] O breadcrumb de uma lista e o redirecionamento de lista excluída levam para `/lists`
-- [ ] `nav-items.test.ts` atualizado
-- [ ] Gate check passes: Build
+- [x] `/lists` mostra a grade com arrastar, renomear e criar; `/lists?new=1` abre o diálogo de nova lista (testes de `home.test.tsx` movidos para `lists.test.tsx` sem perder nenhum)
+- [x] O breadcrumb de uma lista e o redirecionamento de lista excluída levam para `/lists`
+- [x] `nav-items.test.ts` atualizado
+- [x] Gate check passes: Build
 
 **Tests**: unit
 **Gate**: build

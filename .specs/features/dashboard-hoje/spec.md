@@ -268,7 +268,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | HOJE-01 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
-| HOJE-02 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
+| HOJE-02 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
 | HOJE-03 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |
 | HOJE-04 | P1: Ver o dia ao abrir o app | Tasks | Implementing |
 | HOJE-05 | P1: Ver o dia ao abrir o app | Tasks | In Tasks |

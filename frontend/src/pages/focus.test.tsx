@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { Route, Routes } from 'react-router-dom'
 
 import FocusPage from '@/pages/focus'
-import HomePage from '@/pages/home'
+import ListsPage from '@/pages/lists'
 import { focus, lists, plans, subtasks, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import { play } from '@/lib/sounds/synth'
@@ -116,7 +116,7 @@ function listCard(id: string, name: string): ListCard {
 function renderFocus(route: string | { pathname: string; state: unknown } = `/focus/${LIST}`) {
   return renderWithProviders(
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<ListsPage />} />
       <Route path="/lists/:listId" element={<p>Board page</p>} />
       <Route path="/focus/:listId" element={<FocusPage />} />
     </Routes>,

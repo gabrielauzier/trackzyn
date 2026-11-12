@@ -53,7 +53,7 @@ class CardBodyPointerSensor extends PointerSensor {
   ]
 }
 
-export default function HomePage() {
+export default function ListsPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { user } = useAuth()

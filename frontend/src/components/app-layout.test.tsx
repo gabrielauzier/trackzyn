@@ -191,13 +191,15 @@ describe('app layout title bar', () => {
 })
 
 describe('app layout sidebar', () => {
-  it('offers the list entries, with All my lists selected on the home', () => {
+  it('offers the list entries, with All my lists selected on /lists (HOJE-02)', () => {
     state.canWrite = true
-    renderWithProviders(<AppLayout />, { route: '/' })
+    renderWithProviders(<AppLayout />, { route: '/lists' })
 
     const nav = screen.getByRole('navigation')
-    expect(within(nav).getByRole('link', { name: 'Create new list' })).toHaveAttribute('href', '/?new=1')
-    expect(within(nav).getByRole('link', { name: 'All my lists' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'Create new list' })).toHaveAttribute('href', '/lists?new=1')
+    const all = within(nav).getByRole('link', { name: 'All my lists' })
+    expect(all).toHaveAttribute('href', '/lists')
+    expect(all).toHaveAttribute('aria-current', 'page')
     const archived = within(nav).getByRole('link', { name: 'Archived lists' })
     expect(archived).toHaveAttribute('href', '/lists/archived')
     expect(archived).not.toHaveAttribute('aria-current')
