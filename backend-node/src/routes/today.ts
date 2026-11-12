@@ -3,8 +3,9 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 import { authGuards } from '../plugins/auth.ts'
-import { workspaceContext } from '../plugins/workspace.ts'
-import { readToday } from '../services/today.ts'
+import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
+import { type TodayActor, closeDay, readToday } from '../services/today.ts'
+import { UUID_PATTERN } from '../services/users.ts'
 
 const listSchema = z.object({ id: z.string(), name: z.string(), color: z.number() })
 const taskRef = {
@@ -73,15 +74,43 @@ const todaySchema = z.object({
   week_unscheduled: z.number(),
 })
 
+const MAX_CLOSE_MOVES = 500
+const closeBody = z.object({
+  moves: z
+    .array(z.object({ task_id: z.string().regex(UUID_PATTERN, 'Input should be a valid UUID'), to: z.enum(['tomorrow', 'this_week', 'backlog']) }))
+    .max(MAX_CLOSE_MOVES)
+    .refine((moves) => new Set(moves.map((move) => move.task_id.toLowerCase())).size === moves.length, {
+      message: 'A task may be moved only once',
+    }),
+})
+
 /** The logged-in user's day in the current workspace (dashboard-hoje); closed to access tokens (AD-007). */
 export function todayRoutes(ctx: AppContext) {
   return async (app: FastifyInstance): Promise<void> => {
     const typed = app.withTypeProvider<ZodTypeProvider>()
     const { requireUser } = authGuards(ctx)
     const reading = [requireUser, workspaceContext(ctx)]
+    const writing = [...reading, requireWrite]
+    const actor = (request: { workspace: { user: { id: string }; workspace: Pick<TodayActor['workspace'], 'id' | 'timezone'> } }) => ({
+      userId: request.workspace.user.id,
+      workspace: request.workspace.workspace,
+    })
 
     typed.get('/api/today', { schema: { response: { 200: todaySchema } }, preValidation: reading }, async (request) =>
-      readToday(ctx.db, { userId: request.workspace.user.id, workspace: request.workspace.workspace }, new Date()),
+      readToday(ctx.db, actor(request), new Date()),
+    )
+
+    // `Fechar o dia` (HOJE-61): only who writes (HOJE-67), in one transaction.
+    typed.post(
+      '/api/today/close',
+      { schema: { body: closeBody, response: { 200: todaySchema } }, preValidation: writing },
+      async (request) =>
+        closeDay(
+          ctx.db,
+          actor(request),
+          request.body.moves.map((move) => ({ task_id: move.task_id.toLowerCase(), to: move.to })),
+          new Date(),
+        ),
     )
   }
 }

@@ -333,7 +333,7 @@ O usuário deixou as decisões em aberto com o agente (2026-11-11). Os padrões 
 | HOJE-64 | P3: Fechar o dia | Tasks | In Tasks |
 | HOJE-65 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-66 | P3: Fechar o dia | Tasks | In Tasks |
-| HOJE-67 | P3: Fechar o dia | Tasks | In Tasks |
+| HOJE-67 | P3: Fechar o dia | Tasks | Implementing |
 | HOJE-68 | Edge cases | Tasks | Implementing |
 | HOJE-69 | Edge cases | Tasks | Implementing |
 | HOJE-70 | Edge cases | Tasks | Implementing |
