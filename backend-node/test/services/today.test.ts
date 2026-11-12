@@ -3,7 +3,18 @@ import type { PGlite } from '@electric-sql/pglite'
 import { eq } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
-import { type TaskColumn, dayPlanBlocks, dayPlans, focusSessions, lists, subtasks, tasks, users, workspaces } from '../../src/db/schema.ts'
+import {
+  type TaskColumn,
+  dayPlanBlocks,
+  dayPlans,
+  focusSessions,
+  lists,
+  subtasks,
+  taskSeries,
+  tasks,
+  users,
+  workspaces,
+} from '../../src/db/schema.ts'
 import { overview } from '../../src/services/reports.ts'
 import { readToday } from '../../src/services/today.ts'
 import { migratedDb } from '../support/db.ts'
@@ -582,5 +593,96 @@ describe('readToday: the sessions of today (HOJE-06, HOJE-68)', () => {
       .reduce((sum, item) => sum + (item.end_minute - item.start_minute) * 60, 0)
     expect(taskSeconds).toBe(30 * 60 + 75 * 60 + 32 * 60)
     expect(taskSeconds).toBe(report.tiles.task_seconds)
+  })
+})
+
+/** A task completed at `completedAt` by `by` (the reader by default), as `moveTask` records it (AD-006). */
+async function completed(completedAt: Date, options: { by?: string; title?: string; estimate?: number; list?: string } = {}) {
+  const id = await task('done', { title: options.title, estimate: options.estimate, list: options.list })
+  await db
+    .update(tasks)
+    .set({ completedAt, completedByUserId: options.by ?? userId })
+    .where(eq(tasks.id, id))
+  return id
+}
+
+describe('readToday: Feito hoje (HOJE-35, HOJE-36, HOJE-38, HOJE-40)', () => {
+  it('answers a task the reader completed today with its list, estimate, completion, time, badge and series flag', async () => {
+    const id = await completed(SP('2026-11-11T11:00:00'), { title: 'Escrever', estimate: 30 })
+    await session({ taskId: id, startedAt: SP('2026-11-11T10:00:00'), endedAt: SP('2026-11-11T10:25:00') })
+    expect((await readToday(db, actor(), NOW)).done).toEqual([
+      {
+        id,
+        title: 'Escrever',
+        list: { id: listId, name: 'Frete', color: 3 },
+        estimate_minutes: 30,
+        completed_at: SP('2026-11-11T11:00:00').toISOString(),
+        spent_seconds: 25 * 60,
+        verdict: 'early',
+        diff_seconds: -300,
+        series: false,
+      },
+    ])
+  })
+
+  it('HOJE-40 leaves out a task completed today by another member', async () => {
+    const mine = await completed(SP('2026-11-11T11:00:00'))
+    await completed(SP('2026-11-11T12:00:00'), { by: otherUserId })
+    expect((await readToday(db, actor(), NOW)).done.map((item) => item.id)).toEqual([mine])
+  })
+
+  it('HOJE-40 leaves out a task the reader completed yesterday', async () => {
+    const mine = await completed(SP('2026-11-11T00:10:00'))
+    await completed(SP('2026-11-10T23:50:00'))
+    expect((await readToday(db, actor(), NOW)).done.map((item) => item.id)).toEqual([mine])
+  })
+
+  it("leaves out the reader's completion of today in another workspace", async () => {
+    const mine = await completed(SP('2026-11-11T11:00:00'))
+    await completed(SP('2026-11-11T12:00:00'), { list: otherWorkspaceListId })
+    expect((await readToday(db, actor(), NOW)).done.map((item) => item.id)).toEqual([mine])
+  })
+
+  it('answers the most recent completion first', async () => {
+    const first = await completed(SP('2026-11-11T09:00:00'))
+    const last = await completed(SP('2026-11-11T13:00:00'))
+    const middle = await completed(SP('2026-11-11T11:00:00'))
+    expect((await readToday(db, actor(), NOW)).done.map((item) => item.id)).toEqual([last, middle, first])
+  })
+
+  it("counts the time of every member in spent_seconds, as the reports' badge does", async () => {
+    const id = await completed(SP('2026-11-11T11:00:00'), { estimate: 60 })
+    await session({ taskId: id, startedAt: SP('2026-11-11T09:00:00'), endedAt: SP('2026-11-11T09:30:00') })
+    await session({ taskId: id, startedAt: SP('2026-11-10T09:00:00'), endedAt: SP('2026-11-10T09:30:00'), user: otherUserId })
+    expect((await readToday(db, actor(), NOW)).done[0]).toMatchObject({ spent_seconds: 3600, verdict: 'on_time', diff_seconds: 0 })
+  })
+
+  it('HOJE-38 answers a null verdict and diff 0 without an estimate', async () => {
+    const id = await completed(SP('2026-11-11T11:00:00'))
+    await session({ taskId: id, startedAt: SP('2026-11-11T10:00:00'), endedAt: SP('2026-11-11T10:40:00') })
+    expect((await readToday(db, actor(), NOW)).done[0]).toMatchObject({
+      estimate_minutes: null,
+      spent_seconds: 2400,
+      verdict: null,
+      diff_seconds: 0,
+    })
+  })
+
+  it('answers a late badge past 5% of the estimate', async () => {
+    const id = await completed(SP('2026-11-11T11:00:00'), { estimate: 30 })
+    await session({ taskId: id, startedAt: SP('2026-11-11T10:00:00'), endedAt: SP('2026-11-11T10:40:00') })
+    expect((await readToday(db, actor(), NOW)).done[0]).toMatchObject({ verdict: 'late', diff_seconds: 600 })
+  })
+
+  it('answers series true for an occurrence of a series', async () => {
+    const id = await completed(SP('2026-11-11T11:00:00'))
+    const seriesId = randomUUID()
+    await db.insert(taskSeries).values({ id: seriesId, workspaceId, freq: 'daily', createdAt: EARLIER })
+    await db.update(tasks).set({ seriesId }).where(eq(tasks.id, id))
+    expect((await readToday(db, actor(), NOW)).done[0]!.series).toBe(true)
+  })
+
+  it('answers nothing without completions today', async () => {
+    expect((await readToday(db, actor(), NOW)).done).toEqual([])
   })
 })

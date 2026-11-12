@@ -120,10 +120,10 @@ T20 → T21 → T22 → T23
 
 **Done when**:
 
-- [ ] Tarefa concluída hoje pelo leitor aparece; a concluída hoje por outro membro e a que o leitor concluiu ontem ficam de fora (um teste cada, L-044 e L-048)
-- [ ] Ordem pela conclusão, a mais recente primeiro
-- [ ] Estimativa de 30 min com 25 min gastos dá `early` e −300 s; sem estimativa, `verdict` nulo
-- [ ] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
+- [x] Tarefa concluída hoje pelo leitor aparece; a concluída hoje por outro membro e a que o leitor concluiu ontem ficam de fora (um teste cada, L-044 e L-048)
+- [x] Ordem pela conclusão, a mais recente primeiro
+- [x] Estimativa de 30 min com 25 min gastos dá `early` e −300 s; sem estimativa, `verdict` nulo
+- [x] Gate check passes: `npm --prefix backend-node run lint && npm --prefix backend-node run typecheck && npm --prefix backend-node test`
 
 **Tests**: integration
 **Gate**: full
