@@ -82,8 +82,12 @@ const onBreak = state({
   },
 })
 
+/** The instant of a minute of 2026-11-11 in America/Sao_Paulo (UTC-3). */
+const atMinute = (minute: number) => new Date(Date.UTC(2026, 10, 11, 3) + minute * 60_000).toISOString()
+
 function daySession(overrides: Partial<TodaySession>): TodaySession {
-  return { id: 's', kind: 'task', task_id: null, title: 'Task', list_id: work.id, list_color: work.color, start_minute: 0, end_minute: 0, open: false, ...overrides }
+  const base: Omit<TodaySession, 'started_at' | 'ended_at'> & Partial<TodaySession> = { id: 's', kind: 'task', task_id: null, title: 'Task', list_id: work.id, list_color: work.color, start_minute: 0, end_minute: 0, open: false, ...overrides }
+  return { started_at: atMinute(base.start_minute), ended_at: atMinute(base.end_minute), ...base }
 }
 
 function actions() {

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { minuteClock } from '@/lib/agenda/format'
 import { today as todayApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
-import { adherence } from '@/lib/today/rules'
+import { adherence, sessionSeconds } from '@/lib/today/rules'
 import { type CloseDestination, summaryMarkdown } from '@/lib/today/summary'
 import { todayKey } from '@/lib/today/use-today'
 import { cn } from '@/lib/utils'
@@ -77,7 +77,7 @@ export function CloseDayDialog({ onClose, workspaceId, workspaceName, data, nowM
     session.open ? { ...session, end_minute: Math.max(session.end_minute, nowMinute) } : session,
   )
   const taskSessions = sessions.filter((session) => session.kind === 'task')
-  const focusedSeconds = taskSessions.reduce((sum, session) => sum + (session.end_minute - session.start_minute) * 60, 0)
+  const focusedSeconds = sessionSeconds(data.sessions, 'task', nowMinute)
   const planned = data.plan.saved
     ? new Set(data.plan.blocks.filter((block) => block.kind === 'task' && block.task_id !== null).map((block) => block.task_id)).size
     : null

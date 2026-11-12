@@ -8,8 +8,11 @@ import { DayStats } from './day-stats'
 const hm = (h: number, m = 0) => h * 60 + m
 const work = { id: 'l1', name: 'Work', color: 2 }
 
+/** The instant of a minute of 2026-11-11 in America/Sao_Paulo (UTC-3). */
+const atMinute = (minute: number) => new Date(Date.UTC(2026, 10, 11, 3) + minute * 60_000).toISOString()
+
 function session(overrides: Partial<TodaySession>): TodaySession {
-  return {
+  const base: Omit<TodaySession, 'started_at' | 'ended_at'> & Partial<TodaySession> = {
     id: 's',
     kind: 'task',
     task_id: 'a',
@@ -21,6 +24,7 @@ function session(overrides: Partial<TodaySession>): TodaySession {
     open: false,
     ...overrides,
   }
+  return { started_at: atMinute(base.start_minute), ended_at: atMinute(base.end_minute), ...base }
 }
 
 function block(taskId: string, start: number, minutes = 30): TodayPlanBlock {
@@ -63,6 +67,15 @@ describe('DayStats (HOJE-49 to HOJE-53)', () => {
     // 60 + 50 + 32 (13:48 to 14:20) minutes of task, 10 of break.
     expect(within(stat('Focused time')).getByText('2hr 22min')).toBeInTheDocument()
     expect(within(stat('Focused time')).getByText('breaks 10min')).toBeInTheDocument()
+  })
+
+  it('HOJE-49 sums the seconds of sessions off the whole minute and truncates once: 29min 40s + 29min 20s is 59min', () => {
+    // 09:00:40-09:30:20 and 10:10:50-10:40:10 in America/Sao_Paulo; their wall-clock minutes would add up to 1hr.
+    draw({ sessions: [
+      session({ id: 'x1', task_id: 'a', start_minute: hm(9), end_minute: hm(9, 30), started_at: '2026-11-11T12:00:40.000Z', ended_at: '2026-11-11T12:30:20.000Z' }),
+      session({ id: 'x2', task_id: 'b', start_minute: hm(10, 10), end_minute: hm(10, 40), started_at: '2026-11-11T13:10:50.000Z', ended_at: '2026-11-11T13:40:10.000Z' }),
+    ] })
+    expect(within(stat('Focused time')).getByText('59min')).toBeInTheDocument()
   })
 
   it('HOJE-50 counts the planned tasks the reader completed, with one segment per planned task: green done, indigo in focus, gray', () => {

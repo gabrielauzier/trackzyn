@@ -817,8 +817,8 @@ T24 → T25 → T26 → T27 → T28 → T29
 
 **Done when**:
 
-- [ ] Duas sessões de 29min 40s e 29min 20s mostram `59min`, não `58min` nem `1h`; o mesmo no `Focado` do `CloseDayDialog`
-- [ ] Gate check passes: `npm --prefix frontend test`
+- [x] Duas sessões de 29min 40s e 29min 20s mostram `59min`, não `58min` nem `1h`; o mesmo no `Focado` do `CloseDayDialog`
+- [x] Gate check passes: `npm --prefix frontend test`
 
 **Tests**: unit
 **Gate**: quick

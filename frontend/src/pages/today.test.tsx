@@ -156,7 +156,7 @@ describe('TodayPage', () => {
     vi.mocked(today.get).mockResolvedValue(
       day({
         sessions: [
-          { id: 's1', kind: 'task', task_id: 'task-a', title: 'Review the PR', list_id: LIST, list_color: 2, start_minute: 540, end_minute: 600, open: false },
+          { id: 's1', kind: 'task', task_id: 'task-a', title: 'Review the PR', list_id: LIST, list_color: 2, start_minute: 540, end_minute: 600, started_at: '2026-11-11T12:00:00.000Z', ended_at: '2026-11-11T13:00:00.000Z', open: false },
         ],
       }),
     )

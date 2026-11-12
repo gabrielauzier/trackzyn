@@ -546,6 +546,9 @@ export interface TodaySession {
   list_color: number
   start_minute: number
   end_minute: number
+  /** The instants cut to today (ISO); the open session's `ended_at` is `server_now` of the read (HOJE-49). */
+  started_at: string
+  ended_at: string
   open: boolean
 }
 

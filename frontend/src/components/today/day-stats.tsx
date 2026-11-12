@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { formatDuration } from '@/components/board/format-duration'
-import { adherence, switches } from '@/lib/today/rules'
+import { adherence, sessionSeconds, switches } from '@/lib/today/rules'
 import { cn } from '@/lib/utils'
 import type { TodayDoneTask, TodayPlanBlock, TodaySession } from '@/types'
 
@@ -38,10 +38,8 @@ export function DayStats({ planSaved, blocks, sessions, done, focusTaskId, nowMi
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const untilNow = sessions.map((session) => (session.open ? { ...session, end_minute: Math.max(session.end_minute, nowMinute) } : session))
-  const minutesOf = (kind: TodaySession['kind']) =>
-    untilNow.filter((session) => session.kind === kind).reduce((sum, session) => sum + session.end_minute - session.start_minute, 0)
   const taskSessions = untilNow.filter((session) => session.kind === 'task').length
-  const focused = minutesOf('task')
+  const focused = sessionSeconds(sessions, 'task', nowMinute)
 
   // One segment per planned task, in the order of its first block (HOJE-50).
   const planned = [
@@ -58,8 +56,8 @@ export function DayStats({ planSaved, blocks, sessions, done, focusTaskId, nowMi
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      <Stat id="today-stat-focused" label={t('today.stats.focused')} value={formatDuration(focused * 60, language)}>
-        <div className="text-xs text-muted-foreground">{t('today.stats.breaks', { duration: formatDuration(minutesOf('break') * 60, language) })}</div>
+      <Stat id="today-stat-focused" label={t('today.stats.focused')} value={formatDuration(focused, language)}>
+        <div className="text-xs text-muted-foreground">{t('today.stats.breaks', { duration: formatDuration(sessionSeconds(sessions, 'break', nowMinute), language) })}</div>
       </Stat>
       <Stat
         id="today-stat-completed"
@@ -97,7 +95,7 @@ export function DayStats({ planSaved, blocks, sessions, done, focusTaskId, nowMi
       <Stat id="today-stat-switches" label={t('today.stats.switches')} value={switches(untilNow)}>
         {taskSessions > 0 && (
           <div className="text-xs text-muted-foreground">
-            {t('today.stats.average', { duration: formatDuration(Math.round(focused / taskSessions) * 60, language) })}
+            {t('today.stats.average', { duration: formatDuration(Math.round(focused / 60 / taskSessions) * 60, language) })}
           </div>
         )}
       </Stat>
