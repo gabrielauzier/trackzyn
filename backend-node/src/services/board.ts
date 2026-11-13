@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm'
+import { asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import type { SeriesFreq, TaskColumn, Workspace } from '../db/schema.ts'
+import { type Priority, type SeriesFreq, type TaskColumn, type TaskKind, type Workspace, taskGroups } from '../db/schema.ts'
 import { daySql, dayTimezone } from './day.ts'
 import { settle, spentSeconds } from './focus-settle.ts'
 import { getList } from './lists.ts'
@@ -20,6 +20,23 @@ export interface TaskCardView {
   scheduled_time: string | null
   /** The series the task is an occurrence of: its rule and the next day it projects. */
   series: ReturnType<typeof seriesView> | null
+  kind: TaskKind
+  priority: Priority
+  /** The due day (`YYYY-MM-DD`), in the workspace's timezone. */
+  due_on: string | null
+  waiting: boolean
+  waiting_for: string | null
+  flagged: boolean
+  flag_reason: string | null
+  group_id: string | null
+}
+
+/** A group of tasks of the list, for its containers on the board (GRP-04). */
+export interface GroupView {
+  id: string
+  name: string
+  priority: Priority
+  due_on: string | null
 }
 
 export interface ColumnView {
@@ -37,6 +54,7 @@ export interface ProgressColumnView extends ColumnView {
 export interface Board {
   list: { id: string; name: string; color: number }
   timezone: string
+  groups: GroupView[]
   pending: { count: number; estimate_minutes: number }
   columns: {
     backlog: ColumnView
@@ -83,13 +101,22 @@ interface TaskRow extends Record<string, unknown> {
   series_count: number | null
   series_created_count: number | null
   series_ended_at: Date | null
+  kind: TaskKind
+  priority: Priority
+  due_on: string | null
+  waiting: boolean
+  waiting_for: string | null
+  flagged: boolean
+  flag_reason: string | null
+  group_id: string | null
 }
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
   return ((await db.execute(query)) as unknown as { rows: T[] }).rows
 }
 
-const sum = (views: TaskCardView[]) => views.reduce((total, task) => total + (task.estimate_minutes ?? 0), 0)
+/** A task in Aguardando stays out of the sums (WAIT-04); a reminder has no estimate. */
+const sum = (views: TaskCardView[]) => views.reduce((total, task) => total + (task.waiting ? 0 : (task.estimate_minutes ?? 0)), 0)
 
 /**
  * The board of a list in the workspace's day timezone (AD-004): the pending columns in order with
@@ -133,7 +160,8 @@ export async function buildBoard(
                t.scheduled_on::text AS scheduled_on, to_char(t.scheduled_time, 'HH24:MI') AS scheduled_time,
                ts.id AS series_id, ts.freq AS series_freq, ts."interval" AS series_interval, ts.weekdays AS series_weekdays,
                ts.month_day AS series_month_day, ts.until::text AS series_until, ts."count" AS series_count,
-               ts.created_count AS series_created_count, ts.ended_at AS series_ended_at
+               ts.created_count AS series_created_count, ts.ended_at AS series_ended_at,
+               t.kind, t.priority, t.due_on::text AS due_on, t.waiting, t.waiting_for, t.flagged, t.flag_reason, t.group_id
         FROM tasks t
         LEFT JOIN task_series ts ON ts.id = t.series_id
         LEFT JOIN subtasks s ON s.task_id = t.id
@@ -177,6 +205,14 @@ export async function buildBoard(
             },
             row.scheduled_on,
           ),
+    kind: row.kind,
+    priority: row.priority,
+    due_on: row.due_on,
+    waiting: row.waiting,
+    waiting_for: row.waiting_for,
+    flagged: row.flagged,
+    flag_reason: row.flag_reason,
+    group_id: row.group_id,
   })
   const inColumn = (column: TaskColumn) => found.filter((row) => row.column === column).map(view)
 
@@ -191,10 +227,17 @@ export async function buildBoard(
   const dates = [...new Set(doneRows.map((row) => row.completed_date as string))].sort().reverse()
   const days = dates.map((date) => ({ date, tasks: doneRows.filter((row) => row.completed_date === date).map(view) }))
 
+  const groups = await db
+    .select({ id: taskGroups.id, name: taskGroups.name, priority: taskGroups.priority, due_on: taskGroups.dueOn })
+    .from(taskGroups)
+    .where(eq(taskGroups.listId, list.id))
+    .orderBy(asc(taskGroups.createdAt), asc(taskGroups.id))
+
   const pending = [...backlog, ...thisWeek, ...todayTasks]
   return {
     list: { id: list.id, name: list.name, color: list.color },
     timezone,
+    groups,
     pending: { count: pending.length, estimate_minutes: sum(pending) },
     columns: {
       backlog: { tasks: backlog, estimate_minutes: sum(backlog) },

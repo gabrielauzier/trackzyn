@@ -439,7 +439,7 @@ O que o código já fixa:
 | WAIT-01 | P1: Aguardando | T1, T2 | Implementing |
 | WAIT-02 | P1: Aguardando | T18 | In Tasks |
 | WAIT-03 | P1: Aguardando | T2 | Implementing |
-| WAIT-04 | P1: Aguardando | T4 | In Tasks |
+| WAIT-04 | P1: Aguardando | T4 | Implementing |
 | WAIT-05 | P1: Aguardando | T2 | Implementing |
 | FLAG-01 | P1: Flag | T1, T2 | Implementing |
 | FLAG-02 | P1: Flag | T18 | In Tasks |
@@ -459,7 +459,7 @@ O que o código já fixa:
 | MODAL-04 | P1: Modal da tarefa | T7, T8, T22 | In Tasks |
 | MODAL-05 | P1: Modal da tarefa | T22 | In Tasks |
 | MODAL-06 | P1: Modal da tarefa | T22 | In Tasks |
-| API-01 | P2: API e MCP | T4, T6, T16 | In Tasks |
+| API-01 | P2: API e MCP | T4, T6, T16 | Implementing |
 | API-02 | P2: API e MCP | T6 | In Tasks |
 | API-03 | P2: API e MCP | T2, T6 | Implementing |
 | EDGE-01 | Edge Cases | T13 | In Tasks |

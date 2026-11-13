@@ -210,10 +210,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Cada campo novo chega preenchido no card do `GET /api/lists/:id/board`
-- [ ] `groups` traz id, nome, prioridade e prazo dos grupos da lista, e não os de outra lista
-- [ ] Hoje com duas tarefas de 60 min, uma em Aguardando: `estimate_minutes` da coluna e `pending.estimate_minutes` valem 60; Esta semana e Backlog seguem a mesma regra
-- [ ] Gate check passes: Full (backend)
+- [x] Cada campo novo chega preenchido no card do `GET /api/lists/:id/board`
+- [x] `groups` traz id, nome, prioridade e prazo dos grupos da lista, e não os de outra lista
+- [x] Hoje com duas tarefas de 60 min, uma em Aguardando: `estimate_minutes` da coluna e `pending.estimate_minutes` valem 60; Esta semana e Backlog seguem a mesma regra
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/src/routes/board.ts` (o schema de resposta do quadro ganha os campos e `groups`, senão a serialização os tiraria), `backend-node/test/routes/board.test.ts` e `backend-node/test/services/board.test.ts` (as comparações do card inteiro e do quadro vazio ganham os campos novos e `groups: []`). O card devolve `group_id` (nome do design); a spec API-01 chama o campo de `group`.
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
