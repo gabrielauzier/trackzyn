@@ -25,7 +25,8 @@ declare module 'fastify' {
   }
 }
 
-const canWrite = (role: string) => ['owner', 'editor', 'manager'].includes(role)
+/** Whether the role writes in the workspace's lists: owner, editor or manager. */
+export const canWrite = (role: string) => ['owner', 'editor', 'manager'].includes(role)
 
 /**
  * `current_workspace`: resolves `X-Workspace-Id` (or the user's default workspace) after

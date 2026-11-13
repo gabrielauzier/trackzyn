@@ -3,23 +3,26 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 import { INBOX_SOURCES } from '../db/schema.ts'
-import type { WorkspaceContext } from '../plugins/workspace.ts'
 import { authGuards } from '../plugins/auth.ts'
-import { workspaceContext } from '../plugins/workspace.ts'
+import { type WorkspaceContext, canWrite, workspaceContext } from '../plugins/workspace.ts'
 import { dayTimezone } from '../services/day.ts'
 import { decisionSchema } from '../services/decision.ts'
 import {
   type InboxItemView,
   type InboxOwner,
+  type SendResult,
   captureItem,
   countCurrent,
   discardItem,
   listItems,
   restoreItem,
+  sendItem,
   updateItem,
 } from '../services/inbox.ts'
 import { UUID_PATTERN } from '../services/users.ts'
+import { groupReadSchema, toGroupRead } from './groups.ts'
 import { withoutNul } from './schemas.ts'
+import { taskReadSchema, toTaskRead } from './tasks.ts'
 
 const uuid = z.string().regex(UUID_PATTERN, 'Input should be a valid UUID')
 const itemParams = z.object({ item_id: uuid })
@@ -48,6 +51,13 @@ export function toInboxItemRead(item: InboxItemView) {
     discarded_at: item.discardedAt?.toISOString() ?? null,
     created_at: item.createdAt.toISOString(),
   }
+}
+
+/** What a sent item became: the tasks created, and the group when it became one. */
+const sendResultSchema = z.object({ tasks: z.array(taskReadSchema), group: groupReadSchema.nullable() })
+
+function toSendResultRead(result: SendResult) {
+  return { tasks: result.tasks.map(toTaskRead), group: result.group && toGroupRead(result.group) }
 }
 
 /** The inbox of the caller in the workspace of the request (EDGE-07). */
@@ -134,6 +144,21 @@ export function inboxRoutes(ctx: AppContext) {
       '/api/inbox/:item_id/restore',
       { schema: { params: itemParams, response: { 200: inboxItemSchema } }, preValidation: reading },
       async (request) => toInboxItemRead(await restoreItem(ctx.db, ownerOf(request.workspace), request.params.item_id.toLowerCase())),
+    )
+    typed.post(
+      '/api/inbox/:item_id/send',
+      {
+        schema: {
+          params: itemParams,
+          body: z.object({ decision: decisionSchema }),
+          response: { 200: sendResultSchema },
+        },
+        preValidation: reading,
+      },
+      async (request) => {
+        const sender = { ...ownerOf(request.workspace), canWrite: canWrite(request.workspace.member.role) }
+        return toSendResultRead(await sendItem(ctx.db, sender, request.params.item_id.toLowerCase(), request.body.decision))
+      },
     )
   }
 }

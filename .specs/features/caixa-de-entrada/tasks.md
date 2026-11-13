@@ -518,15 +518,17 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Envio rápido cria a tarefa no fim do Backlog com a estimativa e tira o item
-- [ ] Tarefa agendada para hoje cai em Hoje; lembrete sem estimativa; grupo com 4 tarefas na coluna escolhida; `done` cria em Concluídas com `completed_by`
-- [ ] Lista arquivada → 409, item continua com a lista limpa; lista em que o usuário é viewer → 409
-- [ ] Texto com 300 caracteres sem `name` → 422
-- [ ] Dois envios simultâneos do mesmo item: uma tarefa e um 409
-- [ ] Falha na criação (lista apagada no meio) deixa o item na caixa
-- [ ] Gate check passes: Full (backend)
+- [x] Envio rápido cria a tarefa no fim do Backlog com a estimativa e tira o item
+- [x] Tarefa agendada para hoje cai em Hoje; lembrete sem estimativa; grupo com 4 tarefas na coluna escolhida; `done` cria em Concluídas com `completed_by`
+- [x] Lista arquivada → 409, item continua com a lista limpa; lista em que o usuário é viewer → 409
+- [x] Texto com 300 caracteres sem `name` → 422
+- [x] Dois envios simultâneos do mesmo item: uma tarefa e um 409
+- [x] Falha na criação (lista apagada no meio) deixa o item na caixa
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/routes/inbox.ts`
+**Also touched**: `backend-node/src/routes/inbox.ts`, `backend-node/src/plugins/workspace.ts` (exporta `canWrite`), `backend-node/test/routes/inbox-send.test.ts`. `POST /api/inbox/:id/send` recebe `{decision}` e responde `{tasks: TaskRead[], group: GroupRead | null}`. 409 leva `reason`: `list_archived`, `list_read_only` (os dois limpam a lista do item) ou `already_processed`; um id que nenhuma caixa tem mais também responde 409 `already_processed`, porque no PGlite o segundo envio pode chegar depois do commit do primeiro; o item de outro usuário continua 404. Sem `name`, o nome é o texto (422 `name_too_long` acima de 255); sem `estimate_minutes`, a tarefa usa a estimativa da linha. O agendamento é gravado direto, com `schedule_applied_at` quando o dia é hoje ou antes, para a coluna do `Vai para` valer (PROC-04).
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

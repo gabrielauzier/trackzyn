@@ -387,20 +387,20 @@ O que o código já fixa:
 | QUICK-01 | P1: Enviar rápido | T24 | In Tasks |
 | QUICK-02 | P1: Enviar rápido | T12, T24 | Implementing |
 | QUICK-03 | P1: Enviar rápido | T24 | In Tasks |
-| QUICK-04 | P1: Enviar rápido | T13, T24 | In Tasks |
+| QUICK-04 | P1: Enviar rápido | T13, T24 | Implementing |
 | QUICK-05 | P1: Enviar rápido | T12, T24 | Implementing |
-| QUICK-06 | P1: Enviar rápido | T13, T24 | In Tasks |
-| QUICK-07 | P1: Enviar rápido | T13, T24 | In Tasks |
+| QUICK-06 | P1: Enviar rápido | T13, T24 | Implementing |
+| QUICK-07 | P1: Enviar rápido | T13, T24 | Implementing |
 | QUICK-08 | P1: Enviar rápido | T24 | In Tasks |
 | QUICK-09 | P1: Enviar rápido | T24 | In Tasks |
 | PROC-01 | P1: Processar como tarefa | T26 | In Tasks |
 | PROC-02 | P1: Processar como tarefa | T26 | In Tasks |
 | PROC-03 | P1: Processar como tarefa | T11, T26 | Implementing |
 | PROC-04 | P1: Processar como tarefa | T11, T26 | Implementing |
-| PROC-05 | P1: Processar como tarefa | T13, T26 | In Tasks |
-| PROC-06 | P1: Processar como tarefa | T13, T26 | In Tasks |
-| PROC-07 | P1: Processar como tarefa | T13, T26 | In Tasks |
-| PROC-08 | P1: Processar como tarefa | T13, T26 | In Tasks |
+| PROC-05 | P1: Processar como tarefa | T13, T26 | Implementing |
+| PROC-06 | P1: Processar como tarefa | T13, T26 | Implementing |
+| PROC-07 | P1: Processar como tarefa | T13, T26 | Implementing |
+| PROC-08 | P1: Processar como tarefa | T13, T26 | Implementing |
 | ALL-01 | P1: Processar tudo | T27 | In Tasks |
 | ALL-02 | P1: Processar tudo | T27 | In Tasks |
 | ALL-03 | P1: Processar tudo | T27 | In Tasks |
@@ -410,7 +410,7 @@ O que o código já fixa:
 | ALL-07 | P1: Processar tudo | T14 | In Tasks |
 | ALL-08 | P1: Processar tudo | T27 | In Tasks |
 | ALL-09 | P1: Processar tudo | T14 | In Tasks |
-| REM-01 | P1: Lembrete | T13, T26 | In Tasks |
+| REM-01 | P1: Lembrete | T13, T26 | Implementing |
 | REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
 | REM-03 | P1: Lembrete | T18 | In Tasks |
 | REM-04 | P1: Lembrete | T5 | Implementing |
@@ -462,7 +462,7 @@ O que o código já fixa:
 | API-01 | P2: API e MCP | T4, T6, T16 | Implementing |
 | API-02 | P2: API e MCP | T6 | Implementing |
 | API-03 | P2: API e MCP | T2, T6 | Implementing |
-| EDGE-01 | Edge Cases | T13 | In Tasks |
+| EDGE-01 | Edge Cases | T13 | Implementing |
 | EDGE-02 | Edge Cases | T14 | In Tasks |
 | EDGE-03 | Edge Cases | T12 | Implementing |
 | EDGE-04 | Edge Cases | T3 | Implementing |
