@@ -421,12 +421,12 @@ O que o código já fixa:
 | GRP-03 | P1: Grupo de tarefas | T11, T26 | In Tasks |
 | GRP-04 | P1: Grupo de tarefas | T7, T20 | Implementing |
 | GRP-05 | P1: Grupo de tarefas | T20 | In Tasks |
-| GRP-06 | P1: Grupo de tarefas | T8, T21 | In Tasks |
-| GRP-07 | P1: Grupo de tarefas | T8, T21 | In Tasks |
-| GRP-08 | P1: Grupo de tarefas | T8, T21 | In Tasks |
+| GRP-06 | P1: Grupo de tarefas | T8, T21 | Implementing |
+| GRP-07 | P1: Grupo de tarefas | T8, T21 | Implementing |
+| GRP-08 | P1: Grupo de tarefas | T8, T21 | Implementing |
 | GRP-09 | P1: Grupo de tarefas | T9, T21 | In Tasks |
-| GRP-10 | P1: Grupo de tarefas | T8, T21 | In Tasks |
-| GRP-11 | P1: Grupo de tarefas | T8 | In Tasks |
+| GRP-10 | P1: Grupo de tarefas | T8, T21 | Implementing |
+| GRP-11 | P1: Grupo de tarefas | T8 | Implementing |
 | PRI-01 | P1: Prioridade | T1, T2 | Implementing |
 | PRI-02 | P1: Prioridade | T17 | In Tasks |
 | PRI-03 | P1: Prioridade | T17 | In Tasks |

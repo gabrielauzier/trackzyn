@@ -19,6 +19,7 @@ import {
 } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { endOpenSessions } from './focus-settle.ts'
+import { hasOpenTasks, normalizeBlocks } from './groups.ts'
 import { getList } from './lists.ts'
 import { createNextOccurrence } from './series.ts'
 
@@ -115,6 +116,41 @@ export async function lockList(tx: Database, listId: string): Promise<void> {
   await tx.select({ id: lists.id }).from(lists).where(eq(lists.id, listId)).for('update')
 }
 
+/** The tasks of one column with their group, in board order. */
+async function columnTasks(tx: Database, listId: string, column: TaskColumn): Promise<Array<{ id: string; groupId: string | null }>> {
+  return tx
+    .select({ id: tasks.id, groupId: tasks.groupId })
+    .from(tasks)
+    .where(and(eq(tasks.listId, listId), eq(tasks.column, column)))
+    .orderBy(asc(tasks.position), asc(tasks.createdAt))
+}
+
+/** Writes `ids` as the order of their column, from 0 to n-1, touching only the tasks whose position changes. */
+async function writeOrder(tx: Database, ids: readonly string[]): Promise<void> {
+  for (const [position, id] of ids.entries()) {
+    await tx
+      .update(tasks)
+      .set({ position })
+      .where(and(eq(tasks.id, id), sql`${tasks.position} <> ${position}`))
+  }
+}
+
+/**
+ * Puts `taskId` right after the last task of `groupId` in its column, where that group already has a task,
+ * and joins the blocks of the column (AD-013). The task's group must already be stored. Run under `lockList`.
+ */
+async function placeAtEndOfGroup(tx: Database, listId: string, column: TaskColumn, taskId: string, groupId: string | null): Promise<void> {
+  const rows = await columnTasks(tx, listId, column)
+  const groupOf = new Map(rows.map((row) => [row.id, row.groupId]))
+  let ids = rows.map((row) => row.id)
+  if (groupId !== null) {
+    const others = ids.filter((id) => id !== taskId)
+    const last = others.findLastIndex((id) => groupOf.get(id) === groupId)
+    if (last >= 0) ids = others.toSpliced(last + 1, 0, taskId)
+  }
+  await writeOrder(tx, normalizeBlocks(ids, (id) => groupOf.get(id) ?? null))
+}
+
 export async function createTask(
   db: Database,
   workspaceId: string,
@@ -181,6 +217,8 @@ export async function createTask(
       groupId: fields.groupId ?? null,
     }
     await tx.insert(tasks).values(task)
+    // A task of a group is born at the end of the group's block in its column (AD-013).
+    if (task.groupId !== null) await placeAtEndOfGroup(tx as Database, list.id, task.column, task.id, task.groupId)
     const created: Subtask[] = (input.subtasks ?? []).map((title, position) => ({ id: randomUUID(), taskId: task.id, title, done: false, position }))
     if (created.length > 0) await tx.insert(subtasks).values(created)
     return getTask(tx as Database, task.id, workspaceId)
@@ -197,73 +235,96 @@ export async function updateTask(
   const task = await findTask(db, taskId, workspaceId)
   const fields = await resolveFields(db, task, changes)
   const given = Object.fromEntries(Object.entries({ ...changes, ...fields }).filter(([, value]) => value !== undefined))
+  if (fields.groupId !== undefined && fields.groupId !== task.groupId) {
+    // Another group puts the task at the end of that group's block, no group takes it out of the block (MODAL-04).
+    await db.transaction(async (transaction) => {
+      const tx = transaction as Database
+      await lockList(tx, task.listId)
+      await tx.update(tasks).set({ ...given, updatedAt: now }).where(eq(tasks.id, task.id))
+      await placeAtEndOfGroup(tx, task.listId, task.column, task.id, fields.groupId ?? null)
+    })
+    return getTask(db, task.id, workspaceId)
+  }
   // A change of a field is an update of the task (PICK-01).
   if (Object.keys(given).length > 0) await db.update(tasks).set({ ...given, updatedAt: now }).where(eq(tasks.id, task.id))
   return getTask(db, task.id, workspaceId)
 }
 
+/** The group left without a task out of done by a completion, for the toast `<grupo> está sem próxima ação` (GRP-10). */
+export interface GroupWithoutNextAction {
+  id: string
+  name: string
+}
+
 /**
- * Puts the task in `column`, right before `beforeTaskId` (or at the end for null), and renumbers the
- * columns it left and entered from 0 to n-1. Entering `done` records `completed_at = now` and
+ * Puts the task in `column`, right before `beforeTaskId` (or at the end for null), joins the blocks of each
+ * group there (AD-013) and renumbers the columns it left and entered from 0 to n-1. `group` left out keeps
+ * the task's group, null takes it out of its group (GRP-07), an id puts it in that group of the same list
+ * (GRP-06, GRP-08), or 422. Entering `done` records `completed_at = now` and
  * `completed_by_user_id = byUserId` (AD-006) and takes the flag off (FLAG-05); leaving it clears both, and
  * moving inside `done` keeps them.
  * A task that is not in `today` afterwards loses its open focus session, ended at `now` (FOCUS-15).
- * Completing an occurrence of a series creates its next occurrence (`createNextOccurrence`).
+ * Completing an occurrence of a series creates its next occurrence (`createNextOccurrence`). Completing the
+ * last open task of a group answers that group in `groupWithoutNextAction` (GRP-10).
  */
 export async function moveTask(
   db: Database,
   taskId: string,
   workspaceId: string,
-  target: { column: TaskColumn; beforeTaskId: string | null; byUserId: string },
+  target: { column: TaskColumn; beforeTaskId: string | null; byUserId: string; group?: string | null },
   now: Date = new Date(),
-): Promise<TaskWithSubtasks> {
+): Promise<TaskWithSubtasks & { groupWithoutNextAction: GroupWithoutNextAction | null }> {
   const task = await findTask(db, taskId, workspaceId)
-  await db.transaction(async (tx) => {
+  const groupWithoutNextAction = await db.transaction(async (tx) => {
     await lockList(tx as Database, task.listId)
     // Read again under the lock: a concurrent move may have changed the column.
     const [current] = await tx.select().from(tasks).where(eq(tasks.id, task.id))
     if (!current) throw notFound()
+    const groupId = target.group === undefined ? current.groupId : target.group
+    const [group] =
+      groupId === null
+        ? []
+        : await tx
+            .select({ id: taskGroups.id, name: taskGroups.name })
+            .from(taskGroups)
+            .where(and(eq(taskGroups.id, groupId), eq(taskGroups.listId, current.listId)))
+    if (groupId !== null && !group) throw fieldError('The group is not of the list of the task', 'group_of_another_list')
 
-    const columnIds = async (column: TaskColumn) =>
-      (
-        await tx
-          .select({ id: tasks.id })
-          .from(tasks)
-          .where(and(eq(tasks.listId, current.listId), eq(tasks.column, column)))
-          .orderBy(asc(tasks.position), asc(tasks.createdAt))
-      ).map((row) => row.id)
-
-    const entered = (await columnIds(target.column)).filter((id) => id !== current.id)
+    const rows = await columnTasks(tx as Database, current.listId, target.column)
+    const groupOf = new Map(rows.map((row) => [row.id, row.groupId]))
+    groupOf.set(current.id, groupId)
+    const entered = rows.map((row) => row.id).filter((id) => id !== current.id)
     let at = entered.length
     if (target.beforeTaskId !== null && target.beforeTaskId !== current.id) {
       at = entered.indexOf(target.beforeTaskId)
       if (at < 0) throw notFound()
     } else if (target.beforeTaskId === current.id && current.column === target.column) {
-      at = (await columnIds(target.column)).indexOf(current.id)
+      at = rows.findIndex((row) => row.id === current.id)
     }
     entered.splice(at, 0, current.id)
 
     const stays = current.column === 'done'
     const completedAt = target.column !== 'done' ? null : stays ? current.completedAt : now
     const completedByUserId = target.column !== 'done' ? null : stays ? current.completedByUserId : target.byUserId
-    // Entering another column is an update of the task; reordering inside the same one is not (PICK-01).
-    const updated = current.column !== target.column ? { updatedAt: now } : {}
+    // Entering another column or another group is an update of the task; reordering inside the same one is not (PICK-01).
+    const updated = current.column !== target.column || current.groupId !== groupId ? { updatedAt: now } : {}
     // Done takes the flag and its reason off; reopening does not bring them back (FLAG-05).
     const unflagged = target.column === 'done' ? { flagged: false, flagReason: null } : {}
     await tx
       .update(tasks)
-      .set({ column: target.column, completedAt, completedByUserId, ...updated, ...unflagged })
+      .set({ column: target.column, completedAt, completedByUserId, groupId, ...updated, ...unflagged })
       .where(eq(tasks.id, current.id))
     if (target.column !== 'today') await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
-    for (const [position, id] of entered.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
+    await writeOrder(tx as Database, normalizeBlocks(entered, (id) => groupOf.get(id) ?? null))
     if (current.column !== target.column) {
-      const left = await columnIds(current.column)
-      for (const [position, id] of left.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
+      await writeOrder(tx as Database, (await columnTasks(tx as Database, current.listId, current.column)).map((row) => row.id))
     }
     // Completing an occurrence of a series creates the next one in the same write (US-10, D13).
     if (target.column === 'done' && !stays) await createNextOccurrence(tx as Database, current, workspaceId, target.byUserId, now)
+    const completed = target.column === 'done' && !stays
+    return completed && group && !(await hasOpenTasks(tx as Database, group.id)) ? group : null
   })
-  return getTask(db, task.id, workspaceId)
+  return { ...(await getTask(db, task.id, workspaceId)), groupWithoutNextAction }
 }
 
 /** Deletes the task; its subtasks go with it (cascade, AD-005). */
@@ -322,6 +383,11 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       position,
     }))
     if (copies.length > 0) await tx.insert(subtasks).values(copies)
+    // A copy in a group joins the end of the group's block (AD-013).
+    if (copy.groupId !== null) {
+      await placeAtEndOfGroup(tx as Database, copy.listId, column, copy.id, copy.groupId)
+      return getTask(tx as Database, copy.id, workspaceId)
+    }
     return { ...copy, subtasks: copies, createdVia: null, series: null }
   })
 }

@@ -172,6 +172,12 @@ const updateTaskRouteBody = updateTaskBody
   .extend({ ...scheduleFields, ...taskFields, recurrence: recurrenceBody.nullable().optional(), scope: seriesScope.optional() })
   .refine((body) => body.scheduled_time == null || body.scheduled_on !== null, timeNeedsDay)
 export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
+/** Left out keeps the group, null takes the task out of it, an id puts it in that group (GRP-06 to GRP-08). */
+const moveTaskRouteBody = moveTaskBody.extend({ group_id: uuid.nullable().optional() })
+/** The moved task and the group a completion left without a next action (GRP-10). */
+const moveTaskReadSchema = taskReadSchema.extend({
+  group_without_next_action: z.object({ id: z.string(), name: z.string() }).nullable(),
+})
 export const addSubtaskBody = z.object({ title })
 
 /** In the handler and not in the schema: with the session JWT the header is not even read (IDEM-08). */
@@ -328,20 +334,21 @@ export function taskRoutes(ctx: AppContext) {
       {
         schema: {
           params: taskParams,
-          body: moveTaskBody,
-          response: { 200: taskReadSchema },
+          body: moveTaskRouteBody,
+          response: { 200: moveTaskReadSchema },
         },
         config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
-      async (request) =>
-        toTaskRead(
-          await moveTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
-            column: request.body.column,
-            beforeTaskId: request.body.before_task_id?.toLowerCase() ?? null,
-            byUserId: request.workspace.user.id,
-          }),
-        ),
+      async (request) => {
+        const moved = await moveTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
+          column: request.body.column,
+          beforeTaskId: request.body.before_task_id?.toLowerCase() ?? null,
+          byUserId: request.workspace.user.id,
+          group: request.body.group_id?.toLowerCase() ?? request.body.group_id,
+        })
+        return { ...toTaskRead(moved), group_without_next_action: moved.groupWithoutNextAction }
+      },
     )
 
     typed.post(

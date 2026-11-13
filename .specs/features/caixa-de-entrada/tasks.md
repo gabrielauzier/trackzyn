@@ -360,13 +360,15 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Soltar dentro do bloco do mesmo grupo em outra coluna: muda de coluna e continua no grupo, junto das outras
-- [ ] `group: null`: sai do grupo e fica onde foi solta, fora do bloco
-- [ ] Tarefa avulsa com `group: <id>` entra no bloco; grupo de outra lista → 422
-- [ ] Concluir a última tarefa aberta do grupo devolve `{id, name}`; concluir uma que não é a última devolve `null`
-- [ ] Gate check passes: Full (backend)
+- [x] Soltar dentro do bloco do mesmo grupo em outra coluna: muda de coluna e continua no grupo, junto das outras
+- [x] `group: null`: sai do grupo e fica onde foi solta, fora do bloco
+- [x] Tarefa avulsa com `group: <id>` entra no bloco; grupo de outra lista → 422
+- [x] Concluir a última tarefa aberta do grupo devolve `{id, name}`; concluir uma que não é a última devolve `null`
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/routes/tasks.ts`
+**Also touched**: `backend-node/src/routes/tasks.ts` (`POST /api/tasks/:id/move` aceita `group_id`: ausente mantém o grupo, `null` tira, um id põe; a resposta ganha `group_without_next_action: {id, name} | null`; o `move_task` do MCP fica igual), `backend-node/test/routes/tasks-group-move.test.ts`. `duplicateTask` também põe a cópia de uma tarefa de grupo no fim do bloco (AD-013). `applyDueSchedules` (`services/schedule.ts`) ainda move tarefas para Hoje sem `normalizeBlocks`; ficou fora do escopo.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
