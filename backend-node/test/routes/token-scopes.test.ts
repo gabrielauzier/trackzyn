@@ -62,6 +62,7 @@ const CALLS: Record<string, () => Promise<{ url: string; payload?: object; ok: n
   'POST /api/subtasks/:subtask_id/move': async () => ({ url: `/api/subtasks/${await newSubtask()}/move`, payload: { before_subtask_id: null }, ok: 200 }),
   'DELETE /api/tasks/:task_id': async () => ({ url: `/api/tasks/${await newTask()}`, ok: 204 }),
   'DELETE /api/subtasks/:subtask_id': async () => ({ url: `/api/subtasks/${await newSubtask()}`, ok: 204 }),
+  'POST /api/inbox': async () => ({ url: '/api/inbox', payload: { text: 'By token' }, ok: 201 }),
 }
 
 beforeAll(async () => {
@@ -88,7 +89,7 @@ describe('the routes open to tokens', () => {
     const byKey = (a: { method: string; url: string }, b: { method: string; url: string }) => routeKey(a).localeCompare(routeKey(b))
 
     expect(declared.toSorted(byKey)).toEqual([...TOKEN_ROUTES, ...MCP_ROUTES].toSorted(byKey))
-    expect(TOKEN_ROUTES).toHaveLength(16)
+    expect(TOKEN_ROUTES).toHaveLength(17)
   })
 
   it('SCOPE-03 SCOPE-04 every registered route outside the table answers 403 to a token with every scope', async () => {
@@ -140,7 +141,8 @@ describe('the role of the owner on the real routes', () => {
     for (const route of TOKEN_ROUTES) {
       const call = await CALLS[routeKey(route)]!()
       const reply = await send(route.method as Method, call.url, token.value, call.payload)
-      if (route.scope === 'lists:read' || route.scope === 'tasks:read') {
+      // A viewer reads, and captures to their own inbox (Assumptions of caixa-de-entrada).
+      if (route.scope === 'lists:read' || route.scope === 'tasks:read' || route.scope === 'inbox:create') {
         expect(reply.statusCode, routeKey(route)).toBe(call.ok)
       } else {
         expect(reply.statusCode, routeKey(route)).toBe(403)

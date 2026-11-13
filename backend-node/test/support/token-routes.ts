@@ -18,6 +18,7 @@ export const TOKEN_ROUTES: ReadonlyArray<{ method: string; url: string; scope: T
   { method: 'POST', url: '/api/subtasks/:subtask_id/move', scope: 'tasks:write' },
   { method: 'DELETE', url: '/api/tasks/:task_id', scope: 'tasks:delete' },
   { method: 'DELETE', url: '/api/subtasks/:subtask_id', scope: 'tasks:delete' },
+  { method: 'POST', url: '/api/inbox', scope: 'inbox:create' },
 ]
 
 /** Open to any valid token: each tool checks its own scope (MCP-02), which is why they stay out of the table. */

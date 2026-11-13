@@ -79,10 +79,15 @@ export function inboxRoutes(ctx: AppContext) {
           body: z.object({ text: withoutNul(z.string()), source: z.enum(['app', 'desktop']).default('app') }),
           response: { 201: inboxItemSchema },
         },
+        // The only inbox route open to tokens (CAP-09, AD-007): they capture, they do not read nor process.
+        config: { tokenScope: 'inbox:create' },
         preValidation: reading,
       },
       async (request, reply) => {
-        const item = await captureItem(ctx.db, ownerOf(request.workspace), { text: request.body.text, source: request.body.source })
+        const principal = request.tokenPrincipal
+        // A token's item comes from the API, whatever the body says.
+        const origin = principal ? { source: 'api' as const, tokenId: principal.tokenId } : { source: request.body.source }
+        const item = await captureItem(ctx.db, ownerOf(request.workspace), { text: request.body.text, ...origin })
         return reply.code(201).send(toInboxItemRead(item))
       },
     )

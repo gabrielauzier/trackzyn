@@ -375,8 +375,8 @@ O que o código já fixa:
 | CAP-06 | P1: Capturar | T30 | In Tasks |
 | CAP-07 | P1: Capturar | T29, T31 | In Tasks |
 | CAP-08 | P1: Capturar | T29, T31 | In Tasks |
-| CAP-09 | P1: Capturar | T15 | In Tasks |
-| CAP-10 | P1: Capturar | T15, T16 | In Tasks |
+| CAP-09 | P1: Capturar | T15 | Implementing |
+| CAP-10 | P1: Capturar | T15, T16 | Implementing |
 | INBOX-01 | P1: Ver e manter a caixa | T12, T23 | Implementing |
 | INBOX-02 | P1: Ver e manter a caixa | T12, T23 | Implementing |
 | INBOX-03 | P1: Ver e manter a caixa | T12 | Implementing |
@@ -469,7 +469,7 @@ O que o código já fixa:
 | EDGE-05 | Edge Cases | T20 | In Tasks |
 | EDGE-06 | Edge Cases | T18 | In Tasks |
 | EDGE-07 | Edge Cases | T12 | Implementing |
-| EDGE-08 | Edge Cases | T15 | In Tasks |
+| EDGE-08 | Edge Cases | T15 | Implementing |
 
 **Coverage:** 103 total, 103 mapped to tasks, 0 unmapped.
 

@@ -27,6 +27,8 @@ import { applyDueSchedules, setSchedule } from '../services/schedule.ts'
 import { deleteOccurrence, setRecurrence } from '../services/series.ts'
 import { createTaskFromToken, toTaskIntake } from '../services/task-intake.ts'
 import { getTask, moveTask } from '../services/tasks.ts'
+import { captureItem } from '../services/inbox.ts'
+import { ownerOf, toInboxItemRead } from '../routes/inbox.ts'
 
 /** Who is calling and from where, as the guards of `POST /api/mcp` left them. */
 export interface ToolCaller {
@@ -206,6 +208,19 @@ const TOOLS: readonly Tool[] = [
       await deleteOccurrence(ctx.db, id, workspace.workspace.id, 'occurrence', workspace.user.id)
       return { id, deleted: true }
     },
+  }),
+  tool({
+    name: 'capture',
+    description:
+      "Put a text in the inbox of the token's owner, to be processed later in the app into a task, a reminder or a group. Nothing is decided: no list, no estimate. Use it for an idea or a request that is not a task yet.",
+    scope: 'inbox:create',
+    // A viewer captures too: the inbox is personal (Assumptions of caixa-de-entrada).
+    write: false,
+    input: described(z.object({ text: withoutNul(z.string()) }), {
+      text: 'What to remember, 1 to 500 characters once the surrounding spaces are taken off.',
+    }),
+    run: async ({ ctx, workspace, principal }, { text }) =>
+      toInboxItemRead(await captureItem(ctx.db, ownerOf(workspace), { text, source: 'mcp', tokenId: principal.tokenId })),
   }),
 ]
 

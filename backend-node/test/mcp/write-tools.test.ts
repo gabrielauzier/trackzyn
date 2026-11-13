@@ -12,6 +12,7 @@ const TABLE: Record<TokenScope, string[]> = {
   'tasks:create': ['create_task'],
   'tasks:write': ['add_subtask', 'move_task', 'update_task'],
   'tasks:delete': ['delete_task'],
+  'inbox:create': ['capture'],
 }
 
 let t: TestApp

@@ -157,7 +157,7 @@ export const lists = pgTable(
   (t) => [index('ix_lists_workspace_id').on(t.workspaceId, t.position)],
 )
 
-export const TOKEN_SCOPES = ['lists:read', 'tasks:read', 'tasks:create', 'tasks:write', 'tasks:delete'] as const
+export const TOKEN_SCOPES = ['lists:read', 'tasks:read', 'tasks:create', 'tasks:write', 'tasks:delete', 'inbox:create'] as const
 export type TokenScope = (typeof TOKEN_SCOPES)[number]
 
 /** Long-lived API tokens (`tkz_`), each bound to one workspace; denied by default on every route (AD-007). */

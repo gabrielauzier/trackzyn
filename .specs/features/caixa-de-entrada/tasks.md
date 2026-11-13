@@ -583,13 +583,15 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Token com `inbox:create` cria item com origem `api` e o token; `capture` pelo MCP cria com origem `mcp`
-- [ ] Token sem o escopo → 403; ler a caixa por token → 403
-- [ ] Tabela de rotas de token passa de 15 para 16, com a chamada de exemplo
-- [ ] Membro removido perde os itens daquele workspace; os de outro workspace continuam
-- [ ] Gate check passes: Full (backend)
+- [x] Token com `inbox:create` cria item com origem `api` e o token; `capture` pelo MCP cria com origem `mcp`
+- [x] Token sem o escopo → 403; ler a caixa por token → 403
+- [x] Tabela de rotas de token passa de 15 para 16, com a chamada de exemplo
+- [x] Membro removido perde os itens daquele workspace; os de outro workspace continuam
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/db/schema.ts`, `backend-node/src/routes/inbox.ts`, `backend-node/src/services/workspaces.ts`, `backend-node/test/support/token-routes.ts`, `backend-node/test/routes/token-scopes.test.ts`
+**Also touched**: `backend-node/src/db/schema.ts`, `backend-node/src/routes/inbox.ts`, `backend-node/src/services/workspaces.ts`, `backend-node/test/support/token-routes.ts`, `backend-node/test/routes/token-scopes.test.ts` (a tabela passa de 16 para 17, porque o T7 já abriu `GET /api/lists/:id/groups`; o SCOPE-07 aceita `inbox:create` para o viewer, que captura), `backend-node/test/mcp/write-tools.test.ts` (`inbox:create` mostra `capture`), `backend-node/test/routes/inbox-capture-tokens.test.ts`. A ferramenta `capture` (`{text}`) é `write: false` e devolve o item lido. O frontend ainda não conhece o escopo `inbox:create` (`types/index.ts`, `access-tokens-dialog.tsx`).
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
