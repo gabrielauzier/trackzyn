@@ -79,6 +79,18 @@
       "timezoneServerDefault": "Server default ({{zone}})",
       "timezoneTitle": "Date and time",
       "title": "Admin Settings",
+      "titlebar": {
+        "contained": "Page in a card",
+        "containedDesc": "A bar in the sidebar's colour with back and forward, and the page in a card with a rounded corner under it.",
+        "thin": "Thin bar",
+        "thinDesc": "A bar with the workspace and the page's name, there only to move the window.",
+        "search": "Bar with search",
+        "searchDesc": "Back and forward, the search and the privacy and theme buttons move up into the bar.",
+        "integrated": "No bar",
+        "integratedDesc": "The sidebar runs to the top; its top and the top of the page move the window."
+      },
+      "titlebarDesc": "How the top of the desktop app's window looks, for everyone. On macOS the bar also moves the window. The web is not affected.",
+      "titlebarTitle": "Desktop app top bar",
       "updated": "Setting updated"
     },
     "users": {
@@ -325,6 +337,8 @@
     "uploading": "Uploading"
   },
   "nav": {
+    "back": "Back",
+    "forward": "Forward",
     "adminBadge": "admin",
     "adminLink": "{{name}} (admin)",
     "collapseSidebar": "Collapse sidebar",

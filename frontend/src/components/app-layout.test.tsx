@@ -29,6 +29,8 @@ const state = vi.hoisted(() => ({
   workspace: { id: 'synthetic', name: 'Synthetic workspace', role: 'owner' },
   canWrite: false,
   personalTokens: false,
+  titlebar: 'contained' as string,
+  desktopTitlebar: vi.fn(async () => ({ style: 'contained' })),
   accessTokens: { list: vi.fn(async () => []), create: vi.fn(), revoke: vi.fn() },
   auth: {
     oidcConfig: vi.fn(),
@@ -70,6 +72,7 @@ vi.mock('@/lib/api', () => ({
   admin: {
     defaultColors: async () => ({ light: null, dark: null }),
     numberFormat: async () => ({ format: 'auto' }),
+    desktopTitlebar: state.desktopTitlebar,
   },
   workspaces: { create: vi.fn() },
   info: { get: async () => ({ features: {} }) },
@@ -146,6 +149,8 @@ function focusState(counting: boolean): FocusState {
 }
 
 beforeEach(() => {
+  state.desktopTitlebar.mockReset()
+  state.desktopTitlebar.mockImplementation(async () => ({ style: state.titlebar }))
   state.focus.get.mockReset()
   state.focus.send.mockReset()
   state.focus.heartbeat.mockReset()
@@ -158,6 +163,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   state.canWrite = false
   state.personalTokens = false
+  state.titlebar = 'contained'
 })
 
 describe('app layout title bar', () => {
@@ -184,6 +190,187 @@ describe('app layout title bar', () => {
       if (platform) installDesktopApi(platform)
       const { unmount } = renderWithProviders(<AppLayout />)
       expect(document.body.innerHTML, String(platform)).not.toContain('-webkit-app-region')
+      unmount()
+      Reflect.deleteProperty(window, 'trackzyn')
+    }
+  })
+})
+
+describe('app layout desktop frame', () => {
+  const routed = () =>
+    renderWithProviders(
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<p>Home page</p>} />
+          <Route path="/agenda" element={<p>Agenda page</p>} />
+        </Route>
+      </Routes>,
+      { route: '/' },
+    )
+  const titleBar = () => document.querySelector<HTMLElement>('[data-slot="desktop-titlebar"]')
+
+  it('on macOS, a white bar across the top drags the window, and the page sits in a card under it', () => {
+    installDesktopApi('darwin')
+    routed()
+
+    const bar = titleBar()!
+    expect(bar).not.toBeNull()
+    // The sidebar's colour, from the large layout up (below it the narrow header stays).
+    expect(bar).toHaveClass('bg-sidebar', 'hidden', 'lg:flex', 'fixed', 'top-0', 'h-11', DRAG)
+    for (const button of within(bar).getAllByRole('button')) expect(button).toHaveClass(NO_DRAG)
+
+    // The page scrolls by itself to the window's right and bottom edges: only its top-left corner is
+    // rounded, with a border on the top and the left alone.
+    const page = screen.getByRole('main')
+    expect(page).toHaveAttribute('data-desktop-frame')
+    expect(page).toHaveClass('lg:fixed', 'lg:top-11', 'lg:right-0', 'lg:bottom-0', 'lg:overflow-y-auto', 'lg:rounded-tl-xl', 'lg:border-t', 'lg:border-l', 'lg:bg-background')
+    expect(page.className).not.toMatch(/lg:(right|bottom)-2|lg:rounded-xl|lg:border(\s|$)|lg:border-[rb]\b/)
+    // The sidebar starts under the bar, with no line beside the card.
+    expect(screen.getByRole('complementary')).toHaveClass('lg:top-11', 'lg:border-r-0')
+  })
+
+  it('on Windows and Linux, the same frame without a drag region (the system title bar stays)', () => {
+    for (const platform of ['win32', 'linux']) {
+      installDesktopApi(platform)
+      const { unmount } = routed()
+      expect(titleBar(), platform).not.toBeNull()
+      expect(screen.getByRole('main'), platform).toHaveAttribute('data-desktop-frame')
+      expect(document.body.innerHTML, platform).not.toContain('-webkit-app-region')
+      unmount()
+      Reflect.deleteProperty(window, 'trackzyn')
+    }
+  })
+
+  it('on the web, no bar and no card: the page scrolls with the window as before', () => {
+    routed()
+    expect(titleBar()).toBeNull()
+    expect(screen.getByRole('main')).not.toHaveAttribute('data-desktop-frame')
+    expect(screen.getByRole('main').className).not.toMatch(/lg:rounded/)
+  })
+
+  it('goes back and forward through the pages seen, each button off at its end', async () => {
+    installDesktopApi('darwin')
+    const { user } = routed()
+    const back = () => within(titleBar()!).getByRole('button', { name: 'Back' })
+    const forward = () => within(titleBar()!).getByRole('button', { name: 'Forward' })
+    expect(back()).toBeDisabled()
+    expect(forward()).toBeDisabled()
+
+    await user.click(screen.getByRole('link', { name: 'Agenda' }))
+    expect(await screen.findByText('Agenda page')).toBeInTheDocument()
+    expect(back()).toBeEnabled()
+    expect(forward()).toBeDisabled()
+
+    await user.click(back())
+    expect(await screen.findByText('Home page')).toBeInTheDocument()
+    expect(back()).toBeDisabled()
+    expect(forward()).toBeEnabled()
+
+    await user.click(forward())
+    expect(await screen.findByText('Agenda page')).toBeInTheDocument()
+    expect(forward()).toBeDisabled()
+  })
+
+  it('lines the back and forward buttons up with the start of the page, clear of the macOS window buttons', async () => {
+    installDesktopApi('darwin')
+    const { user } = routed()
+    const group = () => within(titleBar()!).getByRole('button', { name: 'Back' }).parentElement!
+    expect(group()).toHaveClass('lg:left-60')
+    // Collapsed, the page starts at 64 px, under the window buttons (16 to 68 px): the arrows keep to
+    // 84 px, 16 px past them.
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+    expect(group()).toHaveClass('lg:left-21')
+    expect(group().className).not.toMatch(/lg:left-16/)
+  })
+
+  it('on Windows and Linux, with no window buttons in the bar, the collapsed arrows start with the page', async () => {
+    installDesktopApi('win32')
+    const { user } = routed()
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+    expect(within(titleBar()!).getByRole('button', { name: 'Back' }).parentElement!).toHaveClass('lg:left-16')
+  })
+})
+
+describe('app layout desktop title bar chosen by the admin', () => {
+  const routed = () =>
+    renderWithProviders(
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<p>Home page</p>} />
+        </Route>
+      </Routes>,
+      { route: '/' },
+    )
+  const titleBar = () => document.querySelector<HTMLElement>('[data-slot="desktop-titlebar"]')!
+  const chosen = async (style: string) => {
+    state.titlebar = style
+    installDesktopApi('darwin')
+    const rendered = routed()
+    await waitFor(() => expect(titleBar()).toHaveAttribute('data-titlebar', style))
+    return rendered
+  }
+
+  it('asks for the bar only on the desktop, and keeps the page in a card until the answer says otherwise', async () => {
+    const web = routed()
+    expect(state.desktopTitlebar).not.toHaveBeenCalled()
+    web.unmount()
+    await chosen('contained')
+    expect(state.desktopTitlebar).toHaveBeenCalled()
+    expect(screen.getByRole('main')).toHaveClass('lg:rounded-tl-xl', 'lg:border-t', 'lg:border-l')
+  })
+
+  it('thin: a bar with a line under it and the workspace and page names, no buttons, the page flat under it', async () => {
+    await chosen('thin')
+    const bar = titleBar()
+    expect(bar).toHaveClass('inset-x-0', 'bg-sidebar', 'border-b', 'h-11', DRAG)
+    expect(within(bar).queryAllByRole('button')).toHaveLength(0)
+    expect(within(bar).getByText('Synthetic workspace · All my lists')).toBeInTheDocument()
+    const page = screen.getByRole('main')
+    expect(page).toHaveClass('lg:fixed', 'lg:top-11', 'lg:overflow-y-auto')
+    expect(page.className).not.toMatch(/lg:rounded|lg:border-[tl]\b/)
+    // The sidebar keeps its line beside the page.
+    expect(screen.getByRole('complementary')).toHaveClass('lg:top-11')
+    expect(screen.getByRole('complementary')).not.toHaveClass('lg:border-r-0')
+  })
+
+  it('search: back, forward, the search and the eye and theme in the bar, gone from the sidebar from the large layout up', async () => {
+    const { user } = await chosen('search')
+    const bar = titleBar()
+    for (const name of ['Back', 'Forward', t('cmdk.triggerAria'), t('privacy.hide'), t('settings.themeDark')]) {
+      const button = within(bar).getByRole('button', { name })
+      expect(button, name).toHaveClass(NO_DRAG)
+    }
+    const sidebar = screen.getByRole('complementary')
+    expect(within(sidebar).getByRole('button', { name: t('cmdk.triggerAria') }).parentElement).toHaveClass('lg:hidden')
+    expect(within(sidebar).getByRole('button', { name: t('privacy.hide') }).parentElement).toHaveClass('lg:hidden')
+
+    await user.click(within(bar).getByRole('button', { name: t('privacy.hide') }))
+    expect(within(bar).getByRole('button', { name: t('privacy.show') })).toBeInTheDocument()
+  })
+
+  it('integrated: no bar, the sidebar runs to the top with room for the window buttons, and a strip over the page drags', async () => {
+    const { user } = await chosen('integrated')
+    const strip = titleBar()
+    expect(strip).toHaveClass('bg-background', 'right-0', 'lg:left-60', DRAG)
+    expect(strip).not.toHaveClass('bg-sidebar', 'inset-x-0')
+    expect(within(strip).queryAllByRole('button')).toHaveLength(0)
+    const sidebar = screen.getByRole('complementary')
+    expect(sidebar).not.toHaveClass('lg:top-11')
+    expect(sidebar.firstElementChild).toHaveClass('lg:h-11', DRAG)
+    expect(sidebar.firstElementChild).not.toHaveClass('lg:hidden')
+    expect(screen.getByRole('main')).toHaveClass('lg:top-11')
+
+    await user.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+    expect(titleBar()).toHaveClass('lg:left-16')
+  })
+
+  it('on Windows and Linux, any bar draws the same but drags nothing (the system title bar stays)', async () => {
+    for (const style of ['thin', 'search', 'integrated']) {
+      state.titlebar = style
+      installDesktopApi('win32')
+      const { unmount } = routed()
+      await waitFor(() => expect(titleBar()).toHaveAttribute('data-titlebar', style))
+      expect(document.body.innerHTML, style).not.toContain('-webkit-app-region')
       unmount()
       Reflect.deleteProperty(window, 'trackzyn')
     }

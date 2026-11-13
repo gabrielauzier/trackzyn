@@ -33,6 +33,9 @@ describe('window state', () => {
   it('uses hiddenInset on macOS only', () => {
     const bounds = resolveWindowBounds(null, [screen])
     expect(windowOptions({ platform: 'darwin', bounds }).titleBarStyle).toBe('hiddenInset')
+    // Centred in the app's 44 px title bar: 12 px lights from y 16 to 28.
+    expect(windowOptions({ platform: 'darwin', bounds })).toMatchObject({ trafficLightPosition: { x: 16, y: 16 } })
+    expect(windowOptions({ platform: 'win32', bounds })).not.toHaveProperty('trafficLightPosition')
     expect(windowOptions({ platform: 'win32', bounds }).titleBarStyle).toBeUndefined()
     expect(windowOptions({ platform: 'linux', bounds }).titleBarStyle).toBeUndefined()
   })

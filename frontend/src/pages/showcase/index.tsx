@@ -31,8 +31,9 @@ export default function ComponentsShowcasePage() {
       setActive(current)
     }
     onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    // Captured on the document: on the desktop the page scrolls inside its card, not the window.
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    return () => document.removeEventListener('scroll', onScroll, { capture: true })
   }, [])
 
   // On narrow screens the tab row scrolls sideways; keep the active tab in it.
@@ -50,6 +51,13 @@ export default function ComponentsShowcasePage() {
     if (!el) return
     const navHeight = navRef.current?.getBoundingClientRect().height ?? 0
     const offset = window.innerWidth >= 1024 ? navHeight + 16 : navHeight + 72
+    // On the desktop, from the large layout up, the card around the page is what scrolls.
+    const frame = el.closest<HTMLElement>('[data-desktop-frame]')
+    if (frame && getComputedStyle(frame).overflowY !== 'visible') {
+      const top = el.getBoundingClientRect().top - frame.getBoundingClientRect().top + frame.scrollTop - offset
+      frame.scrollTo({ top, behavior: 'smooth' })
+      return
+    }
     window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - offset, behavior: 'smooth' })
   }
 

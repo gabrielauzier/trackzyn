@@ -35,8 +35,8 @@ export function windowOptions({ platform, bounds }: { platform: string; bounds: 
     ...bounds,
     minWidth: MIN_SIZE.width,
     minHeight: MIN_SIZE.height,
-    // macOS keeps the traffic lights over the app's own header.
-    ...(platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const } : {}),
+    // macOS keeps the traffic lights over the app's own header, centred in its 44 px title bar.
+    ...(platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 16 } } : {}),
   }
 }
 

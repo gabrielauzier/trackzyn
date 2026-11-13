@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select'
 import { PageHeader } from '@/components/page-header'
 import { TimezoneSettings } from '@/components/timezone-settings'
+import { DesktopTitlebarSettings } from '@/components/desktop-titlebar-settings'
 import { setThemeBasedOnSystem } from '@/lib/theme-utils'
 import { useLocalAuthEnabled } from '@/hooks/use-local-auth'
 import { Search, Plus, Trash2, Shield, ShieldOff, UserCog, Users, Palette, Save, Hash, CalendarDays } from 'lucide-react'
@@ -474,6 +475,8 @@ export default function AdminSettingsPage() {
           })}
         </div>
       </div>
+
+      <DesktopTitlebarSettings />
 
       {/* Settings section */}
       <div className="rounded-xl border border-border/60 bg-card overflow-hidden">

@@ -8,10 +8,12 @@ import { requireLocalAuth } from '../plugins/policy.ts'
 import { createAdminUser, deleteAdminUser, listUsers, toAdminUserRead, updateAdminUser } from '../services/admin.ts'
 import {
   DATE_FORMATS,
+  DESKTOP_TITLEBARS,
   NUMBER_FORMATS,
   deleteAppSetting,
   getAppSetting,
   getDateFormat,
+  getDesktopTitlebar,
   getNumberFormat,
   isRegistrationEnabled,
   setAppSetting,
@@ -32,12 +34,14 @@ const ALLOWED_SETTINGS = new Set([
   'number_format',
   'date_format',
   'timezone',
+  'desktop_titlebar',
 ])
 
 const SETTING_CHOICES: Record<string, string[]> = {
   registration_enabled: ['true', 'false'],
   number_format: NUMBER_FORMATS,
   date_format: DATE_FORMATS,
+  desktop_titlebar: DESKTOP_TITLEBARS,
 }
 
 const adminUserRead = z.object({
@@ -256,6 +260,13 @@ export function adminRoutes(ctx: AppContext) {
       '/api/admin/date-format',
       { schema: { response: { 200: z.object({ format: z.string() }) } }, preValidation: [requireUser] },
       async () => ({ format: await getDateFormat(ctx.db) }),
+    )
+
+    // Every signed-in user's desktop app reads it to draw its top bar.
+    typed.get(
+      '/api/admin/desktop-titlebar',
+      { schema: { response: { 200: z.object({ style: z.string() }) } }, preValidation: [requireUser] },
+      async () => ({ style: await getDesktopTitlebar(ctx.db) }),
     )
   }
 }
