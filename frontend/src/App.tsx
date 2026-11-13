@@ -23,6 +23,7 @@ const ArchivedListsPage = lazy(() => import('@/pages/archived-lists'))
 const ListBoardPage = lazy(() => import('@/pages/list-board'))
 const FocusPage = lazy(() => import('@/pages/focus'))
 const FocusWidgetPage = lazy(() => import('@/pages/focus-widget'))
+const CaptureWindowPage = lazy(() => import('@/pages/capture-window'))
 const AgendaPage = lazy(() => import('@/pages/agenda'))
 const PlanPage = lazy(() => import('@/pages/plan'))
 const ReportsPage = lazy(() => import('@/pages/reports'))
@@ -69,6 +70,15 @@ function App() {
                         element={
                           <ProtectedRoute>
                             <FocusWidgetPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      {/* The desktop capture window (CAP-06): the field alone, outside the layout and its Mod+Shift+Space. */}
+                      <Route
+                        path="/capture"
+                        element={
+                          <ProtectedRoute>
+                            <CaptureWindowPage />
                           </ProtectedRoute>
                         }
                       />

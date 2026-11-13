@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import type { CaptureShortcutSetting } from '../shared/ipc'
 
 type Config = Record<string, unknown>
 export interface Bounds {
@@ -12,10 +13,7 @@ export interface Bounds {
 export type Mode = 'remote' | 'local'
 
 /** The global capture shortcut (AD-012): on or off, and the Electron accelerator it registers. */
-export interface CaptureShortcutSetting {
-  enabled: boolean
-  accelerator: string
-}
+export type { CaptureShortcutSetting }
 
 export const DEFAULT_CAPTURE_SHORTCUT: CaptureShortcutSetting = { enabled: true, accelerator: 'CommandOrControl+Shift+Space' }
 

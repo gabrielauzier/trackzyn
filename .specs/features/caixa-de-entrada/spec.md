@@ -372,7 +372,7 @@ O que o código já fixa:
 | CAP-03 | P1: Capturar | T12, T23 | Implementing |
 | CAP-04 | P1: Capturar | T25 | Implementing |
 | CAP-05 | P1: Capturar | T25 | Implementing |
-| CAP-06 | P1: Capturar | T30 | In Tasks |
+| CAP-06 | P1: Capturar | T30 | Implementing |
 | CAP-07 | P1: Capturar | T29, T31 | Implementing |
 | CAP-08 | P1: Capturar | T29, T31 | Implementing |
 | CAP-09 | P1: Capturar | T15 | Implementing |

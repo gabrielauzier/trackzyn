@@ -1088,12 +1088,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] O atalho abre a janela no topo, carregando `/capture`; um segundo toque só a foca
-- [ ] Guardar envia `source: "desktop"` e fecha a janela; perder o foco fecha
-- [ ] Os canais novos recusam remetente fora de `app://trackzyn/`; a contagem de membros da `TrackzynApi` foi atualizada
-- [ ] Gate check passes: Full (desktop)
+- [x] O atalho abre a janela no topo, carregando `/capture`; um segundo toque só a foca
+- [x] Guardar envia `source: "desktop"` e fecha a janela; perder o foco fecha
+- [x] Os canais novos recusam remetente fora de `app://trackzyn/`; a contagem de membros da `TrackzynApi` foi atualizada
+- [x] Gate check passes: Full (desktop)
 
-**Also touched**: `desktop/src/main/index.ts`, `desktop/src/shared/ipc.ts`, `desktop/src/preload/index.ts`, `frontend/src/pages/capture-window.tsx`, `frontend/src/App.tsx`
+**Also touched**: `desktop/src/main/index.ts`, `desktop/src/shared/ipc.ts`, `desktop/src/preload/index.ts`, `frontend/src/pages/capture-window.tsx`, `frontend/src/App.tsx`, `desktop/src/main/capture-window.test.ts`, `desktop/src/main/config-store.ts` (o tipo passa a vir de `shared/ipc.ts`), `desktop/src/preload/index.test.ts` (26 membros e o papel `capture`), `frontend/src/lib/platform.ts` (espelho dos 26 membros), `frontend/src/lib/desktop/focus-window.ts` (`windowRole` com `capture`), `frontend/src/pages/capture-window.test.tsx`, `frontend/src/App.test.tsx`, e as pontes falsas de sete testes do frontend que montam a `TrackzynApi` inteira. A janela tem 560×150, `center: true`, e o atalho chama `app.focus({ steal: true })` antes de abri-la, para as teclas chegarem ao campo com outro app na frente. O atalho é liberado no `will-quit`. Os canais novos entram na checagem de `ipc.test.ts`, que exige `trustedHandle` e recusa remetente fora de `app://trackzyn/` em todo canal de `IPC`.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

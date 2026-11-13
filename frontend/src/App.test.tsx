@@ -103,3 +103,18 @@ describe('The focus widget route (WIDGET-06)', () => {
     expect(screen.queryByRole('group', { name: 'Focus widget' })).not.toBeInTheDocument()
   })
 })
+
+describe('The desktop capture route (CAP-06)', () => {
+  it('/capture shows the capture field alone, without the sidebar or the app overlay', async () => {
+    localStorage.setItem('token', 'token-123')
+    window.history.replaceState(null, '', '/capture')
+
+    render(<App />)
+
+    expect(await screen.findByRole('textbox', { name: 'Capture in the inbox' })).toBeInTheDocument()
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Your lists' })).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/capture')
+  })
+})

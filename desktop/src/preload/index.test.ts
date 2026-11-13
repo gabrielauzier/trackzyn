@@ -44,12 +44,14 @@ beforeEach(() => {
 })
 
 describe('preload bridge (SYNC-08)', () => {
-  it('exposes exactly twenty-three members, the focus and widget ones included', async () => {
+  it('exposes exactly twenty-six members, the focus, widget and capture ones included', async () => {
     const api = await loadApi()
     expect(Object.keys(api).sort()).toEqual([
       'appVersion',
+      'closeCapture',
       'collapseFocus',
       'expandFocus',
+      'getCaptureShortcut',
       'getMode',
       'getServerUrl',
       'installUpdate',
@@ -66,12 +68,13 @@ describe('preload bridge (SYNC-08)', () => {
       'platform',
       'reportFocusState',
       'resizeWidget',
+      'setCaptureShortcut',
       'setServerUrl',
       'startLocal',
       'startSso',
       'windowRole',
     ])
-    expect(Object.keys(api)).toHaveLength(23)
+    expect(Object.keys(api)).toHaveLength(26)
   })
 
   it('reportFocusState sends the state on focus:state', async () => {
@@ -127,6 +130,8 @@ describe('preload bridge for the focus widget (WIDGET-22, WIDGET-24)', () => {
 
   it('windowRole is widget with the widget argument and main without it', async () => {
     expect((await loadWithArgs(['--trackzyn-window-role=widget'])).windowRole).toBe('widget')
+    expect((await loadWithArgs(['--trackzyn-window-role=capture'])).windowRole).toBe('capture')
+    expect((await loadWithArgs(['--trackzyn-window-role=captures'])).windowRole).toBe('main')
     expect((await loadWithArgs([])).windowRole).toBe('main')
     expect((await loadWithArgs(['--trackzyn-window-role=main'])).windowRole).toBe('main')
     expect((await loadWithArgs(['--trackzyn-window-role=widgets'])).windowRole).toBe('main')
@@ -199,5 +204,19 @@ describe('preload bridge for the focus widget (WIDGET-22, WIDGET-24)', () => {
     bridge.emit('widget:hover', { hovering: false })
     expect(callback.mock.calls).toEqual([[{ hovering: true }], [{ hovering: false }]])
     unsubscribe()
+  })
+})
+
+describe('preload bridge for the capture window (CAP-06, CAP-07)', () => {
+  it('getCaptureShortcut, setCaptureShortcut and closeCapture invoke their channels with their arguments', async () => {
+    const api = await loadApi()
+    await api.getCaptureShortcut()
+    await api.setCaptureShortcut({ enabled: true, accelerator: 'Alt+Space' })
+    await api.closeCapture()
+    expect(bridge.invoke.mock.calls).toEqual([
+      ['capture:get-shortcut'],
+      ['capture:set-shortcut', { enabled: true, accelerator: 'Alt+Space' }],
+      ['capture:close'],
+    ])
   })
 })

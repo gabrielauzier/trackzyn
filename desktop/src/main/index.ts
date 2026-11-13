@@ -5,6 +5,8 @@ import { appendFileSync, mkdirSync } from 'node:fs'
 import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, screen, session, shell, utilityProcess } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { APP_ORIGIN, APP_SCHEME, createAppHandler } from './app-protocol'
+import { createCaptureShortcut } from './capture-shortcut'
+import { createCaptureController, createCaptureWindow, parseCaptureShortcut } from './capture-window'
 import { createConfigStore } from './config-store'
 import { createDeepLinkHandler, setupDeepLinks } from './deep-link'
 import { createDownloadHandler } from './downloads'
@@ -282,6 +284,18 @@ function start() {
     trustedHandle(ipcMain, IPC.focusExpand, (_event, reason: unknown) => widget.close(reason === 'task_left' ? 'task_left' : 'expand'))
     trustedHandle(ipcMain, IPC.focusChanged, (event) => widget.focusChanged((event as { sender?: unknown }).sender))
     trustedHandle(ipcMain, IPC.widgetResize, (_event, mode: unknown) => widget.resize(mode))
+
+    // The capture window (CAP-06): opened by the one global shortcut of the app (AD-012).
+    const capture = createCaptureController({
+      createWindow: () => createCaptureWindow({ appVersion: app.getVersion() }),
+      focusApp: () => app.focus({ steal: true }),
+    })
+    const captureShortcut = createCaptureShortcut({ store, onPress: () => capture.open() })
+    captureShortcut.apply()
+    app.on('will-quit', () => captureShortcut.dispose())
+    trustedHandle(ipcMain, IPC.getCaptureShortcut, () => store.getCaptureShortcut())
+    trustedHandle(ipcMain, IPC.setCaptureShortcut, (_event, setting: unknown) => captureShortcut.set(parseCaptureShortcut(setting)))
+    trustedHandle(ipcMain, IPC.closeCapture, () => capture.close())
     // A page loaded after the download finished still shows the banner.
     mainWindow.webContents.on('did-finish-load', () => {
       if (exporting) mainWindow?.webContents.send(IPC.exportState, { exporting: true })
