@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, eq, ne } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type Priority, type TaskGroup, taskGroups, tasks } from '../db/schema.ts'
+import { type Priority, type TaskColumn, type TaskGroup, lists, taskGroups, tasks } from '../db/schema.ts'
+import { HttpError } from '../http/http-error.ts'
+import { type GroupWithoutNextAction, type TaskWithSubtasks, moveTask } from './tasks.ts'
 
 /** Creates a group of tasks in the list `listId` (GRP-01); its tasks are added apart. */
 export async function createGroup(
@@ -60,4 +62,49 @@ export async function hasOpenTasks(tx: Database, groupId: string): Promise<boole
     .where(and(eq(tasks.groupId, groupId), ne(tasks.column, 'done')))
     .limit(1)
   return open !== undefined
+}
+
+/** The group `groupId` if its list belongs to `workspaceId`, or 404. */
+export async function findGroup(db: Database, groupId: string, workspaceId: string): Promise<TaskGroup> {
+  const [row] = await db
+    .select({ group: taskGroups })
+    .from(taskGroups)
+    .innerJoin(lists, eq(lists.id, taskGroups.listId))
+    .where(and(eq(taskGroups.id, groupId), eq(lists.workspaceId, workspaceId)))
+    .limit(1)
+  if (!row) throw new HttpError(404, 'Group not found')
+  return row.group
+}
+
+/**
+ * Moves every task of the group in the column `from` to the column `to`, right before `beforeTaskId` (or at
+ * the end for null), in the order they had (GRP-09), in one transaction. Each task moves as `moveTask` moves
+ * it, so entering done completes it and takes its flag off; the group's tasks of other columns stay.
+ */
+export async function moveGroupBlock(
+  db: Database,
+  groupId: string,
+  workspaceId: string,
+  target: { from: TaskColumn; to: TaskColumn; beforeTaskId: string | null },
+  byUserId: string,
+  now: Date = new Date(),
+): Promise<{ tasks: TaskWithSubtasks[]; groupWithoutNextAction: GroupWithoutNextAction | null }> {
+  const group = await findGroup(db, groupId, workspaceId)
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    const block = await tx
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(and(eq(tasks.groupId, group.id), eq(tasks.column, target.from)))
+      .orderBy(asc(tasks.position), asc(tasks.createdAt))
+    const moved: TaskWithSubtasks[] = []
+    let groupWithoutNextAction: GroupWithoutNextAction | null = null
+    // One after the other before the same task keeps their order.
+    for (const { id } of block) {
+      const task = await moveTask(tx, id, workspaceId, { column: target.to, beforeTaskId: target.beforeTaskId, byUserId }, now)
+      groupWithoutNextAction = task.groupWithoutNextAction ?? groupWithoutNextAction
+      moved.push(task)
+    }
+    return { tasks: moved, groupWithoutNextAction }
+  })
 }

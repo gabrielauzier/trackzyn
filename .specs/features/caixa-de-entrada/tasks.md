@@ -392,12 +392,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Três tarefas do grupo em Esta semana vão para Hoje antes de uma tarefa avulsa, na mesma ordem; a tarefa do grupo que estava em Backlog fica lá
-- [ ] Para Concluídas, cada tarefa recebe `completed_at` e `completed_by` e perde a flag
-- [ ] Viewer → 403; token → 403
-- [ ] Gate check passes: Full (backend)
+- [x] Três tarefas do grupo em Esta semana vão para Hoje antes de uma tarefa avulsa, na mesma ordem; a tarefa do grupo que estava em Backlog fica lá
+- [x] Para Concluídas, cada tarefa recebe `completed_at` e `completed_by` e perde a flag
+- [x] Viewer → 403; token → 403
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/services/groups.ts`
+**Also touched**: `backend-node/src/services/groups.ts` (`moveGroupBlock` e `findGroup`; cada tarefa passa por `moveTask` na mesma transação), `backend-node/test/routes/groups.test.ts`. A resposta é `{tasks: TaskRead[], group_without_next_action: {id, name} | null}`; um grupo de outro workspace responde 404.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
