@@ -395,8 +395,8 @@ O que o código já fixa:
 | QUICK-09 | P1: Enviar rápido | T24 | In Tasks |
 | PROC-01 | P1: Processar como tarefa | T26 | In Tasks |
 | PROC-02 | P1: Processar como tarefa | T26 | In Tasks |
-| PROC-03 | P1: Processar como tarefa | T11, T26 | In Tasks |
-| PROC-04 | P1: Processar como tarefa | T11, T26 | In Tasks |
+| PROC-03 | P1: Processar como tarefa | T11, T26 | Implementing |
+| PROC-04 | P1: Processar como tarefa | T11, T26 | Implementing |
 | PROC-05 | P1: Processar como tarefa | T13, T26 | In Tasks |
 | PROC-06 | P1: Processar como tarefa | T13, T26 | In Tasks |
 | PROC-07 | P1: Processar como tarefa | T13, T26 | In Tasks |
@@ -417,8 +417,8 @@ O que o código já fixa:
 | REM-05 | P1: Lembrete | T5, T32 | Implementing |
 | REM-06 | P1: Lembrete | T5, T28 | Implementing |
 | GRP-01 | P1: Grupo de tarefas | T7, T13 | Implementing |
-| GRP-02 | P1: Grupo de tarefas | T11, T26 | In Tasks |
-| GRP-03 | P1: Grupo de tarefas | T11, T26 | In Tasks |
+| GRP-02 | P1: Grupo de tarefas | T11, T26 | Implementing |
+| GRP-03 | P1: Grupo de tarefas | T11, T26 | Implementing |
 | GRP-04 | P1: Grupo de tarefas | T7, T20 | Implementing |
 | GRP-05 | P1: Grupo de tarefas | T20 | In Tasks |
 | GRP-06 | P1: Grupo de tarefas | T8, T21 | Implementing |

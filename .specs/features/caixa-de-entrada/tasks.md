@@ -454,10 +454,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `targetColumn`: sem dia → Backlog; hoje → Hoje; outro dia da semana (incluindo domingo) → Esta semana; segunda seguinte → Backlog; `column` explícita vence
-- [ ] `parseTaskLine("Validar 0:30")` → título `Validar`, 30 min; sem `HH:MM` → sem estimativa; `24:01` não vira estimativa
-- [ ] O schema recusa grupo sem tarefas, lembrete com estimativa e nome com 256 caracteres
-- [ ] Gate check passes: Full (backend)
+- [x] `targetColumn`: sem dia → Backlog; hoje → Hoje; outro dia da semana (incluindo domingo) → Esta semana; segunda seguinte → Backlog; `column` explícita vence
+- [x] `parseTaskLine("Validar 0:30")` → título `Validar`, 30 min; sem `HH:MM` → sem estimativa; `24:01` não vira estimativa
+- [x] O schema recusa grupo sem tarefas, lembrete com estimativa e nome com 256 caracteres
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/test/services/decision.test.ts`. `parseTaskLine` fica em `services/decision.ts` (SPEC_DEVIATION: o repositório não tem `shared/`; o frontend espelha a regra). `name` é opcional na decisão: ausente, o envio usa o texto do item (QUICK-04, QUICK-07). `targetColumn(scheduledOn, today, weekEnd, chosen?)` manda um dia já passado para Hoje (D31). A narrowing de `inboxItems.draft` para `Decision` vai no T12.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
