@@ -3,7 +3,7 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
-import { focus, lists, tasks } from '@/lib/api'
+import { cardFields, focus, lists, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import { play } from '@/lib/sounds/synth'
@@ -18,6 +18,7 @@ vi.mock('@/lib/api', () => ({
   tasks: { move: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), remove: vi.fn(), duplicate: vi.fn(), moveToList: vi.fn(), skip: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
+  cardFields: { get: vi.fn(), set: vi.fn() },
   authHeaders: () => ({}),
 }))
 vi.mock('@/lib/sounds/synth', () => ({ play: vi.fn() }))
@@ -208,6 +209,7 @@ beforeEach(() => {
   })
   vi.mocked(tasks.move).mockResolvedValue(fullTask)
   vi.mocked(tasks.get).mockResolvedValue(fullTask)
+  vi.mocked(cardFields.get).mockResolvedValue({ hidden: [] })
 })
 
 afterEach(() => {
@@ -1084,5 +1086,48 @@ describe('ListBoardPage', () => {
     renderBoard()
 
     expect(await screen.findByText('Home page')).toBeInTheDocument()
+  })
+})
+
+describe('ListBoardPage card fields (FIELDS-02, FIELDS-04)', () => {
+  it('the gear of the board bar turns Prazo off: the due chips leave the board without reading it again', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      vi.mocked(lists.board).mockImplementation(async () => {
+        const board = boardOf(WEEK, 'Week')
+        board.columns.today.tasks = [{ ...card(TODAY_TASK, 'DEV-1725'), due_on: '2026-12-20', priority: 'high' }]
+        return board
+      })
+      vi.mocked(cardFields.set).mockResolvedValue({ hidden: ['due'] })
+      const { user } = renderBoard()
+      expect(await screen.findByText('Prazo 20 dez')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Campos do card' }))
+      const due = await screen.findByRole('switch', { name: 'Prazo' })
+      await waitFor(() => expect(due).toBeEnabled())
+      await user.click(due)
+
+      expect(cardFields.set).toHaveBeenCalledWith(WEEK, ['due'])
+      await waitFor(() => expect(screen.queryByText('Prazo 20 dez')).not.toBeInTheDocument())
+      // The other fields stay on, and the board was read only once.
+      expect(screen.getByRole('img', { name: 'Prioridade alta' })).toBeInTheDocument()
+      expect(lists.board).toHaveBeenCalledTimes(1)
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('FIELDS-04 the fields hidden on the server stay hidden on the cards of the list', async () => {
+    vi.mocked(cardFields.get).mockResolvedValue({ hidden: ['priority'] })
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      board.columns.today.tasks = [{ ...card(TODAY_TASK, 'DEV-1725'), priority: 'high', flagged: true, flag_reason: 'Blocked' }]
+      return board
+    })
+    renderBoard()
+
+    expect(await screen.findByText('Blocked')).toBeInTheDocument()
+    await waitFor(() => expect(cardFields.get).toHaveBeenCalledWith(WEEK))
+    await waitFor(() => expect(screen.queryByRole('img', { name: 'High priority' })).not.toBeInTheDocument())
   })
 })

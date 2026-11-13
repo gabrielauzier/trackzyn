@@ -30,6 +30,7 @@ import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
+import { CardFieldsSettings } from '@/components/board/card-fields-settings'
 import { COLUMN_PREFIX, columnsOf, dropTarget, type PendingColumn } from '@/components/board/drop-target'
 import { formatDuration } from '@/components/board/format-duration'
 import { SubtaskList } from '@/components/board/subtask-list'
@@ -51,6 +52,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { FocusRouteState } from '@/lib/desktop/focus-window'
 import { asksSeriesScope } from '@/lib/schedule'
+import { useCardFields } from '@/lib/board/card-fields'
 import type { Board, SeriesScope, TaskCardView, TaskColumn } from '@/types'
 
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
@@ -167,6 +169,8 @@ export default function ListBoardPage() {
   const boardKey = ['lists', listId, 'board'] as const
   const focus = useFocus(listId)
   const { playComplete } = useFocusSounds(focus.state, focus.display)
+  // The new fields this user shows on this board (AD-011).
+  const { fields } = useCardFields(listId)
 
   const { data: board, error } = useQuery({ queryKey: boardKey, queryFn: () => listsApi.board(listId) })
   const { data: allLists } = useQuery({
@@ -362,6 +366,7 @@ export default function ListBoardPage() {
         number={index + 1}
         canWrite={canWrite}
         timeZone={shown.timezone}
+        fields={fields}
         onOpen={(card) => setOpenTaskId(card.id)}
         onEstimateChange={(card, minutes) =>
           estimateMutation.mutate({ id: card.id, minutes, previous: card.estimate_minutes })
@@ -453,6 +458,9 @@ export default function ListBoardPage() {
             estimate: formatDuration(board.pending.estimate_minutes * 60, i18n.language),
           })}
         </p>
+        <div className="ml-auto">
+          <CardFieldsSettings listId={listId} />
+        </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={collisionDetection}
@@ -496,6 +504,7 @@ export default function ListBoardPage() {
                 number={draggedCard.number}
                 canWrite={canWrite}
                 timeZone={shown.timezone}
+                fields={fields}
                 onOpen={noop}
                 className="border-primary"
               />

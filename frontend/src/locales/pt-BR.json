@@ -599,7 +599,15 @@
     "dueToday": "Prazo hoje",
     "dueTomorrow": "Prazo amanhã",
     "dueLate": "Atrasada · {{day}}",
-    "reminder": "Lembrete"
+    "reminder": "Lembrete",
+    "cardFields": {
+      "title": "Campos do card",
+      "priority": "Prioridade",
+      "due": "Prazo",
+      "flag": "Flag",
+      "waiting": "Aguardando",
+      "always": "Nome, estimativa e tempo registrado aparecem sempre."
+    }
   },
   "focus": {
     "sounds": {

@@ -599,7 +599,15 @@
     "dueToday": "Due today",
     "dueTomorrow": "Due tomorrow",
     "dueLate": "Late · {{day}}",
-    "reminder": "Reminder"
+    "reminder": "Reminder",
+    "cardFields": {
+      "title": "Card fields",
+      "priority": "Priority",
+      "due": "Due date",
+      "flag": "Flag",
+      "waiting": "Waiting",
+      "always": "Name, estimate and time spent always show."
+    }
   },
   "focus": {
     "sounds": {

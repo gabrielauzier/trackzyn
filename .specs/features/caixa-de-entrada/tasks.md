@@ -739,11 +739,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] A engrenagem abre `Campos do card` com os quatro switches e a nota `Nome, estimativa e tempo registrado aparecem sempre.`
-- [ ] Desligar Prazo grava `hidden: ["due"]` e tira os chips do quadro sem recarregar
-- [ ] Gate check passes: Full (frontend)
+- [x] A engrenagem abre `Campos do card` com os quatro switches e a nota `Nome, estimativa e tempo registrado aparecem sempre.`
+- [x] Desligar Prazo grava `hidden: ["due"]` e tira os chips do quadro sem recarregar
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/pages/list-board.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/pages/list-board.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/lib/board/card-fields.ts` (`useCardFields` e `cardFieldsKey`, chave `['lists', listId, 'card-fields']`), `frontend/src/components/board/card-fields-settings.test.tsx`, `frontend/src/pages/list-board.test.tsx` (o mock da API ganha `cardFields`). O switch muda na hora (escrita otimista no cache) e volta se o `PUT` falhar, com o erro no toast.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
