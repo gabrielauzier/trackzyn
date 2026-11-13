@@ -610,7 +610,18 @@
     },
     "groupLabel": "Grupo {{name}}",
     "groupWithoutNextAction": "{{name}} está sem próxima ação",
-    "addTaskToGroup": "Adicionar tarefa · {{name}}"
+    "addTaskToGroup": "Adicionar tarefa · {{name}}",
+    "flag": "Flag",
+    "flagAdd": "+ Flag",
+    "flagHint": "Marca que a tarefa precisa de atenção, com um motivo opcional",
+    "flagRemove": "Tirar flag",
+    "flagReason": "Motivo da flag",
+    "flagReasonPlaceholder": "Motivo (opcional)",
+    "group": "Grupo",
+    "noGroup": "Sem grupo",
+    "waitingSwitch": "Aguardando outra pessoa",
+    "waitingForField": "De quem",
+    "waitingForPlaceholder": "De quem (opcional)"
   },
   "focus": {
     "sounds": {

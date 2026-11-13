@@ -34,17 +34,19 @@ export function PrioritySelect({
   onChange,
   id,
   className,
+  disabled,
   'aria-label': ariaLabel,
 }: {
   value: Priority
   onChange: (priority: Priority) => void
   id?: string
+  disabled?: boolean
   className?: string
   'aria-label'?: string
 }) {
   const { t } = useTranslation()
   return (
-    <Select value={value} onValueChange={(next) => onChange(next as Priority)}>
+    <Select value={value} onValueChange={(next) => onChange(next as Priority)} disabled={disabled}>
       <SelectTrigger id={id} aria-label={ariaLabel} className={cn('w-full', className)}>
         <SelectValue />
       </SelectTrigger>

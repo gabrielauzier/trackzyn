@@ -831,14 +831,16 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Sem flag: `+ Flag` com a dica; clicar mostra o motivo e `Tirar flag`
-- [ ] Switch Aguardando abre `De quem`
-- [ ] Select de grupo com os grupos da lista e `Sem grupo`
-- [ ] `Salvar` manda só os campos mudados, incluindo os novos
-- [ ] Lembrete sem Estimativa, Grupo e Subtarefas
-- [ ] Gate check passes: Full (frontend)
+- [x] Sem flag: `+ Flag` com a dica; clicar mostra o motivo e `Tirar flag`
+- [x] Switch Aguardando abre `De quem`
+- [x] Select de grupo com os grupos da lista e `Sem grupo`
+- [x] `Salvar` manda só os campos mudados, incluindo os novos
+- [x] Lembrete sem Estimativa, Grupo e Subtarefas
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/components/board/task-dialog.test.tsx` (mock de `groups.list`), `frontend/src/components/board/priority.tsx` (`PrioritySelect` aceita `disabled`, para o `viewer`). O Prazo é um `input type="date"`; o switch leva o rótulo do design, `Aguardando outra pessoa`. Tirar a flag ou desligar Aguardando manda só `flagged: false` ou `waiting: false`, porque o servidor apaga o texto (FLAG-04, WAIT-05). Os grupos vêm de `['lists', list_id, 'groups']`.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

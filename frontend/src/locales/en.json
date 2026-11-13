@@ -610,7 +610,18 @@
     },
     "groupLabel": "Group {{name}}",
     "groupWithoutNextAction": "{{name}} has no next action",
-    "addTaskToGroup": "Add task · {{name}}"
+    "addTaskToGroup": "Add task · {{name}}",
+    "flag": "Flag",
+    "flagAdd": "+ Flag",
+    "flagHint": "Marks that the task needs attention, with an optional reason",
+    "flagRemove": "Remove flag",
+    "flagReason": "Flag reason",
+    "flagReasonPlaceholder": "Reason (optional)",
+    "group": "Group",
+    "noGroup": "No group",
+    "waitingSwitch": "Waiting on someone",
+    "waitingForField": "Waiting on",
+    "waitingForPlaceholder": "Who (optional)"
   },
   "focus": {
     "sounds": {
