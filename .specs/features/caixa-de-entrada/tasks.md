@@ -240,13 +240,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `POST /api/focus/start` com um lembrete em Hoje → 422 `Reminders have no focus`; com uma tarefa em Hoje continua funcionando
-- [ ] Lembrete movido para Concluídas recebe `completed_at` e `completed_by` como uma tarefa
-- [ ] O próximo foco automático pula um lembrete que esteja antes da tarefa em Hoje
-- [ ] `GET /api/agenda/scheduled` devolve `kind: "reminder"` para o lembrete com hora
-- [ ] Gate check passes: Full (backend)
+- [x] `POST /api/focus/start` com um lembrete em Hoje → 422 `Reminders have no focus`; com uma tarefa em Hoje continua funcionando
+- [x] Lembrete movido para Concluídas recebe `completed_at` e `completed_by` como uma tarefa
+- [x] O próximo foco automático pula um lembrete que esteja antes da tarefa em Hoje
+- [x] `GET /api/agenda/scheduled` devolve `kind: "reminder"` para o lembrete com hora
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/services/scheduled.ts`
+**Also touched**: `backend-node/src/services/scheduled.ts`, `backend-node/src/routes/scheduled.ts` (o schema de resposta da Agenda ganha `kind`), `backend-node/test/routes/scheduled.test.ts` e `backend-node/test/services/scheduled.test.ts` (as comparações da tarefa inteira ganham `kind: 'task'`). O `readFocusState` (`services/focus-state.ts`) ainda mostra um lembrete que esteja primeiro em Hoje como a tarefa do foco e o lista em `today.tasks`, porque lê do quadro; ficou fora do escopo desta tarefa.
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

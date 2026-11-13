@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import type { SeriesFreq } from '../db/schema.ts'
+import type { SeriesFreq, TaskKind } from '../db/schema.ts'
 import { type RecurrenceRule, nextOccurrence } from './recurrence.ts'
 import { applyDueSchedules, workspaceClock } from './schedule.ts'
 import type { seriesView } from './series.ts'
@@ -23,6 +23,8 @@ export interface ScheduledTask {
   scheduled_time: string | null
   /** The live series the task is the open occurrence of. */
   series: { id: string; rule: RuleView } | null
+  /** A reminder with a time is drawn as a marker, without a duration (REM-06). */
+  kind: TaskKind
 }
 
 /** A future occurrence of a series, computed from its rule and never stored (US-11, D14). */
@@ -67,6 +69,7 @@ interface Row {
   series_count: number | null
   series_created_count: number | null
   series_time: string | null
+  kind: TaskKind
 }
 
 const COLUMN_ORDER: Record<PendingColumn, number> = { today: 0, this_week: 1, backlog: 2 }
@@ -87,7 +90,7 @@ export async function listScheduled(db: Database, workspaceId: string, from: str
              t.estimate_minutes, t.scheduled_on::text AS scheduled_on, to_char(t.scheduled_time, 'HH24:MI') AS scheduled_time,
              ts.id AS series_id, ts.freq AS series_freq, ts."interval" AS series_interval, ts.weekdays AS series_weekdays,
              ts.month_day AS series_month_day, ts.until::text AS series_until, ts."count" AS series_count,
-             ts.created_count AS series_created_count, to_char(ts."time", 'HH24:MI') AS series_time
+             ts.created_count AS series_created_count, to_char(ts."time", 'HH24:MI') AS series_time, t.kind
       FROM tasks t
       JOIN lists l ON l.id = t.list_id
       LEFT JOIN task_series ts ON ts.id = t.series_id AND ts.ended_at IS NULL
@@ -124,6 +127,7 @@ export async function listScheduled(db: Database, workspaceId: string, from: str
     scheduled_time: row.scheduled_time,
     series:
       row.series_id === null ? null : { id: row.series_id, rule: ruleView(row) },
+    kind: row.kind,
   })
 
   const inPeriod = found.filter((row) => row.scheduled_on >= from && row.scheduled_on <= to)

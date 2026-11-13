@@ -61,6 +61,7 @@ describe('GET /api/agenda/scheduled (US-5, US-14)', () => {
             scheduled_on: date(2),
             scheduled_time: '10:00',
             series: null,
+            kind: 'task',
           },
         ],
         untimed: [expect.objectContaining({ id: untimed, scheduled_on: date(3), scheduled_time: null })],

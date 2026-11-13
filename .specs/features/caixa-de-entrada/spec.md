@@ -413,9 +413,9 @@ O que o código já fixa:
 | REM-01 | P1: Lembrete | T13, T26 | In Tasks |
 | REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
 | REM-03 | P1: Lembrete | T18 | In Tasks |
-| REM-04 | P1: Lembrete | T5 | In Tasks |
-| REM-05 | P1: Lembrete | T5 | In Tasks |
-| REM-06 | P1: Lembrete | T5, T28 | In Tasks |
+| REM-04 | P1: Lembrete | T5 | Implementing |
+| REM-05 | P1: Lembrete | T5 | Implementing |
+| REM-06 | P1: Lembrete | T5, T28 | Implementing |
 | GRP-01 | P1: Grupo de tarefas | T7, T13 | In Tasks |
 | GRP-02 | P1: Grupo de tarefas | T11, T26 | In Tasks |
 | GRP-03 | P1: Grupo de tarefas | T11, T26 | In Tasks |
