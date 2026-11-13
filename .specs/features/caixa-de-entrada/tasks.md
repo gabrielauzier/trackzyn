@@ -61,6 +61,7 @@ T32
 T7 → T8
 T8 → T9
 T10
+T33
 ```
 
 ### Phase 3: Caixa de entrada (backend)
@@ -436,6 +437,32 @@ T30 → T31
 **Gate**: full
 
 **Commit**: `feat(backend): store the card fields each user shows per list`
+
+---
+
+### T33: Ida para Hoje mantém o bloco do grupo
+
+**What**: `applyDueSchedules` roda `normalizeBlocks` nas colunas que mexe, para a tarefa agendada de um grupo não partir o bloco em Hoje (AD-013).
+**Where**: `backend-node/src/services/schedule.ts`
+**Depends on**: None
+**Reuses**: `normalizeBlocks` (T7)
+**Requirement**: GRP-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Duas tarefas do grupo em Hoje e uma terceira do grupo agendada para hoje em Backlog: depois da leitura, as três ficam juntas em Hoje
+- [ ] Uma tarefa avulsa agendada para hoje continua indo para o fim de Hoje
+- [ ] Gate check passes: Full (backend)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): keep a group's block together when a schedule moves a task to today`
 
 ---
 
@@ -1094,6 +1121,7 @@ Execution is strictly sequential: one task at a time, in order.
 | T8 | `moveTask` com grupo | ✅ Granular |
 | T9 | Uma rota e uma função | ✅ Granular |
 | T10 | Um serviço e uma rota | ✅ Granular |
+| T33 | Uma chamada em `schedule.ts` | ✅ Granular |
 | T11 | Um módulo de funções puras | ✅ Granular |
 | T12 | Serviço da caixa + rotas de leitura e manutenção | ⚠️ Coeso: o CRUD do item |
 | T13 | Um endpoint | ✅ Granular |
@@ -1133,6 +1161,7 @@ Execution is strictly sequential: one task at a time, in order.
 | T8 | T7 | T7 → T8 | ✅ Match |
 | T9 | T8 | T8 → T9 | ✅ Match |
 | T10 | None | — | ✅ Match |
+| T33 | None | — | ✅ Match |
 | T11 | None | — | ✅ Match |
 | T12 | None | — | ✅ Match |
 | T13 | T11, T12 | T11 → T13, T12 → T13 | ✅ Match |
@@ -1174,6 +1203,7 @@ Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem d
 | T8 | Serviços + rota | integration | integration | ✅ OK |
 | T9 | Serviços + rota | integration | integration | ✅ OK |
 | T10 | Serviços + rota | integration | integration | ✅ OK |
+| T33 | Serviços | integration | integration | ✅ OK |
 | T11 | Funções puras | unit | unit | ✅ OK |
 | T12 | Serviços + rotas | integration | integration | ✅ OK |
 | T13 | Serviços + rota | integration | integration | ✅ OK |

@@ -419,7 +419,7 @@ O que o código já fixa:
 | GRP-01 | P1: Grupo de tarefas | T7, T13 | Implementing |
 | GRP-02 | P1: Grupo de tarefas | T11, T26 | Implementing |
 | GRP-03 | P1: Grupo de tarefas | T11, T26 | Implementing |
-| GRP-04 | P1: Grupo de tarefas | T7, T20 | Implementing |
+| GRP-04 | P1: Grupo de tarefas | T7, T20, T33 | Implementing |
 | GRP-05 | P1: Grupo de tarefas | T20 | In Tasks |
 | GRP-06 | P1: Grupo de tarefas | T8, T21 | Implementing |
 | GRP-07 | P1: Grupo de tarefas | T8, T21 | Implementing |
