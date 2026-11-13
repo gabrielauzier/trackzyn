@@ -416,10 +416,10 @@ O que o código já fixa:
 | REM-04 | P1: Lembrete | T5 | Implementing |
 | REM-05 | P1: Lembrete | T5, T32 | Implementing |
 | REM-06 | P1: Lembrete | T5, T28 | Implementing |
-| GRP-01 | P1: Grupo de tarefas | T7, T13 | In Tasks |
+| GRP-01 | P1: Grupo de tarefas | T7, T13 | Implementing |
 | GRP-02 | P1: Grupo de tarefas | T11, T26 | In Tasks |
 | GRP-03 | P1: Grupo de tarefas | T11, T26 | In Tasks |
-| GRP-04 | P1: Grupo de tarefas | T7, T20 | In Tasks |
+| GRP-04 | P1: Grupo de tarefas | T7, T20 | Implementing |
 | GRP-05 | P1: Grupo de tarefas | T20 | In Tasks |
 | GRP-06 | P1: Grupo de tarefas | T8, T21 | In Tasks |
 | GRP-07 | P1: Grupo de tarefas | T8, T21 | In Tasks |
@@ -456,7 +456,7 @@ O que o código já fixa:
 | MODAL-01 | P1: Modal da tarefa | T22 | In Tasks |
 | MODAL-02 | P1: Modal da tarefa | T22 | In Tasks |
 | MODAL-03 | P1: Modal da tarefa | T22 | In Tasks |
-| MODAL-04 | P1: Modal da tarefa | T7, T8, T22 | In Tasks |
+| MODAL-04 | P1: Modal da tarefa | T7, T8, T22 | Implementing |
 | MODAL-05 | P1: Modal da tarefa | T22 | In Tasks |
 | MODAL-06 | P1: Modal da tarefa | T22 | In Tasks |
 | API-01 | P2: API e MCP | T4, T6, T16 | Implementing |

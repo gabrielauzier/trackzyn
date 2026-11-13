@@ -49,6 +49,7 @@ const CALLS: Record<string, () => Promise<{ url: string; payload?: object; ok: n
   'GET /api/lists': async () => ({ url: '/api/lists', ok: 200 }),
   'GET /api/lists/:list_id': async () => ({ url: `/api/lists/${listId}`, ok: 200 }),
   'GET /api/lists/:list_id/board': async () => ({ url: `/api/lists/${listId}/board`, ok: 200 }),
+  'GET /api/lists/:list_id/groups': async () => ({ url: `/api/lists/${listId}/groups`, ok: 200 }),
   'GET /api/tasks/:task_id': async () => ({ url: `/api/tasks/${await newTask()}`, ok: 200 }),
   'POST /api/tasks': async () => ({ url: '/api/tasks', payload: { list_id: listId, title: 'By token', column: 'today' }, ok: 201 }),
   'PATCH /api/tasks/:task_id': async () => ({ url: `/api/tasks/${await newTask()}`, payload: { title: 'Renamed' }, ok: 200 }),
@@ -87,7 +88,7 @@ describe('the routes open to tokens', () => {
     const byKey = (a: { method: string; url: string }, b: { method: string; url: string }) => routeKey(a).localeCompare(routeKey(b))
 
     expect(declared.toSorted(byKey)).toEqual([...TOKEN_ROUTES, ...MCP_ROUTES].toSorted(byKey))
-    expect(TOKEN_ROUTES).toHaveLength(15)
+    expect(TOKEN_ROUTES).toHaveLength(16)
   })
 
   it('SCOPE-03 SCOPE-04 every registered route outside the table answers 403 to a token with every scope', async () => {

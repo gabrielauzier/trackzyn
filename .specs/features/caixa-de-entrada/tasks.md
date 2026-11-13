@@ -330,11 +330,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `normalizeBlocks` junta o grupo na posição da primeira tarefa, mantém a ordem entre elas e não mexe nas avulsas; lista vazia, um grupo só e dois grupos intercalados cobertos
-- [ ] `GET /api/lists/:id/groups` devolve só os grupos da lista; outra lista do workspace não aparece; token com `tasks:read` passa
-- [ ] Gate check passes: Full (backend)
+- [x] `normalizeBlocks` junta o grupo na posição da primeira tarefa, mantém a ordem entre elas e não mexe nas avulsas; lista vazia, um grupo só e dois grupos intercalados cobertos
+- [x] `GET /api/lists/:id/groups` devolve só os grupos da lista; outra lista do workspace não aparece; token com `tasks:read` passa
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/routes/groups.ts`, `backend-node/test/support/token-routes.ts`
+**Also touched**: `backend-node/src/routes/groups.ts`, `backend-node/src/app.ts`, `backend-node/test/support/token-routes.ts`, `backend-node/test/routes/token-scopes.test.ts` (a rota aberta a `tasks:read` leva a tabela de 15 para 16 rotas, com a chamada de exemplo; o T15 leva de 16 para 17). A rota devolve um array de `{id, list_id, name, notes, priority, due_on, created_at}`, do mais antigo ao mais novo.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

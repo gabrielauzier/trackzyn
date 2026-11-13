@@ -14,6 +14,7 @@ import { authRoutes } from './routes/auth.ts'
 import { boardRoutes } from './routes/board.ts'
 import { fileRoutes } from './routes/files.ts'
 import { focusRoutes } from './routes/focus.ts'
+import { groupRoutes } from './routes/groups.ts'
 import { healthRoutes } from './routes/health.ts'
 import { infoRoutes } from './routes/info.ts'
 import { listRoutes } from './routes/lists.ts'
@@ -86,6 +87,7 @@ export async function buildApp(
   await app.register(listRoutes(ctx))
   await app.register(taskRoutes(ctx))
   await app.register(boardRoutes(ctx))
+  await app.register(groupRoutes(ctx))
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
   await app.register(sessionRoutes(ctx))

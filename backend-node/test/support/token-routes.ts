@@ -5,6 +5,7 @@ export const TOKEN_ROUTES: ReadonlyArray<{ method: string; url: string; scope: T
   { method: 'GET', url: '/api/lists', scope: 'lists:read' },
   { method: 'GET', url: '/api/lists/:list_id', scope: 'lists:read' },
   { method: 'GET', url: '/api/lists/:list_id/board', scope: 'tasks:read' },
+  { method: 'GET', url: '/api/lists/:list_id/groups', scope: 'tasks:read' },
   { method: 'GET', url: '/api/tasks/:task_id', scope: 'tasks:read' },
   { method: 'POST', url: '/api/tasks', scope: 'tasks:create' },
   { method: 'PATCH', url: '/api/tasks/:task_id', scope: 'tasks:write' },
