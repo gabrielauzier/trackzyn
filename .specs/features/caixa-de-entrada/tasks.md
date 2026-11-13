@@ -455,9 +455,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Duas tarefas do grupo em Hoje e uma terceira do grupo agendada para hoje em Backlog: depois da leitura, as três ficam juntas em Hoje
-- [ ] Uma tarefa avulsa agendada para hoje continua indo para o fim de Hoje
-- [ ] Gate check passes: Full (backend)
+- [x] Duas tarefas do grupo em Hoje e uma terceira do grupo agendada para hoje em Backlog: depois da leitura, as três ficam juntas em Hoje
+- [x] Uma tarefa avulsa agendada para hoje continua indo para o fim de Hoje
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/test/services/schedule.test.ts` (o helper `task` aceita `groupId`). Só a coluna Hoje é normalizada: tirar tarefas de Backlog e Esta semana não parte um bloco.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

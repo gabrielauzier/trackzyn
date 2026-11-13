@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Database } from '../../src/db/client.ts'
 import { type TaskColumn, taskSeries, tasks, users, workspaces } from '../../src/db/schema.ts'
 import { HttpError } from '../../src/http/http-error.ts'
+import { createGroup } from '../../src/services/groups.ts'
 import { createList, updateList } from '../../src/services/lists.ts'
 import { applyDueSchedules, setSchedule } from '../../src/services/schedule.ts'
 import { moveTask } from '../../src/services/tasks.ts'
@@ -36,7 +37,7 @@ afterEach(async () => {
 const positions = new Map<TaskColumn, number>()
 async function task(
   column: TaskColumn,
-  options: { title?: string; on?: string; time?: string; appliedAt?: Date } = {},
+  options: { title?: string; on?: string; time?: string; appliedAt?: Date; groupId?: string } = {},
 ): Promise<string> {
   const id = randomUUID()
   const position = positions.get(column) ?? 0
@@ -52,6 +53,7 @@ async function task(
     scheduledOn: options.on ?? null,
     scheduledTime: options.time ?? null,
     scheduleAppliedAt: options.appliedAt ?? null,
+    groupId: options.groupId ?? null,
   })
   return id
 }
@@ -315,5 +317,36 @@ describe('applyDueSchedules: the task comes to Today on its day (US-4, D1, D21)'
     expect(results.reduce((sum, moved) => sum + moved, 0)).toBe(1)
     expect(await column('today')).toEqual([already, id])
     expect(await row(id)).toMatchObject({ column: 'today', position: 1, scheduleAppliedAt: NOW })
+  })
+})
+
+describe('applyDueSchedules keeps the block of a group together in Today (GRP-04, AD-013)', () => {
+  const apply = (now = NOW) => applyDueSchedules(db, workspaceId, now)
+
+  it('a task of a group scheduled for today joins the two tasks of its group already in Today, before a loose task', async () => {
+    const groupId = (await createGroup(db, listId, { name: 'Pipeline' }, EARLIER)).id
+    const first = await task('today', { groupId })
+    const second = await task('today', { groupId })
+    const loose = await task('today')
+    const third = await task('backlog', { on: '2026-11-11', groupId })
+
+    expect(await apply()).toBe(1)
+
+    expect(await column('today')).toEqual([first, second, third, loose])
+    expect(await row(third)).toMatchObject({ column: 'today', groupId, position: 2 })
+    expect(await row(loose)).toMatchObject({ position: 3 })
+  })
+
+  it('a loose task scheduled for today still goes to the end of Today, after a group block', async () => {
+    const groupId = (await createGroup(db, listId, { name: 'Pipeline' }, EARLIER)).id
+    const loose = await task('today')
+    const first = await task('today', { groupId })
+    const second = await task('today', { groupId })
+    const scheduled = await task('this_week', { on: '2026-11-11' })
+
+    expect(await apply()).toBe(1)
+
+    expect(await column('today')).toEqual([loose, first, second, scheduled])
+    expect(await row(scheduled)).toMatchObject({ column: 'today', groupId: null, position: 3 })
   })
 })
