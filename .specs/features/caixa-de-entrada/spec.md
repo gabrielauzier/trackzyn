@@ -411,7 +411,7 @@ O que o código já fixa:
 | ALL-08 | P1: Processar tudo | T27 | In Tasks |
 | ALL-09 | P1: Processar tudo | T14 | In Tasks |
 | REM-01 | P1: Lembrete | T13, T26 | In Tasks |
-| REM-02 | P1: Lembrete | T1, T2, T11, T26 | In Tasks |
+| REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
 | REM-03 | P1: Lembrete | T18 | In Tasks |
 | REM-04 | P1: Lembrete | T5 | In Tasks |
 | REM-05 | P1: Lembrete | T5 | In Tasks |
@@ -427,21 +427,21 @@ O que o código já fixa:
 | GRP-09 | P1: Grupo de tarefas | T9, T21 | In Tasks |
 | GRP-10 | P1: Grupo de tarefas | T8, T21 | In Tasks |
 | GRP-11 | P1: Grupo de tarefas | T8 | In Tasks |
-| PRI-01 | P1: Prioridade | T1, T2 | In Tasks |
+| PRI-01 | P1: Prioridade | T1, T2 | Implementing |
 | PRI-02 | P1: Prioridade | T17 | In Tasks |
 | PRI-03 | P1: Prioridade | T17 | In Tasks |
 | PRI-04 | P1: Prioridade | T17 | In Tasks |
-| DUE-01 | P1: Prazo | T1, T2 | In Tasks |
+| DUE-01 | P1: Prazo | T1, T2 | Implementing |
 | DUE-02 | P1: Prazo | T17 | In Tasks |
 | DUE-03 | P1: Prazo | T17 | In Tasks |
 | DUE-04 | P1: Prazo | T17 | In Tasks |
 | DUE-05 | P1: Prazo | T17 | In Tasks |
-| WAIT-01 | P1: Aguardando | T1, T2 | In Tasks |
+| WAIT-01 | P1: Aguardando | T1, T2 | Implementing |
 | WAIT-02 | P1: Aguardando | T18 | In Tasks |
 | WAIT-03 | P1: Aguardando | T2 | In Tasks |
 | WAIT-04 | P1: Aguardando | T4 | In Tasks |
 | WAIT-05 | P1: Aguardando | T2 | In Tasks |
-| FLAG-01 | P1: Flag | T1, T2 | In Tasks |
+| FLAG-01 | P1: Flag | T1, T2 | Implementing |
 | FLAG-02 | P1: Flag | T18 | In Tasks |
 | FLAG-03 | P1: Flag | T18 | In Tasks |
 | FLAG-04 | P1: Flag | T2 | In Tasks |

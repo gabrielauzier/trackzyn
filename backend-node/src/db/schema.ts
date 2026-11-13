@@ -189,6 +189,13 @@ export const personalAccessTokens = pgTable(
 export const TASK_COLUMNS = ['backlog', 'this_week', 'today', 'done'] as const
 export type TaskColumn = (typeof TASK_COLUMNS)[number]
 
+export const TASK_KINDS = ['task', 'reminder'] as const
+export type TaskKind = (typeof TASK_KINDS)[number]
+
+/** The priority of a task, a reminder or a group (PRI-01); `none` shows no icon. */
+export const PRIORITIES = ['none', 'low', 'medium', 'high', 'ultra'] as const
+export type Priority = (typeof PRIORITIES)[number]
+
 /** Where a task came from when no token made it (PICK-17). */
 export type TaskOrigin = 'agenda'
 
@@ -244,6 +251,29 @@ export const taskSeries = pgTable(
   ],
 )
 
+/** A group of tasks of one list (caixa-de-entrada, GRP-01); its tasks form a contiguous block per column (AD-013). */
+export const taskGroups = pgTable(
+  'task_groups',
+  {
+    id: uuid('id').primaryKey(),
+    listId: uuid('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 255 }).notNull(),
+    notes: text('notes'),
+    priority: varchar('priority', { length: 6 }).$type<Priority>().notNull().default('none'),
+    /** The due day, in the workspace's timezone (`YYYY-MM-DD`). */
+    dueOn: date('due_on', { mode: 'string' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index('ix_task_groups_list').on(t.listId),
+    check('ck_task_groups_priority', sql`${t.priority} IN ('none', 'low', 'medium', 'high', 'ultra')`),
+    check('ck_task_groups_notes', sql`${t.notes} IS NULL OR char_length(${t.notes}) <= 10000`),
+  ],
+)
+
 export const tasks = pgTable(
   'tasks',
   {
@@ -274,6 +304,19 @@ export const tasks = pgTable(
     scheduleAppliedAt: timestamp('schedule_applied_at', { withTimezone: true }),
     /** The series this task is an occurrence of (the open one or a completed one); deleting the series keeps the task. */
     seriesId: uuid('series_id').references(() => taskSeries.id, { onDelete: 'set null' }),
+    /** A task, or a reminder: no estimate and no focus (REM-02, REM-05). */
+    kind: varchar('kind', { length: 8 }).$type<TaskKind>().notNull().default('task'),
+    priority: varchar('priority', { length: 6 }).$type<Priority>().notNull().default('none'),
+    /** The due day, in the workspace's timezone (`YYYY-MM-DD`), apart from the schedule (DUE-01). */
+    dueOn: date('due_on', { mode: 'string' }),
+    /** Waiting on someone: the task stays in its column, out of the estimate sums (WAIT-01, WAIT-04). */
+    waiting: boolean('waiting').notNull().default(false),
+    waitingFor: varchar('waiting_for', { length: 100 }),
+    /** Needs attention; leaving for done clears it (FLAG-01, FLAG-05). */
+    flagged: boolean('flagged').notNull().default(false),
+    flagReason: varchar('flag_reason', { length: 200 }),
+    /** The group of the task, of the same list; deleting the group keeps the task. */
+    groupId: uuid('group_id').references(() => taskGroups.id, { onDelete: 'set null' }),
   },
   (t) => [
     index('ix_tasks_list_column_position').on(t.listId, t.column, t.position),
@@ -292,6 +335,13 @@ export const tasks = pgTable(
       .where(sql`${t.scheduledOn} IS NOT NULL AND ${t.scheduleAppliedAt} IS NULL AND ${t.column} IN ('backlog', 'this_week')`),
     index('ix_tasks_scheduled_on').on(t.scheduledOn).where(sql`${t.scheduledOn} IS NOT NULL AND ${t.column} <> 'done'`),
     index('ix_tasks_series').on(t.seriesId).where(sql`${t.seriesId} IS NOT NULL`),
+    index('ix_tasks_group').on(t.groupId).where(sql`${t.groupId} IS NOT NULL`),
+    check('ck_tasks_kind', sql`${t.kind} IN ('task', 'reminder')`),
+    check('ck_tasks_priority', sql`${t.priority} IN ('none', 'low', 'medium', 'high', 'ultra')`),
+    check('ck_tasks_reminder_estimate', sql`${t.kind} = 'task' OR ${t.estimateMinutes} IS NULL`),
+    check('ck_tasks_waiting_for', sql`${t.waiting} OR ${t.waitingFor} IS NULL`),
+    check('ck_tasks_flag_reason', sql`${t.flagged} OR ${t.flagReason} IS NULL`),
+    check('ck_tasks_flag_done', sql`${t.column} <> 'done' OR NOT ${t.flagged}`),
   ],
 )
 
@@ -459,6 +509,59 @@ export const dayPlanBlocks = pgTable(
   ],
 )
 
+export const INBOX_SOURCES = ['app', 'desktop', 'mcp', 'api'] as const
+export type InboxSource = (typeof INBOX_SOURCES)[number]
+
+/** A captured item of one user's inbox in one workspace (caixa-de-entrada); only its author sees it (INBOX-03). */
+export const inboxItems = pgTable(
+  'inbox_items',
+  {
+    id: uuid('id').primaryKey(),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    text: varchar('text', { length: 500 }).notNull(),
+    source: varchar('source', { length: 8 }).$type<InboxSource>().notNull(),
+    createdViaTokenId: uuid('created_via_token_id').references(() => personalAccessTokens.id, { onDelete: 'set null' }),
+    /** The list picked on the row (QUICK-02); archiving or deleting the list is checked on send. */
+    listId: uuid('list_id').references(() => lists.id, { onDelete: 'set null' }),
+    estimateMinutes: integer('estimate_minutes'),
+    /** The decision saved by Processar tudo, sent on commit (ALL-02). */
+    draft: json('draft').$type<Record<string, unknown>>(),
+    /** In the trash since; purged 30 days later on the next read (INBOX-06). */
+    discardedAt: timestamp('discarded_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index('ix_inbox_items_owner').on(t.userId, t.workspaceId, t.discardedAt, t.createdAt),
+    check('ck_inbox_items_text', sql`char_length(btrim(${t.text})) BETWEEN 1 AND 500`),
+    check('ck_inbox_items_source', sql`${t.source} IN ('app', 'desktop', 'mcp', 'api')`),
+    check('ck_inbox_items_estimate_minutes', sql`${t.estimateMinutes} BETWEEN 1 AND 1440`),
+  ],
+)
+
+export const CARD_FIELDS = ['priority', 'due', 'flag', 'waiting'] as const
+export type CardField = (typeof CARD_FIELDS)[number]
+
+/** The card fields a user hides on one list (FIELDS-03); no row means every field is on. */
+export const listCardFields = pgTable(
+  'list_card_fields',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    listId: uuid('list_id')
+      .notNull()
+      .references(() => lists.id, { onDelete: 'cascade' }),
+    hidden: json('hidden').$type<CardField[]>().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.listId] }), index('ix_list_card_fields_list').on(t.listId)],
+)
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Workspace = typeof workspaces.$inferSelect
@@ -474,3 +577,6 @@ export type FocusAction = typeof focusActions.$inferSelect
 export type AccessToken = typeof personalAccessTokens.$inferSelect
 export type DayPlan = typeof dayPlans.$inferSelect
 export type DayPlanBlock = typeof dayPlanBlocks.$inferSelect
+export type TaskGroup = typeof taskGroups.$inferSelect
+export type InboxItem = typeof inboxItems.$inferSelect
+export type ListCardFields = typeof listCardFields.$inferSelect

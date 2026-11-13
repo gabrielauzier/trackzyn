@@ -118,11 +118,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Tarefa existente lê `kind = 'task'`, `priority = 'none'`, `waiting = false`, `flagged = false`
-- [ ] O banco recusa: `priority` fora da lista, lembrete com estimativa, `waiting_for` sem `waiting`, `flag_reason` sem `flagged`, tarefa em `done` com `flagged`, texto de item vazio ou com 501 caracteres
-- [ ] Apagar a lista apaga os grupos e `list_card_fields`; apagar o grupo deixa `tasks.group_id` nulo; apagar a lista do item deixa `inbox_items.list_id` nulo
-- [ ] Catálogo de colunas dos testes de baseline atualizado
-- [ ] Gate check passes: Full (backend)
+- [x] Tarefa existente lê `kind = 'task'`, `priority = 'none'`, `waiting = false`, `flagged = false`
+- [x] O banco recusa: `priority` fora da lista, lembrete com estimativa, `waiting_for` sem `waiting`, `flag_reason` sem `flagged`, tarefa em `done` com `flagged`, texto de item vazio ou com 501 caracteres
+- [x] Apagar a lista apaga os grupos e `list_card_fields`; apagar o grupo deixa `tasks.group_id` nulo; apagar a lista do item deixa `inbox_items.list_id` nulo
+- [x] Catálogo de colunas dos testes de baseline atualizado
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/src/services/tasks.ts` (os dois literais de `Task` recebem os padrões das colunas novas para compilar; T2 liga os campos), `backend-node/test/fixtures/pg-columns.json`, `backend-node/test/db/pglite.test.ts` e `backend-node/test/db/baseline.test.ts` (as três tabelas novas e as oito colunas de `tasks`, lidas do PGlite em 2026-11-13, sem servidor PostgreSQL rodando).
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
