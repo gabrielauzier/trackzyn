@@ -181,10 +181,12 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Tarefa com flag movida para Concluídas fica sem flag e sem motivo; movida de volta, continua sem
-- [ ] Concluir pelo foco (`complete`) também tira a flag
-- [ ] Tarefa de um grupo movida para outra lista fica sem grupo; outra tarefa do mesmo grupo continua nele (L-048)
-- [ ] Gate check passes: Full (backend)
+- [x] Tarefa com flag movida para Concluídas fica sem flag e sem motivo; movida de volta, continua sem
+- [x] Concluir pelo foco (`complete`) também tira a flag
+- [x] Tarefa de um grupo movida para outra lista fica sem grupo; outra tarefa do mesmo grupo continua nele (L-048)
+- [x] Gate check passes: Full (backend)
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

@@ -445,7 +445,7 @@ O que o código já fixa:
 | FLAG-02 | P1: Flag | T18 | In Tasks |
 | FLAG-03 | P1: Flag | T18 | In Tasks |
 | FLAG-04 | P1: Flag | T2 | Implementing |
-| FLAG-05 | P1: Flag | T3 | In Tasks |
+| FLAG-05 | P1: Flag | T3 | Implementing |
 | FLAG-06 | P1: Flag | T2 | Implementing |
 | FIELDS-01 | P1: Campos do card | T18 | In Tasks |
 | FIELDS-02 | P1: Campos do card | T19 | In Tasks |
@@ -465,7 +465,7 @@ O que o código já fixa:
 | EDGE-01 | Edge Cases | T13 | In Tasks |
 | EDGE-02 | Edge Cases | T14 | In Tasks |
 | EDGE-03 | Edge Cases | T12 | In Tasks |
-| EDGE-04 | Edge Cases | T3 | In Tasks |
+| EDGE-04 | Edge Cases | T3 | Implementing |
 | EDGE-05 | Edge Cases | T20 | In Tasks |
 | EDGE-06 | Edge Cases | T18 | In Tasks |
 | EDGE-07 | Edge Cases | T12 | In Tasks |

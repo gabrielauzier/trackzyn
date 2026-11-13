@@ -205,7 +205,8 @@ export async function updateTask(
 /**
  * Puts the task in `column`, right before `beforeTaskId` (or at the end for null), and renumbers the
  * columns it left and entered from 0 to n-1. Entering `done` records `completed_at = now` and
- * `completed_by_user_id = byUserId` (AD-006); leaving it clears both, and moving inside `done` keeps them.
+ * `completed_by_user_id = byUserId` (AD-006) and takes the flag off (FLAG-05); leaving it clears both, and
+ * moving inside `done` keeps them.
  * A task that is not in `today` afterwards loses its open focus session, ended at `now` (FOCUS-15).
  * Completing an occurrence of a series creates its next occurrence (`createNextOccurrence`).
  */
@@ -247,7 +248,12 @@ export async function moveTask(
     const completedByUserId = target.column !== 'done' ? null : stays ? current.completedByUserId : target.byUserId
     // Entering another column is an update of the task; reordering inside the same one is not (PICK-01).
     const updated = current.column !== target.column ? { updatedAt: now } : {}
-    await tx.update(tasks).set({ column: target.column, completedAt, completedByUserId, ...updated }).where(eq(tasks.id, current.id))
+    // Done takes the flag and its reason off; reopening does not bring them back (FLAG-05).
+    const unflagged = target.column === 'done' ? { flagged: false, flagReason: null } : {}
+    await tx
+      .update(tasks)
+      .set({ column: target.column, completedAt, completedByUserId, ...updated, ...unflagged })
+      .where(eq(tasks.id, current.id))
     if (target.column !== 'today') await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
     for (const [position, id] of entered.entries()) await tx.update(tasks).set({ position }).where(eq(tasks.id, id))
     if (current.column !== target.column) {
@@ -321,8 +327,8 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
 }
 
 /**
- * Moves the task to another list of the workspace, to the end of the same column, and renumbers the column
- * it left. Its open focus session ends (FOCUS-15), as for any task that leaves Today, and all its sessions move
+ * Moves the task to another list of the workspace, to the end of the same column, out of its group, and
+ * renumbers the column it left. Its open focus session ends (FOCUS-15), as for any task that leaves Today, and all its sessions move
  * to the new list, so its time counts there (#21).
  */
 export async function moveTaskToList(
@@ -344,7 +350,8 @@ export async function moveTaskToList(
       .select({ next: sql<number>`coalesce(max(${tasks.position}) + 1, 0)::int` })
       .from(tasks)
       .where(and(eq(tasks.listId, target.id), eq(tasks.column, current.column)))
-    await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0, updatedAt: now }).where(eq(tasks.id, current.id))
+    // The group belongs to the list the task left (EDGE-04).
+    await tx.update(tasks).set({ listId: target.id, position: last?.next ?? 0, groupId: null, updatedAt: now }).where(eq(tasks.id, current.id))
     await endOpenSessions(tx as Database, eq(focusSessions.taskId, current.id), now, 'task_left')
     // The task takes its recorded time with it: reports and the agenda group by the session's list (#21).
     await tx.update(focusSessions).set({ listId: target.id }).where(eq(focusSessions.taskId, current.id))
