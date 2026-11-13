@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { useQuery } from '@tanstack/react-query'
-import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search } from 'lucide-react'
+import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search, Plus } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useSidebarState } from '@/contexts/sidebar-state-context'
@@ -23,8 +23,10 @@ import { TwoFactorSetup } from '@/components/two-factor-setup'
 import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
 import { AccessTokensDialog } from '@/components/access-tokens-dialog'
 import { CommandPalette } from '@/components/command-palette'
+import { CaptureOverlay } from '@/components/capture/capture-overlay'
 import { FocusGuard } from '@/components/focus/focus-guard'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
+import { useCaptureHotkey } from '@/hooks/use-capture-hotkey'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
 import { useLocalAuthEnabled } from '@/hooks/use-local-auth'
@@ -71,6 +73,10 @@ export function AppLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
+  // The capture overlay opens from any screen of the app (CAP-04).
+  const [captureOpen, setCaptureOpen] = useState(false)
+  const openCapture = useCallback(() => setCaptureOpen(true), [])
+  useCaptureHotkey(openCapture)
   const { isLoading: workspaceLoading, canWrite } = useWorkspace()
   // How many items wait in the user's inbox, in the current workspace (INBOX-01, EDGE-07).
   const { data: inboxCount = 0 } = useQuery({
@@ -232,8 +238,31 @@ export function AppLayout() {
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
 
-          {/* Command palette trigger */}
+          {/* Capture (CAP-04): the same overlay as Mod+Shift+Space. */}
           <div className={cn('px-3 pt-3', collapsed && 'lg:px-2')}>
+            <button
+              type="button"
+              onClick={() => {
+                setSidebarOpen(false)
+                openCapture()
+              }}
+              title={t('nav.capture')}
+              aria-label={t('nav.capture')}
+              className={cn(
+                'flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90',
+                collapsed && 'lg:px-0',
+              )}
+            >
+              <Plus size={16} strokeWidth={2.4} className="shrink-0" />
+              <span className={cn(collapsed && 'lg:hidden')}>{t('nav.capture')}</span>
+              <kbd aria-hidden className={cn('hidden font-mono text-[10px] opacity-70 lg:inline', collapsed && 'lg:hidden')}>
+                {isMac ? '⌘⇧Space' : 'Ctrl+Shift+Space'}
+              </kbd>
+            </button>
+          </div>
+
+          {/* Command palette trigger */}
+          <div className={cn('px-3 pt-2', collapsed && 'lg:px-2')}>
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
@@ -410,7 +439,8 @@ export function AppLayout() {
       />
       <AccessTokensDialog open={accessTokensOpen} onClose={() => setAccessTokensOpen(false)} />
       <FocusGuard />
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onCapture={openCapture} />
+      <CaptureOverlay open={captureOpen} onOpenChange={setCaptureOpen} />
       <UpdateAvailableDialog
         open={updateDialogOpen}
         onClose={() => setUpdateDialogOpen(false)}

@@ -189,7 +189,8 @@
   },
   "cmdk": {
     "actions": {
-      "uploadFile": "Upload a file"
+      "uploadFile": "Upload a file",
+      "capture": "Capture"
     },
     "description": "Jump to pages and run actions.",
     "empty": {
@@ -343,7 +344,8 @@
     "plan": "Plan",
     "inbox": "Inbox",
     "inboxCount_one": "Inbox, 1 item",
-    "inboxCount_other": "Inbox, {{count}} items"
+    "inboxCount_other": "Inbox, {{count}} items",
+    "capture": "Capture"
   },
   "privacy": {
     "hide": "Hide values",
@@ -1215,5 +1217,13 @@
       "list_read_only": "You no longer write in this list. Pick another list.",
       "already_processed": "This item was already processed."
     }
+  },
+  "capture": {
+    "title": "Capture",
+    "label": "Capture in the inbox",
+    "goesTo": "Goes to the Inbox",
+    "hintSave": "keep",
+    "hintClose": "close",
+    "saved": "Kept in the inbox"
   }
 }

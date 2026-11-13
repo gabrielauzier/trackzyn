@@ -189,7 +189,8 @@
   },
   "cmdk": {
     "actions": {
-      "uploadFile": "Enviar um arquivo"
+      "uploadFile": "Enviar um arquivo",
+      "capture": "Capturar"
     },
     "description": "Vá para páginas e execute ações.",
     "empty": {
@@ -343,7 +344,8 @@
     "plan": "Planejar",
     "inbox": "Caixa de entrada",
     "inboxCount_one": "Caixa de entrada, 1 item",
-    "inboxCount_other": "Caixa de entrada, {{count}} itens"
+    "inboxCount_other": "Caixa de entrada, {{count}} itens",
+    "capture": "Capturar"
   },
   "privacy": {
     "hide": "Ocultar valores",
@@ -1215,5 +1217,13 @@
       "list_read_only": "Você não escreve mais nessa lista. Escolha outra lista.",
       "already_processed": "Este item já foi processado."
     }
+  },
+  "capture": {
+    "title": "Capturar",
+    "label": "Capturar na caixa de entrada",
+    "goesTo": "Vai para a Caixa de entrada",
+    "hintSave": "guardar",
+    "hintClose": "fechar",
+    "saved": "Guardado na caixa"
   }
 }

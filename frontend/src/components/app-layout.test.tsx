@@ -377,6 +377,32 @@ describe('app layout inbox (INBOX-01)', () => {
   })
 })
 
+describe('app layout capture (CAP-04)', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+
+  it('CAP-04 the sidebar button Capturar opens the capture overlay with the field focused', async () => {
+    await i18n.changeLanguage('pt-BR')
+    const { user } = renderWithProviders(<AppLayout />, { route: '/' })
+
+    await user.click(screen.getByRole('button', { name: 'Capturar' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Capturar' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Capturar na caixa de entrada' })).toHaveFocus())
+  })
+
+  it('CAP-04 the layout listens to ⌘⇧Space', async () => {
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    act(() => {
+      fireEvent.keyDown(document, { key: ' ', code: 'Space', metaKey: true, shiftKey: true })
+    })
+
+    expect(await screen.findByRole('dialog', { name: 'Capture' })).toBeInTheDocument()
+  })
+})
+
 describe('app layout admin links', () => {
   afterEach(() => {
     state.user = { ...state.user, is_superuser: false }

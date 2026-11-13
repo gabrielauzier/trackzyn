@@ -71,6 +71,18 @@ describe('CommandPalette', () => {
     }
   })
 
+  it('CAP-04 the Capturar action closes the palette and opens the capture overlay', async () => {
+    await i18n.changeLanguage('pt-BR')
+    const onOpenChange = vi.fn()
+    const onCapture = vi.fn()
+    const { user } = renderWithProviders(<CommandPalette open onOpenChange={onOpenChange} onCapture={onCapture} />)
+
+    await user.click((await screen.findAllByRole('option')).find((option) => option.textContent === 'Capturar')!)
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    await waitFor(() => expect(onCapture).toHaveBeenCalledTimes(1))
+  })
+
   it('PLAN-36 leaving an unsaved plan from the palette asks Descartar o rascunho? first', async () => {
     await i18n.changeLanguage('pt-BR')
     const { user } = renderWithProviders(

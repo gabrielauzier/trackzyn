@@ -370,8 +370,8 @@ O que o código já fixa:
 | CAP-01 | P1: Capturar | T12, T23 | Implementing |
 | CAP-02 | P1: Capturar | T12, T23 | Implementing |
 | CAP-03 | P1: Capturar | T12, T23 | Implementing |
-| CAP-04 | P1: Capturar | T25 | In Tasks |
-| CAP-05 | P1: Capturar | T25 | In Tasks |
+| CAP-04 | P1: Capturar | T25 | Implementing |
+| CAP-05 | P1: Capturar | T25 | Implementing |
 | CAP-06 | P1: Capturar | T30 | In Tasks |
 | CAP-07 | P1: Capturar | T29, T31 | In Tasks |
 | CAP-08 | P1: Capturar | T29, T31 | In Tasks |

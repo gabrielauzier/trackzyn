@@ -929,12 +929,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `⌘⇧Space` e `Ctrl+Shift+Space` abrem com o campo focado; a paleta e o botão também
-- [ ] Enter guarda com origem `app` e fecha; Esc fecha sem guardar
-- [ ] Erro de rede mantém o texto e mostra `Não deu para guardar. Tente de novo.`
-- [ ] Gate check passes: Full (frontend)
+- [x] `⌘⇧Space` e `Ctrl+Shift+Space` abrem com o campo focado; a paleta e o botão também
+- [x] Enter guarda com origem `app` e fecha; Esc fecha sem guardar
+- [x] Erro de rede mantém o texto e mostra `Não deu para guardar. Tente de novo.`
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/hooks/use-capture-hotkey.ts`, `frontend/src/components/command-palette.tsx`, `frontend/src/components/app-layout.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/hooks/use-capture-hotkey.ts`, `frontend/src/components/command-palette.tsx`, `frontend/src/components/app-layout.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/components/command-palette.test.tsx` e `frontend/src/components/app-layout.test.tsx` (a ação da paleta, o botão da barra lateral e o atalho no layout). O overlay exporta `CaptureField` (o campo com Enter, Esc e as mensagens), que a janela de captura do desktop reaproveita com `source: 'desktop'`. A ação da paleta recebe `onCapture` do layout. O toast de sucesso é `Guardado na caixa` (design.md).
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
