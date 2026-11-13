@@ -1119,11 +1119,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Fora do desktop o card não aparece
-- [ ] Desligar e trocar chamam o IPC; resposta `in_use` mostra `Esse atalho já está em uso` e o switch desligado
-- [ ] Gate check passes: Full (frontend)
+- [x] Fora do desktop o card não aparece
+- [x] Desligar e trocar chamam o IPC; resposta `in_use` mostra `Esse atalho já está em uso` e o switch desligado
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/pages/workspace-settings.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/pages/workspace-settings.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json` (`capture.computer.*`), `frontend/src/lib/desktop/accelerator.ts` e o teste (combinação apertada para acelerador do Electron e exibição `⌘⇧Space` / `Ctrl+Shift+Space`), `frontend/src/components/capture/capture-shortcut-settings.test.tsx`, `frontend/src/pages/workspace-settings.test.tsx`. O campo é um botão: clicar começa a gravar, a próxima combinação com Ctrl, ⌘ ou Alt vira o atalho (ligado), Esc cancela. Uma tecla sem modificador além de Shift não vale, para o atalho global não tomar uma tecla de todos os apps.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

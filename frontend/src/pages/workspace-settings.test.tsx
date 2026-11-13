@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { workspaces as workspacesApi } from '@/lib/api'
 import { renderWithProviders } from '@/test/utils'
@@ -339,5 +339,33 @@ describe('workspace settings: hours count mode (#42)', () => {
     } finally {
       await i18n.changeLanguage('en')
     }
+  })
+})
+
+describe('workspace settings: the Neste computador card (CAP-07)', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'trackzyn')
+  })
+
+  it('is not on the page in the browser', async () => {
+    renderWithProviders(<WorkspaceSettingsPage />)
+    expect(await screen.findByRole('radiogroup', { name: 'Hours count' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'On this computer' })).not.toBeInTheDocument()
+  })
+
+  it('is on the page in the desktop app, with the capture shortcut', async () => {
+    Object.defineProperty(window, 'trackzyn', {
+      value: {
+        isDesktop: true,
+        platform: 'linux',
+        windowRole: 'main',
+        getCaptureShortcut: vi.fn(async () => ({ enabled: true, accelerator: 'CommandOrControl+Shift+Space' })),
+        setCaptureShortcut: vi.fn(async () => ({ ok: true })),
+      },
+      configurable: true,
+    })
+    renderWithProviders(<WorkspaceSettingsPage />)
+    expect(await screen.findByRole('heading', { name: 'On this computer' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Capture shortcut' })).toHaveAttribute('aria-checked', 'true'))
   })
 })

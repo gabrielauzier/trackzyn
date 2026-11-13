@@ -1226,7 +1226,15 @@
     "goesTo": "Vai para a Caixa de entrada",
     "hintSave": "guardar",
     "hintClose": "fechar",
-    "saved": "Guardado na caixa"
+    "saved": "Guardado na caixa",
+    "computer": {
+      "title": "Neste computador",
+      "shortcut": "Atalho de captura",
+      "combination": "Combinação do atalho de captura",
+      "recording": "Aperte a combinação…",
+      "hint": "Abre a captura com outro app na frente. Clique na combinação e aperte a nova.",
+      "inUse": "Esse atalho já está em uso"
+    }
   },
   "process": {
     "title": "Processar",

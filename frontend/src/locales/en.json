@@ -1226,7 +1226,15 @@
     "goesTo": "Goes to the Inbox",
     "hintSave": "keep",
     "hintClose": "close",
-    "saved": "Kept in the inbox"
+    "saved": "Kept in the inbox",
+    "computer": {
+      "title": "On this computer",
+      "shortcut": "Capture shortcut",
+      "combination": "Combination of the capture shortcut",
+      "recording": "Press the combination…",
+      "hint": "Opens the capture with another app in front. Click the combination and press the new one.",
+      "inUse": "That shortcut is already in use"
+    }
   },
   "process": {
     "title": "Process",

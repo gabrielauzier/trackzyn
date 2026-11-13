@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { IconPicker } from '@/components/icon-picker'
 import { IconBadge } from '@/components/icon-badge'
+import { CaptureShortcutSettings } from '@/components/capture/capture-shortcut-settings'
 import {
   Popover,
   PopoverContent,
@@ -571,6 +572,9 @@ export default function WorkspaceSettingsPage() {
           if (mode !== current.hours_count_mode) hoursCountMutation.mutate(mode)
         }}
       />
+
+      {/* The desktop's own settings: shown only in the desktop app (CAP-07). */}
+      <CaptureShortcutSettings />
 
       {/* Members card */}
       <section className="space-y-4 rounded-xl border bg-card p-6">
