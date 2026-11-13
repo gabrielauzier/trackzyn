@@ -367,9 +367,9 @@ O que o código já fixa:
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CAP-01 | P1: Capturar | T12, T23 | In Tasks |
-| CAP-02 | P1: Capturar | T12, T23 | In Tasks |
-| CAP-03 | P1: Capturar | T12, T23 | In Tasks |
+| CAP-01 | P1: Capturar | T12, T23 | Implementing |
+| CAP-02 | P1: Capturar | T12, T23 | Implementing |
+| CAP-03 | P1: Capturar | T12, T23 | Implementing |
 | CAP-04 | P1: Capturar | T25 | In Tasks |
 | CAP-05 | P1: Capturar | T25 | In Tasks |
 | CAP-06 | P1: Capturar | T30 | In Tasks |
@@ -377,18 +377,18 @@ O que o código já fixa:
 | CAP-08 | P1: Capturar | T29, T31 | In Tasks |
 | CAP-09 | P1: Capturar | T15 | In Tasks |
 | CAP-10 | P1: Capturar | T15, T16 | In Tasks |
-| INBOX-01 | P1: Ver e manter a caixa | T12, T23 | In Tasks |
-| INBOX-02 | P1: Ver e manter a caixa | T12, T23 | In Tasks |
-| INBOX-03 | P1: Ver e manter a caixa | T12 | In Tasks |
-| INBOX-04 | P1: Ver e manter a caixa | T12, T23 | In Tasks |
-| INBOX-05 | P1: Ver e manter a caixa | T12, T23 | In Tasks |
-| INBOX-06 | P1: Ver e manter a caixa | T12 | In Tasks |
+| INBOX-01 | P1: Ver e manter a caixa | T12, T23 | Implementing |
+| INBOX-02 | P1: Ver e manter a caixa | T12, T23 | Implementing |
+| INBOX-03 | P1: Ver e manter a caixa | T12 | Implementing |
+| INBOX-04 | P1: Ver e manter a caixa | T12, T23 | Implementing |
+| INBOX-05 | P1: Ver e manter a caixa | T12, T23 | Implementing |
+| INBOX-06 | P1: Ver e manter a caixa | T12 | Implementing |
 | INBOX-07 | P1: Ver e manter a caixa | T23 | In Tasks |
 | QUICK-01 | P1: Enviar rápido | T24 | In Tasks |
-| QUICK-02 | P1: Enviar rápido | T12, T24 | In Tasks |
+| QUICK-02 | P1: Enviar rápido | T12, T24 | Implementing |
 | QUICK-03 | P1: Enviar rápido | T24 | In Tasks |
 | QUICK-04 | P1: Enviar rápido | T13, T24 | In Tasks |
-| QUICK-05 | P1: Enviar rápido | T12, T24 | In Tasks |
+| QUICK-05 | P1: Enviar rápido | T12, T24 | Implementing |
 | QUICK-06 | P1: Enviar rápido | T13, T24 | In Tasks |
 | QUICK-07 | P1: Enviar rápido | T13, T24 | In Tasks |
 | QUICK-08 | P1: Enviar rápido | T24 | In Tasks |
@@ -464,11 +464,11 @@ O que o código já fixa:
 | API-03 | P2: API e MCP | T2, T6 | Implementing |
 | EDGE-01 | Edge Cases | T13 | In Tasks |
 | EDGE-02 | Edge Cases | T14 | In Tasks |
-| EDGE-03 | Edge Cases | T12 | In Tasks |
+| EDGE-03 | Edge Cases | T12 | Implementing |
 | EDGE-04 | Edge Cases | T3 | Implementing |
 | EDGE-05 | Edge Cases | T20 | In Tasks |
 | EDGE-06 | Edge Cases | T18 | In Tasks |
-| EDGE-07 | Edge Cases | T12 | In Tasks |
+| EDGE-07 | Edge Cases | T12 | Implementing |
 | EDGE-08 | Edge Cases | T15 | In Tasks |
 
 **Coverage:** 103 total, 103 mapped to tasks, 0 unmapped.

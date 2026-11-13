@@ -485,14 +485,16 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Capturar `"  Ligar  "` grava `Ligar`, origem `app`; `source: "desktop"` grava `desktop`; vazio e 501 caracteres → 422
-- [ ] Viewer captura; dois usuários do workspace veem e contam só o próprio item; `PATCH` no item do outro → 404
-- [ ] Atuais do mais antigo ao mais novo; descartar leva à Lixeira; restaurar devolve com lista e estimativa
-- [ ] Item descartado há 31 dias some na leitura; há 29, continua
-- [ ] Item do workspace B não aparece no A
-- [ ] Gate check passes: Full (backend)
+- [x] Capturar `"  Ligar  "` grava `Ligar`, origem `app`; `source: "desktop"` grava `desktop`; vazio e 501 caracteres → 422
+- [x] Viewer captura; dois usuários do workspace veem e contam só o próprio item; `PATCH` no item do outro → 404
+- [x] Atuais do mais antigo ao mais novo; descartar leva à Lixeira; restaurar devolve com lista e estimativa
+- [x] Item descartado há 31 dias some na leitura; há 29, continua
+- [x] Item do workspace B não aparece no A
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/services/inbox.ts`, `backend-node/src/app.ts`
+**Also touched**: `backend-node/src/services/inbox.ts`, `backend-node/src/app.ts`, `backend-node/src/db/schema.ts` (`inboxItems.draft` passa a `Decision`, só o tipo), `backend-node/test/routes/inbox.test.ts`. O item lido é `{id, text, source, created_via, list_id, estimate_minutes, draft, discarded_at, created_at}`; `GET /api/inbox` responde `{timezone, items}` e `GET /api/inbox/count` responde `{count}`. Texto vazio responde 422 `code: text_empty`, acima de 500 `text_too_long`.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

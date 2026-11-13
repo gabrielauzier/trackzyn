@@ -17,6 +17,7 @@ import { fileRoutes } from './routes/files.ts'
 import { focusRoutes } from './routes/focus.ts'
 import { groupRoutes } from './routes/groups.ts'
 import { healthRoutes } from './routes/health.ts'
+import { inboxRoutes } from './routes/inbox.ts'
 import { infoRoutes } from './routes/info.ts'
 import { listRoutes } from './routes/lists.ts'
 import { mcpRoutes } from './routes/mcp.ts'
@@ -90,6 +91,7 @@ export async function buildApp(
   await app.register(boardRoutes(ctx))
   await app.register(groupRoutes(ctx))
   await app.register(cardFieldRoutes(ctx))
+  await app.register(inboxRoutes(ctx))
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
   await app.register(sessionRoutes(ctx))

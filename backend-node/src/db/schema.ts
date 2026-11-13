@@ -18,6 +18,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core'
+import type { Decision } from '../services/decision.ts'
 
 // The first six tables match what Alembic revision 001 created, so a database from the old Python
 // backend is adopted as migration 0000 (see db/migrate.ts). Tables after them exist only here.
@@ -530,7 +531,7 @@ export const inboxItems = pgTable(
     listId: uuid('list_id').references(() => lists.id, { onDelete: 'set null' }),
     estimateMinutes: integer('estimate_minutes'),
     /** The decision saved by Processar tudo, sent on commit (ALL-02). */
-    draft: json('draft').$type<Record<string, unknown>>(),
+    draft: json('draft').$type<Decision>(),
     /** In the trash since; purged 30 days later on the next read (INBOX-06). */
     discardedAt: timestamp('discarded_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
