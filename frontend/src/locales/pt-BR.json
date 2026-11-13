@@ -608,7 +608,9 @@
       "waiting": "Aguardando",
       "always": "Nome, estimativa e tempo registrado aparecem sempre."
     },
-    "groupLabel": "Grupo {{name}}"
+    "groupLabel": "Grupo {{name}}",
+    "groupWithoutNextAction": "{{name}} está sem próxima ação",
+    "addTaskToGroup": "Adicionar tarefa · {{name}}"
   },
   "focus": {
     "sounds": {

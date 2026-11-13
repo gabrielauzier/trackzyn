@@ -3,7 +3,7 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
-import { cardFields, focus, lists, tasks } from '@/lib/api'
+import { cardFields, focus, groups, lists, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import { play } from '@/lib/sounds/synth'
@@ -19,13 +19,14 @@ vi.mock('@/lib/api', () => ({
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   cardFields: { get: vi.fn(), set: vi.fn() },
+  groups: { move: vi.fn() },
   authHeaders: () => ({}),
 }))
 vi.mock('@/lib/sounds/synth', () => ({ play: vi.fn() }))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace', timezone: null }, canWrite: state.canWrite }),
 }))
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }))
 
 const WEEK = '11111111-1111-4111-8111-111111111111'
 const WORK = '22222222-2222-4222-8222-222222222222'
@@ -1129,5 +1130,162 @@ describe('ListBoardPage card fields (FIELDS-02, FIELDS-04)', () => {
     expect(await screen.findByText('Blocked')).toBeInTheDocument()
     await waitFor(() => expect(cardFields.get).toHaveBeenCalledWith(WEEK))
     await waitFor(() => expect(screen.queryByRole('img', { name: 'High priority' })).not.toBeInTheDocument())
+  })
+})
+
+describe('ListBoardPage group containers and their drags (GRP-04, GRP-06..10)', () => {
+  const G1 = '33333333-3333-4333-8333-333333333333'
+  const A1 = 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1'
+  const A2 = 'a2a2a2a2-a2a2-4a2a-8a2a-a2a2a2a2a2a2'
+  const LOOSE = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+  const PIPELINE = { id: G1, name: 'Pipeline', priority: 'none' as const, due_on: null }
+  // Today: the block of Pipeline (A1, A2), then a loose task.
+  const rows = [A1, A2, LOOSE]
+
+  function groupBoard(): Board {
+    const board = boardOf(WEEK, 'Week')
+    board.groups = [PIPELINE]
+    board.columns.today.tasks = [
+      { ...card(A1, 'Step 1'), group_id: G1 },
+      { ...card(A2, 'Step 2'), group_id: G1 },
+      card(LOOSE, 'Loose'),
+    ]
+    board.columns.done.days = []
+    return board
+  }
+
+  /** Columns in a row, Today's cards stacked, the container around its two cards and its title on top. */
+  function layOutGroupBoard() {
+    const columns = ['backlog', 'this_week', 'today', 'done']
+    const original = HTMLElement.prototype.getBoundingClientRect
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.dataset.column) return DOMRect.fromRect({ x: columns.indexOf(this.dataset.column) * 300, y: 0, width: 280, height: 600 })
+      if (this.dataset.groupTitle) return DOMRect.fromRect({ x: 610, y: 60, width: 260, height: 30 })
+      if (this.dataset.groupId) return DOMRect.fromRect({ x: 605, y: 60, width: 270, height: 230 })
+      const row = rows.indexOf(this.dataset.taskId ?? '')
+      if (row >= 0) return DOMRect.fromRect({ x: 610, y: 100 + row * 100, width: 260, height: 80 })
+      return original.call(this)
+    })
+  }
+
+  const focusCard = (id: string) => document.querySelector<HTMLElement>(`[data-task-id="${id}"]`)!.focus()
+
+  beforeEach(() => {
+    vi.mocked(lists.board).mockImplementation(async () => groupBoard())
+    vi.mocked(groups.move).mockResolvedValue({ tasks: [], group_without_next_action: null })
+  })
+
+  it('GRP-04 draws the group as a container with its count around its cards, the loose task outside', async () => {
+    renderBoard()
+
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+    expect(within(container).getByText('2 tasks')).toBeInTheDocument()
+    expect(within(container).getByRole('button', { name: 'Step 1' })).toBeInTheDocument()
+    expect(within(container).getByRole('button', { name: 'Step 2' })).toBeInTheDocument()
+    expect(within(container).queryByRole('button', { name: 'Loose' })).not.toBeInTheDocument()
+  })
+
+  it('GRP-06 a task dropped on a card of its own container keeps the group', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    focusCard(A1)
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(A1, { column: 'today', before_task_id: LOOSE, group_id: G1 }))
+  })
+
+  it('GRP-07 a task of the group dropped on a loose card leaves the group', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    focusCard(A2)
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(A2, { column: 'today', before_task_id: null, group_id: null }))
+  })
+
+  it('GRP-08 a loose task dropped on a card of the container enters the group, at that place', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    focusCard(LOOSE)
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowUp}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(LOOSE, { column: 'today', before_task_id: A2, group_id: G1 }))
+  })
+
+  it('GRP-09 the title drags the whole container to another column', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    within(container).getByRole('button', { name: /^Pipeline/ }).focus()
+    await user.keyboard(' ')
+    // The first step lands on the Today column itself, the second on This week.
+    await user.keyboard('{ArrowLeft}{ArrowLeft}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(groups.move).toHaveBeenCalledWith(G1, { from: 'today', to: 'this_week', before_task_id: null }))
+    expect(tasks.move).not.toHaveBeenCalled()
+  })
+
+  it('a viewer cannot drag the container', async () => {
+    state.canWrite = false
+    renderBoard()
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    expect(within(container).queryByRole('button', { name: /^Pipeline/ })).not.toBeInTheDocument()
+  })
+
+  it('GRP-10 a move that leaves the group without a next action says so, and Adicionar tarefa creates a task in it', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      vi.mocked(tasks.move).mockResolvedValue({ ...fullTask, group_without_next_action: { id: G1, name: 'Pipeline' } })
+      vi.mocked(tasks.create).mockResolvedValue({ ...fullTask, group_id: G1 })
+      const { user } = renderBoard()
+      const container = await screen.findByRole('group', { name: 'Grupo Pipeline' })
+
+      await user.click(within(container).getAllByRole('button', { name: 'Mais ações' })[0]!)
+      await user.click(await screen.findByRole('menuitem', { name: 'Mover para a direita' }))
+
+      await waitFor(() => expect(toast.info).toHaveBeenCalledTimes(1))
+      const [message, options] = vi.mocked(toast.info).mock.calls[0]!
+      expect(message).toBe('Pipeline está sem próxima ação')
+      const action = (options as { action: { label: string; onClick: () => void } }).action
+      expect(action.label).toBe('Adicionar tarefa')
+
+      act(() => action.onClick())
+      const dialog = await screen.findByRole('dialog', { name: 'Adicionar tarefa · Pipeline' })
+      await user.type(within(dialog).getByLabelText('Título'), 'Next step')
+      await user.click(within(dialog).getByRole('button', { name: 'Adicionar' }))
+
+      await waitFor(() =>
+        expect(tasks.create).toHaveBeenCalledWith({ list_id: WEEK, title: 'Next step', estimate_minutes: null, column: 'backlog', group_id: G1 }),
+      )
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Adicionar tarefa · Pipeline' })).not.toBeInTheDocument())
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('GRP-10 a move that leaves a next action shows no toast', async () => {
+    vi.mocked(tasks.move).mockResolvedValue({ ...fullTask, group_without_next_action: null })
+    const { user } = renderBoard()
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    await moveFromMenu(user, within(within(container).getAllByRole('button', { name: 'Step 1' })[0]!.closest<HTMLElement>('[data-task-id]')!), 'Move right')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalled())
+    expect(toast.info).not.toHaveBeenCalled()
   })
 })

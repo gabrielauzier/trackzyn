@@ -22,16 +22,29 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { cn } from '@/lib/utils'
 import { useCardSelection } from '@/lib/use-card-selection'
-import { lists as listsApi, tasks as tasksApi } from '@/lib/api'
+import { groups as groupsApi, lists as listsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { formatClock } from '@/lib/focus/format-clock'
 import { useFocus } from '@/lib/focus/use-focus'
 import { useFocusSounds } from '@/lib/sounds/use-focus-sounds'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { BoardColumn, DoneColumn } from '@/components/board/board-column'
+import { AddTaskForm } from '@/components/board/add-task-form'
+import { BoardColumn, DoneColumn, type RenderGroup } from '@/components/board/board-column'
 import { CardFieldsSettings } from '@/components/board/card-fields-settings'
-import { COLUMN_PREFIX, columnsOf, dropTarget, type PendingColumn } from '@/components/board/drop-target'
+import {
+  COLUMN_PREFIX,
+  CONTAINER_PREFIX,
+  GROUP_PREFIX,
+  columnOver,
+  columnsOf,
+  containerOf,
+  dropTarget,
+  groupDropTarget,
+  type GroupDropTarget,
+  type PendingColumn,
+} from '@/components/board/drop-target'
+import { GroupContainer } from '@/components/board/group-container'
 import { formatDuration } from '@/components/board/format-duration'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { QuickNote } from '@/components/board/quick-note'
@@ -42,6 +55,7 @@ import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialo
 import { SeriesScopeDialog } from '@/components/schedule/series-scope-dialog'
 import { ListBadge } from '@/components/lists/list-badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,18 +67,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { FocusRouteState } from '@/lib/desktop/focus-window'
 import { asksSeriesScope } from '@/lib/schedule'
 import { useCardFields } from '@/lib/board/card-fields'
-import type { Board, SeriesScope, TaskCardView, TaskColumn } from '@/types'
+import type { Board, GroupWithoutNextAction, SeriesScope, TaskCardView, TaskColumn } from '@/types'
 
 const COLUMNS: TaskColumn[] = ['backlog', 'this_week', 'today', 'done']
 /** The drag overlay's card is only a picture of the dragged one, so its actions do nothing. */
 const noop = () => {}
 
-/** The card or column under the pointer (cards first); the keyboard has no pointer, so the closest corners. */
+/** Cards come first, then a group's container, then the column's own area. */
+const hitRank = (id: string) => (id.startsWith(COLUMN_PREFIX) ? 2 : id.startsWith(GROUP_PREFIX) ? 1 : 0)
+
+/** The card, container or column under the pointer, in that order; the keyboard has no pointer, so the closest corners. */
 const collisionDetection: CollisionDetection = (args) => {
   const hits = pointerWithin(args)
   if (hits.length === 0) return closestCorners(args)
-  const cards = hits.filter((hit) => !String(hit.id).startsWith(COLUMN_PREFIX))
-  return cards.length > 0 ? cards : hits
+  const best = Math.min(...hits.map((hit) => hitRank(String(hit.id))))
+  return hits.filter((hit) => hitRank(String(hit.id)) === best)
 }
 
 function findCard(board: Board, column: TaskColumn, id: string): { task: TaskCardView; column: TaskColumn; number: number } | null {
@@ -73,8 +90,11 @@ function findCard(board: Board, column: TaskColumn, id: string): { task: TaskCar
   return index < 0 ? null : { task: tasks[index], column, number: index + 1 }
 }
 
-/** The board with `taskId` moved into a pending column, right before `beforeId` (or last). */
-function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: string | null): Board {
+/**
+ * The board with `taskId` moved into a pending column, right before `beforeId` (or last), in `group` when
+ * given (null: out of its group).
+ */
+function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: string | null, group?: string | null): Board {
   let moved: TaskCardView | undefined
   const take = (tasks: TaskCardView[]) =>
     tasks.filter((task) => {
@@ -92,6 +112,7 @@ function placeTask(board: Board, taskId: string, to: PendingColumn, beforeId: st
     },
   }
   if (!moved) return board
+  if (group !== undefined) moved = { ...moved, group_id: group }
   const target = columns[to].tasks
   const index = beforeId ? target.findIndex((task) => task.id === beforeId) : -1
   target.splice(index < 0 ? target.length : index, 0, moved)
@@ -178,9 +199,28 @@ export default function ListBoardPage() {
     queryFn: () => listsApi.list({ archived: false }),
   })
 
+  /** The group whose `Adicionar tarefa` was chosen in the toast of a group without a next action. */
+  const [addingTo, setAddingTo] = useState<GroupWithoutNextAction | null>(null)
+  // The last open task of a group went to Concluídas: say so, and offer its next action (GRP-10).
+  const warnNoNextAction = (group: GroupWithoutNextAction | null | undefined) => {
+    if (!group) return
+    toast.info(t('board.groupWithoutNextAction', { name: group.name }), {
+      action: { label: t('board.addTask'), onClick: () => setAddingTo(group) },
+    })
+  }
+
   const moveMutation = useMutation({
-    mutationFn: ({ id, column, before }: { id: string; column: TaskColumn; before: string | null }) =>
-      tasksApi.move(id, { column, before_task_id: before }),
+    mutationFn: ({ id, column, before, group }: { id: string; column: TaskColumn; before: string | null; group?: string | null }) =>
+      tasksApi.move(id, group === undefined ? { column, before_task_id: before } : { column, before_task_id: before, group_id: group }),
+    onSuccess: (moved) => warnNoNextAction(moved.group_without_next_action),
+    onError: (e) => toast.error(extractApiError(e, t('common.error'))),
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: ['lists'] }),
+  })
+  // The whole container dragged by its title takes the group's tasks of its column along (GRP-09).
+  const groupMoveMutation = useMutation({
+    mutationFn: (target: GroupDropTarget) =>
+      groupsApi.move(target.group, { from: target.from, to: target.to, before_task_id: target.before }),
+    onSuccess: (result) => warnNoNextAction(result.group_without_next_action),
     onError: (e) => toast.error(extractApiError(e, t('common.error'))),
     onSettled: () => void queryClient.invalidateQueries({ queryKey: ['lists'] }),
   })
@@ -252,7 +292,8 @@ export default function ListBoardPage() {
 
   const shown = preview ?? board
   const taskColumns = columnsOf(shown)
-  const move = (id: string, column: TaskColumn, before: string | null) => moveMutation.mutate({ id, column, before })
+  const move = (id: string, column: TaskColumn, before: string | null, group?: string | null) =>
+    moveMutation.mutate({ id, column, before, group })
 
   // The task of this user's open session, which the board highlights with its time running (FOCUS-16).
   const session = focus.state?.session
@@ -277,18 +318,20 @@ export default function ListBoardPage() {
     insertedAt.current = null
   }
 
-  const columnUnder = (overId: string) =>
-    overId.startsWith(COLUMN_PREFIX) ? (overId.slice(COLUMN_PREFIX.length) as TaskColumn) : taskColumns.get(overId)
+  const columnUnder = (overId: string) => columnOver(shown, overId, taskColumns)
 
   const onDragStart = ({ active }: DragStartEvent) => {
-    setDraggedId(String(active.id))
-    dragOrigin.current = taskColumns.get(String(active.id)) ?? null
+    const activeId = String(active.id)
+    setDraggedId(activeId)
+    dragOrigin.current = containerOf(activeId)?.column ?? taskColumns.get(activeId) ?? null
   }
 
   const onDragOver = ({ active, over }: DragOverEvent) => {
     if (!over || !canWrite) return
     const activeId = String(active.id)
     const overId = String(over.id)
+    // A container moves on the drop only, without a preview.
+    if (activeId.startsWith(CONTAINER_PREFIX)) return
     // Once previewed, the dragged card sits under the pointer, so it is also what the pointer is over.
     if (overId === activeId) return
     const to = columnUnder(overId)
@@ -303,7 +346,7 @@ export default function ListBoardPage() {
       setPreview(placeInDone(board, activeId))
       return
     }
-    const before = overId.startsWith(COLUMN_PREFIX) ? null : overId
+    const before = overId.startsWith(COLUMN_PREFIX) || containerOf(overId) ? null : overId
     insertedAt.current = before
     setPreview(placeTask(board, activeId, to, before))
   }
@@ -315,6 +358,11 @@ export default function ListBoardPage() {
     if (!over || !canWrite || !origin) return
     const activeId = String(active.id)
     const overId = String(over.id)
+    if (activeId.startsWith(CONTAINER_PREFIX)) {
+      const target = groupDropTarget(board, activeId, overId)
+      if (target) groupMoveMutation.mutate(target)
+      return
+    }
     const current = taskColumns.get(activeId)
     const to = overId === activeId ? current : columnUnder(overId)
     if (!current || !to) return
@@ -330,20 +378,32 @@ export default function ListBoardPage() {
     // Moved into this column during the drag, and not dragged to another card since: it is where the preview put it.
     const placed = current !== origin && (overId === activeId || overId.startsWith(COLUMN_PREFIX) || overId === inserted)
     let before: string | null
+    let group: string | null | undefined
     if (placed) {
       const ids = shown.columns[to].tasks.map((task) => task.id)
       before = ids[ids.indexOf(activeId) + 1] ?? null
+      // Where the preview put it: the group of the card it went before, or out of any (GRP-06..08).
+      const at = dropTarget(board, activeId, overId === activeId ? (inserted ?? `${COLUMN_PREFIX}${to}`) : overId)
+      group = at && at.column !== 'done' ? at.group : undefined
     } else {
       const target = dropTarget(shown, activeId, overId)
       if (!target || target.column === 'done') return
       before = target.before
+      group = target.group
     }
-    queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeTask(previous, activeId, to, before))
-    move(activeId, to, before)
+    queryClient.setQueryData<Board>(boardKey, (previous) => previous && placeTask(previous, activeId, to, before, group))
+    move(activeId, to, before, group)
   }
 
   const draggedColumn = draggedId ? taskColumns.get(draggedId) : undefined
   const draggedCard = draggedId && draggedColumn ? findCard(shown, draggedColumn, draggedId) : null
+  const draggedContainer = draggedId ? containerOf(draggedId) : null
+  const draggedGroup = draggedContainer && shown.groups.find((group) => group.id === draggedContainer.group)
+  const draggedGroupTasks = draggedContainer
+    ? (draggedContainer.column === 'done' ? shown.columns.done.days.flatMap((day) => day.tasks) : shown.columns[draggedContainer.column].tasks).filter(
+        (task) => task.group_id === draggedContainer.group,
+      )
+    : []
 
   // The quick actions' arrows go one column over, as a drag would; into Concluídas it completes the task.
   const step = (task: TaskCardView, column: TaskColumn, direction: 'left' | 'right') => {
@@ -405,10 +465,25 @@ export default function ListBoardPage() {
     </SortableTask>
   )
 
+  // A container is a drop target of its own, dragged whole by its title (GRP-06..09).
+  const renderGroup =
+    (column: TaskColumn): RenderGroup =>
+    (group, tasks, cards) => (
+      <BoardGroup key={`${group.id}:${tasks[0]?.id}`} group={group} column={column} count={tasks.length} canWrite={canWrite}>
+        {cards}
+      </BoardGroup>
+    )
+
   const renderColumn = (column: TaskColumn) =>
     column === 'done' ? (
       <ColumnDrop column="done" ids={shown.columns.done.days.flatMap((day) => day.tasks.map((task) => task.id))}>
-        <DoneColumn done={shown.columns.done} renderTask={renderTask('done')} className="h-full" />
+        <DoneColumn
+          done={shown.columns.done}
+          groups={shown.groups}
+          renderTask={renderTask('done')}
+          renderGroup={renderGroup('done')}
+          className="h-full"
+        />
       </ColumnDrop>
     ) : (
       <ColumnDrop column={column} ids={shown.columns[column].tasks.map((task) => task.id)}>
@@ -417,7 +492,9 @@ export default function ListBoardPage() {
           view={shown.columns[column]}
           listId={listId}
           canWrite={canWrite}
+          groups={shown.groups}
           renderTask={renderTask(column)}
+          renderGroup={renderGroup(column)}
           onFocusNow={() => navigate(`/focus/${listId}`, { state: { collapse: true } satisfies FocusRouteState })}
           onOpenFocus={() => navigate(`/focus/${listId}`, { state: { start: false } satisfies FocusRouteState })}
           className="h-full"
@@ -510,6 +587,13 @@ export default function ListBoardPage() {
               />
             </div>
           )}
+          {draggedGroup && (
+            <GroupContainer group={draggedGroup} count={draggedGroupTasks.length} className="cursor-grabbing">
+              {draggedGroupTasks.map((task) => (
+                <TaskCard key={task.id} task={task} column={draggedContainer!.column} canWrite={canWrite} timeZone={shown.timezone} fields={fields} onOpen={noop} />
+              ))}
+            </GroupContainer>
+          )}
         </DragOverlay>
       </DndContext>
 
@@ -540,7 +624,52 @@ export default function ListBoardPage() {
         }}
       />
       <TaskDialog taskId={openTaskId} canWrite={canWrite} timeZone={board.timezone} onClose={() => setOpenTaskId(null)} />
+      <Dialog open={addingTo !== null} onOpenChange={(open) => !open && setAddingTo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('board.addTaskToGroup', { name: addingTo?.name ?? '' })}</DialogTitle>
+          </DialogHeader>
+          {addingTo && (
+            <AddTaskForm listId={listId} column="backlog" groupId={addingTo.id} defaultOpen onClose={() => setAddingTo(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
+  )
+}
+
+/** A group's container on the board: a drop target (`group:<id>:<col>`) and, by its title, a drag handle (`container:<id>:<col>`). */
+function BoardGroup({
+  group,
+  column,
+  count,
+  canWrite,
+  children,
+}: {
+  group: Board['groups'][number]
+  column: TaskColumn
+  count: number
+  canWrite: boolean
+  children: ReactNode
+}) {
+  // A sortable, not a plain draggable: the keyboard moves only what is also a drop target (GRP-09).
+  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useSortable({
+    id: `${CONTAINER_PREFIX}${group.id}:${column}`,
+    disabled: !canWrite,
+  })
+  // A container dragged by its title is no target of its own drop.
+  const { setNodeRef: setDropRef } = useDroppable({ id: `${GROUP_PREFIX}${group.id}:${column}`, disabled: isDragging })
+  return (
+    <GroupContainer
+      group={group}
+      count={count}
+      containerRef={setDropRef}
+      titleRef={setDragRef}
+      handle={canWrite ? { ...attributes, ...listeners, 'data-group-title': group.id } : undefined}
+      className={cn(isDragging && 'opacity-40')}
+    >
+      {children}
+    </GroupContainer>
   )
 }
 

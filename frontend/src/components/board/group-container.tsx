@@ -28,7 +28,7 @@ export function GroupContainer({ group, count, children, handle, containerRef, t
       data-group-id={group.id}
       className={cn('flex flex-col gap-2 rounded-xl bg-muted p-2', className)}
     >
-      <div ref={titleRef} className="flex min-w-0 items-center gap-2 px-1.5 pt-0.5" {...handle}>
+      <div ref={titleRef} {...handle} className={cn('flex min-w-0 items-center gap-2 px-1.5 pt-0.5', handle && 'cursor-grab')}>
         <span className="truncate text-sm font-bold">{group.name}</span>
         <span className="text-xs whitespace-nowrap text-muted-foreground">{t('board.taskCount', { count })}</span>
       </div>

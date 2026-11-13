@@ -800,12 +800,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `dropTarget` (unidade): card do grupo, `group:<id>:<col>`, `container:<id>:<col>` e `column:<col>` dão o grupo e a coluna certos
-- [ ] Interação: soltar dentro mantém o grupo; fora tira; avulsa dentro entra; título move o bloco
-- [ ] Resposta com `group_without_next_action` mostra `<grupo> está sem próxima ação` e `Adicionar tarefa`
-- [ ] Gate check passes: Full (frontend)
+- [x] `dropTarget` (unidade): card do grupo, `group:<id>:<col>`, `container:<id>:<col>` e `column:<col>` dão o grupo e a coluna certos
+- [x] Interação: soltar dentro mantém o grupo; fora tira; avulsa dentro entra; título move o bloco
+- [x] Resposta com `group_without_next_action` mostra `<grupo> está sem próxima ação` e `Adicionar tarefa`
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/components/board/drop-target.ts`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/components/board/drop-target.ts`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/components/board/drop-target.test.ts`, `frontend/src/pages/list-board.test.tsx` (mock de `groups` e `toast.info`), `frontend/src/components/board/group-container.tsx` (o `{...handle}` vem antes da classe do título), `frontend/src/components/board/add-task-form.tsx` e `frontend/src/lib/api.ts` (`AddTaskForm` aceita `groupId`, `defaultOpen` e `onClose`, e `tasks.create` aceita `group_id`: o `Adicionar tarefa` do toast abre um diálogo que cria a tarefa no fim do bloco do grupo, no Backlog). `groupDropTarget` fica em `drop-target.ts`. O título do contêiner é um `useSortable` (o teclado só move o que também é alvo) e a área do contêiner não recebe o próprio contêiner. Soltar em Concluídas mantém o grupo; a resposta traz o toast quando era a última aberta.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

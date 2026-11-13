@@ -415,6 +415,8 @@ export const tasks = {
     scheduled_on?: string | null
     scheduled_time?: string | null
     notes?: string
+    /** Creates the task at the end of the group's block. */
+    group_id?: string
   }): Promise<Task> => {
     const { data } = await api.post('/tasks', payload)
     return data

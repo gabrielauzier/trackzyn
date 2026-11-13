@@ -19,12 +19,17 @@ import type { TaskColumn } from '@/types'
 interface AddTaskFormProps {
   listId: string
   column: TaskColumn
+  /** Creates the task at the end of this group's block (GRP-10). */
+  groupId?: string
+  /** Starts as the open form, and closing it calls `onClose`. */
+  defaultOpen?: boolean
+  onClose?: () => void
 }
 
 /** `+ Add task` at the end of a column, which opens into an inline form. */
-export function AddTaskForm({ listId, column }: AddTaskFormProps) {
+export function AddTaskForm({ listId, column, groupId, defaultOpen = false, onClose }: AddTaskFormProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
 
   if (!open) {
     return (
@@ -37,10 +42,20 @@ export function AddTaskForm({ listId, column }: AddTaskFormProps) {
       </Button>
     )
   }
-  return <TaskForm listId={listId} column={column} onClose={() => setOpen(false)} />
+  return (
+    <TaskForm
+      listId={listId}
+      column={column}
+      groupId={groupId}
+      onClose={() => {
+        setOpen(false)
+        onClose?.()
+      }}
+    />
+  )
 }
 
-function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () => void }) {
+function TaskForm({ listId, column, groupId, onClose }: Omit<AddTaskFormProps, 'onClose'> & { onClose: () => void }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const schema = z.object({
@@ -56,7 +71,13 @@ function TaskForm({ listId, column, onClose }: AddTaskFormProps & { onClose: () 
 
   const create = useMutation({
     mutationFn: (values: Values) =>
-      tasksApi.create({ list_id: listId, title: values.title, estimate_minutes: durationMinutes(values.estimate), column }),
+      tasksApi.create({
+        list_id: listId,
+        title: values.title,
+        estimate_minutes: durationMinutes(values.estimate),
+        column,
+        ...(groupId === undefined ? {} : { group_id: groupId }),
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['lists'] })
       onClose()

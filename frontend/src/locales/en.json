@@ -608,7 +608,9 @@
       "waiting": "Waiting",
       "always": "Name, estimate and time spent always show."
     },
-    "groupLabel": "Group {{name}}"
+    "groupLabel": "Group {{name}}",
+    "groupWithoutNextAction": "{{name}} has no next action",
+    "addTaskToGroup": "Add task · {{name}}"
   },
   "focus": {
     "sounds": {
