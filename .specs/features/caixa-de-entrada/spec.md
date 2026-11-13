@@ -342,7 +342,7 @@ O que o código já fixa:
 
 **Acceptance Criteria**:
 
-1. The system SHALL devolver `kind` (`task` ou `reminder`), `priority`, `due_on`, `waiting`, `waiting_for`, `flagged`, `flag_reason` e `group` em `get_board`, `get_task` e nas leituras de tarefa da API. (API-01)
+1. The system SHALL devolver `kind` (`task` ou `reminder`), `priority`, `due_on`, `waiting`, `waiting_for`, `flagged`, `flag_reason` e `group_id` em `get_board`, `get_task` e nas leituras de tarefa da API. (API-01)
 2. WHEN `create_task` ou `update_task` recebe esses campos com escopo `tasks:create` ou `tasks:write` THEN o sistema SHALL gravá-los com as mesmas validações da interface. (API-02)
 3. IF um campo novo vem com valor inválido pela API THEN o sistema SHALL responder 422 sem gravar nada. (API-03)
 
@@ -414,7 +414,7 @@ O que o código já fixa:
 | REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
 | REM-03 | P1: Lembrete | T18 | In Tasks |
 | REM-04 | P1: Lembrete | T5 | Implementing |
-| REM-05 | P1: Lembrete | T5 | Implementing |
+| REM-05 | P1: Lembrete | T5, T32 | Implementing |
 | REM-06 | P1: Lembrete | T5, T28 | Implementing |
 | GRP-01 | P1: Grupo de tarefas | T7, T13 | In Tasks |
 | GRP-02 | P1: Grupo de tarefas | T11, T26 | In Tasks |

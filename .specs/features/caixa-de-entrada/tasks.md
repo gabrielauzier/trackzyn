@@ -57,6 +57,7 @@ T4 → T6
 ### Phase 2: Grupos e campos do card (backend)
 
 ```
+T32
 T7 → T8
 T8 → T9
 T10
@@ -282,6 +283,32 @@ T30 → T31
 **Gate**: full
 
 **Commit**: `feat(backend): expose the new task fields in the MCP tools`
+
+---
+
+### T32: Tela do foco ignora lembretes
+
+**What**: `readFocusState` deixa lembretes fora da tarefa do foco e de `today.tasks`, como `todayTasks` já faz.
+**Where**: `backend-node/src/services/focus-state.ts`
+**Depends on**: None
+**Reuses**: filtro `kind = 'task'` de `todayTasks` (T5)
+**Requirement**: REM-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Com um lembrete antes de uma tarefa em Hoje, `GET /api/focus` mostra a tarefa como a do foco e não lista o lembrete
+- [ ] Com só um lembrete em Hoje, o foco fica sem tarefa
+- [ ] Gate check passes: Full (backend)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): keep reminders off the focus screen`
 
 ---
 
@@ -1039,6 +1066,7 @@ Execution is strictly sequential: one task at a time, in order.
 | T4 | `buildBoard` | ✅ Granular |
 | T5 | Foco e Agenda recusam/marcam lembrete | ⚠️ Coeso: a mesma regra de lembrete |
 | T6 | Ferramentas MCP | ✅ Granular |
+| T32 | Um filtro em `focus-state.ts` | ✅ Granular |
 | T7 | Serviço de grupos + uma rota | ✅ Granular |
 | T8 | `moveTask` com grupo | ✅ Granular |
 | T9 | Uma rota e uma função | ✅ Granular |
@@ -1077,6 +1105,7 @@ Execution is strictly sequential: one task at a time, in order.
 | T4 | T2 | T2 → T4 | ✅ Match |
 | T5 | T2 | T2 → T5 | ✅ Match |
 | T6 | T4 | T4 → T6 | ✅ Match |
+| T32 | None | — | ✅ Match |
 | T7 | None | — | ✅ Match |
 | T8 | T7 | T7 → T8 | ✅ Match |
 | T9 | T8 | T8 → T9 | ✅ Match |
@@ -1117,6 +1146,7 @@ Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem d
 | T4 | Serviços | integration | integration | ✅ OK |
 | T5 | Serviços | integration | integration | ✅ OK |
 | T6 | Rotas e MCP | integration | integration | ✅ OK |
+| T32 | Serviços | integration | integration | ✅ OK |
 | T7 | Serviços + rota + função pura | integration | integration | ✅ OK |
 | T8 | Serviços + rota | integration | integration | ✅ OK |
 | T9 | Serviços + rota | integration | integration | ✅ OK |
