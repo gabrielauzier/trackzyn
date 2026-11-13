@@ -1,3 +1,5 @@
+import { measure } from '@/lib/time/intervals'
+import type { HoursCountMode } from '@/types'
 import type { Piece } from './layout'
 
 const startOf = (piece: Piece) => Date.parse(piece.session.started_at)
@@ -13,9 +15,10 @@ function joinable(piece: Piece, apartId: string | null): boolean {
  * The visible pieces of one day with the near sessions joined (MERGE-11 to MERGE-18): closed sessions of one list and
  * kind whose gap, from the latest end of the block so far to the next start, is `gapMinutes` × 60 s or less, measured
  * on the sessions' own instants, become one piece from the first start to the latest end, with `members` in start order.
- * Every other piece comes back as it was; a null gap gives the pieces back unchanged (MERGE-22).
+ * Every other piece comes back as it was; a null gap gives the pieces back unchanged (MERGE-22). The block lasts the sum
+ * of its sessions, or their union in net hours (HOURS-13).
  */
-export function joinPieces(pieces: Piece[], gapMinutes: number | null, apartId: string | null): Piece[] {
+export function joinPieces(pieces: Piece[], gapMinutes: number | null, apartId: string | null, mode: HoursCountMode = 'gross'): Piece[] {
   if (gapMinutes === null) return pieces
   const gapMs = gapMinutes * 60_000
   const result: Piece[] = []
@@ -48,7 +51,11 @@ export function joinPieces(pieces: Piece[], gapMinutes: number | null, apartId: 
       start: first.start,
       end: Math.max(...block.map((piece) => piece.end)),
       running: false,
-      seconds: block.reduce((sum, piece) => sum + piece.seconds, 0),
+      // In net hours the block lasts the union of its sessions (HOURS-13).
+      seconds:
+        mode === 'net'
+          ? Math.floor(measure(block.map((piece) => [startOf(piece), endOf(piece)])) / 1000)
+          : block.reduce((sum, piece) => sum + piece.seconds, 0),
       members: block.map((piece) => piece.session),
     })
   }

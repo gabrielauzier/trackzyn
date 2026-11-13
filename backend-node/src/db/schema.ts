@@ -90,13 +90,19 @@ export const workspaces = pgTable(
     minSessionMinutes: smallint('min_session_minutes'),
     /** Sessions of one list and kind this many minutes apart or less (1 to 60) are drawn as one block in the agenda; null keeps them apart (#23). */
     mergeGapMinutes: smallint('merge_gap_minutes'),
+    /** How totals count time that overlaps: `gross` sums every interval, `net` counts the overlap once (#42, AD-010). */
+    hoursCountMode: varchar('hours_count_mode', { length: 5 }).$type<HoursCountMode>().notNull().default('gross'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
   },
   (t) => [
     check('ck_workspaces_min_session_minutes', sql`${t.minSessionMinutes} BETWEEN 1 AND 60`),
     check('ck_workspaces_merge_gap_minutes', sql`${t.mergeGapMinutes} BETWEEN 1 AND 60`),
+    check('ck_workspaces_hours_count_mode', sql`${t.hoursCountMode} IN ('gross', 'net')`),
   ],
 )
+
+export const HOURS_COUNT_MODES = ['gross', 'net'] as const
+export type HoursCountMode = (typeof HOURS_COUNT_MODES)[number]
 
 export const files = pgTable(
   'files',

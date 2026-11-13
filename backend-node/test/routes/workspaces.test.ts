@@ -195,6 +195,67 @@ describe('join gap (#23)', () => {
   })
 })
 
+describe('hours count mode (#42)', () => {
+  const modeOf = async (id: string, token: string) =>
+    (await call('GET', '/api/workspaces/current', token, undefined, { 'x-workspace-id': id })).json().hours_count_mode
+
+  it('HOURS-02 reads gross by default in the list, in current and for every role', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+    for (const user of [owner, ...members]) {
+      const current = await call('GET', '/api/workspaces/current', user.token, undefined, { 'x-workspace-id': id })
+      expect(current.json()).toHaveProperty('hours_count_mode', 'gross')
+      const listed = (await call('GET', '/api/workspaces', user.token)).json() as Array<{ id: string; hours_count_mode: unknown }>
+      expect(listed.find((workspace) => workspace.id === id)).toHaveProperty('hours_count_mode', 'gross')
+    }
+  })
+
+  it('HOURS-03 lets the owner set net and back to gross, and keeps it on a PATCH without the field', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['viewer'])
+
+    const set = await call('PATCH', `/api/workspaces/${id}`, owner.token, { hours_count_mode: 'net' })
+    expect(set.statusCode).toBe(200)
+    expect(set.json().hours_count_mode).toBe('net')
+    expect(await modeOf(id, members[0]!.token)).toBe('net')
+
+    const renamed = await call('PATCH', `/api/workspaces/${id}`, owner.token, { name: 'Renamed' })
+    expect(renamed.json()).toMatchObject({ name: 'Renamed', hours_count_mode: 'net' })
+
+    const back = await call('PATCH', `/api/workspaces/${id}`, owner.token, { hours_count_mode: 'gross' })
+    expect(back.json().hours_count_mode).toBe('gross')
+    expect(await modeOf(id, owner.token)).toBe('gross')
+  })
+
+  it('HOURS-04 answers 422 to null, "liquid", "NET" and 1, and keeps the stored value', async () => {
+    const owner = await register(t)
+    const { id } = await shared(owner)
+    await call('PATCH', `/api/workspaces/${id}`, owner.token, { hours_count_mode: 'net' })
+
+    for (const bad of [null, 'liquid', 'NET', 1]) {
+      const refused = await call('PATCH', `/api/workspaces/${id}`, owner.token, { hours_count_mode: bad })
+      expect(refused.statusCode).toBe(422)
+    }
+    expect(await modeOf(id, owner.token)).toBe('net')
+  })
+
+  it('HOURS-05 answers 403 to an editor and a viewer, keeps the value, and lets a manager set it', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+
+    for (const member of members) {
+      const refused = await call('PATCH', `/api/workspaces/${id}`, member.token, { hours_count_mode: 'net' })
+      expect(refused.statusCode).toBe(403)
+    }
+    expect(await modeOf(id, owner.token)).toBe('gross')
+
+    const manager = await register(t)
+    const managed = (await call('POST', '/api/workspaces', manager.token, { name: 'Managed' })).json().id as string
+    const set = await call('PATCH', `/api/workspaces/${managed}`, manager.token, { hours_count_mode: 'net' })
+    expect(set.json()).toMatchObject({ role: 'manager', hours_count_mode: 'net' })
+  })
+})
+
 describe('members', () => {
   it('lists, changes roles and removes members with the sole-owner protections', async () => {
     const owner = await register(t)

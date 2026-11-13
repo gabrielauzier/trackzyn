@@ -40,9 +40,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { AlertTriangle, Archive, Info, Plus, Save, Trash2, Users } from 'lucide-react'
+import { AlertTriangle, Archive, Clock, Info, Plus, Save, Trash2, Users } from 'lucide-react'
 import { SUPPORTED_LANGS } from '@/lib/i18n'
-import type { WorkspaceMember, WorkspaceRole } from '@/types'
+import type { HoursCountMode, WorkspaceMember, WorkspaceRole } from '@/types'
 
 function labelForRole(role: WorkspaceRole, t: (key: string) => string): string {
   return {
@@ -178,6 +178,26 @@ export default function WorkspaceSettingsPage() {
       toast.success(t('workspace.saveSuccess'))
       void refresh()
       // A new timezone or locale changes how workspace data renders.
+      void queryClient.invalidateQueries()
+    },
+    onError: (e: unknown) => {
+      const detail =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        (e instanceof Error ? e.message : t('workspace.saveError'))
+      toast.error(detail)
+    },
+  })
+
+  // The hours count saves on its own, at once, like the format cards of the administration (HOURS-07).
+  const hoursCountMutation = useMutation({
+    mutationFn: (mode: HoursCountMode) => {
+      if (!current) throw new Error('No workspace')
+      return workspacesApi.update(current.id, { hours_count_mode: mode })
+    },
+    onSuccess: () => {
+      toast.success(t('workspace.saveSuccess'))
+      void refresh()
+      // Every total the app shows follows the mode.
       void queryClient.invalidateQueries()
     },
     onError: (e: unknown) => {
@@ -544,6 +564,14 @@ export default function WorkspaceSettingsPage() {
         </div>
       </section>
 
+      <HoursCountCard
+        mode={current.hours_count_mode}
+        disabled={!canManage || hoursCountMutation.isPending}
+        onPick={(mode) => {
+          if (mode !== current.hours_count_mode) hoursCountMutation.mutate(mode)
+        }}
+      />
+
       {/* Members card */}
       <section className="space-y-4 rounded-xl border bg-card p-6">
         <div className="flex items-center justify-between">
@@ -831,5 +859,77 @@ function StatTile({ label, value }: { label: string; value: string }) {
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="text-lg font-semibold mt-1">{value}</p>
     </div>
+  )
+}
+
+/**
+ * The hours count of the workspace (HOURS-06 to HOURS-08), drawn like the date format card of the
+ * administration: one row per option, with a radio, the name, an example and the explanation.
+ */
+function HoursCountCard({
+  mode,
+  disabled,
+  onPick,
+}: {
+  mode: HoursCountMode
+  disabled: boolean
+  onPick: (mode: HoursCountMode) => void
+}) {
+  const { t } = useTranslation()
+  const options = [
+    {
+      value: 'gross',
+      label: t('workspace.hoursCountGross'),
+      example: t('workspace.hoursCountGrossExample'),
+      desc: t('workspace.hoursCountGrossDescription'),
+    },
+    {
+      value: 'net',
+      label: t('workspace.hoursCountNet'),
+      example: t('workspace.hoursCountNetExample'),
+      desc: t('workspace.hoursCountNetDescription'),
+    },
+  ] as const
+  return (
+    <section className="rounded-xl border border-border/60 bg-card overflow-hidden">
+      <div className="px-5 py-4 border-b border-border/40">
+        <div className="flex items-center gap-2 mb-0.5">
+          <Clock size={15} className="text-muted-foreground" aria-hidden />
+          <h2 id="ws-hours-count-title" className="text-sm font-semibold text-foreground">
+            {t('workspace.hoursCount')}
+          </h2>
+        </div>
+        <p className="text-xs text-muted-foreground">{t('workspace.hoursCountDescription')}</p>
+      </div>
+      <div role="radiogroup" aria-labelledby="ws-hours-count-title" className="divide-y divide-border/40">
+        {options.map((opt) => {
+          const checked = mode === opt.value
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              onClick={() => onPick(opt.value)}
+              disabled={disabled}
+              className="flex items-start gap-3 w-full px-5 py-4 text-left hover:bg-muted/40 transition-colors disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+            >
+              <div
+                className={`mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 ${checked ? 'border-primary bg-primary' : 'border-muted-foreground/40'}`}
+              >
+                {checked && <div className="h-full w-full rounded-full bg-primary ring-2 ring-background ring-inset" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                  <span className="text-xs tabular-nums text-muted-foreground">{opt.example}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </section>
   )
 }

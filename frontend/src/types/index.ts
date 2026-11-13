@@ -73,6 +73,8 @@ export interface AppSetting {
   value: string
 }
 
+export type HoursCountMode = 'gross' | 'net'
+
 export interface Workspace {
   id: string
   name: string
@@ -87,6 +89,8 @@ export interface Workspace {
   min_session_minutes: number | null
   /** Sessions of one list and kind this many minutes apart or less are drawn as one block in the agenda; null keeps them apart. */
   merge_gap_minutes: number | null
+  /** How totals count time that overlaps: gross sums every interval, net counts the overlap once (#42). */
+  hours_count_mode: HoursCountMode
   created_at: string
   created_by_user_id: string | null
   managed_by_user_id: string | null
@@ -313,6 +317,10 @@ export interface Overview {
   /** Only lists with time in the period, archived ones included. */
   by_list: { list_id: string; name: string; color: number; is_archived: boolean; seconds: number }[]
   break_seconds: number
+  /** The count the totals follow: in net, time two sessions share counts once (#42). */
+  hours_count_mode: HoursCountMode
+  /** The task time of the period summed session by session, whatever the mode. */
+  gross_task_seconds: number
   done: {
     /** Most recent day first. */
     days: { date: string; tasks: DoneTaskView[] }[]

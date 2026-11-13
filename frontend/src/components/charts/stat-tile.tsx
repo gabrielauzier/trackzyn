@@ -14,6 +14,8 @@ export interface StatTileProps {
   higherIsBetter?: boolean
   trend?: number[]
   icon?: ReactNode
+  /** A short line under the value, such as the gross total of a net one. */
+  footnote?: ReactNode
   className?: string
 }
 
@@ -26,6 +28,7 @@ export function StatTile({
   higherIsBetter = true,
   trend,
   icon,
+  footnote,
   className,
 }: StatTileProps) {
   const direction = delta === undefined || delta === 0 ? 0 : delta > 0 ? 1 : -1
@@ -39,6 +42,7 @@ export function StatTile({
         {icon && <span className="text-muted-foreground">{icon}</span>}
       </div>
       <p className="mt-1.5 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+      {footnote && <p className="mt-1 text-xs tabular-nums text-muted-foreground">{footnote}</p>}
       {delta !== undefined && (
         <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
           <span

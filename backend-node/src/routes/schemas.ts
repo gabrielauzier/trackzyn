@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Workspace, WorkspaceMember } from '../db/schema.ts'
+import { HOURS_COUNT_MODES, type Workspace, type WorkspaceMember } from '../db/schema.ts'
 import type { User } from '../db/schema.ts'
 
 /** PostgreSQL text cannot hold a NUL character: without this it is a 500 at the database, not a 422. */
@@ -29,6 +29,8 @@ export const workspaceReadSchema = z.object({
   min_session_minutes: z.number().int().nullable(),
   /** Sessions of one list and kind this many minutes apart or less are drawn as one block in the agenda; null keeps them apart. */
   merge_gap_minutes: z.number().int().nullable(),
+  /** How totals count time that overlaps: gross sums every interval, net counts the overlap once (#42). */
+  hours_count_mode: z.enum(HOURS_COUNT_MODES),
   created_at: z.string(),
   created_by_user_id: z.string().nullable(),
   managed_by_user_id: z.string().nullable(),
@@ -46,6 +48,7 @@ export function toWorkspaceRead(workspace: Workspace, role: string | null) {
     color: workspace.color,
     min_session_minutes: workspace.minSessionMinutes,
     merge_gap_minutes: workspace.mergeGapMinutes,
+    hours_count_mode: workspace.hoursCountMode,
     created_at: workspace.createdAt.toISOString(),
     created_by_user_id: workspace.createdByUserId,
     managed_by_user_id: workspace.managedByUserId,

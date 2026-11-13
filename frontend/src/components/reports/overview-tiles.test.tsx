@@ -48,3 +48,14 @@ describe('OverviewTiles (REPORT-01, REPORT-02, REPORT-03, REPORT-12)', () => {
     expect(tile('Time worked')).toHaveTextContent(/^Time worked3hr 30min$/)
   })
 })
+
+describe('OverviewTiles in net hours (#42)', () => {
+  it('HOURS-19 adds Bruto: 4h under Tempo trabalhado when given the gross time', () => {
+    renderWithProviders(
+      <OverviewTiles tiles={{ work_days: 1, tasks_done: 1, task_seconds: 3 * 3600, avg_seconds_per_task: 3 * 3600 }} grossSeconds={4 * 3600} />,
+    )
+
+    expect(tile('Tempo trabalhado')).toHaveTextContent(/^Tempo trabalhado3hBruto: 4h$/)
+    expect(tile('Média por tarefa')).toHaveTextContent(/^Média por tarefa3h$/)
+  })
+})

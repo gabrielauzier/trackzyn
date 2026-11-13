@@ -92,6 +92,15 @@ describe('SessionMoveConfirm', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
+  it('HOURS-14 ends the warning in net hours with The time in common counts once in the total., and in gross with counts in both.', () => {
+    const other: AgendaSession = { ...saved, id: 's2', task_title: 'Call', started_at: '2026-11-04T16:30:00.000Z', ended_at: '2026-11-04T16:45:00.000Z' }
+    const { unmount } = confirm({ sessions: [saved, other], hoursCountMode: 'net' })
+    expect(screen.getByRole('status')).toHaveTextContent('Overlaps Call (13:30 – 13:45). The time in common counts once in the total.')
+    unmount()
+    confirm({ sessions: [saved, other], hoursCountMode: 'gross' })
+    expect(screen.getByRole('status')).toHaveTextContent('Overlaps Call (13:30 – 13:45). The time in common counts in both.')
+  })
+
   it('ADJ-07 does not warn about the session itself when the new time covers its saved time', () => {
     // Moved half an hour later: 11:30 – 12:30 shares 11:30 – 12:00 with the saved 11:00 – 12:00.
     confirm({ times: { day: '2026-11-04', start: 11 * 60 + 30, end: 12 * 60 + 30 }, sessions: [saved] })

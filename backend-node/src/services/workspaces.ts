@@ -36,6 +36,7 @@ export async function createPersonalWorkspaceForUser(db: Database, user: User): 
     color: null,
     minSessionMinutes: null,
     mergeGapMinutes: null,
+    hoursCountMode: 'gross',
     createdAt: now,
   }
   await db.transaction(async (tx) => {
@@ -182,6 +183,7 @@ export async function createWorkspace(
     color: input.color ?? null,
     minSessionMinutes: null,
     mergeGapMinutes: null,
+    hoursCountMode: 'gross',
     createdAt: now,
   }
   await db.transaction(async (tx) => {

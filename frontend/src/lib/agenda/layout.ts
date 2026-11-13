@@ -1,4 +1,5 @@
-import type { AgendaSession, ProjectedOccurrence, ScheduledTask } from '@/types'
+import { measure } from '@/lib/time/intervals'
+import type { AgendaSession, HoursCountMode, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 const MINUTE_MS = 60_000
 const DAY_MS = 24 * 60 * MINUTE_MS
@@ -203,9 +204,15 @@ export function assignLanes<T extends { start: number; end: number }>(pieces: T[
   return result
 }
 
-/** Seconds of the task sessions of a day; breaks do not count (AGENDA-01). */
-export function dayTotal(pieces: Piece[]): number {
-  return pieces.reduce((sum, piece) => (piece.session.kind === 'task' ? sum + piece.seconds : sum), 0)
+/**
+ * Seconds of the task sessions of a day; breaks do not count (AGENDA-01). In net hours the time two sessions share
+ * counts once, floored once from the exact minutes (HOURS-09, HOURS-10).
+ */
+export function dayTotal(pieces: Piece[], mode: HoursCountMode = 'gross'): number {
+  const tasks = pieces.filter((piece) => piece.session.kind === 'task')
+  // Minutes come from milliseconds: back to whole milliseconds before flooring, so float noise never drops a second.
+  if (mode === 'net') return Math.floor(Math.round(measure(tasks.map((piece) => [piece.start, piece.end])) * MINUTE_MS) / 1000)
+  return tasks.reduce((sum, piece) => sum + piece.seconds, 0)
 }
 
 /** The latest minute a session may end on `day`: the whole of a past day, up to now today, nothing on a later day (AGENDA-23). */

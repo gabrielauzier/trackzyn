@@ -118,6 +118,27 @@ describe('GET /api/reports/sessions', () => {
     expect(viewers.json()).toEqual({ days: [] })
   })
 
+  it('HOURS-21 answers the mode of the workspace and the gross total, and counts two overlapping hours once in net', async () => {
+    const { owner, workspaceId, listId } = await setup()
+    const task = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Logged', column: 'today' })).json().id as string
+    const at = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 3_600_000).toISOString()
+    const log = (started_at: string, ended_at: string) =>
+      call('POST', '/api/sessions', owner.token, workspaceId, { kind: 'task', task_id: task, started_at, ended_at })
+    expect((await log(at(5), at(3))).statusCode).toBe(201)
+    expect((await log(at(4), at(2))).statusCode).toBe(201)
+    const read = async () => (await call('GET', `/api/reports/overview?${period(date(-1), date(1))}`, owner.token, workspaceId)).json()
+
+    const gross = await read()
+    expect(gross.hours_count_mode).toBe('gross')
+    expect(gross.gross_task_seconds).toBe(gross.tiles.task_seconds)
+
+    await t.app.inject({ method: 'PATCH', url: `/api/workspaces/${workspaceId}`, headers: bearer(owner.token), payload: { hours_count_mode: 'net' } })
+    const net = await read()
+    expect(net.hours_count_mode).toBe('net')
+    // The two logged sessions share one hour; the open focus session overlaps neither.
+    expect(net.gross_task_seconds - net.tiles.task_seconds).toBe(3600)
+  })
+
   it('HIDE-19 leaves out a 2-minute session once the owner sets the workspace minimum to 5, and keeps the 1-hour one', async () => {
     const { owner, workspaceId, listId } = await setup()
     const task = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Logged', column: 'today' })).json().id as string

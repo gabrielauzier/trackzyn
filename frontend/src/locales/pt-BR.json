@@ -474,6 +474,14 @@
     "joinNearSessions": "Juntar sessões próximas",
     "mergeGapLabel": "Até",
     "mergeGapUnit": "minutos",
+    "hoursCount": "Contagem de horas",
+    "hoursCountDescription": "Como a Agenda, os Relatórios, o Planejamento e o tempo gasto das tarefas somam sessões e blocos que se sobrepõem.",
+    "hoursCountGross": "Horas totais",
+    "hoursCountGrossExample": "09:00–11:00 + 10:00–12:00 = 4h",
+    "hoursCountGrossDescription": "Soma cada sessão inteira, mesmo quando sessões se sobrepõem.",
+    "hoursCountNet": "Horas líquidas",
+    "hoursCountNetExample": "09:00–11:00 + 10:00–12:00 = 3h",
+    "hoursCountNetDescription": "O tempo em que sessões ou blocos se sobrepõem conta uma vez.",
     "hideShortSessionsHint": "Sessões encerradas mais curtas que isso somem da Agenda e da aba Sessões dos Relatórios para todos os membros. Elas continuam contando em todos os totais.",
     "hideShortSessionsInfo": "Sobre esconder sessões curtas",
     "you": "você",
@@ -693,11 +701,13 @@
       "invalidPeriod": "O período precisa terminar depois do início e ter no máximo 366 dias.",
       "listDeleted": "A lista foi excluída."
     },
+    "netNotice": "Horas líquidas: o tempo em que sessões se sobrepõem conta uma vez no total. O tempo de cada lista conta inteiro.",
     "tiles": {
       "workDays": "Dias trabalhados",
       "tasksDone": "Tarefas concluídas",
       "timeWorked": "Tempo trabalhado",
-      "avgPerTask": "Média por tarefa"
+      "avgPerTask": "Média por tarefa",
+      "gross": "Bruto: {{duration}}"
     },
     "noActivity": "Sem atividade no período",
     "daily": {
@@ -755,6 +765,7 @@
     }
   },
   "agenda": {
+    "netTotal": "Horas líquidas · bruto: {{gross}}",
     "errors": {
       "future": "A sessão não pode terminar no futuro.",
       "duration": "Use de 1 minuto a 24 horas."
@@ -797,6 +808,7 @@
       "end": "Fim",
       "duration": "Duração",
       "overlap": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta nas duas.",
+      "overlapNet": "Sobrepõe {{title}} ({{start}} – {{end}}). O tempo em comum conta uma vez no total.",
       "editTitle": "Editar sessão",
       "edit": "Editar",
       "origin": {

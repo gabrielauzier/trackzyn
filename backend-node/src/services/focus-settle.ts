@@ -1,4 +1,4 @@
-import { type SQL, and, eq, inArray, isNull, lt, lte, sql } from 'drizzle-orm'
+import { type SQL, and, eq, isNull, lt, lte, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type FocusEndReason, focusActions, focusSessions } from '../db/schema.ts'
 
@@ -23,23 +23,40 @@ export async function settle(tx: Database, userId: string, now: Date): Promise<v
 }
 
 /**
- * Milliseconds of focus spent on each task, over every task session up to `now`. An open session
- * counts until `now`, and never past its deadline, so a session nobody settled yet is still exact.
- * Tasks without sessions are absent from the map.
+ * Milliseconds of focus spent on each task, over every task session of every member up to `now`. An open
+ * session counts until `now`, and never past its deadline, so a session nobody settled yet is still exact.
+ * The workspace of each task picks the count (AD-010): `gross` sums the sessions, `net` measures their union,
+ * so time two sessions of the task share counts once (HOURS-23, HOURS-26). Tasks without sessions are absent
+ * from the map.
  */
 export async function spentMilliseconds(tx: Database, taskIds: string[], now: Date): Promise<Map<string, number>> {
   if (taskIds.length === 0) return new Map()
   const instant = sql`${now.toISOString()}::timestamptz`
-  const end = sql`coalesce(${focusSessions.endedAt}, least(${instant}, coalesce(${focusSessions.deadlineAt}, ${instant})))`
-  const found = await tx
-    .select({
-      taskId: focusSessions.taskId,
-      ms: sql<number>`round(extract(epoch FROM sum(${end} - ${focusSessions.startedAt})) * 1000)::float8`,
-    })
-    .from(focusSessions)
-    .where(and(eq(focusSessions.kind, 'task'), inArray(focusSessions.taskId, taskIds)))
-    .groupBy(focusSessions.taskId)
-  return new Map(found.map((row) => [row.taskId as string, Number(row.ms)]))
+  const ids = sql.join(
+    taskIds.map((id) => sql`${id}::uuid`),
+    sql`, `,
+  )
+  const result = (await tx.execute(sql`
+    WITH s AS (
+      SELECT fs.task_id, fs.started_at AS a,
+             coalesce(fs.ended_at, least(${instant}, coalesce(fs.deadline_at, ${instant}))) AS z
+      FROM focus_sessions fs
+      WHERE fs.kind = 'task' AND fs.task_id IN (${ids})
+    ),
+    agg AS (
+      SELECT task_id, extract(epoch FROM sum(z - a)) AS gross, range_agg(tstzrange(a, greatest(a, z))) AS m
+      FROM s GROUP BY task_id
+    )
+    SELECT agg.task_id,
+           round(CASE WHEN w.hours_count_mode = 'net'
+                      THEN coalesce((SELECT extract(epoch FROM sum(upper(r) - lower(r))) FROM unnest(agg.m) AS r), 0)
+                      ELSE agg.gross END * 1000)::float8 AS ms
+    FROM agg
+    JOIN tasks t ON t.id = agg.task_id
+    JOIN lists l ON l.id = t.list_id
+    JOIN workspaces w ON w.id = l.workspace_id
+  `)) as unknown as { rows: Array<{ task_id: string; ms: number }> }
+  return new Map(result.rows.map((row) => [row.task_id, Number(row.ms)]))
 }
 
 /** `spentMilliseconds` in whole seconds, as the board and the focus screen show it. */

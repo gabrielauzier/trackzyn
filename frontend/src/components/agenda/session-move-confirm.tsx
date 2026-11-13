@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { clockTime } from '@/lib/agenda/format'
 import { dayOf, findOverlap, zonedInstant } from '@/lib/agenda/layout'
 import { sessionErrorMessage } from '@/lib/agenda/use-agenda'
-import type { AgendaSession } from '@/types'
+import type { AgendaSession, HoursCountMode } from '@/types'
 
 interface SessionMoveConfirmProps {
   /** The saved session, at its saved times. */
@@ -22,6 +22,8 @@ interface SessionMoveConfirmProps {
   onCancel: () => void
   /** Saves the new times; a rejection is the API error, shown in the panel (ADJ-04). */
   onSave: () => Promise<unknown>
+  /** Names how the overlap counts in the warning (HOURS-14); gross when absent. */
+  hoursCountMode?: HoursCountMode
 }
 
 /** `Wed, Nov 4` of a day, in the reader's language. */
@@ -34,7 +36,16 @@ function shortDate(day: string, locale: string): string {
  * `Novo horário — ainda não salvo` with the saved time struck through and the new one with its duration, the overlap
  * warning, `Cancelar` (or Esc) and `Salvar horário`.
  */
-export function SessionMoveConfirm({ session, times, timezone, now, sessions, onCancel, onSave }: SessionMoveConfirmProps) {
+export function SessionMoveConfirm({
+  session,
+  times,
+  timezone,
+  now,
+  sessions,
+  onCancel,
+  onSave,
+  hoursCountMode = 'gross',
+}: SessionMoveConfirmProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
   const [saving, setSaving] = useState(false)
@@ -96,7 +107,7 @@ export function SessionMoveConfirm({ session, times, timezone, now, sessions, on
       </div>
       {overlap && (
         <p role="status" className="rounded-md bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
-          {t('agenda.panel.overlap', {
+          {t(hoursCountMode === 'net' ? 'agenda.panel.overlapNet' : 'agenda.panel.overlap', {
             title: overlap.kind === 'break' ? t('agenda.break') : overlap.task_title,
             start: clockTime(overlap.started_at, timezone),
             end: overlap.ended_at === null ? t('agenda.now') : clockTime(overlap.ended_at, timezone),

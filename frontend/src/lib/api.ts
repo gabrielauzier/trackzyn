@@ -3,6 +3,7 @@ import { getDesktopApi, isDesktop } from '@/lib/platform'
 import { writesBlocked } from '@/lib/write-lock'
 import type { NumberFormat, DateFormat } from '@/lib/format'
 import type {
+  HoursCountMode,
   AccessToken,
   AgendaSession,
   AgendaSessionChanges,
@@ -130,6 +131,8 @@ export const workspaces = {
       min_session_minutes?: number | null
       /** 1 to 60; null keeps near sessions apart in the agenda (#23). */
       merge_gap_minutes?: number | null
+      /** gross or net; never null (#42). */
+      hours_count_mode?: HoursCountMode
     },
   ): Promise<Workspace> => {
     const { data } = await api.patch(`/workspaces/${id}`, payload)

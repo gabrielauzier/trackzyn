@@ -408,6 +408,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: frontend/src/pages/agenda.tsx:251 (round-4 S4) (frontend-pages)
 - last seen: 2026-11-10T18:48:13Z
 
+### L-067 - When one criterion names several entry points that share a helper, test each entry point in the new mode, not only the first one
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `backend-services` · harmful: 0
+- features: contagem-de-horas
+- evidence: HOURS-25 backend-node/src/services/focus.ts:289 (backend-services)
+- last seen: 2026-11-11T00:04:16Z
+
+### L-068 - Check every route a spec criterion names against the router before approving the spec
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `routes` · harmful: 0
+- features: contagem-de-horas
+- evidence: HOURS-02 backend-node/src/routes/workspaces.ts:94 (routes)
+- last seen: 2026-11-11T00:04:16Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

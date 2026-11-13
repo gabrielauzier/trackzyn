@@ -38,6 +38,8 @@ const overview: Overview = {
   productive: { hours: [18], weekdays: [1], months: ['2026-10'] },
   by_list: [{ list_id: LIST, name: 'Semana', color: 2, is_archived: false, seconds: 12600 }],
   break_seconds: 600,
+  hours_count_mode: 'gross',
+  gross_task_seconds: 12600,
   done: { days: [], early_or_on_time_pct: null, late_pct: null },
 }
 
@@ -175,5 +177,39 @@ describe('ReportsPage (REPORT-01, REPORT-07, REPORT-12, REPORT-20)', () => {
     await user.click(await screen.findByRole('option', { name: 'Semana' }))
 
     expect(await screen.findByText('Lista: Semana')).toBeInTheDocument()
+  })
+})
+
+describe('ReportsPage in net hours (#42)', () => {
+  const notice = 'Horas líquidas: o tempo em que sessões se sobrepõem conta uma vez no total. O tempo de cada lista conta inteiro.'
+  const tile = (label: string) => screen.getByRole('group', { name: label })
+
+  it('HOURS-18 HOURS-19 shows the notice above the tiles and Bruto: 4h in Tempo trabalhado for a net overview', async () => {
+    vi.mocked(reports.overview).mockResolvedValue({
+      ...overview,
+      tiles: { ...overview.tiles, task_seconds: 3 * 3600 },
+      hours_count_mode: 'net',
+      gross_task_seconds: 4 * 3600,
+    })
+    renderWithProviders(<ReportsPage />)
+
+    const note = await screen.findByText(notice)
+    expect(tile('Tempo trabalhado')).toHaveTextContent(/^Tempo trabalhado3hBruto: 4h$/)
+    expect(note.compareDocumentPosition(tile('Dias trabalhados')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('HOURS-38 keeps the notice and the Bruto line in net when nothing overlaps', async () => {
+    vi.mocked(reports.overview).mockResolvedValue({ ...overview, hours_count_mode: 'net', gross_task_seconds: 12600 })
+    renderWithProviders(<ReportsPage />)
+
+    expect(await screen.findByText(notice)).toBeInTheDocument()
+    expect(tile('Tempo trabalhado')).toHaveTextContent(/^Tempo trabalhado3h 30minBruto: 3h 30min$/)
+  })
+
+  it('HOURS-20 shows neither the notice nor the Bruto line for a gross overview', async () => {
+    renderWithProviders(<ReportsPage />)
+
+    expect(await screen.findByRole('group', { name: 'Tempo trabalhado' })).toHaveTextContent(/^Tempo trabalhado3h 30min$/)
+    expect(screen.queryByText(notice)).toBeNull()
   })
 })

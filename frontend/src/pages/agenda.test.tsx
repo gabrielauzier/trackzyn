@@ -24,7 +24,12 @@ vi.mock('sonner', async (importOriginal) => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }))
 
-const workspace = vi.hoisted(() => ({ canWrite: true, minSessionMinutes: null as number | null, mergeGapMinutes: null as number | null }))
+const workspace = vi.hoisted(() => ({
+  canWrite: true,
+  minSessionMinutes: null as number | null,
+  mergeGapMinutes: null as number | null,
+  hoursCountMode: 'gross' as 'gross' | 'net',
+}))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({
     current: {
@@ -33,6 +38,7 @@ vi.mock('@/contexts/workspace-context', () => ({
       timezone: null,
       min_session_minutes: workspace.minSessionMinutes,
       merge_gap_minutes: workspace.mergeGapMinutes,
+      hours_count_mode: workspace.hoursCountMode,
     },
     canWrite: workspace.canWrite,
   }),
@@ -72,6 +78,7 @@ beforeEach(() => {
   workspace.canWrite = true
   workspace.minSessionMinutes = null
   workspace.mergeGapMinutes = null
+  workspace.hoursCountMode = 'gross'
   // Wednesday 4 November 2026, 14:07 in São Paulo.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-11-04T17:07:00.000Z'))
@@ -1981,5 +1988,22 @@ describe('AgendaPage: the saved plan (PLAN-24 to PLAN-29)', () => {
     const { user } = show()
     await user.click(await screen.findByRole('button', { name: 'Plan tomorrow' }))
     expect(screen.getByTestId('where')).toHaveTextContent('/planejar/2026-11-05')
+  })
+})
+
+describe('AgendaPage in net hours (#42)', () => {
+  // Monday 2 November, 10:00–11:00 and a manual 10:30–11:30 in São Paulo.
+  const manual: AgendaSession = { ...monday, id: 's2', origin: 'manual', started_at: '2026-11-02T13:30:00.000Z', ended_at: '2026-11-02T14:30:00.000Z' }
+
+  it('HOURS-09 follows the workspace: 1hr 30min for the day in net, 2hr in gross', async () => {
+    vi.mocked(sessions.list).mockResolvedValue({ sessions: [monday, manual] })
+    workspace.hoursCountMode = 'net'
+    const { unmount } = renderWithProviders(<AgendaPage />)
+    expect((await dayHeader('2026-11-02')).querySelector('[data-day-total]')).toHaveTextContent('1hr 30min')
+    unmount()
+
+    workspace.hoursCountMode = 'gross'
+    renderWithProviders(<AgendaPage />)
+    expect((await dayHeader('2026-11-02')).querySelector('[data-day-total]')).toHaveTextContent('2hr')
   })
 })

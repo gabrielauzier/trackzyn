@@ -49,8 +49,9 @@ export function SessionBlock({ piece, pxPerMinute, timezone, selected = false, o
   // The whole length of a closed session; an open one runs to now, as its piece does.
   const secondsOf = (member: AgendaSession) =>
     member.ended_at === null ? piece.seconds : Math.max(0, Math.floor((Date.parse(member.ended_at) - Date.parse(member.started_at)) / 1000))
-  // A joined block lasts the sum of its sessions, not the gaps between them (MERGE-20).
-  const duration = formatDuration(members ? members.reduce((sum, member) => sum + secondsOf(member), 0) : secondsOf(session), i18n.language)
+  // A joined block lasts what `joinPieces` counted: the sum of its sessions without the gaps (MERGE-20), or their
+  // union in net hours (HOURS-13).
+  const duration = formatDuration(members ? piece.seconds : secondsOf(session), i18n.language)
   // A joined block spans from its first start to the latest end of its sessions.
   const lastEnd = members && new Date(Math.max(...members.map((member) => Date.parse(member.ended_at!)))).toISOString()
   const label = lastEnd ? `${session.list_name}, ${count}, ${rangeOf(session.started_at, lastEnd)}` : `${title}, ${range}`

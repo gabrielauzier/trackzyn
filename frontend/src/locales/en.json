@@ -474,6 +474,14 @@
     "joinNearSessions": "Join near sessions",
     "mergeGapLabel": "Up to",
     "mergeGapUnit": "minutes",
+    "hoursCount": "Hours count",
+    "hoursCountDescription": "How the Agenda, the Reports, the Planning and the time spent on tasks add up sessions and blocks that overlap.",
+    "hoursCountGross": "Total hours",
+    "hoursCountGrossExample": "09:00–11:00 + 10:00–12:00 = 4h",
+    "hoursCountGrossDescription": "Adds up each whole session, even when sessions overlap.",
+    "hoursCountNet": "Net hours",
+    "hoursCountNetExample": "09:00–11:00 + 10:00–12:00 = 3h",
+    "hoursCountNetDescription": "Time in which sessions or blocks overlap counts once.",
     "hideShortSessionsHint": "Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.",
     "hideShortSessionsInfo": "About hiding short sessions",
     "you": "you",
@@ -693,11 +701,13 @@
       "invalidPeriod": "The period must end after it starts and have at most 366 days.",
       "listDeleted": "The list was deleted."
     },
+    "netNotice": "Net hours: time in which sessions overlap counts once in the total. The time of each list counts whole.",
     "tiles": {
       "workDays": "Work days",
       "tasksDone": "Tasks done",
       "timeWorked": "Time worked",
-      "avgPerTask": "Average per task"
+      "avgPerTask": "Average per task",
+      "gross": "Gross: {{duration}}"
     },
     "noActivity": "No activity in the period",
     "daily": {
@@ -755,6 +765,7 @@
     }
   },
   "agenda": {
+    "netTotal": "Net hours · gross: {{gross}}",
     "errors": {
       "future": "The session cannot end in the future.",
       "duration": "Use 1 minute to 24 hours."
@@ -797,6 +808,7 @@
       "end": "End",
       "duration": "Duration",
       "overlap": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts in both.",
+      "overlapNet": "Overlaps {{title}} ({{start}} – {{end}}). The time in common counts once in the total.",
       "editTitle": "Edit session",
       "edit": "Edit",
       "origin": {

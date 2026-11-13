@@ -881,6 +881,12 @@
       "type": "smallint",
       "nullable": true,
       "maxLength": null
+    },
+    {
+      "column": "hours_count_mode",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 5
     }
   ]
 }

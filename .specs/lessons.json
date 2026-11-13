@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 67,
+  "next_id": 69,
   "lessons": [
     {
       "id": "L-001",
@@ -1198,6 +1198,42 @@
       ],
       "created": "2026-11-10T18:48:13Z",
       "last_seen": "2026-11-10T18:48:13Z"
+    },
+    {
+      "id": "L-067",
+      "key": "ac_gap::when one criterion names several entry points that share a helper test each entry point in the new mode not only the first one",
+      "text": "When one criterion names several entry points that share a helper, test each entry point in the new mode, not only the first one",
+      "signal": "ac_gap",
+      "scope": "backend-services",
+      "status": "candidate",
+      "features": [
+        "contagem-de-horas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOURS-25 backend-node/src/services/focus.ts:289 (backend-services)"
+      ],
+      "created": "2026-11-11T00:04:16Z",
+      "last_seen": "2026-11-11T00:04:16Z"
+    },
+    {
+      "id": "L-068",
+      "key": "spec_precision_gap::check every route a spec criterion names against the router before approving the spec",
+      "text": "Check every route a spec criterion names against the router before approving the spec",
+      "signal": "spec_precision_gap",
+      "scope": "routes",
+      "status": "candidate",
+      "features": [
+        "contagem-de-horas"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOURS-02 backend-node/src/routes/workspaces.ts:94 (routes)"
+      ],
+      "created": "2026-11-11T00:04:16Z",
+      "last_seen": "2026-11-11T00:04:16Z"
     }
   ]
 }

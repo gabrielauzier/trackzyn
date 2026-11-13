@@ -27,7 +27,8 @@ import type { DragTarget, useGridDrag } from '@/lib/agenda/use-grid-drag'
 import { useZoomScroll } from '@/lib/agenda/use-zoom-scroll'
 import { clockMinutes } from '@/lib/plan/clock'
 import { cn } from '@/lib/utils'
-import type { AgendaSession, PlannedBlock as Planned, ProjectedOccurrence, ScheduledTask } from '@/types'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import type { AgendaSession, HoursCountMode, PlannedBlock as Planned, ProjectedOccurrence, ScheduledTask } from '@/types'
 
 /** 144 px per hour: the scale at the default zoom (3x). */
 export const PX_PER_MINUTE = 2.4
@@ -40,6 +41,8 @@ export type GridDrag = ReturnType<typeof useGridDrag>
 interface WeekGridProps {
   /** The days of the columns, Monday to Sunday (or a single day). */
   days: string[]
+  /** How the day total counts sessions that overlap; gross when absent (HOURS-09, HOURS-10). */
+  hoursCountMode?: HoursCountMode
   sessions: AgendaSession[]
   /** The workspace timezone; days, times and midnight read in it. */
   timezone: string
@@ -143,6 +146,7 @@ export function WeekGrid({
   planned = NONE,
   onOpenPlanned,
   onPlanDay,
+  hoursCountMode = 'gross',
 }: WeekGridProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -208,7 +212,7 @@ export function WeekGrid({
       <div data-agenda-header className="flex shrink-0 overflow-y-hidden border-b [scrollbar-gutter:stable]">
         <div className="flex w-14 shrink-0 items-center justify-center">{corner}</div>
         {days.map((day) => {
-          const total = dayTotal(pieces.get(day) ?? [])
+          const total = dayTotal(pieces.get(day) ?? [], hoursCountMode)
           return (
             <div
               key={day}
@@ -223,9 +227,29 @@ export function WeekGrid({
               ) : (
                 <span className="text-lg font-semibold leading-none">{Number(day.slice(8))}</span>
               )}
-              <span className="h-4 text-xs tabular-nums text-muted-foreground">
-                {total > 0 ? formatDuration(total, locale) : ''}
-              </span>
+              {hoursCountMode === 'net' && total > 0 ? (
+                // The net total names its count and the gross one on hover or focus (HOURS-11).
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        data-day-total
+                        tabIndex={0}
+                        className="h-4 rounded-sm text-xs tabular-nums text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {formatDuration(total, locale)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t('agenda.netTotal', { gross: formatDuration(dayTotal(pieces.get(day) ?? [], 'gross'), locale) })}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <span data-day-total className="h-4 text-xs tabular-nums text-muted-foreground">
+                  {total > 0 ? formatDuration(total, locale) : ''}
+                </span>
+              )}
               {onPlanDay && day >= today && (
                 <button
                   type="button"
@@ -265,7 +289,7 @@ export function WeekGrid({
             const resting = visible.filter((piece) => piece.session.id !== adjusting?.sessionId)
             // The planned blocks share the width with the sessions, so they never cover one (PLAN-24).
             const laid = assignLanes<Piece | ScheduledPiece | Omit<PlannedPiece, 'lane' | 'lanes'>>([
-              ...joinPieces(resting, joinGap, apartId),
+              ...joinPieces(resting, joinGap, apartId, hoursCountMode),
               ...moving,
               ...(scheduled.get(day) ?? []),
               ...(laidPlanned.get(day) ?? []),

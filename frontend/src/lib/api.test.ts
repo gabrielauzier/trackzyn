@@ -36,7 +36,7 @@ vi.mock('axios', async (importOriginal) => {
   return { ...actual, default: Object.assign(Object.create(axios) as typeof axios, { create }) }
 })
 
-const { agenda, focus, plans, reports, tasks } = await import('@/lib/api')
+const { agenda, focus, plans, reports, tasks, workspaces } = await import('@/lib/api')
 
 const LIST = '6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b'
 const BASE = { occurred_at: '2026-10-24T13:00:00.000Z', device_id: 'device-1', list_id: LIST }
@@ -224,6 +224,16 @@ describe('reports.overview and reports.sessions (REPORT-01, REPORT-07, REPORT-20
         body: undefined,
         authorization: 'Bearer token-123',
       },
+    ])
+  })
+})
+
+describe('workspaces.update (HOURS-07)', () => {
+  it('sends the hours count mode with PATCH /api/workspaces/<id> and only the mode in the body', async () => {
+    await workspaces.update('ws-1', { hours_count_mode: 'net' })
+
+    expect(http.sent).toEqual([
+      { method: 'patch', url: '/api/workspaces/ws-1', body: { hours_count_mode: 'net' }, authorization: 'Bearer token-123' },
     ])
   })
 })
