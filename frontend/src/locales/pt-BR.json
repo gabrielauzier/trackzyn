@@ -340,7 +340,10 @@
     "archivedLists": "Listas arquivadas",
     "reports": "Relatórios",
     "agenda": "Agenda",
-    "plan": "Planejar"
+    "plan": "Planejar",
+    "inbox": "Caixa de entrada",
+    "inboxCount_one": "Caixa de entrada, 1 item",
+    "inboxCount_other": "Caixa de entrada, {{count}} itens"
   },
   "privacy": {
     "hide": "Ocultar valores",
@@ -1170,5 +1173,34 @@
     "medium": "Média",
     "high": "Alta",
     "ultra": "Ultra"
+  },
+  "inbox": {
+    "title": "Caixa de entrada",
+    "waiting_one": "1 item esperando decisão",
+    "waiting_other": "{{count}} itens esperando decisão",
+    "captureLabel": "O que está na sua cabeça?",
+    "capturePlaceholder": "O que está na sua cabeça? Enter para guardar",
+    "captureSubmit": "Guardar ↵",
+    "tooLong": "Até 500 caracteres",
+    "captureFailed": "Não deu para guardar. Tente de novo.",
+    "tabCurrent": "Atuais · {{count}}",
+    "tabTrash": "Lixeira · {{count}}",
+    "oldestFirst": "Mais antigo primeiro",
+    "empty": "Nada na caixa. Capture o que estiver na cabeça.",
+    "trashEmpty": "A Lixeira está vazia.",
+    "trashHint": "Os itens ficam 30 dias na Lixeira.",
+    "discardedOn": "Descartado em {{day}}",
+    "discard": "Descartar {{text}}",
+    "restore": "Restaurar",
+    "restoreAria": "Restaurar {{text}}",
+    "ageToday": "hoje, {{time}}",
+    "ageYesterday": "ontem",
+    "ageDays_one": "há 1 dia",
+    "ageDays_other": "há {{count}} dias",
+    "source_app": "Trackzyn",
+    "source_desktop": "desktop",
+    "source_mcp": "MCP",
+    "sourceApi": "API",
+    "actionFailed": "Não deu certo. Tente de novo."
   }
 }

@@ -383,7 +383,7 @@ O que o código já fixa:
 | INBOX-04 | P1: Ver e manter a caixa | T12, T23 | Implementing |
 | INBOX-05 | P1: Ver e manter a caixa | T12, T23 | Implementing |
 | INBOX-06 | P1: Ver e manter a caixa | T12 | Implementing |
-| INBOX-07 | P1: Ver e manter a caixa | T23 | In Tasks |
+| INBOX-07 | P1: Ver e manter a caixa | T23 | Implementing |
 | QUICK-01 | P1: Enviar rápido | T24 | In Tasks |
 | QUICK-02 | P1: Enviar rápido | T12, T24 | Implementing |
 | QUICK-03 | P1: Enviar rápido | T24 | In Tasks |

@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
+import { useQuery } from '@tanstack/react-query'
 import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useSidebarState } from '@/contexts/sidebar-state-context'
-import { admin as adminApi } from '@/lib/api'
+import { admin as adminApi, inbox as inboxApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { APP_VERSION } from '@/lib/build-info'
 import { setThemeBasedOnSystem } from '@/lib/theme-utils'
@@ -71,6 +72,12 @@ export function AppLayout() {
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
   const { isLoading: workspaceLoading, canWrite } = useWorkspace()
+  // How many items wait in the user's inbox, in the current workspace (INBOX-01, EDGE-07).
+  const { data: inboxCount = 0 } = useQuery({
+    queryKey: ['inbox', 'count'],
+    queryFn: () => inboxApi.count(),
+    select: (data) => data.count,
+  })
   const { user } = useAuth()
   const isSuperuser = !!user?.is_superuser
   const { isEnabled, updateCheckRepo } = useFeatureFlags()
@@ -269,9 +276,12 @@ export function AppLayout() {
                     : location.pathname.startsWith(item.path)
                 const Icon = item.icon
                 // An admin link says so in its name and tip, which is all the collapsed sidebar shows (#32).
+                const count = item.badge === 'inbox' ? inboxCount : 0
                 const label = item.admin
                   ? t('nav.adminLink', { name: t(`nav.${item.key}`) })
-                  : t(`nav.${item.key}`)
+                  : count > 0
+                    ? t('nav.inboxCount', { count })
+                    : t(`nav.${item.key}`)
                 return (
                   <Link
                     key={item.key}
@@ -296,7 +306,20 @@ export function AppLayout() {
                         collapsed && 'lg:h-5 lg:w-5',
                       )}
                     />
-                    <span className={cn(item.admin && 'flex-1', collapsed && 'lg:hidden')}>{t(`nav.${item.key}`)}</span>
+                    <span className={cn((item.admin || item.badge) && 'flex-1', collapsed && 'lg:hidden')}>{t(`nav.${item.key}`)}</span>
+                    {/* Zero shows no number (INBOX-01). */}
+                    {count > 0 && (
+                      <span
+                        data-inbox-badge
+                        aria-hidden
+                        className={cn(
+                          'flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold tabular-nums text-primary-foreground',
+                          collapsed && 'lg:absolute lg:top-0.5 lg:right-0.5 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[9px]',
+                        )}
+                      >
+                        {count}
+                      </span>
+                    )}
                     {item.admin && (
                       <>
                         <span

@@ -340,7 +340,10 @@
     "archivedLists": "Archived lists",
     "reports": "Reports",
     "agenda": "Agenda",
-    "plan": "Plan"
+    "plan": "Plan",
+    "inbox": "Inbox",
+    "inboxCount_one": "Inbox, 1 item",
+    "inboxCount_other": "Inbox, {{count}} items"
   },
   "privacy": {
     "hide": "Hide values",
@@ -1170,5 +1173,34 @@
     "medium": "Medium",
     "high": "High",
     "ultra": "Ultra"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "waiting_one": "1 item waiting for a decision",
+    "waiting_other": "{{count}} items waiting for a decision",
+    "captureLabel": "What is on your mind?",
+    "capturePlaceholder": "What is on your mind? Enter to keep it",
+    "captureSubmit": "Keep ↵",
+    "tooLong": "Up to 500 characters",
+    "captureFailed": "Could not keep it. Try again.",
+    "tabCurrent": "Current · {{count}}",
+    "tabTrash": "Trash · {{count}}",
+    "oldestFirst": "Oldest first",
+    "empty": "Nothing in the inbox. Capture whatever is on your mind.",
+    "trashEmpty": "The trash is empty.",
+    "trashHint": "Items stay in the trash for 30 days.",
+    "discardedOn": "Discarded on {{day}}",
+    "discard": "Discard {{text}}",
+    "restore": "Restore",
+    "restoreAria": "Restore {{text}}",
+    "ageToday": "today, {{time}}",
+    "ageYesterday": "yesterday",
+    "ageDays_one": "1 day ago",
+    "ageDays_other": "{{count}} days ago",
+    "source_app": "Trackzyn",
+    "source_desktop": "desktop",
+    "source_mcp": "MCP",
+    "sourceApi": "API",
+    "actionFailed": "That did not work. Try again."
   }
 }

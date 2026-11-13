@@ -864,13 +864,15 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Contador `6` com seis itens e sem número com zero
-- [ ] Enter no campo guarda, limpa e o item aparece por último; vazio não envia; 501 caracteres mostra `Até 500 caracteres` e mantém o texto
-- [ ] Descartar leva à Lixeira; restaurar devolve
-- [ ] Atuais vazia mostra `Nada na caixa. Capture o que estiver na cabeça.`
-- [ ] Gate check passes: Full (frontend)
+- [x] Contador `6` com seis itens e sem número com zero
+- [x] Enter no campo guarda, limpa e o item aparece por último; vazio não envia; 501 caracteres mostra `Até 500 caracteres` e mantém o texto
+- [x] Descartar leva à Lixeira; restaurar devolve
+- [x] Atuais vazia mostra `Nada na caixa. Capture o que estiver na cabeça.`
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/App.tsx`, `frontend/src/lib/nav-items.ts`, `frontend/src/components/app-layout.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/App.tsx`, `frontend/src/lib/nav-items.ts`, `frontend/src/components/app-layout.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/lib/inbox/age.ts` (idade e origem), `frontend/src/lib/inbox/errors.ts`, `frontend/src/lib/inbox/use-capture.ts` (o campo de captura, reaproveitado pelo overlay e pela janela do desktop), `frontend/src/lib/nav-items.test.ts` (a lista exata ganha `inbox`), `frontend/src/components/app-layout.test.tsx` (mock de `inbox.count` e os testes do contador). SPEC_DEVIATION: o item `Caixa de entrada` fica no fim da seção Workspace, depois de Relatórios e Arquivos, e não no topo como no design: os testes da barra lateral fixam a abertura da seção com as três entradas de lista e a ordem Agenda, Planejar, Relatórios, Arquivos.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

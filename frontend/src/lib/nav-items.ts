@@ -1,4 +1,4 @@
-import { Archive, BarChart3, CalendarCheck, CalendarDays, Component, FolderOpen, LayoutGrid, Plus } from 'lucide-react'
+import { Archive, BarChart3, CalendarCheck, CalendarDays, Component, FolderOpen, Inbox, LayoutGrid, Plus } from 'lucide-react'
 
 /**
  * Sidebar destinations. Lives outside `app-layout.tsx` so the filtering
@@ -13,9 +13,20 @@ import { Archive, BarChart3, CalendarCheck, CalendarDays, Component, FolderOpen,
  *
  * A link marked `admin` is for the instance's superuser (`is_superuser`)
  * only: hidden from everyone else, and drawn with the `admin` badge (#32).
+ *
+ * A link with `badge: 'inbox'` shows how many items wait in the user's inbox (INBOX-01).
  */
 export type NavItem =
-  | { type: 'link'; key: string; path: string; icon: React.ElementType; feature?: string; write?: boolean; admin?: boolean }
+  | {
+      type: 'link'
+      key: string
+      path: string
+      icon: React.ElementType
+      feature?: string
+      write?: boolean
+      admin?: boolean
+      badge?: 'inbox'
+    }
   | { type: 'separator'; labelKey: string }
 
 export const navItems: NavItem[] = [
@@ -28,6 +39,10 @@ export const navItems: NavItem[] = [
   { type: 'link', key: 'plan', path: '/planejar', icon: CalendarCheck },
   { type: 'link', key: 'reports', path: '/reports', icon: BarChart3 },
   { type: 'link', key: 'files', path: '/files', icon: FolderOpen, admin: true },
+  // Every member has an inbox, a viewer too (INBOX-01).
+  // SPEC_DEVIATION: the design draws Caixa de entrada first in the Workspace section.
+  // Reason: the section opens with the three list entries, and Agenda, Planejar, Reports and Files follow them in order (nav-items and app-layout tests).
+  { type: 'link', key: 'inbox', path: '/inbox', icon: Inbox, badge: 'inbox' },
   { type: 'separator', labelKey: 'nav.groupDevelopers' },
   { type: 'link', key: 'components', path: '/components', icon: Component, admin: true },
 ]
