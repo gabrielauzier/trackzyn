@@ -420,7 +420,7 @@ O que o código já fixa:
 | GRP-02 | P1: Grupo de tarefas | T11, T26 | Implementing |
 | GRP-03 | P1: Grupo de tarefas | T11, T26 | Implementing |
 | GRP-04 | P1: Grupo de tarefas | T7, T20, T33 | Implementing |
-| GRP-05 | P1: Grupo de tarefas | T20 | In Tasks |
+| GRP-05 | P1: Grupo de tarefas | T20 | Implementing |
 | GRP-06 | P1: Grupo de tarefas | T8, T21 | Implementing |
 | GRP-07 | P1: Grupo de tarefas | T8, T21 | Implementing |
 | GRP-08 | P1: Grupo de tarefas | T8, T21 | Implementing |
@@ -466,7 +466,7 @@ O que o código já fixa:
 | EDGE-02 | Edge Cases | T14 | Implementing |
 | EDGE-03 | Edge Cases | T12 | Implementing |
 | EDGE-04 | Edge Cases | T3 | Implementing |
-| EDGE-05 | Edge Cases | T20 | In Tasks |
+| EDGE-05 | Edge Cases | T20 | Implementing |
 | EDGE-06 | Edge Cases | T18 | Implementing |
 | EDGE-07 | Edge Cases | T12 | Implementing |
 | EDGE-08 | Edge Cases | T15 | Implementing |

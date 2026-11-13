@@ -10,8 +10,8 @@ vi.mock('@/lib/api', () => ({ tasks: { create: vi.fn() } }))
 
 const LIST = '99999999-9999-4999-8999-999999999999'
 
-function card(id: string, title: string, estimate: number | null = 60): TaskCardView {
-  return { ...PLAIN_TASK_FIELDS, id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
+function card(id: string, title: string, estimate: number | null = 60, group_id: string | null = null): TaskCardView {
+  return { ...PLAIN_TASK_FIELDS, group_id, id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
 }
 
 const renderTask = (task: TaskCardView) => <p key={task.id}>{task.title}</p>
@@ -337,5 +337,78 @@ describe('DoneColumn', () => {
     } finally {
       await i18n.changeLanguage('en')
     }
+  })
+})
+
+describe('the group containers of the columns (GRP-04, GRP-05, EDGE-05)', () => {
+  const GROUP = { id: 'g1', name: 'Pipeline', priority: 'none' as const, due_on: null }
+
+  it('GRP-04 draws the group as a container with the column\'s count and its cards, in order, beside the loose tasks', () => {
+    renderWithProviders(
+      <BoardColumn
+        column="this_week"
+        view={progressView({ tasks: [card('a', 'Loose'), card('b', 'Step 1', 60, 'g1'), card('c', 'Step 2', 60, 'g1')] })}
+        groups={[GROUP]}
+        listId={LIST}
+        canWrite
+        renderTask={renderTask}
+      />,
+    )
+
+    const container = screen.getByRole('group', { name: 'Group Pipeline' })
+    expect(within(container).getByText('2 tasks')).toBeInTheDocument()
+    expect(within(container).getAllByText(/^Step/).map((step) => step.textContent)).toEqual(['Step 1', 'Step 2'])
+    expect(within(container).queryByText('Loose')).not.toBeInTheDocument()
+    expect(screen.getByText('Loose')).toBeInTheDocument()
+  })
+
+  it('GRP-05 a column without a task of the group has no container', () => {
+    renderWithProviders(
+      <BoardColumn column="backlog" view={{ tasks: [card('a', 'Loose')], estimate_minutes: 60 }} groups={[GROUP]} listId={LIST} canWrite renderTask={renderTask} />,
+    )
+
+    expect(screen.queryByRole('group', { name: 'Group Pipeline' })).not.toBeInTheDocument()
+  })
+
+  it('EDGE-05 a group with tasks in Today and Done shows in both, each counting its own column', () => {
+    renderWithProviders(
+      <>
+        <BoardColumn
+          column="today"
+          view={progressView({ tasks: [card('a', 'Open 1', 60, 'g1'), card('b', 'Open 2', 60, 'g1')] })}
+          groups={[GROUP]}
+          listId={LIST}
+          canWrite
+          renderTask={renderTask}
+        />
+        <DoneColumn
+          done={{ today_count: 1, days: [{ date: '2026-11-11', tasks: [card('c', 'Closed', 60, 'g1')] }] }}
+          groups={[GROUP]}
+          renderTask={renderTask}
+        />
+      </>,
+    )
+
+    const [today, done] = screen.getAllByRole('group', { name: 'Group Pipeline' })
+    expect(within(today!).getByText('2 tasks')).toBeInTheDocument()
+    expect(within(today!).getByText('Open 1')).toBeInTheDocument()
+    expect(within(done!).getByText('1 task')).toBeInTheDocument()
+    expect(within(done!).getByText('Closed')).toBeInTheDocument()
+  })
+
+  it('numbers the cards inside a container by their place in the column', () => {
+    const numbered = (task: TaskCardView, index: number) => <p key={task.id}>{`${index + 1}. ${task.title}`}</p>
+    renderWithProviders(
+      <BoardColumn
+        column="today"
+        view={progressView({ tasks: [card('a', 'Loose'), card('b', 'Step', 60, 'g1')] })}
+        groups={[GROUP]}
+        listId={LIST}
+        canWrite
+        renderTask={numbered}
+      />,
+    )
+
+    expect(within(screen.getByRole('group', { name: 'Group Pipeline' })).getByText('2. Step')).toBeInTheDocument()
   })
 })

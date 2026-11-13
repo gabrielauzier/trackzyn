@@ -769,12 +769,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `columnItems` agrupa as consecutivas do mesmo grupo e deixa as avulsas
-- [ ] O contêiner mostra o nome e `<n> tarefas` contando só a coluna; some da coluna sem tarefa do grupo
-- [ ] Grupo com tarefas em Hoje e Concluídas aparece nas duas
-- [ ] Gate check passes: Quick
+- [x] `columnItems` agrupa as consecutivas do mesmo grupo e deixa as avulsas
+- [x] O contêiner mostra o nome e `<n> tarefas` contando só a coluna; some da coluna sem tarefa do grupo
+- [x] Grupo com tarefas em Hoje e Concluídas aparece nas duas
+- [x] Gate check passes: Quick
 
-**Also touched**: `frontend/src/lib/board/blocks.ts`
+**Also touched**: `frontend/src/lib/board/blocks.ts`, `frontend/src/lib/board/blocks.test.ts`, `frontend/src/components/board/group-container.test.tsx`, `frontend/src/components/board/board-column.tsx` e o teste (props `groups` e `renderGroup`; o `renderGroup` padrão desenha o contêiner simples, e o quadro passa o arrastável no T21), `frontend/src/locales/pt-BR.json` e `en.json` (`board.groupLabel`). Em Concluídas, ordenada por dia, um grupo partido por uma tarefa avulsa vira dois contêineres, cada um com a própria contagem; nas colunas abertas o bloco é contíguo (AD-013) e a contagem é a da coluna.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

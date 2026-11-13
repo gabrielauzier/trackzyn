@@ -607,7 +607,8 @@
       "flag": "Flag",
       "waiting": "Aguardando",
       "always": "Nome, estimativa e tempo registrado aparecem sempre."
-    }
+    },
+    "groupLabel": "Grupo {{name}}"
   },
   "focus": {
     "sounds": {

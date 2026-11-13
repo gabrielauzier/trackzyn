@@ -607,7 +607,8 @@
       "flag": "Flag",
       "waiting": "Waiting",
       "always": "Name, estimate and time spent always show."
-    }
+    },
+    "groupLabel": "Group {{name}}"
   },
   "focus": {
     "sounds": {

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { CircleCheck, Eye, Rocket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AddTaskForm } from '@/components/board/add-task-form'
+import { GroupContainer } from '@/components/board/group-container'
+import { columnItems, type BoardGroup } from '@/lib/board/blocks'
 import { formatDuration } from '@/components/board/format-duration'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -14,6 +16,33 @@ type PendingColumn = 'backlog' | 'this_week' | 'today'
 
 const shell = 'flex min-h-0 flex-col gap-3 rounded-2xl border bg-card/50 p-4'
 
+/** Draws one group's container around its cards (`cards`); the board makes it a drop target. */
+export type RenderGroup = (group: BoardGroup, tasks: TaskCardView[], cards: ReactNode) => ReactNode
+
+const plainGroup: RenderGroup = (group, tasks, cards) => (
+  <GroupContainer key={`${group.id}:${tasks[0]?.id}`} group={group} count={tasks.length}>
+    {cards}
+  </GroupContainer>
+)
+
+/** The tasks of a column, the consecutive ones of a group inside its container (GRP-04). */
+function columnCards(
+  tasks: TaskCardView[],
+  groups: readonly BoardGroup[],
+  renderTask: (task: TaskCardView, index: number) => ReactNode,
+  renderGroup: RenderGroup,
+) {
+  return columnItems(tasks, groups).map((item) =>
+    item.type === 'task'
+      ? renderTask(item.task, item.index)
+      : renderGroup(
+          item.group,
+          item.tasks.map(({ task }) => task),
+          item.tasks.map(({ task, index }) => renderTask(task, index)),
+        ),
+  )
+}
+
 interface BoardColumnProps {
   column: PendingColumn
   /** Today and This week carry `done`/`total` for the progress bar. */
@@ -23,6 +52,10 @@ interface BoardColumnProps {
   canWrite: boolean
   /** Renders one card; `index` is its 0-based place in the column. */
   renderTask: (task: TaskCardView, index: number) => ReactNode
+  /** The groups of the list, drawn as containers around their cards. */
+  groups?: readonly BoardGroup[]
+  /** Draws a container; a plain one when left out. */
+  renderGroup?: RenderGroup
   /** What Focus now does; the focus mode itself comes with `foco-e-sons`. */
   onFocusNow?: () => void
   /** Opens the focus screen without starting the timer; only the desktop app offers it (#14). */
@@ -31,7 +64,18 @@ interface BoardColumnProps {
 }
 
 /** One of the three pending columns: Backlog, This week or Today. */
-export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocusNow, onOpenFocus, className }: BoardColumnProps) {
+export function BoardColumn({
+  column,
+  view,
+  listId,
+  canWrite,
+  renderTask,
+  groups = [],
+  renderGroup = plainGroup,
+  onFocusNow,
+  onOpenFocus,
+  className,
+}: BoardColumnProps) {
   const { t, i18n } = useTranslation()
   const hasProgress = view.done !== undefined && view.total !== undefined
   const done = view.done ?? 0
@@ -89,7 +133,7 @@ export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocu
         </div>
       )}
 
-      <div className="flex flex-col gap-2">{view.tasks.map((task, index) => renderTask(task, index))}</div>
+      <div className="flex flex-col gap-2">{columnCards(view.tasks, groups, renderTask, renderGroup)}</div>
 
       {canWrite && <AddTaskForm listId={listId} column={column} />}
 
@@ -107,11 +151,13 @@ export function BoardColumn({ column, view, listId, canWrite, renderTask, onFocu
 interface DoneColumnProps {
   done: Board['columns']['done']
   renderTask: (task: TaskCardView, index: number) => ReactNode
+  groups?: readonly BoardGroup[]
+  renderGroup?: RenderGroup
   className?: string
 }
 
 /** Concluídas: today and the last earlier day with completions, grouped by day. */
-export function DoneColumn({ done, renderTask, className }: DoneColumnProps) {
+export function DoneColumn({ done, renderTask, groups = [], renderGroup = plainGroup, className }: DoneColumnProps) {
   const { t, i18n } = useTranslation()
   // `date` is a calendar day in the workspace timezone; read it at noon UTC so no offset moves it.
   const dayLabel = new Intl.DateTimeFormat(i18n.language, {
@@ -137,7 +183,7 @@ export function DoneColumn({ done, renderTask, className }: DoneColumnProps) {
               <span>{label}</span>
               <span>{t('board.taskCount', { count: day.tasks.length })}</span>
             </div>
-            {day.tasks.map((task, index) => renderTask(task, index))}
+            {columnCards(day.tasks, groups, renderTask, renderGroup)}
           </div>
         )
       })}
