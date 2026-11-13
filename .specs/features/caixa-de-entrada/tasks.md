@@ -552,12 +552,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Três itens (tarefa, descarte, sem rascunho): uma tarefa criada, um na Lixeira, um em Atuais
-- [ ] Um rascunho com lista arquivada: 409 com `[{item_id, reason: "list_archived"}]` e nada criado
-- [ ] Enviar avulso um item com rascunho apaga o rascunho
-- [ ] Gate check passes: Full (backend)
+- [x] Três itens (tarefa, descarte, sem rascunho): uma tarefa criada, um na Lixeira, um em Atuais
+- [x] Um rascunho com lista arquivada: 409 com `[{item_id, reason: "list_archived"}]` e nada criado
+- [x] Enviar avulso um item com rascunho apaga o rascunho
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/routes/inbox.ts`
+**Also touched**: `backend-node/src/routes/inbox.ts`, `backend-node/test/routes/inbox-commit.test.ts`. `POST /api/inbox/commit` aceita `{item_ids?: string[]}` ou nenhum corpo (sem ids, envia todos os rascunhos) e responde `{tasks: TaskRead[], groups: GroupRead[], discarded: string[]}`. O 409 é `{detail, items: [{item_id, reason}]}`, com `reason` `list_archived`, `list_read_only`, `list_not_found`, `name_too_long` ou `already_processed` (id da revisão que não está mais em Atuais com rascunho). O descarte pelo commit apaga o rascunho do item.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

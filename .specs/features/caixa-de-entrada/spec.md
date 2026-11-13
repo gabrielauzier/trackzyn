@@ -406,10 +406,10 @@ O que o código já fixa:
 | ALL-03 | P1: Processar tudo | T27 | In Tasks |
 | ALL-04 | P1: Processar tudo | T27 | In Tasks |
 | ALL-05 | P1: Processar tudo | T27 | In Tasks |
-| ALL-06 | P1: Processar tudo | T14 | In Tasks |
-| ALL-07 | P1: Processar tudo | T14 | In Tasks |
+| ALL-06 | P1: Processar tudo | T14 | Implementing |
+| ALL-07 | P1: Processar tudo | T14 | Implementing |
 | ALL-08 | P1: Processar tudo | T27 | In Tasks |
-| ALL-09 | P1: Processar tudo | T14 | In Tasks |
+| ALL-09 | P1: Processar tudo | T14 | Implementing |
 | REM-01 | P1: Lembrete | T13, T26 | Implementing |
 | REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
 | REM-03 | P1: Lembrete | T18 | In Tasks |
@@ -463,7 +463,7 @@ O que o código já fixa:
 | API-02 | P2: API e MCP | T6 | Implementing |
 | API-03 | P2: API e MCP | T2, T6 | Implementing |
 | EDGE-01 | Edge Cases | T13 | Implementing |
-| EDGE-02 | Edge Cases | T14 | In Tasks |
+| EDGE-02 | Edge Cases | T14 | Implementing |
 | EDGE-03 | Edge Cases | T12 | Implementing |
 | EDGE-04 | Edge Cases | T3 | Implementing |
 | EDGE-05 | Edge Cases | T20 | In Tasks |

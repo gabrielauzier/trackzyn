@@ -251,3 +251,70 @@ export async function sendItem(db: Database, sender: InboxSender, itemId: string
     throw error
   }
 }
+
+/** Why one item of the review cannot be sent (ALL-07, EDGE-02). */
+export interface CommitRefusal {
+  item_id: string
+  reason: SendRefusal | 'list_not_found' | 'name_too_long'
+}
+
+/** What the review sent: the tasks and groups created, and the ids of the items sent to the trash. */
+export interface CommitResult {
+  tasks: TaskWithSubtasks[]
+  groups: TaskGroup[]
+  discarded: string[]
+}
+
+/** Why `item`'s draft cannot be applied now, or null when it can. */
+async function refusalOf(tx: Database, sender: InboxSender, item: InboxItem, decision: Decision): Promise<CommitRefusal['reason'] | null> {
+  if (decision.type === 'discard') return null
+  if ((decision.name ?? item.text).length > 255) return 'name_too_long'
+  try {
+    await checkList(tx, sender, decision.list_id.toLowerCase())
+    return null
+  } catch (error) {
+    if (!(error instanceof HttpError)) throw error
+    return (error.extra.reason as SendRefusal | undefined) ?? 'list_not_found'
+  }
+}
+
+/**
+ * Sends every draft of Processar tudo in one transaction (ALL-06): each decided item becomes its task,
+ * reminder or group, or goes to the trash without its draft; items without a draft stay in Atuais. `itemIds`,
+ * the items the review shows, must all still be in Atuais with a draft. If any item cannot be sent, nothing
+ * is and the answer is 409 with the reason of each one (ALL-07, EDGE-02).
+ */
+export async function commitDrafts(db: Database, sender: InboxSender, itemIds?: readonly string[], now: Date = new Date()): Promise<CommitResult> {
+  return db.transaction(async (transaction) => {
+    const tx = transaction as Database
+    const drafted = await tx
+      .select()
+      .from(inboxItems)
+      .where(and(ofOwner(sender), isNull(inboxItems.discardedAt), isNotNull(inboxItems.draft)))
+      .orderBy(asc(inboxItems.createdAt), asc(inboxItems.id))
+      .for('update')
+    const chosen = itemIds === undefined ? drafted : drafted.filter((item) => itemIds.includes(item.id))
+    const refusals: CommitRefusal[] = (itemIds ?? [])
+      .filter((id) => !drafted.some((item) => item.id === id))
+      .map((id) => ({ item_id: id, reason: 'already_processed' }))
+    for (const item of chosen) {
+      const reason = await refusalOf(tx, sender, item, item.draft!)
+      if (reason !== null) refusals.push({ item_id: item.id, reason })
+    }
+    if (refusals.length > 0) throw new HttpError(409, 'Some items cannot be sent', {}, { items: refusals })
+
+    const result: CommitResult = { tasks: [], groups: [], discarded: [] }
+    for (const item of chosen) {
+      const decision = item.draft!
+      if (decision.type === 'discard') {
+        await tx.update(inboxItems).set({ discardedAt: now, draft: null }).where(eq(inboxItems.id, item.id))
+        result.discarded.push(item.id)
+        continue
+      }
+      const sent = await applyDecision(tx, sender, await takeItem(tx, sender, item.id), decision, now)
+      result.tasks.push(...sent.tasks)
+      if (sent.group) result.groups.push(sent.group)
+    }
+    return result
+  })
+}

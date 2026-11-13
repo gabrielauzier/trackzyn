@@ -12,6 +12,7 @@ import {
   type InboxOwner,
   type SendResult,
   captureItem,
+  commitDrafts,
   countCurrent,
   discardItem,
   listItems,
@@ -158,6 +159,24 @@ export function inboxRoutes(ctx: AppContext) {
       async (request) => {
         const sender = { ...ownerOf(request.workspace), canWrite: canWrite(request.workspace.member.role) }
         return toSendResultRead(await sendItem(ctx.db, sender, request.params.item_id.toLowerCase(), request.body.decision))
+      },
+    )
+    typed.post(
+      '/api/inbox/commit',
+      {
+        schema: {
+          // The items the review shows; left out, or with no body, every draft is sent.
+          body: z.object({ item_ids: z.array(uuid).max(1000).optional() }).nullish(),
+          response: {
+            200: z.object({ tasks: z.array(taskReadSchema), groups: z.array(groupReadSchema), discarded: z.array(z.string()) }),
+          },
+        },
+        preValidation: reading,
+      },
+      async (request) => {
+        const sender = { ...ownerOf(request.workspace), canWrite: canWrite(request.workspace.member.role) }
+        const result = await commitDrafts(ctx.db, sender, request.body?.item_ids?.map((id) => id.toLowerCase()))
+        return { tasks: result.tasks.map(toTaskRead), groups: result.groups.map(toGroupRead), discarded: result.discarded }
       },
     )
   }
