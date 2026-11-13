@@ -455,6 +455,8 @@ export interface ScheduledTask {
   scheduled_on: string
   scheduled_time: string | null
   series: { id: string; rule: RecurrenceRule } | null
+  /** A reminder with a time is a marker on the Agenda, with no duration (REM-06); left out, a task. */
+  kind?: TaskKind
 }
 
 /** A future occurrence of a series, projected from its rule and never stored (US-11, D14). */

@@ -1026,9 +1026,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Lembrete às 10:00 vira um marcador com sino na linha das 10:00, sem altura de duração e sem arraste de duração
-- [ ] Tarefa agendada com hora continua como bloco
-- [ ] Gate check passes: Quick
+- [x] Lembrete às 10:00 vira um marcador com sino na linha das 10:00, sem altura de duração e sem arraste de duração
+- [x] Tarefa agendada com hora continua como bloco
+- [x] Gate check passes: Quick
+
+**Also touched**: `frontend/src/types/index.ts` (`ScheduledTask.kind`, opcional porque as fixtures antigas não o têm), `frontend/src/components/agenda/scheduled-block.test.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json` (`Lembrete · HH:MM`). O marcador continua arrastável para outro horário (mover, não mudar a duração). Fim da fase: build do frontend ok.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

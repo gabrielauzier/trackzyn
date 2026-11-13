@@ -1,6 +1,6 @@
 import type { PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Clock, Repeat } from 'lucide-react'
+import { Bell, Clock, Repeat } from 'lucide-react'
 
 import { formatDuration } from '@/components/board/format-duration'
 import { TaskSlot } from '@/components/agenda/task-slot'
@@ -49,6 +49,39 @@ export function ScheduledBlock({ piece, pxPerMinute, canWrite, onOpen, onDragSta
   const where = projection ? repeatsLabel(scheduled.occurrence.rule, t, language) : `${scheduled.task.list.name} · ${t(`board.columns.${scheduled.task.column}`)}`
   // A projection does not move (D14); a viewer moves nothing (US-6).
   const action = canWrite && !projection ? t('agenda.scheduled.openOrDrag') : t('agenda.scheduled.open')
+
+  // A reminder with a time is a marker at its hour, with no height of duration (REM-06).
+  const reminder = !projection && scheduled.task.kind === 'reminder'
+  if (reminder) {
+    const at = t('agenda.scheduled.reminder', { time: start })
+    return (
+      <TaskSlot
+        piece={{ ...piece, end: piece.start }}
+        pxPerMinute={pxPerMinute}
+        color={source.list.color}
+        icon={Bell}
+        iconSlot="bell-icon"
+        label={`${source.title}, ${at}`}
+        onOpen={() => onOpen?.(taskId)}
+        onPointerDown={onDragStart}
+        className={cn('overflow-visible rounded-none border-0 border-t-2 border-solid', onDragStart && 'cursor-grab', dragging && 'opacity-30')}
+        data={{
+          'data-scheduled-id': taskId,
+          'data-reminder': true,
+          'data-draggable': onDragStart ? true : undefined,
+          'data-dragging': dragging || undefined,
+        }}
+        tooltip={
+          <>
+            <span className="font-medium break-words whitespace-normal">{source.title}</span>
+            <span className="tabular-nums opacity-80">{at}</span>
+            <span className="opacity-80">{where}</span>
+            <span className="opacity-80">{action}</span>
+          </>
+        }
+      />
+    )
+  }
 
   const Icon = repeats ? Repeat : Clock
 

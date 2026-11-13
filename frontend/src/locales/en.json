@@ -904,7 +904,8 @@
       "defaultHour": "(1h)",
       "next": "Next occurrence · {{day}} · {{start}} – {{end}}",
       "openOrDrag": "Click to open · drag to reschedule",
-      "open": "Click to open"
+      "open": "Click to open",
+      "reminder": "Reminder · {{time}}"
     },
     "untimed": {
       "label": "Scheduled without a set time",

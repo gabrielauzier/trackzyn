@@ -904,7 +904,8 @@
       "defaultHour": "(1h)",
       "next": "Próxima ocorrência · {{day}} · {{start}} – {{end}}",
       "openOrDrag": "Clique para abrir · arraste para reagendar",
-      "open": "Clique para abrir"
+      "open": "Clique para abrir",
+      "reminder": "Lembrete · {{time}}"
     },
     "untimed": {
       "label": "Agendadas sem hora definida",
