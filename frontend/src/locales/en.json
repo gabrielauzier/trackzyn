@@ -1131,5 +1131,13 @@
     "newTask": {
       "hint": "For the plan of the day."
     }
+  },
+  "priority": {
+    "label": "{{name}} priority",
+    "none": "None",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "ultra": "Ultra"
   }
 }

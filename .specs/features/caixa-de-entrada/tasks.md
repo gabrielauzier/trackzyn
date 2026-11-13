@@ -676,11 +676,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Cada prioridade tem o ícone, a cor e o rótulo `Prioridade <nome>`; `none` não renderiza nada; o select lista as cinco com ícone
-- [ ] `dueState`: amanhã e hoje → `soon`; ontem → `late`; ontem em `done` → `done`; depois de amanhã → `neutral`; virada do dia no fuso do workspace
-- [ ] Gate check passes: Quick
+- [x] Cada prioridade tem o ícone, a cor e o rótulo `Prioridade <nome>`; `none` não renderiza nada; o select lista as cinco com ícone
+- [x] `dueState`: amanhã e hoje → `soon`; ontem → `late`; ontem em `done` → `done`; depois de amanhã → `neutral`; virada do dia no fuso do workspace
+- [x] Gate check passes: Quick
 
-**Also touched**: `frontend/src/lib/board/due.ts`
+**Also touched**: `frontend/src/lib/board/due.ts`, `frontend/src/lib/board/due.test.ts`, `frontend/src/components/board/priority.test.tsx`, `frontend/src/locales/pt-BR.json` e `en.json` (namespace `priority`: os cinco nomes e o rótulo `Prioridade {{name}}`). `dueState(due_on, column, today)` recebe o `today` já no fuso do workspace (`todayInTimezone`). No select, o ícone fica ao lado do nome e é decorativo; o rótulo acessível `Prioridade <nome>` é do `PriorityIcon` do card.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

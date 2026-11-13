@@ -428,14 +428,14 @@ O que o código já fixa:
 | GRP-10 | P1: Grupo de tarefas | T8, T21 | Implementing |
 | GRP-11 | P1: Grupo de tarefas | T8 | Implementing |
 | PRI-01 | P1: Prioridade | T1, T2 | Implementing |
-| PRI-02 | P1: Prioridade | T17 | In Tasks |
-| PRI-03 | P1: Prioridade | T17 | In Tasks |
-| PRI-04 | P1: Prioridade | T17 | In Tasks |
+| PRI-02 | P1: Prioridade | T17 | Implementing |
+| PRI-03 | P1: Prioridade | T17 | Implementing |
+| PRI-04 | P1: Prioridade | T17 | Implementing |
 | DUE-01 | P1: Prazo | T1, T2 | Implementing |
-| DUE-02 | P1: Prazo | T17 | In Tasks |
-| DUE-03 | P1: Prazo | T17 | In Tasks |
-| DUE-04 | P1: Prazo | T17 | In Tasks |
-| DUE-05 | P1: Prazo | T17 | In Tasks |
+| DUE-02 | P1: Prazo | T17 | Implementing |
+| DUE-03 | P1: Prazo | T17 | Implementing |
+| DUE-04 | P1: Prazo | T17 | Implementing |
+| DUE-05 | P1: Prazo | T17 | Implementing |
 | WAIT-01 | P1: Aguardando | T1, T2 | Implementing |
 | WAIT-02 | P1: Aguardando | T18 | In Tasks |
 | WAIT-03 | P1: Aguardando | T2 | Implementing |
