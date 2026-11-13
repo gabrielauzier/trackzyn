@@ -460,7 +460,7 @@ O que o código já fixa:
 | MODAL-05 | P1: Modal da tarefa | T22 | In Tasks |
 | MODAL-06 | P1: Modal da tarefa | T22 | In Tasks |
 | API-01 | P2: API e MCP | T4, T6, T16 | Implementing |
-| API-02 | P2: API e MCP | T6 | In Tasks |
+| API-02 | P2: API e MCP | T6 | Implementing |
 | API-03 | P2: API e MCP | T2, T6 | Implementing |
 | EDGE-01 | Edge Cases | T13 | In Tasks |
 | EDGE-02 | Edge Cases | T14 | In Tasks |

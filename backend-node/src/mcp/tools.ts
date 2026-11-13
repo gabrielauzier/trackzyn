@@ -11,8 +11,10 @@ import {
   moveTaskBody,
   recurrenceBody,
   scheduleFields,
+  taskFields,
   taskParams,
   toSubtaskRead,
+  toTaskFields,
   toTaskRead,
   updateTaskAndSchedule,
   updateTaskBody,
@@ -64,6 +66,18 @@ const SCHEDULE_TEXTS = {
     'Makes the task repeat from scheduled_on, or null to stop. {freq: daily | weekly | monthly, interval: 1 to 99, weekdays: [1 (Monday) to 7 (Sunday)] for weekly, month_day: 1 to 31 for monthly, until: YYYY-MM-DD or count: 1 to 999 to end it}. The next occurrence is created when this one is completed. Needs scheduled_on.',
 }
 
+/** The texts of the caixa-de-entrada fields of create_task and update_task (API-02). */
+const FIELD_TEXTS = {
+  kind: 'task (the default) or reminder. A reminder has no estimate and no focus.',
+  priority: 'none (the default), low, medium, high or ultra.',
+  due_on: 'The day the task must be done by (YYYY-MM-DD) in the workspace timezone, apart from scheduled_on, or null for none.',
+  waiting: 'true when the task waits on someone; it stays in its column, out of the estimate sums. false clears waiting_for.',
+  waiting_for: 'Who the task waits on, up to 100 characters, or null. Needs waiting.',
+  flagged: 'true to flag the task as needing attention; false clears flag_reason. A completed task has no flag.',
+  flag_reason: 'Why the task is flagged, up to 200 characters, or null. Needs flagged.',
+  group_id: 'The id of a group of tasks of the same list, as get_board answers in groups, or null for none.',
+}
+
 const TOOLS: readonly Tool[] = [
   tool({
     name: 'list_lists',
@@ -75,7 +89,7 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'get_board',
-    description: 'Get the board of a list: its tasks grouped by column (backlog, this_week, today, done), with estimates, time spent, subtask progress, the scheduled day and time and the recurrence rule with its next day.',
+    description: 'Get the board of a list: its tasks grouped by column (backlog, this_week, today, done), with estimates, time spent, subtask progress, the scheduled day and time, the recurrence rule with its next day, kind, priority, due day, waiting, flag and group, and the groups of the list.',
     scope: 'tasks:read',
     write: false,
     input: described(listParams, { list_id: 'The id of the list, as returned by list_lists.' }),
@@ -89,7 +103,7 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'get_task',
-    description: 'Get one task with its notes, estimate, column, subtasks, scheduled day and time and the recurrence rule with its next day.',
+    description: 'Get one task with its notes, estimate, column, subtasks, scheduled day and time, the recurrence rule with its next day, kind, priority, due day, waiting, flag and group.',
     scope: 'tasks:read',
     write: false,
     input: described(taskParams, { task_id: TASK_ID }),
@@ -102,11 +116,12 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'create_task',
-    description: 'Create a task in a list, optionally with notes, an estimate, subtasks, a scheduled day and time and a recurrence. It goes to the end of its column. Send an idempotency_key when you may retry, so that a retry does not create the task twice. The list must not be archived.',
+    description: 'Create a task or a reminder in a list, optionally with notes, an estimate, subtasks, a scheduled day and time, a recurrence, a priority, a due day, waiting, a flag and a group. It goes to the end of its column. Send an idempotency_key when you may retry, so that a retry does not create the task twice. The list must not be archived.',
     scope: 'tasks:create',
     write: true,
-    input: described(createTaskBody.extend({ ...scheduleInput, idempotency_key: withoutNul(z.string().min(1).max(255)).optional() }), {
+    input: described(createTaskBody.extend({ ...scheduleInput, ...taskFields, idempotency_key: withoutNul(z.string().min(1).max(255)).optional() }), {
       ...SCHEDULE_TEXTS,
+      ...FIELD_TEXTS,
       list_id: 'The id of the list, as returned by list_lists.',
       title: 'The title of the task, 1 to 255 characters.',
       estimate_minutes: 'How long the task should take, from 1 to 1440 minutes, or null for no estimate.',
@@ -117,7 +132,7 @@ const TOOLS: readonly Tool[] = [
     }),
     run: async ({ ctx, workspace, principal }, { idempotency_key, recurrence, ...body }) => {
       const workspaceId = workspace.workspace.id
-      const input = toTaskIntake({ ...body, recurrence })
+      const input = { ...toTaskIntake({ ...body, recurrence }), fields: toTaskFields(body) }
       const on = input.scheduledOn ?? null
       const time = input.scheduledTime ?? null
       // Created, scheduled and made to repeat in one transaction, so a refused schedule or rule creates nothing:
@@ -136,11 +151,12 @@ const TOOLS: readonly Tool[] = [
   }),
   tool({
     name: 'update_task',
-    description: 'Change the title, estimate, notes, scheduled day and time or recurrence of a task. Send only the fields to change; a new day keeps the time. To change its column, use move_task.',
+    description: 'Change the title, estimate, notes, scheduled day and time, recurrence, kind, priority, due day, waiting, flag or group of a task. Send only the fields to change; a new day keeps the time. To change its column, use move_task.',
     scope: 'tasks:write',
     write: true,
-    input: described(taskParams.extend({ ...updateTaskBody.shape, ...scheduleInput }), {
+    input: described(taskParams.extend({ ...updateTaskBody.shape, ...scheduleInput, ...taskFields }), {
       ...SCHEDULE_TEXTS,
+      ...FIELD_TEXTS,
       task_id: TASK_ID,
       title: 'The new title, 1 to 255 characters.',
       estimate_minutes: 'The new estimate, from 1 to 1440 minutes, or null to remove it.',

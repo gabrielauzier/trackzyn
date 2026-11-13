@@ -271,9 +271,12 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `update_task` com `priority: "high"` e `due_on` grava; `get_task` e `get_board` devolvem os dois
-- [ ] Valor inválido → `isError` com a mensagem de 422, sem gravar
-- [ ] Gate check passes: Full (backend)
+- [x] `update_task` com `priority: "high"` e `due_on` grava; `get_task` e `get_board` devolvem os dois
+- [x] Valor inválido → `isError` com a mensagem de 422, sem gravar
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/test/mcp/create-task.test.ts` (o MCP-03 lista os campos do `create_task` e ganha os oito novos). `get_task` e `get_board` já devolviam os campos desde o T2 e o T4; esta tarefa abre `create_task` e `update_task` com `taskFields`.
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full
