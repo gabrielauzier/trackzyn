@@ -220,7 +220,10 @@ describe('FocusWidgetPage', () => {
 
     // Unchanged: the second click closes it, and it does not open again.
     await user.click(screen.getByRole('button', { name: 'Notes' }))
-    await screen.findByRole('textbox', { name: 'Notes' })
+    // The editor takes the focus a timeout and an animation frame after it shows up; the second click
+    // closes by leaving the field, so it comes once the field has the focus, as it does for a person.
+    const opened = await screen.findByRole('textbox', { name: 'Notes' })
+    await waitFor(() => expect(opened).toHaveFocus())
     await user.click(screen.getByRole('button', { name: 'Notes' }))
     await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument())
     await new Promise((resolve) => setTimeout(resolve, 50))
