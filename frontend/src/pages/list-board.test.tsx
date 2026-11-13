@@ -8,7 +8,7 @@ import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import { play } from '@/lib/sounds/synth'
 import { toast } from 'sonner'
-import { i18n, renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Board, FocusState, ListCard, Task, TaskCardView } from '@/types'
 
 const state = vi.hoisted(() => ({ canWrite: true }))
@@ -34,11 +34,11 @@ const T2 = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const T3 = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 
 function card(id: string, title: string, estimate: number | null = 60): TaskCardView {
-  return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
+  return { ...PLAIN_TASK_FIELDS, id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
 }
 
 function boardOf(id: string, name: string): Board {
-  return {
+  return { groups: [],
     list: { id, name, color: 3 },
     timezone: 'America/Sao_Paulo',
     pending: { count: 1, estimate_minutes: 60 },
@@ -66,7 +66,7 @@ function listCard(id: string, name: string, position: number): ListCard {
   }
 }
 
-const fullTask: Task = {
+const fullTask: Task = { ...PLAIN_TASK_FIELDS,
   id: TODAY_TASK,
   list_id: WEEK,
   title: 'DEV-1725',
@@ -234,7 +234,7 @@ describe('ListBoardPage', () => {
   })
 
   it('shows an empty list as all clear in Portuguese', async () => {
-    vi.mocked(lists.board).mockResolvedValue({
+    vi.mocked(lists.board).mockResolvedValue({ groups: [],
       list: { id: WEEK, name: 'Week', color: 3 },
       timezone: 'America/Sao_Paulo',
       pending: { count: 0, estimate_minutes: 0 },

@@ -18,6 +18,7 @@ import { render, type RenderOptions, type RenderResult } from '@testing-library/
 import userEvent from '@testing-library/user-event'
 
 import i18n from '@/lib/i18n'
+import type { TaskFields } from '@/types'
 import { SidebarStateProvider } from '@/contexts/sidebar-state-provider'
 
 /**
@@ -95,6 +96,18 @@ export function t(key: string, options?: Record<string, unknown>): string {
 }
 
 export { i18n }
+
+/** The new task fields at their defaults (a plain task, no priority, due day, waiting, flag or group), for fixtures. */
+export const PLAIN_TASK_FIELDS: TaskFields = {
+  kind: 'task',
+  priority: 'none',
+  due_on: null,
+  waiting: false,
+  waiting_for: null,
+  flagged: false,
+  flag_reason: null,
+  group_id: null,
+}
 
 /** Puts the caret at the end of a contenteditable, which user-event cannot do with the keyboard. */
 export function placeCaretAtEnd(element: HTMLElement) {

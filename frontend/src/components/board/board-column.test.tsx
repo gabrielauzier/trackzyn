@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
 
 import { BoardColumn, DoneColumn } from '@/components/board/board-column'
-import { i18n, renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { TrackzynApi } from '@/lib/platform'
 import type { Board, BoardProgressColumnView, TaskCardView } from '@/types'
 
@@ -11,7 +11,7 @@ vi.mock('@/lib/api', () => ({ tasks: { create: vi.fn() } }))
 const LIST = '99999999-9999-4999-8999-999999999999'
 
 function card(id: string, title: string, estimate: number | null = 60): TaskCardView {
-  return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
+  return { ...PLAIN_TASK_FIELDS, id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
 }
 
 const renderTask = (task: TaskCardView) => <p key={task.id}>{task.title}</p>

@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 
 import { AddTaskForm } from '@/components/board/add-task-form'
 import { tasks } from '@/lib/api'
-import { renderWithProviders } from '@/test/utils'
+import { renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
@@ -12,7 +12,7 @@ vi.mock('@/lib/api', () => ({
 
 const LIST = '11111111-1111-4111-8111-111111111111'
 
-const created: Task = {
+const created: Task = { ...PLAIN_TASK_FIELDS,
   id: '22222222-2222-4222-8222-222222222222',
   list_id: LIST,
   title: 'Write the report',

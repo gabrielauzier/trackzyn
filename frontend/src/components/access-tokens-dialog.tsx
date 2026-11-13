@@ -32,6 +32,7 @@ const SCOPE_KEYS: Record<AccessTokenScope, string> = {
   'tasks:create': 'accessTokens.scopeTasksCreate',
   'tasks:write': 'accessTokens.scopeTasksWrite',
   'tasks:delete': 'accessTokens.scopeTasksDelete',
+  'inbox:create': 'accessTokens.scopeInboxCreate',
 }
 const SCOPES = Object.keys(SCOPE_KEYS) as AccessTokenScope[]
 const DEFAULT_SCOPES: AccessTokenScope[] = ['lists:read', 'tasks:create']

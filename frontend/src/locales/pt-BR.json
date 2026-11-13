@@ -22,6 +22,7 @@
     "errorReadOnly": "Seu papel neste workspace é só de leitura: escolha apenas escopos de leitura.",
     "errorWorkspace": "Você não é membro deste workspace.",
     "nameVisible": "O nome do token fica visível aos membros do workspace nas tarefas criadas por ele.",
+    "scopeInboxCreate": "Capturar na caixa de entrada",
     "scopeListsRead": "Ver as listas do workspace",
     "scopeTasksCreate": "Criar tarefas",
     "scopeTasksDelete": "Excluir tarefas e subtarefas, com o tempo registrado",

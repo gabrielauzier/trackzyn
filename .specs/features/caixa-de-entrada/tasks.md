@@ -646,11 +646,13 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Um teste por método novo confere URL, verbo e corpo
-- [ ] O diálogo de tokens lista `Capturar na caixa de entrada`
-- [ ] Gate check passes: Full (frontend)
+- [x] Um teste por método novo confere URL, verbo e corpo
+- [x] O diálogo de tokens lista `Capturar na caixa de entrada`
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/types/index.ts`, `frontend/src/components/access-tokens-dialog.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/types/index.ts`, `frontend/src/components/access-tokens-dialog.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/lib/api.test.ts`, `frontend/src/components/access-tokens-dialog.test.tsx`, `frontend/src/test/utils.tsx` (`PLAIN_TASK_FIELDS`, os campos novos no padrão), e os fixtures de `Task`, `TaskCardView` e `Board` que o typecheck pediu (`new-schedule-panel`, `add-task-form`, `board-column`, `drop-target`, `subtask-list`, `task-card`, `task-dialog`, `focus-notes`, `focus-subtasks`, `widget-notes`, `agenda`, `focus`, `list-board`). Os clientes seguem o nome dos vizinhos do arquivo: `inbox`, `groups` e `cardFields` (o design os chama `inboxApi`, `groupsApi` e `cardFieldsApi`). `tasks.move` devolve `group_without_next_action` como opcional no tipo, para os mocks que devolvem só a `Task`.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

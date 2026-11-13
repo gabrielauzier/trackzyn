@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, within } from '@testing-library/react'
 
 import { TaskCard } from '@/components/board/task-card'
-import { i18n, renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { TaskCardView, TaskColumn } from '@/types'
 
 function task(overrides: Partial<TaskCardView> = {}): TaskCardView {
-  return {
+  return { ...PLAIN_TASK_FIELDS,
     id: '11111111-1111-4111-8111-111111111111',
     title: 'DEV-1725',
     estimate_minutes: 60,

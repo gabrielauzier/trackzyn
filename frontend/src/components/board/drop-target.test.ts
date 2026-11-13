@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 import { dropTarget } from '@/components/board/drop-target'
 import type { Board, TaskCardView } from '@/types'
+import { PLAIN_TASK_FIELDS } from '@/test/utils'
 
-const card = (id: string, position: number): TaskCardView => ({
+const card = (id: string, position: number): TaskCardView => ({ ...PLAIN_TASK_FIELDS,
   id,
   title: id,
   estimate_minutes: null,
@@ -17,7 +18,7 @@ const card = (id: string, position: number): TaskCardView => ({
 })
 
 // Backlog is empty; Today has three cards, This week one, Concluídas one.
-const board: Board = {
+const board: Board = { groups: [],
   list: { id: 'list', name: 'List', color: 0 },
   timezone: 'America/Sao_Paulo',
   pending: { count: 4, estimate_minutes: 0 },

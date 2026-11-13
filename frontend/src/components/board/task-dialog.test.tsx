@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 
 import { TaskDialog } from '@/components/board/task-dialog'
 import { tasks } from '@/lib/api'
-import { i18n, placeCaretAtEnd, renderWithProviders } from '@/test/utils'
+import { i18n, placeCaretAtEnd, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
@@ -13,7 +13,7 @@ vi.mock('@/lib/api', () => ({
 
 const TASK = '11111111-1111-4111-8111-111111111111'
 
-const task: Task = {
+const task: Task = { ...PLAIN_TASK_FIELDS,
   id: TASK,
   list_id: '99999999-9999-4999-8999-999999999999',
   title: 'Write the report',

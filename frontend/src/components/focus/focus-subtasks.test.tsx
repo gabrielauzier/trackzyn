@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react'
 
 import { FocusSubtasks } from '@/components/focus/focus-subtasks'
 import i18n from '@/lib/i18n'
-import { renderWithProviders } from '@/test/utils'
+import { renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Subtask, Task } from '@/types'
 
 const api = vi.hoisted(() => ({
@@ -15,7 +15,7 @@ vi.mock('@/lib/api', () => api)
 const sub = (id: string, title: string, done: boolean, position: number): Subtask => ({ id, task_id: 'task-a', title, done, position })
 
 function taskWith(items: Subtask[]): Task {
-  return {
+  return { ...PLAIN_TASK_FIELDS,
     id: 'task-a',
     list_id: 'list-1',
     title: 'Write the report',

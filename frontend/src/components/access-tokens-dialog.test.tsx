@@ -211,7 +211,7 @@ describe('AccessTokensDialog form', () => {
     expect(screen.getByRole('combobox', { name: 'Workspace' })).toHaveTextContent('Synthetic workspace')
     expect(screen.getByRole('combobox', { name: 'Expires in' })).toHaveTextContent('90 days')
     const checks = Object.fromEntries(
-      ['lists:read', 'tasks:read', 'tasks:create', 'tasks:write', 'tasks:delete'].map((scope) => [
+      ['lists:read', 'tasks:read', 'tasks:create', 'tasks:write', 'tasks:delete', 'inbox:create'].map((scope) => [
         scope,
         screen.getByRole('checkbox', { name: new RegExp(`^${scope}`) }).getAttribute('aria-checked'),
       ]),
@@ -222,7 +222,16 @@ describe('AccessTokensDialog form', () => {
       'tasks:create': 'true',
       'tasks:write': 'false',
       'tasks:delete': 'false',
+      'inbox:create': 'false',
     })
+  })
+
+  it('CAP-10 lists the inbox:create scope as Capturar na caixa de entrada', async () => {
+    await i18n.changeLanguage('pt-BR')
+    const { user } = renderDialog()
+    await user.click(await screen.findByRole('button', { name: 'Gerar token' }))
+
+    expect(await screen.findByRole('checkbox', { name: 'inbox:create Capturar na caixa de entrada' })).toHaveAttribute('aria-checked', 'false')
   })
 
   it('warns that the token name is visible to the workspace members', async () => {

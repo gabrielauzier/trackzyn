@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 
 import { SubtaskList } from '@/components/board/subtask-list'
 import { subtasks, tasks } from '@/lib/api'
-import { renderWithProviders } from '@/test/utils'
+import { renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Subtask, Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
@@ -20,7 +20,7 @@ function subtask(id: string, title: string, done: boolean, position: number): Su
 }
 
 function taskWith(items: Subtask[]): Task {
-  return {
+  return { ...PLAIN_TASK_FIELDS,
     id: TASK,
     list_id: '99999999-9999-4999-8999-999999999999',
     title: 'Write the report',

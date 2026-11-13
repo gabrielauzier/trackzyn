@@ -22,6 +22,7 @@
     "errorReadOnly": "Your role in this workspace is read-only: choose only read scopes.",
     "errorWorkspace": "You are not a member of this workspace.",
     "nameVisible": "The token's name is visible to workspace members on the tasks it creates.",
+    "scopeInboxCreate": "Capture into the inbox",
     "scopeListsRead": "See the workspace's lists",
     "scopeTasksCreate": "Create tasks",
     "scopeTasksDelete": "Delete tasks and subtasks, with their recorded time",

@@ -11,7 +11,7 @@ import { play } from '@/lib/sounds/synth'
 import * as queue from '@/lib/focus/queue'
 import type { QueuedAction } from '@/lib/focus/queue'
 import type { TrackzynApi } from '@/lib/platform'
-import { placeCaretAtEnd, renderWithProviders } from '@/test/utils'
+import { placeCaretAtEnd, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { FocusState, ListCard, PlannedBlock, Subtask, Task } from '@/types'
 
 const role = vi.hoisted(() => ({ canWrite: true }))
@@ -42,7 +42,7 @@ const now = () => new Date().toISOString()
 
 /** The task `id` as `GET /api/tasks/:id` answers it, with `items` as its subtasks. */
 function taskWith(id: string, items: Subtask[]): Task {
-  return {
+  return { ...PLAIN_TASK_FIELDS,
     id,
     list_id: LIST,
     title: id,
