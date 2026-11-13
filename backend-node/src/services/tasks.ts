@@ -2,15 +2,18 @@ import { randomUUID } from 'node:crypto'
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import {
+  type Priority,
   type Subtask,
   type Task,
   type TaskColumn,
+  type TaskKind,
   type TaskOrigin,
   type TaskSeries,
   focusSessions,
   lists,
   personalAccessTokens,
   subtasks,
+  taskGroups,
   taskSeries,
   tasks,
 } from '../db/schema.ts'
@@ -58,6 +61,55 @@ export async function getTask(db: Database, taskId: string, workspaceId: string)
   return { ...row.task, subtasks: found, createdVia: createdVia(row.createdVia, row.task.createdFrom), series: row.series }
 }
 
+/** The fields of caixa-de-entrada on a task; a field left out keeps its value (or its default on create). */
+export interface TaskFields {
+  kind?: TaskKind
+  priority?: Priority
+  dueOn?: string | null
+  waiting?: boolean
+  waitingFor?: string | null
+  flagged?: boolean
+  flagReason?: string | null
+  groupId?: string | null
+}
+
+const fieldError = (message: string, code: string) => new HttpError(422, message, {}, { code })
+
+/**
+ * The fields `changes` leave on `current`, or 422. Unmarking Aguardando clears "de quem" (WAIT-05), taking the
+ * flag off clears its reason (FLAG-04); a reminder has no estimate (REM-02), a completed task has no flag
+ * (FLAG-05) and the group must be one of the task's list.
+ */
+async function resolveFields(
+  db: Database,
+  current: Pick<Task, 'listId' | 'column' | 'kind' | 'estimateMinutes' | 'waiting' | 'flagged'>,
+  changes: TaskFields & { estimateMinutes?: number | null },
+): Promise<TaskFields> {
+  const kind = changes.kind ?? current.kind
+  const estimate = changes.estimateMinutes !== undefined ? changes.estimateMinutes : current.estimateMinutes
+  if (kind === 'reminder' && estimate !== null) throw fieldError('A reminder has no estimate', 'reminder_estimate')
+  const waiting = changes.waiting ?? current.waiting
+  if (!waiting && changes.waitingFor != null) throw fieldError('waiting_for needs waiting', 'waiting_for_needs_waiting')
+  const flagged = changes.flagged ?? current.flagged
+  if (!flagged && changes.flagReason != null) throw fieldError('flag_reason needs flagged', 'flag_reason_needs_flag')
+  if (flagged && current.column === 'done') throw fieldError('A completed task has no flag', 'flag_on_done')
+  if (changes.groupId != null) {
+    const [group] = await db.select({ listId: taskGroups.listId }).from(taskGroups).where(eq(taskGroups.id, changes.groupId))
+    if (group?.listId !== current.listId) throw fieldError('The group is not of the list of the task', 'group_of_another_list')
+  }
+  // Only what changes, so an empty change is not an update of the task (PICK-01).
+  return {
+    kind: changes.kind,
+    priority: changes.priority,
+    dueOn: changes.dueOn,
+    waiting: changes.waiting,
+    waitingFor: waiting ? changes.waitingFor : changes.waiting === false ? null : undefined,
+    flagged: changes.flagged,
+    flagReason: flagged ? changes.flagReason : changes.flagged === false ? null : undefined,
+    groupId: changes.groupId,
+  }
+}
+
 /** Serialises every change to the order of a list's tasks (two moves at once: the last one wins). */
 export async function lockList(tx: Database, listId: string): Promise<void> {
   await tx.select({ id: lists.id }).from(lists).where(eq(lists.id, listId)).for('update')
@@ -67,7 +119,7 @@ export async function createTask(
   db: Database,
   workspaceId: string,
   /** `userId` is who creates the task: a task created in done counts as completed by them (AD-006). */
-  input: {
+  input: TaskFields & {
     listId: string
     title: string
     estimateMinutes: number | null
@@ -86,6 +138,11 @@ export async function createTask(
   now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const list = await getList(db, input.listId, workspaceId)
+  const fields = await resolveFields(
+    db,
+    { listId: list.id, column: input.column, kind: 'task', estimateMinutes: null, waiting: false, flagged: false },
+    input,
+  )
   return db.transaction(async (tx) => {
     await lockList(tx as Database, list.id)
     // Read under the lock: the list may have been archived since `getList`.
@@ -114,14 +171,14 @@ export async function createTask(
       scheduledTime: null,
       scheduleAppliedAt: null,
       seriesId: null,
-      kind: 'task',
-      priority: 'none',
-      dueOn: null,
-      waiting: false,
-      waitingFor: null,
-      flagged: false,
-      flagReason: null,
-      groupId: null,
+      kind: fields.kind ?? 'task',
+      priority: fields.priority ?? 'none',
+      dueOn: fields.dueOn ?? null,
+      waiting: fields.waiting ?? false,
+      waitingFor: fields.waitingFor ?? null,
+      flagged: fields.flagged ?? false,
+      flagReason: fields.flagReason ?? null,
+      groupId: fields.groupId ?? null,
     }
     await tx.insert(tasks).values(task)
     const created: Subtask[] = (input.subtasks ?? []).map((title, position) => ({ id: randomUUID(), taskId: task.id, title, done: false, position }))
@@ -134,11 +191,12 @@ export async function updateTask(
   db: Database,
   taskId: string,
   workspaceId: string,
-  changes: { title?: string; estimateMinutes?: number | null; notes?: string },
+  changes: TaskFields & { title?: string; estimateMinutes?: number | null; notes?: string },
   now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const task = await findTask(db, taskId, workspaceId)
-  const given = Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined))
+  const fields = await resolveFields(db, task, changes)
+  const given = Object.fromEntries(Object.entries({ ...changes, ...fields }).filter(([, value]) => value !== undefined))
   // A change of a field is an update of the task (PICK-01).
   if (Object.keys(given).length > 0) await db.update(tasks).set({ ...given, updatedAt: now }).where(eq(tasks.id, task.id))
   return getTask(db, task.id, workspaceId)
@@ -209,8 +267,8 @@ export async function deleteTask(db: Database, taskId: string, workspaceId: stri
 }
 
 /**
- * A copy of the task in the same list and column, at the end of it, with the same notes, estimate and
- * subtasks (none of them done). A copy of a completed task starts in backlog: it has not been done yet.
+ * A copy of the task in the same list and column, at the end of it, with the same notes, estimate,
+ * subtasks (none of them done), kind, priority, due day, Aguardando and group, without the flag. A copy of a completed task starts in backlog: it has not been done yet.
  */
 export async function duplicateTask(db: Database, taskId: string, workspaceId: string, now: Date = new Date()): Promise<TaskWithSubtasks> {
   const source = await getTask(db, taskId, workspaceId)
@@ -239,14 +297,15 @@ export async function duplicateTask(db: Database, taskId: string, workspaceId: s
       scheduledTime: null,
       scheduleAppliedAt: null,
       seriesId: null,
-      kind: 'task',
-      priority: 'none',
-      dueOn: null,
-      waiting: false,
-      waitingFor: null,
+      kind: source.kind,
+      priority: source.priority,
+      dueOn: source.dueOn,
+      waiting: source.waiting,
+      waitingFor: source.waitingFor,
+      // The copy has not met the problem the flag marks.
       flagged: false,
       flagReason: null,
-      groupId: null,
+      groupId: source.groupId,
     }
     await tx.insert(tasks).values(copy)
     const copies: Subtask[] = source.subtasks.map((subtask, position) => ({

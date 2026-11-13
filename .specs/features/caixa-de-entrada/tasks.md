@@ -149,12 +149,15 @@ T30 → T31
 
 **Done when**:
 
-- [ ] `PATCH` grava e devolve cada campo novo; `priority: "urgent"`, `waiting_for` com 101 caracteres e `flag_reason` com 201 → 422 sem gravar
-- [ ] Marcar e desmarcar Aguardando não muda a coluna nem a posição
-- [ ] Desmarcar `waiting` apaga `waiting_for`; tirar `flagged` apaga `flag_reason`; pôr ou tirar a flag não muda coluna, prioridade nem Aguardando
-- [ ] Estimativa num lembrete → 422
-- [ ] `duplicateTask` copia os campos novos, menos a flag
-- [ ] Gate check passes: Full (backend)
+- [x] `PATCH` grava e devolve cada campo novo; `priority: "urgent"`, `waiting_for` com 101 caracteres e `flag_reason` com 201 → 422 sem gravar
+- [x] Marcar e desmarcar Aguardando não muda a coluna nem a posição
+- [x] Desmarcar `waiting` apaga `waiting_for`; tirar `flagged` apaga `flag_reason`; pôr ou tirar a flag não muda coluna, prioridade nem Aguardando
+- [x] Estimativa num lembrete → 422
+- [x] `duplicateTask` copia os campos novos, menos a flag
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/src/services/task-intake.ts` (os campos entram no `TaskIntake` e no hash da idempotência só quando enviados, então uma chave antiga mantém o hash), `backend-node/test/routes/tasks.test.ts` (o TASK-01 compara a leitura inteira e ganha os campos novos). Os campos ficam em `taskFields` e `toTaskFields`, exportados de `routes/tasks.ts`, fora de `createTaskBody` e `updateTaskBody`, para o MCP ganhá-los no T6. Nesta tarefa `group_id` só é gravado e conferido (grupo de outra lista → 422); o bloco do grupo vem no T8.
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

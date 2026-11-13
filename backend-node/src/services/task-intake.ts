@@ -5,7 +5,7 @@ import { type TaskColumn, taskIdempotencyKeys, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import type { TokenPrincipal } from './access-tokens.ts'
 import type { RecurrenceRule } from './recurrence.ts'
-import { type TaskWithSubtasks, createTask, getTask } from './tasks.ts'
+import { type TaskFields, type TaskWithSubtasks, createTask, getTask } from './tasks.ts'
 
 const KEY_LIFETIME_MS = 86_400_000
 
@@ -22,6 +22,8 @@ export interface TaskIntake {
   scheduledTime?: string | null
   /** The rule the caller applies once the task exists (US-7, MCP only); it counts for the request hash. */
   recurrence?: RecurrenceRule | null
+  /** Priority, due day, Aguardando, flag, kind and group (caixa-de-entrada); they count for the request hash. */
+  fields?: TaskFields
 }
 
 /** The body of `POST /api/tasks` after its schema, with every default filled: two ways of saying the same thing hash the same (IDEM-03). */
@@ -49,12 +51,14 @@ export function toTaskIntake(body: {
   }
 }
 
-function requestHash({ listId, title, estimateMinutes, column, notes, subtasks, scheduledOn, scheduledTime, recurrence }: TaskIntake): string {
-  // Left out when there is none, so a key stored before the schedule or the rule counted keeps its hash.
+function requestHash({ listId, title, estimateMinutes, column, notes, subtasks, scheduledOn, scheduledTime, recurrence, fields }: TaskIntake): string {
+  // Left out when there is none, so a key stored before the schedule, the rule or the fields counted keeps its hash.
   const schedule = scheduledOn == null ? {} : { scheduledOn, scheduledTime: scheduledTime ?? null }
   const rule = recurrence == null ? {} : { recurrence }
+  const given = Object.fromEntries(Object.entries(fields ?? {}).filter(([, value]) => value !== undefined))
+  const extra = Object.keys(given).length === 0 ? {} : { fields: given }
   return createHash('sha256')
-    .update(JSON.stringify({ listId, title, estimateMinutes, column, notes, subtasks, ...schedule, ...rule }))
+    .update(JSON.stringify({ listId, title, estimateMinutes, column, notes, subtasks, ...schedule, ...rule, ...extra }))
     .digest('hex')
 }
 
@@ -72,7 +76,7 @@ export async function createTaskFromToken(
   now: Date = new Date(),
 ): Promise<{ task: TaskWithSubtasks; replayed: boolean }> {
   const create = (tx: Database, id: string) =>
-    createTask(tx, workspaceId, { ...input, id, userId: principal.user.id, createdViaTokenId: principal.tokenId, rejectArchived: true }, now)
+    createTask(tx, workspaceId, { ...input, ...input.fields, id, userId: principal.user.id, createdViaTokenId: principal.tokenId, rejectArchived: true }, now)
 
   if (idempotencyKey === undefined) return { task: await create(db, randomUUID()), replayed: false }
 

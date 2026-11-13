@@ -438,15 +438,15 @@ O que o código já fixa:
 | DUE-05 | P1: Prazo | T17 | In Tasks |
 | WAIT-01 | P1: Aguardando | T1, T2 | Implementing |
 | WAIT-02 | P1: Aguardando | T18 | In Tasks |
-| WAIT-03 | P1: Aguardando | T2 | In Tasks |
+| WAIT-03 | P1: Aguardando | T2 | Implementing |
 | WAIT-04 | P1: Aguardando | T4 | In Tasks |
-| WAIT-05 | P1: Aguardando | T2 | In Tasks |
+| WAIT-05 | P1: Aguardando | T2 | Implementing |
 | FLAG-01 | P1: Flag | T1, T2 | Implementing |
 | FLAG-02 | P1: Flag | T18 | In Tasks |
 | FLAG-03 | P1: Flag | T18 | In Tasks |
-| FLAG-04 | P1: Flag | T2 | In Tasks |
+| FLAG-04 | P1: Flag | T2 | Implementing |
 | FLAG-05 | P1: Flag | T3 | In Tasks |
-| FLAG-06 | P1: Flag | T2 | In Tasks |
+| FLAG-06 | P1: Flag | T2 | Implementing |
 | FIELDS-01 | P1: Campos do card | T18 | In Tasks |
 | FIELDS-02 | P1: Campos do card | T19 | In Tasks |
 | FIELDS-03 | P1: Campos do card | T10 | In Tasks |
@@ -461,7 +461,7 @@ O que o código já fixa:
 | MODAL-06 | P1: Modal da tarefa | T22 | In Tasks |
 | API-01 | P2: API e MCP | T4, T6, T16 | In Tasks |
 | API-02 | P2: API e MCP | T6 | In Tasks |
-| API-03 | P2: API e MCP | T2, T6 | In Tasks |
+| API-03 | P2: API e MCP | T2, T6 | Implementing |
 | EDGE-01 | Edge Cases | T13 | In Tasks |
 | EDGE-02 | Edge Cases | T14 | In Tasks |
 | EDGE-03 | Edge Cases | T12 | In Tasks |
