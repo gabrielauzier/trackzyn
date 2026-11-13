@@ -393,8 +393,8 @@ O que o código já fixa:
 | QUICK-07 | P1: Enviar rápido | T13, T24 | Implementing |
 | QUICK-08 | P1: Enviar rápido | T24 | Implementing |
 | QUICK-09 | P1: Enviar rápido | T24 | Implementing |
-| PROC-01 | P1: Processar como tarefa | T26 | In Tasks |
-| PROC-02 | P1: Processar como tarefa | T26 | In Tasks |
+| PROC-01 | P1: Processar como tarefa | T26 | Implementing |
+| PROC-02 | P1: Processar como tarefa | T26 | Implementing |
 | PROC-03 | P1: Processar como tarefa | T11, T26 | Implementing |
 | PROC-04 | P1: Processar como tarefa | T11, T26 | Implementing |
 | PROC-05 | P1: Processar como tarefa | T13, T26 | Implementing |

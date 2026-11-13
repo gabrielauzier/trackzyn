@@ -960,14 +960,16 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Abre com o texto, origem, idade, tipo Tarefa e lista e estimativa da linha
-- [ ] Sem nome ou sem lista, o salvar fica desabilitado com o campo marcado
-- [ ] Agendar para hoje mostra `Vai para <lista> › Hoje`; trocar a coluna muda o destino
-- [ ] Lembrete esconde a estimativa; grupo sem tarefas mostra `Adicione a primeira tarefa`; `Validar 0:30` vira tarefa de 30 min
-- [ ] Erro da API mantém os valores e mostra a mensagem no formulário
-- [ ] Gate check passes: Full (frontend)
+- [x] Abre com o texto, origem, idade, tipo Tarefa e lista e estimativa da linha
+- [x] Sem nome ou sem lista, o salvar fica desabilitado com o campo marcado
+- [x] Agendar para hoje mostra `Vai para <lista> › Hoje`; trocar a coluna muda o destino
+- [x] Lembrete esconde a estimativa; grupo sem tarefas mostra `Adicione a primeira tarefa`; `Validar 0:30` vira tarefa de 30 min
+- [x] Erro da API mantém os valores e mostra a mensagem no formulário
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/lib/inbox/decision.ts` e o teste (`targetColumn` e `parseTaskLine` copiados de `backend-node/src/services/decision.ts`: o repositório não tem `shared/`), `frontend/src/pages/inbox.tsx` (`?process=<id>` abre o diálogo; decidido o item, abre o próximo de Atuais ou fecha). O botão de salvar se chama `Salvar e próximo` também no avulso (PROC-02), e depois do envio abre o próximo item. O toast do envio é `Enviado para <lista> › <coluna>`, com a coluna que a API devolveu.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

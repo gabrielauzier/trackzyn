@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Inbox, Plus, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,6 +11,7 @@ import { inboxOrigin } from '@/lib/inbox/age'
 import { useCapture } from '@/lib/inbox/use-capture'
 import { shortDay } from '@/lib/schedule'
 import { InboxRow } from '@/components/inbox/inbox-row'
+import { ProcessDialog } from '@/components/inbox/process-dialog'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -93,6 +95,9 @@ export default function InboxPage() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('current')
+  // The Processar is part of the URL: `?process=<id>` (QUICK-08).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const processing = searchParams.get('process')
 
   const current = useQuery({ queryKey: ['inbox', 'current'], queryFn: () => inboxApi.list('current') })
   const trash = useQuery({ queryKey: ['inbox', 'trash'], queryFn: () => inboxApi.list('trash') })
@@ -101,6 +106,20 @@ export default function InboxPage() {
 
   const changed = () => queryClient.invalidateQueries({ queryKey: ['inbox'] })
   const failed = () => toast.error(t('inbox.actionFailed'))
+  const processed = currentItems.find((item) => item.id === processing)
+  const closeProcess = () =>
+    setSearchParams((params) => {
+      params.delete('process')
+      return params
+    })
+  /** After an item is decided, the Processar opens the next item of Atuais, or closes on the last one. */
+  const processNext = () => {
+    const at = currentItems.findIndex((item) => item.id === processing)
+    const next = currentItems[at + 1]
+    if (next) setSearchParams({ process: next.id })
+    else closeProcess()
+  }
+
   const discard = useMutation({ mutationFn: (id: string) => inboxApi.discard(id), onSuccess: changed, onError: failed })
   const restore = useMutation({ mutationFn: (id: string) => inboxApi.restore(id), onSuccess: changed, onError: failed })
 
@@ -163,6 +182,10 @@ export default function InboxPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {processed && (
+        <ProcessDialog item={processed} timeZone={current.data?.timezone} onClose={closeProcess} onNext={processNext} />
+      )}
     </div>
   )
 }
