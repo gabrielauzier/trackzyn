@@ -12,6 +12,7 @@ import { accessTokenRoutes } from './routes/access-tokens.ts'
 import { adminRoutes } from './routes/admin.ts'
 import { authRoutes } from './routes/auth.ts'
 import { boardRoutes } from './routes/board.ts'
+import { cardFieldRoutes } from './routes/card-fields.ts'
 import { fileRoutes } from './routes/files.ts'
 import { focusRoutes } from './routes/focus.ts'
 import { groupRoutes } from './routes/groups.ts'
@@ -88,6 +89,7 @@ export async function buildApp(
   await app.register(taskRoutes(ctx))
   await app.register(boardRoutes(ctx))
   await app.register(groupRoutes(ctx))
+  await app.register(cardFieldRoutes(ctx))
   await app.register(focusRoutes(ctx))
   await app.register(reportRoutes(ctx))
   await app.register(sessionRoutes(ctx))

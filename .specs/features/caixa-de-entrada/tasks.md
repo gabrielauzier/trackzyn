@@ -423,12 +423,14 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Sem linha, `GET` devolve os quatro campos ligados
-- [ ] `PUT {hidden: ["due"]}` esconde Prazo só para o usuário e só naquela lista; outro usuário e outra lista continuam com tudo ligado (L-048)
-- [ ] Campo desconhecido → 422; token → 403
-- [ ] Gate check passes: Full (backend)
+- [x] Sem linha, `GET` devolve os quatro campos ligados
+- [x] `PUT {hidden: ["due"]}` esconde Prazo só para o usuário e só naquela lista; outro usuário e outra lista continuam com tudo ligado (L-048)
+- [x] Campo desconhecido → 422; token → 403
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/services/card-fields.ts`
+**Also touched**: `backend-node/src/services/card-fields.ts`, `backend-node/src/app.ts`, `backend-node/test/routes/card-fields.test.ts`, `backend-node/test/support/roles.ts` (`inWorkspace` aceita `PUT`). `GET` e `PUT` respondem `{hidden: CardField[]}` na ordem de `CARD_FIELDS`; lista vazia é tudo ligado. Qualquer membro, `viewer` inclusive, escolhe os próprios campos.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

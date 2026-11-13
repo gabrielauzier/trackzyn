@@ -449,8 +449,8 @@ O que o código já fixa:
 | FLAG-06 | P1: Flag | T2 | Implementing |
 | FIELDS-01 | P1: Campos do card | T18 | In Tasks |
 | FIELDS-02 | P1: Campos do card | T19 | In Tasks |
-| FIELDS-03 | P1: Campos do card | T10 | In Tasks |
-| FIELDS-04 | P1: Campos do card | T10, T19 | In Tasks |
+| FIELDS-03 | P1: Campos do card | T10 | Implementing |
+| FIELDS-04 | P1: Campos do card | T10, T19 | Implementing |
 | FIELDS-05 | P1: Campos do card | T18 | In Tasks |
 | FIELDS-06 | P1: Campos do card | T18 | In Tasks |
 | MODAL-01 | P1: Modal da tarefa | T22 | In Tasks |
