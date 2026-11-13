@@ -1201,6 +1201,19 @@
     "source_desktop": "desktop",
     "source_mcp": "MCP",
     "sourceApi": "API",
-    "actionFailed": "Não deu certo. Tente de novo."
+    "actionFailed": "Não deu certo. Tente de novo.",
+    "process": "Processar",
+    "listPlaceholder": "Lista",
+    "listOf": "Lista de {{text}}",
+    "estimateOf": "Estimativa de {{text}}",
+    "estimatePlaceholder": "Est.",
+    "send": "Enviar",
+    "sendTo": "Enviar para {{list}} › Backlog",
+    "sent": "Enviado para {{list}} › Backlog",
+    "refusal": {
+      "list_archived": "A lista foi arquivada. Escolha outra lista.",
+      "list_read_only": "Você não escreve mais nessa lista. Escolha outra lista.",
+      "already_processed": "Este item já foi processado."
+    }
   }
 }

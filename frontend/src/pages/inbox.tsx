@@ -1,14 +1,15 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Inbox, Plus, Trash2, Undo2 } from 'lucide-react'
+import { Inbox, Plus, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { inbox as inboxApi } from '@/lib/api'
 import { todayInTimezone } from '@/lib/date-utils'
-import { inboxAge, inboxOrigin } from '@/lib/inbox/age'
+import { inboxOrigin } from '@/lib/inbox/age'
 import { useCapture } from '@/lib/inbox/use-capture'
 import { shortDay } from '@/lib/schedule'
+import { InboxRow } from '@/components/inbox/inbox-row'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -53,26 +54,6 @@ function CaptureForm() {
         </p>
       )}
     </div>
-  )
-}
-
-function CurrentRow({ item, timeZone, onDiscard }: { item: InboxItem; timeZone: string | undefined; onDiscard: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <li className="flex items-center gap-3 rounded-xl border border-border bg-card py-3 pr-3 pl-4">
-      <span aria-hidden className="size-2 shrink-0 rounded-full bg-primary" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-medium">{item.text}</p>
-        <p className="mt-1 flex gap-2.5 text-xs text-muted-foreground">
-          <span>{inboxAge(item.created_at, new Date(), timeZone, t)}</span>
-          <span aria-hidden>·</span>
-          <span>{inboxOrigin(item, t)}</span>
-        </p>
-      </div>
-      <Button type="button" variant="ghost" size="icon-sm" aria-label={t('inbox.discard', { text: item.text })} onClick={onDiscard}>
-        <Trash2 />
-      </Button>
-    </li>
   )
 }
 
@@ -157,7 +138,7 @@ export default function InboxPage() {
           ) : (
             <ul aria-label={t('inbox.title')} className="flex flex-col gap-2">
               {currentItems.map((item) => (
-                <CurrentRow key={item.id} item={item} timeZone={current.data?.timezone} onDiscard={() => discard.mutate(item.id)} />
+                <InboxRow key={item.id} item={item} timeZone={current.data?.timezone} onDiscard={() => discard.mutate(item.id)} />
               ))}
             </ul>
           )}

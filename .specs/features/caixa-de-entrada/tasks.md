@@ -896,12 +896,16 @@ T30 → T31
 
 **Done when**:
 
-- [ ] O select lista só as listas ativas em que o usuário escreve
-- [ ] `Enviar` some sem lista e com texto de 256 caracteres; aparece com lista
-- [ ] Escolher lista e estimativa grava no item; estimativa `25:00` fica marcada como inválida e não grava
-- [ ] 409 de lista arquivada mostra o toast e limpa o select
-- [ ] Clicar fora dos controles abre `?process=<id>`; clicar no select, na estimativa, em `Enviar` ou no descartar não abre
-- [ ] Gate check passes: Full (frontend)
+- [x] O select lista só as listas ativas em que o usuário escreve
+- [x] `Enviar` some sem lista e com texto de 256 caracteres; aparece com lista
+- [x] Escolher lista e estimativa grava no item; estimativa `25:00` fica marcada como inválida e não grava
+- [x] 409 de lista arquivada mostra o toast e limpa o select
+- [x] Clicar fora dos controles abre `?process=<id>`; clicar no select, na estimativa, em `Enviar` ou no descartar não abre
+- [x] Gate check passes: Full (frontend)
+
+**Also touched**: `frontend/src/pages/inbox.tsx` (Atuais passa a usar `InboxRow`), `frontend/src/pages/inbox.test.tsx` (mocks de `lists` e do workspace), `frontend/src/lib/inbox/use-writable-lists.ts` (as listas ativas em que o usuário escreve, como o `canWrite` do quadro), `frontend/src/lib/inbox/errors.ts` (`sendRefusal`), `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`. Os toasts dos motivos do 409 não têm texto na spec: `A lista foi arquivada. Escolha outra lista.`, `Você não escreve mais nessa lista. Escolha outra lista.`, `Este item já foi processado.`; o envio mostra `Enviado para <lista> › Backlog`. O destaque do hover (QUICK-09) é CSS e o teste confere as classes.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

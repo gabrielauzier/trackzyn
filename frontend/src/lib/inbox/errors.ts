@@ -1,3 +1,5 @@
+import type { InboxRefusal } from '@/types'
+
 /** The status and body of a failed API call, or null for a failure with no answer (the network). */
 export function failedResponse(error: unknown): { status: number; data: Record<string, unknown> } | null {
   if (!error || typeof error !== 'object' || !('response' in error)) return null
@@ -17,3 +19,11 @@ export function captureRefusal(error: unknown): 'text_empty' | 'text_too_long' |
 
 /** The longest text an item keeps (CAP-03). */
 export const MAX_CAPTURE_LENGTH = 500
+
+/** Why a send was refused (QUICK-06, EDGE-01), read from a 409; null for any other failure. */
+export function sendRefusal(error: unknown): InboxRefusal | null {
+  const failed = failedResponse(error)
+  if (failed?.status !== 409) return null
+  const reason = failed.data.reason
+  return reason === 'list_archived' || reason === 'list_read_only' || reason === 'already_processed' ? reason : null
+}

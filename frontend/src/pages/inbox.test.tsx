@@ -7,8 +7,10 @@ import { i18n, renderWithProviders } from '@/test/utils'
 import type { InboxItem } from '@/types'
 
 vi.mock('@/lib/api', () => ({
-  inbox: { list: vi.fn(), capture: vi.fn(), discard: vi.fn(), restore: vi.fn() },
+  inbox: { list: vi.fn(), capture: vi.fn(), discard: vi.fn(), restore: vi.fn(), update: vi.fn(), send: vi.fn() },
+  lists: { list: vi.fn(async () => ({ timezone: 'America/Sao_Paulo', lists: [] })) },
 }))
+vi.mock('@/contexts/workspace-context', () => ({ useWorkspace: () => ({ canWrite: true }) }))
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }))
 
 const TZ = 'America/Sao_Paulo'

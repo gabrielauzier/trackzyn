@@ -384,15 +384,15 @@ O que o código já fixa:
 | INBOX-05 | P1: Ver e manter a caixa | T12, T23 | Implementing |
 | INBOX-06 | P1: Ver e manter a caixa | T12 | Implementing |
 | INBOX-07 | P1: Ver e manter a caixa | T23 | Implementing |
-| QUICK-01 | P1: Enviar rápido | T24 | In Tasks |
+| QUICK-01 | P1: Enviar rápido | T24 | Implementing |
 | QUICK-02 | P1: Enviar rápido | T12, T24 | Implementing |
-| QUICK-03 | P1: Enviar rápido | T24 | In Tasks |
+| QUICK-03 | P1: Enviar rápido | T24 | Implementing |
 | QUICK-04 | P1: Enviar rápido | T13, T24 | Implementing |
 | QUICK-05 | P1: Enviar rápido | T12, T24 | Implementing |
 | QUICK-06 | P1: Enviar rápido | T13, T24 | Implementing |
 | QUICK-07 | P1: Enviar rápido | T13, T24 | Implementing |
-| QUICK-08 | P1: Enviar rápido | T24 | In Tasks |
-| QUICK-09 | P1: Enviar rápido | T24 | In Tasks |
+| QUICK-08 | P1: Enviar rápido | T24 | Implementing |
+| QUICK-09 | P1: Enviar rápido | T24 | Implementing |
 | PROC-01 | P1: Processar como tarefa | T26 | In Tasks |
 | PROC-02 | P1: Processar como tarefa | T26 | In Tasks |
 | PROC-03 | P1: Processar como tarefa | T11, T26 | Implementing |
