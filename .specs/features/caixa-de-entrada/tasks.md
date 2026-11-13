@@ -1056,13 +1056,15 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Padrão `CommandOrControl+Shift+Space` ligado; trocar libera o anterior antes de registrar
-- [ ] `register` falso grava `enabled: false` e devolve `in_use`
-- [ ] Desligar libera a combinação
-- [ ] O teste do WIDGET-05 falha se `globalShortcut` aparecer em qualquer outro arquivo
-- [ ] Gate check passes: Full (desktop)
+- [x] Padrão `CommandOrControl+Shift+Space` ligado; trocar libera o anterior antes de registrar
+- [x] `register` falso grava `enabled: false` e devolve `in_use`
+- [x] Desligar libera a combinação
+- [x] O teste do WIDGET-05 falha se `globalShortcut` aparecer em qualquer outro arquivo
+- [x] Gate check passes: Full (desktop)
 
-**Also touched**: `desktop/src/main/config-store.ts`, `desktop/src/main/widget-shortcut.test.ts`
+**Also touched**: `desktop/src/main/config-store.ts` (`getCaptureShortcut`/`setCaptureShortcut`, padrão quando o valor salvo é inválido), `desktop/src/main/config-store.test.ts`, `desktop/src/main/capture-shortcut.test.ts`, `desktop/src/main/widget-shortcut.test.ts`. `globalShortcut` é o do Electron por padrão dentro de `capture-shortcut.ts`, para o `index.ts` não precisar citá-lo (AD-012). `register` que lança erro (combinação inválida ou sem suporte, como no Wayland) também vira `in_use`.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
