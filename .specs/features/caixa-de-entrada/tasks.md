@@ -301,9 +301,12 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Com um lembrete antes de uma tarefa em Hoje, `GET /api/focus` mostra a tarefa como a do foco e não lista o lembrete
-- [ ] Com só um lembrete em Hoje, o foco fica sem tarefa
-- [ ] Gate check passes: Full (backend)
+- [x] Com um lembrete antes de uma tarefa em Hoje, `GET /api/focus` mostra a tarefa como a do foco e não lista o lembrete
+- [x] Com só um lembrete em Hoje, o foco fica sem tarefa
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/test/routes/reminders.test.ts`. `today.pending` também conta só as tarefas, porque a tela do foco só percorre elas.
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

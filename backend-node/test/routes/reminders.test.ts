@@ -69,6 +69,26 @@ describe('REM-05 a reminder has no focus', () => {
   })
 })
 
+describe('REM-05 the focus screen leaves reminders out', () => {
+  it('with a reminder before a task in Today, GET /api/focus shows the task as the focus and does not list the reminder', async () => {
+    const { owner, workspaceId, listId, post } = await setup()
+    await post({ title: 'Pagar o DAS', kind: 'reminder' })
+    const task = await post({ title: 'Validar', estimate_minutes: 30 })
+    const state = (await call('GET', `/api/focus?list_id=${listId}`, owner.token, workspaceId)).json()
+    expect(state.task).toMatchObject({ id: task, title: 'Validar' })
+    expect(state.today.tasks.map((card: { id: string }) => card.id)).toEqual([task])
+    expect(state.today.pending).toBe(1)
+  })
+
+  it('with only a reminder in Today, the focus has no task', async () => {
+    const { owner, workspaceId, listId, post } = await setup()
+    await post({ title: 'Pagar o DAS', kind: 'reminder' })
+    const state = (await call('GET', `/api/focus?list_id=${listId}`, owner.token, workspaceId)).json()
+    expect(state.task).toBeNull()
+    expect(state.today.tasks).toEqual([])
+  })
+})
+
 describe('REM-04 a reminder completes like a task', () => {
   it('moved to Concluídas, it gets completed_at and completed_by', async () => {
     const { owner, workspaceId, post } = await setup()
