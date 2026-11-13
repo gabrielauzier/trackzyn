@@ -1190,8 +1190,8 @@
       "chooseTask": "Choose a task",
       "planToday": "Plan today",
       "nothingPlanned": "Nothing planned for now",
-      "pendingCount_one": "{{count}} task pending · {{duration}} estimated",
-      "pendingCount_other": "{{count}} tasks pending · {{duration}} estimated",
+      "pendingCount_one": "{{count}} task for today · {{duration}} estimated",
+      "pendingCount_other": "{{count}} tasks for today · {{duration}} estimated",
       "noSession": "No session today",
       "sinceLast": "No focus for {{duration}} · last session: {{name}}, until {{time}}"
     },

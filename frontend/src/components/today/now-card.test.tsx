@@ -442,10 +442,10 @@ describe('NowCard with nothing open', () => {
   })
 
   describe('nothing planned for now (HOJE-12)', () => {
-    it('says so with how many tasks are pending and their estimates, Choose a task and Plan today', () => {
+    it('says so with how many tasks are for today and their estimates, Choose a task and Plan today', () => {
       show(focusOf(idle), { pending: pendingFive })
       expect(screen.getByText('Nothing planned for now')).toBeInTheDocument()
-      expect(screen.getByText('5 tasks pending · 4hr 58min estimated')).toBeInTheDocument()
+      expect(screen.getByText('5 tasks for today · 4hr 58min estimated')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Choose a task' })).toBeInTheDocument()
       // HOJE-16
       expect(screen.getByRole('link', { name: 'Plan today' })).toHaveAttribute('href', `/planejar/${DAY}`)

@@ -1190,8 +1190,8 @@
       "chooseTask": "Escolher tarefa",
       "planToday": "Planejar hoje",
       "nothingPlanned": "Nada planejado para agora",
-      "pendingCount_one": "{{count}} tarefa em Pendente · {{duration}} estimadas",
-      "pendingCount_other": "{{count}} tarefas em Pendente · {{duration}} estimadas",
+      "pendingCount_one": "{{count}} tarefa para hoje · {{duration}} estimadas",
+      "pendingCount_other": "{{count}} tarefas para hoje · {{duration}} estimadas",
       "noSession": "Nenhuma sessão hoje",
       "sinceLast": "Sem foco há {{duration}} · última sessão: {{name}}, até {{time}}"
     },
