@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 69,
+  "next_id": 79,
   "lessons": [
     {
       "id": "L-001",
@@ -1234,6 +1234,186 @@
       ],
       "created": "2026-11-11T00:04:16Z",
       "last_seen": "2026-11-11T00:04:16Z"
+    },
+    {
+      "id": "L-069",
+      "key": "spec_precision_gap::when a feature reuses an existing write path list that path s side effects series end column moves in the spec and test each one the new flow triggers",
+      "text": "When a feature reuses an existing write path, list that path's side effects (series end, column moves) in the spec and test each one the new flow triggers",
+      "signal": "spec_precision_gap",
+      "scope": "services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-61; backend-node/src/services/schedule.ts:92-99 (services)"
+      ],
+      "created": "2026-11-12T02:07:33Z",
+      "last_seen": "2026-11-12T02:07:33Z"
+    },
+    {
+      "id": "L-070",
+      "key": "spec_deviation::before specifying a ui message from the api check that the data path keeps that message the offline focus queue keeps only status and code",
+      "text": "Before specifying a UI message from the API, check that the data path keeps that message; the offline focus queue keeps only status and code",
+      "signal": "spec_deviation",
+      "scope": "frontend-focus",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-22; frontend/src/components/today/now-card.tsx:319 (frontend-focus)"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-071",
+      "key": "spec_precision_gap::prove transaction atomicity with a failure injected after the first write not with a validation that rejects before any write",
+      "text": "Prove transaction atomicity with a failure injected after the first write, not with a validation that rejects before any write",
+      "signal": "spec_precision_gap",
+      "scope": "services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-65; backend-node/test/services/today.test.ts:838 (services)"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-072",
+      "key": "spec_precision_gap::when two acs govern the same element in one state the spec must say which wins and a test must assert it",
+      "text": "When two ACs govern the same element in one state, the spec must say which wins and a test must assert it",
+      "signal": "spec_precision_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-17/HOJE-20; frontend/src/components/today/now-card.tsx:233"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-073",
+      "key": "spec_precision_gap::when a number must match the reports exactly test it with sessions that do not start or end on a whole minute",
+      "text": "When a number must match the reports exactly, test it with sessions that do not start or end on a whole minute",
+      "signal": "spec_precision_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HOJE-49; backend-node/test/services/today.test.ts:567"
+      ],
+      "created": "2026-11-12T02:07:34Z",
+      "last_seen": "2026-11-12T02:07:34Z"
+    },
+    {
+      "id": "L-074",
+      "key": "spec_deviation::when a ui rule depends on a flag of a task send that flag for every place the task appears including the task in focus",
+      "text": "When a UI rule depends on a flag of a task, send that flag for every place the task appears, including the task in focus",
+      "signal": "spec_deviation",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "frontend/src/components/today/close-day-dialog.tsx:105 (HOJE-75, G6 round 2) (frontend)"
+      ],
+      "created": "2026-11-12T03:50:11Z",
+      "last_seen": "2026-11-12T03:50:11Z"
+    },
+    {
+      "id": "L-075",
+      "key": "surviving_mutant::when a read selects the open session test it with a closed session beside the open one so the open only filter is pinned",
+      "text": "When a read selects the open session, test it with a closed session beside the open one so the open-only filter is pinned",
+      "signal": "surviving_mutant",
+      "scope": "backend-services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "backend-node/src/services/today.ts:337 (mutant B4, validation.md round 3) (backend-services)"
+      ],
+      "created": "2026-11-12T04:09:21Z",
+      "last_seen": "2026-11-12T04:09:21Z"
+    },
+    {
+      "id": "L-076",
+      "key": "surviving_mutant::when a read narrows open sessions to the reader test it with another member s open session beside the reader s so the reader filter is pinned",
+      "text": "When a read narrows open sessions to the reader, test it with another member's open session beside the reader's so the reader filter is pinned",
+      "signal": "surviving_mutant",
+      "scope": "backend-services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md mutant B5 (backend-node/src/services/today.ts:337) (backend-services)"
+      ],
+      "created": "2026-11-12T04:37:35Z",
+      "last_seen": "2026-11-12T04:37:35Z"
+    },
+    {
+      "id": "L-077",
+      "key": "surviving_mutant::when a test relies on which row an unordered query returns first fix the sort key the plan uses such as an id that sorts lowest instead of relying on insertion order",
+      "text": "When a test relies on which row an unordered query returns first, fix the sort key the plan uses, such as an id that sorts lowest, instead of relying on insertion order.",
+      "signal": "surviving_mutant",
+      "scope": "backend-services",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant B5 backend-node/src/services/today.ts:337; backend-node/test/services/today.test.ts:860-875 (backend-services)"
+      ],
+      "created": "2026-11-12T05:04:36Z",
+      "last_seen": "2026-11-12T05:04:36Z"
+    },
+    {
+      "id": "L-078",
+      "key": "surviving_mutant::when the spec gives a threshold such as n or more test the value exactly at n not only values above and below it",
+      "text": "When the spec gives a threshold such as N or more, test the value exactly at N, not only values above and below it.",
+      "signal": "surviving_mutant",
+      "scope": "frontend-components",
+      "status": "candidate",
+      "features": [
+        "dashboard-hoje"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "mutant F4 frontend/src/components/today/close-day-dialog.tsx:225; HOJE-60 (frontend-components)"
+      ],
+      "created": "2026-11-12T05:05:55Z",
+      "last_seen": "2026-11-12T05:05:55Z"
     }
   ]
 }

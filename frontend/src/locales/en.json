@@ -339,7 +339,8 @@
     "archivedLists": "Archived lists",
     "reports": "Reports",
     "agenda": "Agenda",
-    "plan": "Plan"
+    "plan": "Plan",
+    "today": "Today"
   },
   "privacy": {
     "hide": "Hide values",
@@ -484,6 +485,9 @@
     "hoursCountNetDescription": "Time in which sessions or blocks overlap counts once.",
     "hideShortSessionsHint": "Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.",
     "hideShortSessionsInfo": "About hiding short sessions",
+    "planAdherence": "Show plan adherence",
+    "planAdherenceInfo": "About showing plan adherence",
+    "planAdherenceHint": "Shows the Plan adherence and Plan × actual cards on the Today dashboard, for every member.",
     "you": "you",
     "youManageThis": "You manage this workspace"
   },
@@ -1129,6 +1133,163 @@
     },
     "newTask": {
       "hint": "For the plan of the day."
+    }
+  },
+  "today": {
+    "tile": {
+      "noEstimate": "No estimate"
+    },
+    "pending": {
+      "title": "Pending",
+      "summary_one": "{{count}} task · {{duration}} estimated",
+      "summary_other": "{{count}} tasks · {{duration}} estimated",
+      "empty": "Nothing pending for today",
+      "groups": {
+        "late": "Late",
+        "timed": "Timed",
+        "planned": "In the plan",
+        "carried": "From earlier days",
+        "unplanned": "No plan"
+      },
+      "passed": "{{time}} · passed {{duration}} ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago",
+      "subtasks": "{{done}}/{{total}} subtasks"
+    },
+    "capacity": {
+      "over": "Doesn't fit the day: {{duration}} of tasks left over",
+      "fits": "Fits the day: {{duration}} free",
+      "withoutEstimate_one": "{{count}} without an estimate, counted as 0",
+      "withoutEstimate_other": "{{count}} without an estimate, counted as 0"
+    },
+    "done": {
+      "title": "Done today",
+      "summary_one": "{{duration}} in {{count}} task",
+      "summary_other": "{{duration}} in {{count}} tasks",
+      "spentOf": "{{spent}} of {{estimate}}",
+      "empty": "Nothing done today yet"
+    },
+    "now": {
+      "focusLabel": "Now · in focus",
+      "breakLabel": "Now · on a break",
+      "idleLabel": "Now · nothing in focus",
+      "spentOf": "{{spent}} of {{estimate}}",
+      "left": "{{duration}} left · ends at {{time}}",
+      "breakLeft": "{{duration}} left",
+      "elapsed": "{{duration}} elapsed",
+      "extendLabel": "Estimate used up",
+      "spent": "{{duration}} spent",
+      "elsewhere": "In focus in another workspace: {{name}}",
+      "openFocus": "Open focus",
+      "refused": "The server refused: {{action}}",
+      "progress": "Time against the estimate",
+      "byThePlan": "By the plan, now would be",
+      "blockTime": "{{start}}–{{end}} · started {{duration}} ago",
+      "startFocus": "Start focus",
+      "anotherTask": "Another task",
+      "chooseTask": "Choose a task",
+      "planToday": "Plan today",
+      "nothingPlanned": "Nothing planned for now",
+      "pendingCount_one": "{{count}} task for today · {{duration}} estimated",
+      "pendingCount_other": "{{count}} tasks for today · {{duration}} estimated",
+      "noSession": "No session today",
+      "sinceLast": "No focus for {{duration}} · last session: {{name}}, until {{time}}"
+    },
+    "picker": {
+      "search": "Search tasks",
+      "empty": "No task found"
+    },
+    "header": {
+      "left": "{{duration}} until the end of the day ({{time}})",
+      "ended": "Workday ended at {{time}}",
+      "readFailed": "Couldn't update",
+      "retry": "Try again"
+    },
+    "timeline": {
+      "title": "Plan × actual",
+      "planned": "planned",
+      "logged": "logged",
+      "break": "break",
+      "plan": "Plan",
+      "real": "Actual",
+      "now": "now",
+      "hour": "{{hour}}h",
+      "item": "{{title}} · {{start}}–{{end}}",
+      "breakTitle": "Break",
+      "noPlan": "No plan for today",
+      "planToday": "Plan today"
+    },
+    "stats": {
+      "focused": "Focused time",
+      "breaks": "breaks {{duration}}",
+      "completed": "Completed",
+      "ofPlanned": "of {{count}} in the plan",
+      "noPlan": "no plan today",
+      "adherence": "Plan adherence",
+      "adherenceHint": "of the planned time so far became a session of the same task",
+      "noBlocks": "no blocks so far",
+      "switches": "Task switches",
+      "average": "average session {{duration}}"
+    },
+    "tomorrow": {
+      "title": "Tomorrow",
+      "scheduled": "scheduled",
+      "recurring": "recurring",
+      "weekUnscheduled_one": "{{count}} task in This week without a day",
+      "weekUnscheduled_other": "{{count}} tasks in This week without a day",
+      "noPlan": "Tomorrow has no plan yet",
+      "planBlocks_one": "Plan for tomorrow: {{count}} block",
+      "planBlocks_other": "Plan for tomorrow: {{count}} blocks",
+      "empty": "Nothing set for tomorrow"
+    },
+    "summary": {
+      "title": "## {{workspace}} · {{date}}",
+      "focused": "Focused {{duration}}",
+      "doneOfPlanned": "{{done}} of {{planned}} done",
+      "doneCount_one": "{{count}} done",
+      "doneCount_other": "{{count}} done",
+      "adherence": "adherence {{percent}}%",
+      "done": "### Done",
+      "later": "### Left for later",
+      "nothingDone": "- nothing done",
+      "nothingLeft": "- nothing left open",
+      "to": {
+        "tomorrow": "tomorrow",
+        "this_week": "this week",
+        "backlog": "backlog"
+      }
+    },
+    "close": {
+      "button": "Close the day",
+      "title": "Close the day",
+      "focused": "Focused",
+      "completed": "Completed",
+      "adherence": "Plan adherence",
+      "onTime": "On time",
+      "of": "of {{count}}",
+      "byList": "Time by list",
+      "open": "What is still open",
+      "openHint": "where each one goes",
+      "nothingOpen": "Nothing left open",
+      "destination": "Destination of {{title}}",
+      "to": {
+        "tomorrow": "Tomorrow",
+        "this_week": "This week",
+        "backlog": "Backlog"
+      },
+      "endsSeries": "Would end the recurrence",
+      "postponed_one": "Postponed {{count}} day in a row",
+      "postponed_other": "Postponed {{count}} days in a row",
+      "note": "Note of the day",
+      "optional": "(optional)",
+      "notePlaceholder": "What got stuck, what you learned, what to remember tomorrow",
+      "summary": "Summary in Markdown",
+      "copy": "Copy on close",
+      "back": "Back",
+      "failed": "Couldn't close the day",
+      "copied": "Summary copied",
+      "copyFailed": "Couldn't copy the summary",
+      "copyAgain": "Copy again"
     }
   }
 }

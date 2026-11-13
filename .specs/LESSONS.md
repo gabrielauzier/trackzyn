@@ -420,6 +420,66 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: HOURS-02 backend-node/src/routes/workspaces.ts:94 (routes)
 - last seen: 2026-11-11T00:04:16Z
 
+### L-069 - When a feature reuses an existing write path, list that path's side effects (series end, column moves) in the spec and test each one the new flow triggers
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `services` · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-61; backend-node/src/services/schedule.ts:92-99 (services)
+- last seen: 2026-11-12T02:07:33Z
+
+### L-070 - Before specifying a UI message from the API, check that the data path keeps that message; the offline focus queue keeps only status and code
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `frontend-focus` · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-22; frontend/src/components/today/now-card.tsx:319 (frontend-focus)
+- last seen: 2026-11-12T02:07:34Z
+
+### L-071 - Prove transaction atomicity with a failure injected after the first write, not with a validation that rejects before any write
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `services` · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-65; backend-node/test/services/today.test.ts:838 (services)
+- last seen: 2026-11-12T02:07:34Z
+
+### L-072 - When two ACs govern the same element in one state, the spec must say which wins and a test must assert it
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-17/HOJE-20; frontend/src/components/today/now-card.tsx:233
+- last seen: 2026-11-12T02:07:34Z
+
+### L-073 - When a number must match the reports exactly, test it with sessions that do not start or end on a whole minute
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · harmful: 0
+- features: dashboard-hoje
+- evidence: HOJE-49; backend-node/test/services/today.test.ts:567
+- last seen: 2026-11-12T02:07:34Z
+
+### L-074 - When a UI rule depends on a flag of a task, send that flag for every place the task appears, including the task in focus
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: dashboard-hoje
+- evidence: frontend/src/components/today/close-day-dialog.tsx:105 (HOJE-75, G6 round 2) (frontend)
+- last seen: 2026-11-12T03:50:11Z
+
+### L-075 - When a read selects the open session, test it with a closed session beside the open one so the open-only filter is pinned
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-services` · harmful: 0
+- features: dashboard-hoje
+- evidence: backend-node/src/services/today.ts:337 (mutant B4, validation.md round 3) (backend-services)
+- last seen: 2026-11-12T04:09:21Z
+
+### L-076 - When a read narrows open sessions to the reader, test it with another member's open session beside the reader's so the reader filter is pinned
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-services` · harmful: 0
+- features: dashboard-hoje
+- evidence: validation.md mutant B5 (backend-node/src/services/today.ts:337) (backend-services)
+- last seen: 2026-11-12T04:37:35Z
+
+### L-077 - When a test relies on which row an unordered query returns first, fix the sort key the plan uses, such as an id that sorts lowest, instead of relying on insertion order.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend-services` · harmful: 0
+- features: dashboard-hoje
+- evidence: mutant B5 backend-node/src/services/today.ts:337; backend-node/test/services/today.test.ts:860-875 (backend-services)
+- last seen: 2026-11-12T05:04:36Z
+
+### L-078 - When the spec gives a threshold such as N or more, test the value exactly at N, not only values above and below it.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `frontend-components` · harmful: 0
+- features: dashboard-hoje
+- evidence: mutant F4 frontend/src/components/today/close-day-dialog.tsx:225; HOJE-60 (frontend-components)
+- last seen: 2026-11-12T05:05:55Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

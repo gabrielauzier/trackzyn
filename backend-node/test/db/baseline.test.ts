@@ -57,8 +57,9 @@ describe('migration baseline', () => {
     const original = new Set(['alembic_version', ...TABLES])
     const columnsAfter = (await columnSignature(client)).filter((c) => original.has(String((c as { table_name: string }).table_name)))
     // The later migrations only add to the original tables: 0007 appends workspaces.min_session_minutes (#22)
-    // and 0008 appends workspaces.merge_gap_minutes (#23), and 0016 appends workspaces.hours_count_mode (#42).
-    const added = ['min_session_minutes', 'merge_gap_minutes', 'hours_count_mode']
+    // and 0008 appends workspaces.merge_gap_minutes (#23), 0016 appends workspaces.hours_count_mode (#42)
+    // and 0017 appends workspaces.plan_adherence_enabled.
+    const added = ['min_session_minutes', 'merge_gap_minutes', 'hours_count_mode', 'plan_adherence_enabled']
     const isAdded = (c: unknown) =>
       (c as { table_name: string }).table_name === 'workspaces' && added.includes((c as { column_name: string }).column_name)
     expect(columnsAfter.filter((c) => !isAdded(c))).toEqual(columnsBefore)
@@ -89,6 +90,15 @@ describe('migration baseline', () => {
         is_nullable: 'NO',
         column_default: "'gross'::character varying",
         ordinal_position: 13,
+      },
+      {
+        table_name: 'workspaces',
+        column_name: 'plan_adherence_enabled',
+        data_type: 'boolean',
+        character_maximum_length: null,
+        is_nullable: 'NO',
+        column_default: 'false',
+        ordinal_position: 14,
       },
     ])
 

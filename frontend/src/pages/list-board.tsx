@@ -234,7 +234,7 @@ export default function ListBoardPage() {
   )
 
   if ((error as { response?: { status?: number } } | null)?.response?.status === 404) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/lists" replace />
   }
   if (!board) {
     return (
@@ -426,7 +426,7 @@ export default function ListBoardPage() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/">
+          <Link to="/lists">
             <ChevronLeft size={16} /> {t('board.back')}
           </Link>
         </Button>

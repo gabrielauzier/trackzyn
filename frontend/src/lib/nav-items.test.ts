@@ -18,7 +18,7 @@ describe('visibleNavItems', () => {
     expect(linkKeys(asMember)).not.toContain('components')
     expect(separators(asMember)).not.toContain('nav.groupDevelopers')
     // The rest of the workspace section stays.
-    expect(linkKeys(asMember)).toEqual(['newList', 'allLists', 'archivedLists', 'agenda', 'plan', 'reports'])
+    expect(linkKeys(asMember)).toEqual(['today', 'newList', 'allLists', 'archivedLists', 'agenda', 'plan', 'reports'])
     expect(separators(asMember)).toEqual(['nav.groupWorkspace'])
     // Not a superuser is the default.
     expect(visibleNavItems(navItems, () => false)).toEqual(asMember)
@@ -58,11 +58,12 @@ describe('visibleNavItems', () => {
     expect(linkKeys(visibleNavItems(items, () => false, true))).toEqual(['create', 'browse'])
   })
 
-  it('opens the workspace section with the three list entries', () => {
-    const lists = navItems.filter((item) => item.type === 'link').slice(0, 3)
+  it('opens the workspace section with Today, then the three list entries (HOJE-01, HOJE-02)', () => {
+    const lists = navItems.filter((item) => item.type === 'link').slice(0, 4)
     expect(lists.map((item) => item.type === 'link' && [item.key, item.path])).toEqual([
-      ['newList', '/?new=1'],
-      ['allLists', '/'],
+      ['today', '/'],
+      ['newList', '/lists?new=1'],
+      ['allLists', '/lists'],
       ['archivedLists', '/lists/archived'],
     ])
   })

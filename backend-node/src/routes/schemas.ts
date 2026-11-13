@@ -31,6 +31,8 @@ export const workspaceReadSchema = z.object({
   merge_gap_minutes: z.number().int().nullable(),
   /** How totals count time that overlaps: gross sums every interval, net counts the overlap once (#42). */
   hours_count_mode: z.enum(HOURS_COUNT_MODES),
+  /** The Hoje dashboard shows the cards that compare the day with its plan. */
+  plan_adherence_enabled: z.boolean(),
   created_at: z.string(),
   created_by_user_id: z.string().nullable(),
   managed_by_user_id: z.string().nullable(),
@@ -49,6 +51,7 @@ export function toWorkspaceRead(workspace: Workspace, role: string | null) {
     min_session_minutes: workspace.minSessionMinutes,
     merge_gap_minutes: workspace.mergeGapMinutes,
     hours_count_mode: workspace.hoursCountMode,
+    plan_adherence_enabled: workspace.planAdherenceEnabled,
     created_at: workspace.createdAt.toISOString(),
     created_by_user_id: workspace.createdByUserId,
     managed_by_user_id: workspace.managedByUserId,

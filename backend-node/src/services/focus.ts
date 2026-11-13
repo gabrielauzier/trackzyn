@@ -114,7 +114,7 @@ async function applyAction(
   })
 }
 
-async function endSession(tx: Database, session: FocusSession, at: Date, reason: FocusEndReason): Promise<void> {
+export async function endSession(tx: Database, session: FocusSession, at: Date, reason: FocusEndReason): Promise<void> {
   await tx.update(focusSessions).set({ endedAt: at, endReason: reason }).where(eq(focusSessions.id, session.id))
 }
 

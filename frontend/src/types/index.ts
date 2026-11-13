@@ -91,6 +91,8 @@ export interface Workspace {
   merge_gap_minutes: number | null
   /** How totals count time that overlaps: gross sums every interval, net counts the overlap once (#42). */
   hours_count_mode: HoursCountMode
+  /** The Hoje dashboard shows the cards that compare the day with its plan (Aderência ao plano, Plano x Real). */
+  plan_adherence_enabled: boolean
   created_at: string
   created_by_user_id: string | null
   managed_by_user_id: string | null
@@ -491,6 +493,101 @@ export interface PlanCandidate {
 
 /** A saved block with its day, as the Agenda draws it (`GET /api/plans`, PLAN-24). */
 export type PlannedBlock = PlanBlock & { day: string }
+
+/** A task as the Hoje dashboard shows it (dashboard-hoje). */
+export interface TodayTaskRef {
+  id: string
+  title: string
+  list: PlanListRef
+  estimate_minutes: number | null
+}
+
+/** A task of `Pendente`: the Today column of the active lists, minus the task in focus (HOJE-23). */
+export interface TodayPendingTask extends TodayTaskRef {
+  position: number
+  scheduled_on: string | null
+  /** The minute of `scheduled_time` when the task is scheduled for today. */
+  scheduled_minute: number | null
+  /** The start of the task's first block in today's plan. */
+  plan_minute: number | null
+  has_session_today: boolean
+  /** Today minus `scheduled_on` in calendar days, when that day is before today (HOJE-28). */
+  days_late: number | null
+  subtasks: { done: number; total: number }
+  /** An occurrence of a series: `Fechar o dia` only sends it to tomorrow (HOJE-75). */
+  series: boolean
+}
+
+/** A task the reader completed today (HOJE-35), with the badge of the reports. */
+export interface TodayDoneTask extends TodayTaskRef {
+  completed_at: string
+  /** All the time of the task, of every member. */
+  spent_seconds: number
+  verdict: 'early' | 'on_time' | 'late' | null
+  diff_seconds: number
+  series: boolean
+}
+
+/** A block of today's plan, in minutes of the day; `done` is a done task or a break already started. */
+export interface TodayPlanBlock {
+  id: string
+  kind: 'task' | 'break'
+  task_id: string | null
+  title: string
+  list_color: number | null
+  start_minute: number
+  minutes: number
+  done: boolean
+}
+
+/** A session of the reader cut to today (HOJE-68); `end_minute` is 1440 at midnight. A break may have no name. */
+export interface TodaySession {
+  id: string
+  kind: 'task' | 'break'
+  task_id: string | null
+  title: string | null
+  list_id: string
+  list_color: number
+  start_minute: number
+  end_minute: number
+  /** The instants cut to today (ISO); the open session's `ended_at` is `server_now` of the read (HOJE-49). */
+  started_at: string
+  ended_at: string
+  open: boolean
+}
+
+/** A task already set for tomorrow (HOJE-54); `scheduled_minute` is null without a time. */
+export interface TodayTomorrowTask extends TodayTaskRef {
+  scheduled_minute: number | null
+  series: boolean
+}
+
+/** Where `Fechar o dia` sends a pending task (HOJE-59). */
+export interface TodayCloseMove {
+  task_id: string
+  to: 'tomorrow' | 'this_week' | 'backlog'
+}
+
+/** `GET /api/today`: the reader's day in the current workspace; minutes are minutes of the day in its timezone. */
+export interface TodayRead {
+  server_now: string
+  day: string
+  tomorrow: string
+  timezone: string
+  now_minute: number
+  workday: Workday
+  pending: TodayPendingTask[]
+  done: TodayDoneTask[]
+  plan: { saved: boolean; blocks: TodayPlanBlock[] }
+  sessions: TodaySession[]
+  /** The blocks of the reader's plan of tomorrow; 0 without a plan. */
+  tomorrow_plan_blocks: number
+  tomorrow_tasks: TodayTomorrowTask[]
+  /** `This week` tasks without a day. */
+  week_unscheduled: number
+  /** The task of the open task session is an occurrence of a series (HOJE-75). */
+  focus_task_series: boolean
+}
 
 /** The body of a block for `PUT /api/plans/:day`; `start` is `HH:MM`. */
 export type PlanBlockInput =

@@ -191,17 +191,38 @@ describe('app layout title bar', () => {
 })
 
 describe('app layout sidebar', () => {
-  it('offers the list entries, with All my lists selected on the home', () => {
+  it('offers the list entries, with All my lists selected on /lists (HOJE-02)', () => {
     state.canWrite = true
-    renderWithProviders(<AppLayout />, { route: '/' })
+    renderWithProviders(<AppLayout />, { route: '/lists' })
 
     const nav = screen.getByRole('navigation')
-    expect(within(nav).getByRole('link', { name: 'Create new list' })).toHaveAttribute('href', '/?new=1')
-    expect(within(nav).getByRole('link', { name: 'All my lists' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'Create new list' })).toHaveAttribute('href', '/lists?new=1')
+    const all = within(nav).getByRole('link', { name: 'All my lists' })
+    expect(all).toHaveAttribute('href', '/lists')
+    expect(all).toHaveAttribute('aria-current', 'page')
     const archived = within(nav).getByRole('link', { name: 'Archived lists' })
     expect(archived).toHaveAttribute('href', '/lists/archived')
     expect(archived).not.toHaveAttribute('aria-current')
     expect(within(nav).queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument()
+  })
+
+  it('offers Today first, leading to /, and marks it on the dashboard (HOJE-01)', () => {
+    state.canWrite = true
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const nav = screen.getByRole('navigation')
+    const links = within(nav).getAllByRole('link')
+    expect(links[0]).toHaveAccessibleName('Today')
+    expect(links[0]).toHaveAttribute('href', '/')
+    expect(links[0]).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: 'All my lists' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('does not mark Today on another page', () => {
+    state.canWrite = true
+    renderWithProviders(<AppLayout />, { route: '/lists' })
+
+    expect(within(screen.getByRole('navigation')).getByRole('link', { name: 'Today' })).not.toHaveAttribute('aria-current')
   })
 
   it('offers Agenda, leading to /agenda, between the lists and Reports (AGENDA-13)', () => {

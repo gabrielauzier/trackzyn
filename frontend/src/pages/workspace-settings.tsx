@@ -96,6 +96,8 @@ export default function WorkspaceSettingsPage() {
   // Sessions of one list and kind this many minutes apart or less are drawn as one block in the agenda (#23).
   const [joinNear, setJoinNear] = useState(false)
   const [gapMinutes, setGapMinutes] = useState('')
+  // The Hoje dashboard shows Aderência ao plano and Plano x Real only when this is on.
+  const [planAdherence, setPlanAdherence] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [invitePassword, setInvitePassword] = useState('')
@@ -112,6 +114,7 @@ export default function WorkspaceSettingsPage() {
     current?.color,
     current?.min_session_minutes,
     current?.merge_gap_minutes,
+    current?.plan_adherence_enabled,
   ])
   const [previousFormKey, setPreviousFormKey] = useState<string | null>(null)
   if (formKey !== previousFormKey) {
@@ -126,6 +129,7 @@ export default function WorkspaceSettingsPage() {
       setMinMinutes(current.min_session_minutes === null ? '' : String(current.min_session_minutes))
       setJoinNear(current.merge_gap_minutes !== null)
       setGapMinutes(current.merge_gap_minutes === null ? '' : String(current.merge_gap_minutes))
+      setPlanAdherence(current.plan_adherence_enabled)
     }
   }
   // A whole number from 1 to 60 while the switch is on (HIDE-09).
@@ -172,6 +176,7 @@ export default function WorkspaceSettingsPage() {
         color: editColor,
         min_session_minutes: hideShort ? Number(minMinutes) : null,
         merge_gap_minutes: joinNear ? Number(gapMinutes) : null,
+        plan_adherence_enabled: planAdherence,
       })
     },
     onSuccess: () => {
@@ -560,6 +565,34 @@ export default function WorkspaceSettingsPage() {
                 {t('workspace.minSessionInvalid')}
               </p>
             )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="ws-plan-adherence"
+              aria-labelledby="ws-plan-adherence-label"
+              checked={planAdherence}
+              onCheckedChange={setPlanAdherence}
+              disabled={!canManage}
+            />
+            <div className="flex items-center gap-1">
+              <Label id="ws-plan-adherence-label" htmlFor="ws-plan-adherence" className="text-[13px]">
+                {t('workspace.planAdherence')}
+              </Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={t('workspace.planAdherenceInfo')}
+                      className="inline-flex size-6 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <Info className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t('workspace.planAdherenceHint')}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </section>

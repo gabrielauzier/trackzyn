@@ -37,6 +37,8 @@ import type {
   Task,
   TaskColumn,
   TaskList,
+  TodayCloseMove,
+  TodayRead,
   StoredFile,
   Workday,
   Workspace,
@@ -133,6 +135,8 @@ export const workspaces = {
       merge_gap_minutes?: number | null
       /** gross or net; never null (#42). */
       hours_count_mode?: HoursCountMode
+      /** Shows the plan adherence cards on the Hoje dashboard. */
+      plan_adherence_enabled?: boolean
     },
   ): Promise<Workspace> => {
     const { data } = await api.patch(`/workspaces/${id}`, payload)
@@ -489,6 +493,19 @@ export const plans = {
   /** Keeps the workday in the user's preferences; answers 422 when the end is not after the start (PLAN-22, PLAN-23). */
   setWorkday: async (workday: Workday): Promise<Workday> => {
     const { data } = await api.put('/users/me/workday', workday)
+    return data
+  },
+}
+
+// Today: the logged-in user's day in the current workspace (dashboard-hoje)
+export const today = {
+  get: async (): Promise<TodayRead> => {
+    const { data } = await api.get('/today')
+    return data
+  },
+  /** `Fechar o dia` (HOJE-61): moves the pending tasks in one write and answers the day after it. */
+  close: async (moves: TodayCloseMove[]): Promise<TodayRead> => {
+    const { data } = await api.post('/today/close', { moves })
     return data
   },
 }

@@ -1,4 +1,4 @@
-import { Archive, BarChart3, CalendarCheck, CalendarDays, Component, FolderOpen, LayoutGrid, Plus } from 'lucide-react'
+import { Archive, BarChart3, CalendarCheck, CalendarDays, Component, FolderOpen, LayoutGrid, Plus, Sun } from 'lucide-react'
 
 /**
  * Sidebar destinations. Lives outside `app-layout.tsx` so the filtering
@@ -20,8 +20,10 @@ export type NavItem =
 
 export const navItems: NavItem[] = [
   { type: 'separator', labelKey: 'nav.groupWorkspace' },
-  { type: 'link', key: 'newList', path: '/?new=1', icon: Plus, write: true },
-  { type: 'link', key: 'allLists', path: '/', icon: LayoutGrid },
+  // The Hoje dashboard, where the app opens (HOJE-01).
+  { type: 'link', key: 'today', path: '/', icon: Sun },
+  { type: 'link', key: 'newList', path: '/lists?new=1', icon: Plus, write: true },
+  { type: 'link', key: 'allLists', path: '/lists', icon: LayoutGrid },
   { type: 'link', key: 'archivedLists', path: '/lists/archived', icon: Archive },
   { type: 'link', key: 'agenda', path: '/agenda', icon: CalendarDays },
   // `/planejar` opens the plan of today (PLAN-30).

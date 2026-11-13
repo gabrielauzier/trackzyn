@@ -92,6 +92,8 @@ export const workspaces = pgTable(
     mergeGapMinutes: smallint('merge_gap_minutes'),
     /** How totals count time that overlaps: `gross` sums every interval, `net` counts the overlap once (#42, AD-010). */
     hoursCountMode: varchar('hours_count_mode', { length: 5 }).$type<HoursCountMode>().notNull().default('gross'),
+    /** Shows the cards that compare the day with its plan (Aderência ao plano, Plano x Real) on the Hoje dashboard; off by default. */
+    planAdherenceEnabled: boolean('plan_adherence_enabled').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
   },
   (t) => [

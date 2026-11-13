@@ -339,7 +339,8 @@
     "archivedLists": "Listas arquivadas",
     "reports": "Relatórios",
     "agenda": "Agenda",
-    "plan": "Planejar"
+    "plan": "Planejar",
+    "today": "Hoje"
   },
   "privacy": {
     "hide": "Ocultar valores",
@@ -484,6 +485,9 @@
     "hoursCountNetDescription": "O tempo em que sessões ou blocos se sobrepõem conta uma vez.",
     "hideShortSessionsHint": "Sessões encerradas mais curtas que isso somem da Agenda e da aba Sessões dos Relatórios para todos os membros. Elas continuam contando em todos os totais.",
     "hideShortSessionsInfo": "Sobre esconder sessões curtas",
+    "planAdherence": "Mostrar aderência ao plano",
+    "planAdherenceInfo": "Sobre mostrar aderência ao plano",
+    "planAdherenceHint": "Mostra os cards Aderência ao plano e Plano × real no Hoje, para todos os membros.",
     "you": "você",
     "youManageThis": "Você gerencia este workspace"
   },
@@ -1129,6 +1133,163 @@
     },
     "newTask": {
       "hint": "Para o plano do dia."
+    }
+  },
+  "today": {
+    "tile": {
+      "noEstimate": "Sem estimativa"
+    },
+    "pending": {
+      "title": "Pendente",
+      "summary_one": "{{count}} tarefa · {{duration}} estimadas",
+      "summary_other": "{{count}} tarefas · {{duration}} estimadas",
+      "empty": "Nada pendente para hoje",
+      "groups": {
+        "late": "Atrasada",
+        "timed": "Com horário",
+        "planned": "No plano",
+        "carried": "Veio de dias anteriores",
+        "unplanned": "Sem plano"
+      },
+      "passed": "{{time}} · passou há {{duration}}",
+      "daysAgo_one": "há {{count}} dia",
+      "daysAgo_other": "há {{count}} dias",
+      "subtasks": "{{done}}/{{total}} subtarefas"
+    },
+    "capacity": {
+      "over": "Não cabe no dia: sobram {{duration}} de tarefa",
+      "fits": "Cabe no dia: {{duration}} livre",
+      "withoutEstimate_one": "{{count}} sem estimativa, contada como 0",
+      "withoutEstimate_other": "{{count}} sem estimativa, contadas como 0"
+    },
+    "done": {
+      "title": "Feito hoje",
+      "summary_one": "{{duration}} em {{count}} tarefa",
+      "summary_other": "{{duration}} em {{count}} tarefas",
+      "spentOf": "{{spent}} de {{estimate}}",
+      "empty": "Nada concluído hoje ainda"
+    },
+    "now": {
+      "focusLabel": "Agora · em foco",
+      "breakLabel": "Agora · intervalo",
+      "idleLabel": "Agora · nada em foco",
+      "spentOf": "{{spent}} de {{estimate}}",
+      "left": "faltam {{duration}} · termina às {{time}}",
+      "breakLeft": "faltam {{duration}}",
+      "elapsed": "{{duration}} decorridos",
+      "extendLabel": "Estimativa esgotada",
+      "spent": "{{duration}} gastos",
+      "elsewhere": "Em foco em outro workspace: {{name}}",
+      "openFocus": "Abrir foco",
+      "refused": "O servidor recusou: {{action}}",
+      "progress": "Tempo contra a estimativa",
+      "byThePlan": "Pelo plano, agora seria",
+      "blockTime": "{{start}}–{{end}} · começou há {{duration}}",
+      "startFocus": "Começar foco",
+      "anotherTask": "Outra tarefa",
+      "chooseTask": "Escolher tarefa",
+      "planToday": "Planejar hoje",
+      "nothingPlanned": "Nada planejado para agora",
+      "pendingCount_one": "{{count}} tarefa para hoje · {{duration}} estimadas",
+      "pendingCount_other": "{{count}} tarefas para hoje · {{duration}} estimadas",
+      "noSession": "Nenhuma sessão hoje",
+      "sinceLast": "Sem foco há {{duration}} · última sessão: {{name}}, até {{time}}"
+    },
+    "picker": {
+      "search": "Buscar tarefas",
+      "empty": "Nenhuma tarefa encontrada"
+    },
+    "header": {
+      "left": "{{duration}} até o fim do dia ({{time}})",
+      "ended": "Jornada encerrada às {{time}}",
+      "readFailed": "Não foi possível atualizar",
+      "retry": "Tentar de novo"
+    },
+    "timeline": {
+      "title": "Plano × real",
+      "planned": "planejado",
+      "logged": "registrado",
+      "break": "intervalo",
+      "plan": "Plano",
+      "real": "Real",
+      "now": "agora",
+      "hour": "{{hour}}h",
+      "item": "{{title}} · {{start}}–{{end}}",
+      "breakTitle": "Intervalo",
+      "noPlan": "Sem plano para hoje",
+      "planToday": "Planejar hoje"
+    },
+    "stats": {
+      "focused": "Tempo focado",
+      "breaks": "intervalos {{duration}}",
+      "completed": "Concluídas",
+      "ofPlanned": "de {{count}} no plano",
+      "noPlan": "sem plano hoje",
+      "adherence": "Aderência ao plano",
+      "adherenceHint": "do tempo planejado até agora virou sessão da mesma tarefa",
+      "noBlocks": "sem blocos até agora",
+      "switches": "Trocas de tarefa",
+      "average": "sessão média de {{duration}}"
+    },
+    "tomorrow": {
+      "title": "Amanhã",
+      "scheduled": "agendada",
+      "recurring": "recorrente",
+      "weekUnscheduled_one": "{{count}} tarefa em Esta semana sem dia",
+      "weekUnscheduled_other": "{{count}} tarefas em Esta semana sem dia",
+      "noPlan": "Amanhã ainda não tem plano",
+      "planBlocks_one": "Plano de amanhã: {{count}} bloco",
+      "planBlocks_other": "Plano de amanhã: {{count}} blocos",
+      "empty": "Nada marcado para amanhã"
+    },
+    "summary": {
+      "title": "## {{workspace}} · {{date}}",
+      "focused": "Focado {{duration}}",
+      "doneOfPlanned": "{{done}} de {{planned}} concluídas",
+      "doneCount_one": "{{count}} concluída",
+      "doneCount_other": "{{count}} concluídas",
+      "adherence": "aderência {{percent}}%",
+      "done": "### Feito",
+      "later": "### Ficou para depois",
+      "nothingDone": "- nada concluído",
+      "nothingLeft": "- nada ficou aberto",
+      "to": {
+        "tomorrow": "amanhã",
+        "this_week": "esta semana",
+        "backlog": "backlog"
+      }
+    },
+    "close": {
+      "button": "Fechar o dia",
+      "title": "Fechar o dia",
+      "focused": "Focado",
+      "completed": "Concluídas",
+      "adherence": "Aderência ao plano",
+      "onTime": "No prazo",
+      "of": "de {{count}}",
+      "byList": "Tempo por lista",
+      "open": "O que ficou aberto",
+      "openHint": "para onde vai cada uma",
+      "nothingOpen": "Nada ficou aberto",
+      "destination": "Destino de {{title}}",
+      "to": {
+        "tomorrow": "Amanhã",
+        "this_week": "Esta semana",
+        "backlog": "Backlog"
+      },
+      "endsSeries": "Encerraria a recorrência",
+      "postponed_one": "Adiada {{count}} dia seguido",
+      "postponed_other": "Adiada {{count}} dias seguidos",
+      "note": "Nota do dia",
+      "optional": "(opcional)",
+      "notePlaceholder": "O que travou, o que aprendeu, o que lembrar amanhã",
+      "summary": "Resumo em Markdown",
+      "copy": "Copiar ao fechar",
+      "back": "Voltar",
+      "failed": "Não foi possível fechar o dia",
+      "copied": "Resumo copiado",
+      "copyFailed": "Não foi possível copiar o resumo",
+      "copyAgain": "Copiar de novo"
     }
   }
 }
