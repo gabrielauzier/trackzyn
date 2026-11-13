@@ -135,6 +135,8 @@ export const workspaces = {
       merge_gap_minutes?: number | null
       /** gross or net; never null (#42). */
       hours_count_mode?: HoursCountMode
+      /** Shows the plan adherence cards on the Hoje dashboard. */
+      plan_adherence_enabled?: boolean
     },
   ): Promise<Workspace> => {
     const { data } = await api.patch(`/workspaces/${id}`, payload)

@@ -91,6 +91,8 @@ export interface Workspace {
   merge_gap_minutes: number | null
   /** How totals count time that overlaps: gross sums every interval, net counts the overlap once (#42). */
   hours_count_mode: HoursCountMode
+  /** The Hoje dashboard shows the cards that compare the day with its plan (Aderência ao plano, Plano x Real). */
+  plan_adherence_enabled: boolean
   created_at: string
   created_by_user_id: string | null
   managed_by_user_id: string | null

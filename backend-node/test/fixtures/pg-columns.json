@@ -887,6 +887,12 @@
       "type": "character varying",
       "nullable": false,
       "maxLength": 5
+    },
+    {
+      "column": "plan_adherence_enabled",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
     }
   ]
 }

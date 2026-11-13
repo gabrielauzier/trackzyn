@@ -15,10 +15,10 @@ vi.mock('@/lib/api', () => ({
   tasks: { get: vi.fn(), move: vi.fn() },
   authHeaders: () => ({}),
 }))
-const role = vi.hoisted(() => ({ canWrite: true }))
+const role = vi.hoisted(() => ({ canWrite: true, planAdherence: true }))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({
-    current: { id: 'ws', name: 'Synthetic workspace', timezone: 'America/Sao_Paulo' },
+    current: { id: 'ws', name: 'Synthetic workspace', timezone: 'America/Sao_Paulo', plan_adherence_enabled: role.planAdherence },
     workspaces: [{ id: 'ws', name: 'Synthetic workspace' }],
     canWrite: role.canWrite,
   }),
@@ -99,6 +99,7 @@ function show() {
 beforeEach(() => {
   vi.clearAllMocks()
   role.canWrite = true
+  role.planAdherence = true
   localStorage.clear()
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(AT_1420)
@@ -151,6 +152,23 @@ describe('TodayPage', () => {
     show()
     const card = (await screen.findByRole('heading', { name: 'Plan × actual' })).closest('section')!
     expect(within(within(card).getByRole('list', { name: 'Plan' })).getByText('Review the PR')).toBeInTheDocument()
+  })
+
+  it('leaves Plan × actual and Plan adherence out when the workspace has the plan adherence cards off', async () => {
+    role.planAdherence = false
+    vi.mocked(today.get).mockResolvedValue(
+      day({
+        plan: {
+          saved: true,
+          blocks: [{ id: 'b1', kind: 'task', task_id: 'task-a', title: 'Review the PR', list_color: 2, start_minute: 810, minutes: 90, done: false }],
+        },
+      }),
+    )
+    show()
+    expect(await screen.findByRole('group', { name: 'Task switches' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Focused time' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Plan adherence' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Plan × actual' })).toBeNull()
   })
 
   it('shows the numbers of the day beside the Now card (HOJE-49)', async () => {

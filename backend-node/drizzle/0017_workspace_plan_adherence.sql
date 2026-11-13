@@ -1,0 +1,2 @@
+-- The Hoje dashboard shows the cards that compare the day with its plan (Aderência ao plano, Plano x Real) only when the workspace turns this on.
+ALTER TABLE "workspaces" ADD COLUMN "plan_adherence_enabled" boolean DEFAULT false NOT NULL;

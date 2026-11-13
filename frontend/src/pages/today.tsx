@@ -49,6 +49,8 @@ export default function TodayPage() {
   const listsQuery = useQuery({ queryKey: ['lists', { archived: false }], queryFn: () => listsApi.list({ archived: false }) })
   const focus = useFocus()
   const [closing, setClosing] = useState(false)
+  // Aderência ao plano and Plano × real show only where the workspace turned them on.
+  const showPlanAdherence = current?.plan_adherence_enabled ?? false
 
   const timeZone = data?.timezone ?? current?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   const now = useNowMinute(timeZone, () => void refetch())
@@ -142,16 +144,19 @@ export default function TodayPage() {
               done={data.done}
               focusTaskId={focus.state?.session?.kind === 'task' ? focus.state.session.task_id : null}
               nowMinute={now.minute}
+              showAdherence={showPlanAdherence}
             />
           </div>
-          <PlanVsReal
-            day={data.day}
-            workday={data.workday}
-            planSaved={data.plan.saved}
-            blocks={data.plan.blocks}
-            sessions={data.sessions}
-            nowMinute={now.minute}
-          />
+          {showPlanAdherence && (
+            <PlanVsReal
+              day={data.day}
+              workday={data.workday}
+              planSaved={data.plan.saved}
+              blocks={data.plan.blocks}
+              sessions={data.sessions}
+              nowMinute={now.minute}
+            />
+          )}
           <div className="grid gap-4 lg:grid-cols-2">
             <PendingCard
               pending={data.pending}

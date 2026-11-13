@@ -55,7 +55,7 @@ const sessions: TodaySession[] = [
 
 function draw(props: Partial<Parameters<typeof DayStats>[0]> = {}) {
   return renderWithProviders(
-    <DayStats planSaved blocks={[]} sessions={[]} done={[]} focusTaskId={null} nowMinute={hm(14, 20)} {...props} />,
+    <DayStats planSaved blocks={[]} sessions={[]} done={[]} focusTaskId={null} nowMinute={hm(14, 20)} showAdherence {...props} />,
   )
 }
 
@@ -111,6 +111,17 @@ describe('DayStats (HOJE-49 to HOJE-53)', () => {
     draw({ blocks: [block('a', hm(15), 60)] })
     expect(within(stat('Plan adherence')).getByText('—')).toBeInTheDocument()
     expect(within(stat('Plan adherence')).getByText('no blocks so far')).toBeInTheDocument()
+  })
+
+  it('leaves Plan adherence out when the workspace has it off, and Task switches takes the whole row', () => {
+    draw({ sessions, blocks: [block('a', hm(9), 60)], showAdherence: false })
+    expect(screen.queryByRole('group', { name: 'Plan adherence' })).toBeNull()
+    expect(screen.getAllByRole('group').map((group) => group.getAttribute('aria-labelledby'))).toEqual([
+      'today-stat-focused',
+      'today-stat-completed',
+      'today-stat-switches',
+    ])
+    expect(stat('Task switches')).toHaveClass('col-span-2')
   })
 
   it('HOJE-53 shows the task switches and the average task session', () => {

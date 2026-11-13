@@ -16,11 +16,25 @@ interface DayStatsProps {
   /** The task of the open task session, if any. */
   focusTaskId: string | null
   nowMinute: number
+  /** The workspace shows Aderência ao plano; off, the other three stats fill the grid. */
+  showAdherence: boolean
 }
 
-function Stat({ id, label, value, children }: { id: string; label: string; value: ReactNode; children?: ReactNode }) {
+function Stat({
+  id,
+  label,
+  value,
+  children,
+  className,
+}: {
+  id: string
+  label: string
+  value: ReactNode
+  children?: ReactNode
+  className?: string
+}) {
   return (
-    <div role="group" aria-labelledby={id} className="flex flex-col gap-1 rounded-xl border bg-card p-4">
+    <div role="group" aria-labelledby={id} className={cn('flex flex-col gap-1 rounded-xl border bg-card p-4', className)}>
       <div id={id} className="text-xs text-muted-foreground">
         {label}
       </div>
@@ -34,7 +48,7 @@ function Stat({ id, label, value, children }: { id: string; label: string; value
  * The four numbers of the day beside the Now card (HOJE-49 to HOJE-53), counted on the client every minute from the
  * raw sessions and plan of the day read; the open session counts until now.
  */
-export function DayStats({ planSaved, blocks, sessions, done, focusTaskId, nowMinute }: DayStatsProps) {
+export function DayStats({ planSaved, blocks, sessions, done, focusTaskId, nowMinute, showAdherence }: DayStatsProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? i18n.language
   const untilNow = sessions.map((session) => (session.open ? { ...session, end_minute: Math.max(session.end_minute, nowMinute) } : session))
@@ -89,10 +103,17 @@ export function DayStats({ planSaved, blocks, sessions, done, focusTaskId, nowMi
           <div className="text-xs text-muted-foreground">{t('today.stats.noPlan')}</div>
         )}
       </Stat>
-      <Stat id="today-stat-adherence" label={t('today.stats.adherence')} value={share === null ? '—' : `${share}%`}>
-        <div className="text-xs text-muted-foreground">{share === null ? t('today.stats.noBlocks') : t('today.stats.adherenceHint')}</div>
-      </Stat>
-      <Stat id="today-stat-switches" label={t('today.stats.switches')} value={switches(untilNow)}>
+      {showAdherence && (
+        <Stat id="today-stat-adherence" label={t('today.stats.adherence')} value={share === null ? '—' : `${share}%`}>
+          <div className="text-xs text-muted-foreground">{share === null ? t('today.stats.noBlocks') : t('today.stats.adherenceHint')}</div>
+        </Stat>
+      )}
+      <Stat
+        id="today-stat-switches"
+        label={t('today.stats.switches')}
+        value={switches(untilNow)}
+        className={showAdherence ? undefined : 'col-span-2'}
+      >
         {taskSessions > 0 && (
           <div className="text-xs text-muted-foreground">
             {t('today.stats.average', { duration: formatDuration(Math.round(focused / 60 / taskSessions) * 60, language) })}

@@ -485,6 +485,9 @@
     "hoursCountNetDescription": "O tempo em que sessões ou blocos se sobrepõem conta uma vez.",
     "hideShortSessionsHint": "Sessões encerradas mais curtas que isso somem da Agenda e da aba Sessões dos Relatórios para todos os membros. Elas continuam contando em todos os totais.",
     "hideShortSessionsInfo": "Sobre esconder sessões curtas",
+    "planAdherence": "Mostrar aderência ao plano",
+    "planAdherenceInfo": "Sobre mostrar aderência ao plano",
+    "planAdherenceHint": "Mostra os cards Aderência ao plano e Plano × real no Hoje, para todos os membros.",
     "you": "você",
     "youManageThis": "Você gerencia este workspace"
   },

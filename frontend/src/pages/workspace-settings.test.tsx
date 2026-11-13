@@ -44,6 +44,7 @@ const workspace = (minSessionMinutes: number | null): Workspace => ({
   min_session_minutes: minSessionMinutes,
   merge_gap_minutes: null,
   hours_count_mode: 'gross',
+  plan_adherence_enabled: false,
   created_at: '2026-10-01T00:00:00.000Z',
   created_by_user_id: 'u1',
   managed_by_user_id: null,
@@ -339,5 +340,39 @@ describe('workspace settings: hours count mode (#42)', () => {
     } finally {
       await i18n.changeLanguage('en')
     }
+  })
+})
+
+describe('workspace settings: plan adherence cards', () => {
+  const adherenceSwitch = () => screen.getByRole('switch', { name: 'Show plan adherence' })
+
+  it('shows the switch off for a workspace that has the cards off', async () => {
+    renderWithProviders(<WorkspaceSettingsPage />)
+    expect(await screen.findByRole('switch', { name: 'Show plan adherence' })).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('opens on for a workspace that has the cards on', async () => {
+    state.workspace = { ...workspace(null), plan_adherence_enabled: true }
+    renderWithProviders(<WorkspaceSettingsPage />)
+    expect(await screen.findByRole('switch', { name: 'Show plan adherence' })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('sends true once turned on, and false once turned off', async () => {
+    const { user } = renderWithProviders(<WorkspaceSettingsPage />)
+    await user.click(await screen.findByRole('switch', { name: 'Show plan adherence' }))
+    await user.click(save())
+    await waitFor(() => expect(workspacesApi.update).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(workspacesApi.update).mock.calls[0]).toEqual(['ws', expect.objectContaining({ plan_adherence_enabled: true })])
+
+    await user.click(adherenceSwitch())
+    await user.click(save())
+    await waitFor(() => expect(workspacesApi.update).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(workspacesApi.update).mock.calls[1]).toEqual(['ws', expect.objectContaining({ plan_adherence_enabled: false })])
+  })
+
+  it('cannot be changed by a member who does not manage the workspace', async () => {
+    state.canManage = false
+    renderWithProviders(<WorkspaceSettingsPage />)
+    expect(await screen.findByRole('switch', { name: 'Show plan adherence' })).toBeDisabled()
   })
 })

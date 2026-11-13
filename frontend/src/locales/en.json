@@ -485,6 +485,9 @@
     "hoursCountNetDescription": "Time in which sessions or blocks overlap counts once.",
     "hideShortSessionsHint": "Closed sessions shorter than this leave the Agenda and the Sessions tab of the Reports for every member. They still count in every total.",
     "hideShortSessionsInfo": "About hiding short sessions",
+    "planAdherence": "Show plan adherence",
+    "planAdherenceInfo": "About showing plan adherence",
+    "planAdherenceHint": "Shows the Plan adherence and Plan × actual cards on the Today dashboard, for every member.",
     "you": "you",
     "youManageThis": "You manage this workspace"
   },

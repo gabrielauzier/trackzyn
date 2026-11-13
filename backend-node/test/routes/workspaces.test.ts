@@ -256,6 +256,52 @@ describe('hours count mode (#42)', () => {
   })
 })
 
+describe('plan adherence cards', () => {
+  const flagOf = async (id: string, token: string) =>
+    (await call('GET', '/api/workspaces/current', token, undefined, { 'x-workspace-id': id })).json().plan_adherence_enabled
+
+  it('reads false by default for the owner, an editor and a viewer, in the list and in current', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+    for (const user of [owner, ...members]) {
+      expect(await flagOf(id, user.token)).toBe(false)
+      const listed = (await call('GET', '/api/workspaces', user.token)).json() as Array<{ id: string; plan_adherence_enabled: unknown }>
+      expect(listed.find((workspace) => workspace.id === id)).toHaveProperty('plan_adherence_enabled', false)
+    }
+  })
+
+  it('lets the owner turn it on, keeps it on a PATCH without the field, and turns it off', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['viewer'])
+
+    const on = await call('PATCH', `/api/workspaces/${id}`, owner.token, { plan_adherence_enabled: true })
+    expect(on.statusCode).toBe(200)
+    expect(on.json().plan_adherence_enabled).toBe(true)
+    expect(await flagOf(id, members[0]!.token)).toBe(true)
+
+    const renamed = await call('PATCH', `/api/workspaces/${id}`, owner.token, { name: 'Renamed' })
+    expect(renamed.json()).toMatchObject({ name: 'Renamed', plan_adherence_enabled: true })
+
+    const off = await call('PATCH', `/api/workspaces/${id}`, owner.token, { plan_adherence_enabled: false })
+    expect(off.json().plan_adherence_enabled).toBe(false)
+    expect(await flagOf(id, owner.token)).toBe(false)
+  })
+
+  it('answers 422 to a value that is not a boolean, and 403 to an editor and a viewer, keeping the stored value', async () => {
+    const owner = await register(t)
+    const { id, members } = await shared(owner, ['editor', 'viewer'])
+    await call('PATCH', `/api/workspaces/${id}`, owner.token, { plan_adherence_enabled: true })
+
+    for (const bad of ['true', 1, null]) {
+      expect((await call('PATCH', `/api/workspaces/${id}`, owner.token, { plan_adherence_enabled: bad })).statusCode).toBe(422)
+    }
+    for (const member of members) {
+      expect((await call('PATCH', `/api/workspaces/${id}`, member.token, { plan_adherence_enabled: false })).statusCode).toBe(403)
+    }
+    expect(await flagOf(id, owner.token)).toBe(true)
+  })
+})
+
 describe('members', () => {
   it('lists, changes roles and removes members with the sole-owner protections', async () => {
     const owner = await register(t)
