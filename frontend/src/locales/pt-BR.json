@@ -590,7 +590,16 @@
     "renameSubtaskHint": "Clique duas vezes para renomear",
     "moveSubtaskUp": "Mover {{title}} para cima",
     "moveSubtaskDown": "Mover {{title}} para baixo",
-    "openFocus": "Abrir o foco sem iniciar o cronômetro"
+    "openFocus": "Abrir o foco sem iniciar o cronômetro",
+    "flagWithoutReason": "Flag sem motivo",
+    "waiting": "Aguardando",
+    "waitingFor": "Aguardando · {{who}}",
+    "due": "Prazo",
+    "dueOn": "Prazo {{day}}",
+    "dueToday": "Prazo hoje",
+    "dueTomorrow": "Prazo amanhã",
+    "dueLate": "Atrasada · {{day}}",
+    "reminder": "Lembrete"
   },
   "focus": {
     "sounds": {

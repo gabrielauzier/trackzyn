@@ -706,14 +706,16 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Com tudo desligado, o card é igual ao de hoje (nome, estimativa, tempo)
-- [ ] Flag ligada: borda vermelha e motivo ou `Flag sem motivo`; Flag desligada: sem borda; tarefa sem flag nunca tem borda vermelha
-- [ ] `Aguardando · Fulano` e `Aguardando` sem o "de quem"
-- [ ] Agendamento e prazo no mesmo dia aparecem os dois
-- [ ] Lembrete: sino, sem checkbox, sem estimativa e sem tempo, com qualquer combinação de campos
-- [ ] Gate check passes: Quick
+- [x] Com tudo desligado, o card é igual ao de hoje (nome, estimativa, tempo)
+- [x] Flag ligada: borda vermelha e motivo ou `Flag sem motivo`; Flag desligada: sem borda; tarefa sem flag nunca tem borda vermelha
+- [x] `Aguardando · Fulano` e `Aguardando` sem o "de quem"
+- [x] Agendamento e prazo no mesmo dia aparecem os dois
+- [x] Lembrete: sino, sem checkbox, sem estimativa e sem tempo, com qualquer combinação de campos
+- [x] Gate check passes: Quick
 
-**Also touched**: `frontend/src/components/board/reminder-card.tsx`
+**Also touched**: `frontend/src/components/board/reminder-card.tsx`, `frontend/src/lib/board/card-fields.ts` (`CARD_FIELDS`, `CardFieldsState`, `ALL_CARD_FIELDS`, `shownFields`), `frontend/src/components/board/task-card.test.tsx`, `frontend/src/locales/pt-BR.json` e `en.json` (chaves `board.flagWithoutReason`, `waiting`, `waitingFor`, `due`, `dueOn`, `dueToday`, `dueTomorrow`, `dueLate`, `reminder`). `fields` é opcional e, sem ele, liga os quatro (FIELDS-03). O `TaskCard` desenha o `ReminderCard` quando `kind` é `reminder`, então o quadro não precisa escolher o card.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: quick

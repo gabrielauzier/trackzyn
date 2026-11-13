@@ -590,7 +590,16 @@
     "renameSubtaskHint": "Double-click to rename",
     "moveSubtaskUp": "Move {{title}} up",
     "moveSubtaskDown": "Move {{title}} down",
-    "openFocus": "Open focus without starting the timer"
+    "openFocus": "Open focus without starting the timer",
+    "flagWithoutReason": "Flag without a reason",
+    "waiting": "Waiting",
+    "waitingFor": "Waiting · {{who}}",
+    "due": "Due",
+    "dueOn": "Due {{day}}",
+    "dueToday": "Due today",
+    "dueTomorrow": "Due tomorrow",
+    "dueLate": "Late · {{day}}",
+    "reminder": "Reminder"
   },
   "focus": {
     "sounds": {

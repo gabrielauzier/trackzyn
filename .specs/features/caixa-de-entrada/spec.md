@@ -412,7 +412,7 @@ O que o código já fixa:
 | ALL-09 | P1: Processar tudo | T14 | Implementing |
 | REM-01 | P1: Lembrete | T13, T26 | Implementing |
 | REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
-| REM-03 | P1: Lembrete | T18 | In Tasks |
+| REM-03 | P1: Lembrete | T18 | Implementing |
 | REM-04 | P1: Lembrete | T5 | Implementing |
 | REM-05 | P1: Lembrete | T5, T32 | Implementing |
 | REM-06 | P1: Lembrete | T5, T28 | Implementing |
@@ -437,22 +437,22 @@ O que o código já fixa:
 | DUE-04 | P1: Prazo | T17 | Implementing |
 | DUE-05 | P1: Prazo | T17 | Implementing |
 | WAIT-01 | P1: Aguardando | T1, T2 | Implementing |
-| WAIT-02 | P1: Aguardando | T18 | In Tasks |
+| WAIT-02 | P1: Aguardando | T18 | Implementing |
 | WAIT-03 | P1: Aguardando | T2 | Implementing |
 | WAIT-04 | P1: Aguardando | T4 | Implementing |
 | WAIT-05 | P1: Aguardando | T2 | Implementing |
 | FLAG-01 | P1: Flag | T1, T2 | Implementing |
-| FLAG-02 | P1: Flag | T18 | In Tasks |
-| FLAG-03 | P1: Flag | T18 | In Tasks |
+| FLAG-02 | P1: Flag | T18 | Implementing |
+| FLAG-03 | P1: Flag | T18 | Implementing |
 | FLAG-04 | P1: Flag | T2 | Implementing |
 | FLAG-05 | P1: Flag | T3 | Implementing |
 | FLAG-06 | P1: Flag | T2 | Implementing |
-| FIELDS-01 | P1: Campos do card | T18 | In Tasks |
+| FIELDS-01 | P1: Campos do card | T18 | Implementing |
 | FIELDS-02 | P1: Campos do card | T19 | In Tasks |
 | FIELDS-03 | P1: Campos do card | T10 | Implementing |
 | FIELDS-04 | P1: Campos do card | T10, T19 | Implementing |
-| FIELDS-05 | P1: Campos do card | T18 | In Tasks |
-| FIELDS-06 | P1: Campos do card | T18 | In Tasks |
+| FIELDS-05 | P1: Campos do card | T18 | Implementing |
+| FIELDS-06 | P1: Campos do card | T18 | Implementing |
 | MODAL-01 | P1: Modal da tarefa | T22 | In Tasks |
 | MODAL-02 | P1: Modal da tarefa | T22 | In Tasks |
 | MODAL-03 | P1: Modal da tarefa | T22 | In Tasks |
@@ -467,7 +467,7 @@ O que o código já fixa:
 | EDGE-03 | Edge Cases | T12 | Implementing |
 | EDGE-04 | Edge Cases | T3 | Implementing |
 | EDGE-05 | Edge Cases | T20 | In Tasks |
-| EDGE-06 | Edge Cases | T18 | In Tasks |
+| EDGE-06 | Edge Cases | T18 | Implementing |
 | EDGE-07 | Edge Cases | T12 | Implementing |
 | EDGE-08 | Edge Cases | T15 | Implementing |
 

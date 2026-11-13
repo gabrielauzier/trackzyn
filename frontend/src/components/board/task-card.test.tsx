@@ -452,3 +452,206 @@ describe('TaskCard schedule badge (US-3, US-11)', () => {
     expect(badge.closest('div')).toBe(screen.getByTitle('Time spent').parentElement)
   })
 })
+
+describe('TaskCard new fields, each on and off (AD-011, FIELDS-01, FIELDS-05)', () => {
+  // Wednesday 2026-11-11, 14:07 in America/Sao_Paulo.
+  const TZ = 'America/Sao_Paulo'
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-11T17:07:00Z'))
+    await i18n.changeLanguage('pt-BR')
+  })
+  afterEach(async () => {
+    vi.useRealTimers()
+    await i18n.changeLanguage('en')
+  })
+
+  const NONE = { priority: false, due: false, flag: false, waiting: false }
+  const ALL = { priority: true, due: true, flag: true, waiting: true }
+  const only = (field: keyof typeof NONE) => ({ ...NONE, [field]: true })
+  const LOADED: Partial<TaskCardView> = {
+    priority: 'ultra',
+    due_on: '2026-11-10',
+    waiting: true,
+    waiting_for: 'QA',
+    flagged: true,
+    flag_reason: 'Bloqueada pelo deploy',
+  }
+  const show = (overrides: Partial<TaskCardView>, fields: typeof NONE, column: TaskColumn = 'this_week') =>
+    renderWithProviders(<TaskCard task={task(overrides)} column={column} timeZone={TZ} fields={fields} canWrite {...noop} />)
+  const card = () => screen.getByRole('button', { name: 'DEV-1725' }).closest('[data-slot="card"]')!
+
+  it('FIELDS-01 with every field off, a card with all the new fields is the card of today: name, estimate, time', () => {
+    const { container: loaded } = show(LOADED, NONE)
+    const { container: plain } = renderWithProviders(<TaskCard task={task()} column="this_week" timeZone={TZ} canWrite {...noop} />)
+
+    expect(loaded.innerHTML).toBe(plain.innerHTML)
+    expect(within(loaded).getByTitle('Estimativa')).toHaveTextContent('1h')
+    expect(within(loaded).getByTitle('Tempo gasto')).toHaveTextContent('0min')
+  })
+
+  it('PRI-02 Prioridade on shows the icon at the start of the bottom row; off hides it', () => {
+    const { unmount } = show({ priority: 'high' }, only('priority'))
+    const icon = screen.getByRole('img', { name: 'Prioridade alta' })
+    expect(icon.parentElement!.firstElementChild).toBe(icon)
+    expect(icon.closest('div')).toBe(screen.getByTitle('Tempo gasto').parentElement)
+    unmount()
+
+    show({ priority: 'high' }, { ...ALL, priority: false })
+    expect(screen.queryByRole('img', { name: 'Prioridade alta' })).not.toBeInTheDocument()
+  })
+
+  it('FLAG-02 Flag on: red border and the reason under the title, with the red flag', () => {
+    show({ flagged: true, flag_reason: 'Esperando acesso' }, only('flag'))
+
+    expect(card()).toHaveClass('border-rose-600')
+    const reason = screen.getByText('Esperando acesso')
+    expect(reason.parentElement!.querySelector('svg.lucide-flag')).toHaveClass('text-rose-500')
+    // Right under the title row.
+    expect(screen.getByRole('button', { name: 'DEV-1725' }).parentElement!.nextElementSibling).toBe(reason.parentElement)
+  })
+
+  it('FLAG-02 a flag without a reason shows Flag sem motivo', () => {
+    show({ flagged: true, flag_reason: null }, only('flag'))
+
+    expect(screen.getByText('Flag sem motivo')).toBeInTheDocument()
+    expect(card()).toHaveClass('border-rose-600')
+  })
+
+  it('FIELDS-05 Flag off: no reason and no red border on a flagged task', () => {
+    show({ flagged: true, flag_reason: 'Esperando acesso' }, { ...ALL, flag: false })
+
+    expect(screen.queryByText('Esperando acesso')).not.toBeInTheDocument()
+    expect(card()).not.toHaveClass('border-rose-600')
+  })
+
+  it('FLAG-03 a task without a flag never has the red border, with every field on and the others set', () => {
+    show({ ...LOADED, flagged: false, flag_reason: null }, ALL)
+
+    expect(card()).not.toHaveClass('border-rose-600')
+    expect(screen.queryByText('Flag sem motivo')).not.toBeInTheDocument()
+  })
+
+  it('WAIT-02 Aguardando on shows Aguardando · <de quem>, or Aguardando alone; off hides it', () => {
+    const { unmount } = show({ waiting: true, waiting_for: 'Fulano' }, only('waiting'))
+    expect(screen.getByText('Aguardando · Fulano').parentElement!.querySelector('svg.lucide-user-round')).not.toBeNull()
+    unmount()
+
+    const second = show({ waiting: true, waiting_for: null }, only('waiting'))
+    expect(screen.getByText(/^Aguardando$/)).toBeInTheDocument()
+    second.unmount()
+
+    show({ waiting: true, waiting_for: 'Fulano' }, { ...ALL, waiting: false })
+    expect(screen.queryByText(/Aguardando/)).not.toBeInTheDocument()
+  })
+
+  it('WAIT-02 a task not waiting shows no chip with Aguardando on', () => {
+    show({ waiting: false }, ALL)
+    expect(screen.queryByText(/Aguardando/)).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['2026-11-20', 'this_week', 'Prazo 20 nov', 'bg-muted'],
+    ['2026-11-12', 'this_week', 'Prazo amanhã', 'text-amber-700'],
+    ['2026-11-11', 'today', 'Prazo hoje', 'text-amber-700'],
+    ['2026-11-10', 'today', 'Atrasada · 10 nov', 'text-rose-700'],
+    ['2026-11-10', 'done', 'Prazo 10 nov', 'bg-muted'],
+  ] as const)('DUE-02..05 Prazo on: due %s in %s shows %s', (due_on, column, text, tone) => {
+    show({ due_on }, only('due'), column)
+
+    const chip = screen.getByText(text).parentElement!
+    expect(chip).toHaveClass(tone)
+    expect(chip.querySelector('svg.lucide-hourglass')).not.toBeNull()
+  })
+
+  it('DUE-02 Prazo off hides the chip; a task without a due day has none', () => {
+    const { unmount } = show({ due_on: '2026-11-20' }, { ...ALL, due: false })
+    expect(screen.queryByText(/Prazo/)).not.toBeInTheDocument()
+    unmount()
+
+    show({ due_on: null }, ALL)
+    expect(screen.queryByText(/Prazo|Atrasada/)).not.toBeInTheDocument()
+  })
+
+  it('EDGE-06 a schedule and a due day on the same day show both, apart', () => {
+    show({ scheduled_on: '2026-11-12', due_on: '2026-11-12' }, ALL)
+
+    const schedule = screen.getByTitle('Qui, 12 nov')
+    const due = screen.getByText('Prazo amanhã').parentElement!
+    expect(schedule).toHaveTextContent('Amanhã')
+    expect(schedule.contains(due)).toBe(false)
+    expect(due.contains(schedule)).toBe(false)
+  })
+
+  it('keeps the order: title, flag, chips, bottom row', () => {
+    show(LOADED, ALL)
+
+    const title = screen.getByRole('button', { name: 'DEV-1725' }).parentElement!
+    const flag = screen.getByText('Bloqueada pelo deploy').parentElement!
+    const chips = screen.getByText('Atrasada · 10 nov').parentElement!.parentElement!
+    const bottom = screen.getByTitle('Tempo gasto').parentElement!
+    expect(title.nextElementSibling).toBe(flag)
+    expect(flag.nextElementSibling).toBe(chips)
+    expect(chips.nextElementSibling).toBe(bottom)
+    expect(within(chips).getByText('Aguardando · QA')).toBeInTheDocument()
+  })
+})
+
+describe('TaskCard of a reminder (REM-03, FIELDS-06)', () => {
+  const TZ = 'America/Sao_Paulo'
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-11T17:07:00Z'))
+    await i18n.changeLanguage('pt-BR')
+  })
+  afterEach(async () => {
+    vi.useRealTimers()
+    await i18n.changeLanguage('en')
+  })
+
+  const REMINDER: Partial<TaskCardView> = { kind: 'reminder', title: 'Pagar o DAS', estimate_minutes: null, priority: 'high', scheduled_on: '2026-11-11', scheduled_time: '10:00' }
+  const NONE = { priority: false, due: false, flag: false, waiting: false }
+  const ALL = { priority: true, due: true, flag: true, waiting: true }
+
+  it.each([
+    ['every field on', ALL],
+    ['every field off', NONE],
+  ])('shows the bell, the title and the time, without checkbox, estimate or time spent, with %s', (_, fields) => {
+    const onOpen = vi.fn()
+    renderWithProviders(<TaskCard task={task(REMINDER)} column="today" number={1} timeZone={TZ} fields={fields} canWrite onOpen={onOpen} />)
+
+    expect(screen.getByRole('img', { name: 'Lembrete' })).toHaveClass('lucide-bell')
+    expect(screen.getByRole('button', { name: 'Pagar o DAS' })).toBeInTheDocument()
+    expect(screen.getByText('10:00')).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Estimativa')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Editar estimativa' })).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Tempo gasto')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Ordem em Hoje')).not.toBeInTheDocument()
+  })
+
+  it('REM-03 shows the priority icon with Prioridade on, and hides it with it off', () => {
+    const { unmount } = renderWithProviders(<TaskCard task={task(REMINDER)} column="today" timeZone={TZ} fields={ALL} canWrite {...noop} />)
+    expect(screen.getByRole('img', { name: 'Prioridade alta' })).toBeInTheDocument()
+    unmount()
+
+    renderWithProviders(<TaskCard task={task(REMINDER)} column="today" timeZone={TZ} fields={NONE} canWrite {...noop} />)
+    expect(screen.queryByRole('img', { name: 'Prioridade alta' })).not.toBeInTheDocument()
+  })
+
+  it('in Concluídas it has no check icon either, and the title is struck through', () => {
+    renderWithProviders(<TaskCard task={task(REMINDER)} column="done" timeZone={TZ} fields={ALL} canWrite {...noop} />)
+
+    expect(screen.queryByLabelText('Concluída')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Pagar o DAS' })).toHaveClass('line-through')
+  })
+
+  it('opens the task dialog from the title', async () => {
+    vi.useRealTimers()
+    const onOpen = vi.fn()
+    const { user } = renderWithProviders(<TaskCard task={task(REMINDER)} column="today" timeZone={TZ} fields={ALL} canWrite onOpen={onOpen} />)
+
+    await user.click(screen.getByRole('button', { name: 'Pagar o DAS' }))
+    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ title: 'Pagar o DAS', kind: 'reminder' }))
+  })
+})
