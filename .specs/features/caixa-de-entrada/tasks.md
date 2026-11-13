@@ -993,14 +993,16 @@ T30 → T31
 
 **Done when**:
 
-- [ ] Abre no primeiro item sem rascunho com `Processar · 1 de 3`
-- [ ] Salvar guarda o rascunho e não cria tarefa; pular não guarda
-- [ ] A revisão lista tipo, nome, prioridade e destino; o resumo soma itens e estimativas por coluna
-- [ ] Clicar num item volta ao formulário e salvar retorna à revisão
-- [ ] 409 marca cada item com o motivo; `Terminar depois` fecha e o próximo `Processar tudo` continua
-- [ ] Gate check passes: Full (frontend)
+- [x] Abre no primeiro item sem rascunho com `Processar · 1 de 3`
+- [x] Salvar guarda o rascunho e não cria tarefa; pular não guarda
+- [x] A revisão lista tipo, nome, prioridade e destino; o resumo soma itens e estimativas por coluna
+- [x] Clicar num item volta ao formulário e salvar retorna à revisão
+- [x] 409 marca cada item com o motivo; `Terminar depois` fecha e o próximo `Processar tudo` continua
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/components/inbox/process-dialog.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`
+**Also touched**: `frontend/src/components/inbox/process-dialog.tsx`, `frontend/src/locales/pt-BR.json`, `frontend/src/locales/en.json`, `frontend/src/pages/inbox.tsx` (botão `Processar tudo` e `?process=all`). `ProcessAllDialog` fica em `process-dialog.tsx` e o teste do fluxo inteiro em `review-step.test.tsx`. `ProcessForm` passa a abrir de um rascunho. Na revisão, `Descartar` e `Já fiz` também viram rascunho (`discard`, `done`). Os textos dos motivos do 409 que a spec não dá: `Sem permissão na lista`, `Lista não encontrada`, `Nome com mais de 255 caracteres`, `Já processado em outra janela` (`Lista arquivada` é o do EDGE-02).
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

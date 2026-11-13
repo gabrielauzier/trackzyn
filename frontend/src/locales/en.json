@@ -1216,7 +1216,8 @@
       "list_archived": "The list was archived. Pick another list.",
       "list_read_only": "You no longer write in this list. Pick another list.",
       "already_processed": "This item was already processed."
-    }
+    },
+    "processAll": "Process all"
   },
   "capture": {
     "title": "Capture",
@@ -1266,6 +1267,40 @@
     "done": "Done already (under 2 min)",
     "skip": "Skip",
     "save": "Save and next",
-    "sent": "Sent to {{list}} › {{column}}"
+    "sent": "Sent to {{list}} › {{column}}",
+    "progress": "Process · {{n}} of {{total}}",
+    "reviewHeading": "Process · Review",
+    "closeKeep": "Close and keep the draft",
+    "review": {
+      "title": "Check before sending",
+      "hint": "Nothing left the inbox yet. Click an item to fix it; on confirming, everything is sent at once.",
+      "kind_task": "Task",
+      "kind_reminder": "Reminder",
+      "kind_group": "Group",
+      "kind_done": "Done already",
+      "kind_discard": "Discarded",
+      "kind_skipped": "Skipped",
+      "trash": "Trash",
+      "staysInInbox": "Stays in the inbox",
+      "edit": "Fix {{name}}",
+      "groupTasks_one": "1 task",
+      "groupTasks_other": "{{count}} tasks",
+      "byList": "Where each thing goes",
+      "gains_one": "+1 item",
+      "gains_other": "+{{count}} items",
+      "later": "Finish later",
+      "confirm_one": "Confirm and send 1 item",
+      "confirm_other": "Confirm and send {{count}} items",
+      "refused": "No item was sent. Fix the marked items.",
+      "sent_one": "1 item sent",
+      "sent_other": "{{count}} items sent",
+      "reason": {
+        "list_archived": "List archived",
+        "list_read_only": "No permission on the list",
+        "list_not_found": "List not found",
+        "name_too_long": "Name over 255 characters",
+        "already_processed": "Already processed in another window"
+      }
+    }
   }
 }

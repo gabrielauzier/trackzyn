@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Inbox, Plus, Undo2 } from 'lucide-react'
+import { Inbox, Play, Plus, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { inbox as inboxApi } from '@/lib/api'
@@ -11,7 +11,7 @@ import { inboxOrigin } from '@/lib/inbox/age'
 import { useCapture } from '@/lib/inbox/use-capture'
 import { shortDay } from '@/lib/schedule'
 import { InboxRow } from '@/components/inbox/inbox-row'
-import { ProcessDialog } from '@/components/inbox/process-dialog'
+import { ProcessAllDialog, ProcessDialog } from '@/components/inbox/process-dialog'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -125,10 +125,18 @@ export default function InboxPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t('inbox.title')}</h1>
-        {current.data && (
-          <p className="mt-1 text-sm text-muted-foreground">{t('inbox.waiting', { count: currentItems.length })}</p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t('inbox.title')}</h1>
+          {current.data && (
+            <p className="mt-1 text-sm text-muted-foreground">{t('inbox.waiting', { count: currentItems.length })}</p>
+          )}
+        </div>
+        {currentItems.length > 0 && (
+          <Button type="button" onClick={() => setSearchParams({ process: 'all' })}>
+            <Play className="fill-current" />
+            {t('inbox.processAll')}
+          </Button>
         )}
       </header>
 
@@ -183,6 +191,9 @@ export default function InboxPage() {
         </TabsContent>
       </Tabs>
 
+      {processing === 'all' && current.data && (
+        <ProcessAllDialog items={currentItems} timeZone={current.data.timezone} onClose={closeProcess} />
+      )}
       {processed && (
         <ProcessDialog item={processed} timeZone={current.data?.timezone} onClose={closeProcess} onNext={processNext} />
       )}

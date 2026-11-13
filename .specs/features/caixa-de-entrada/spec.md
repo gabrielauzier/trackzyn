@@ -401,14 +401,14 @@ O que o código já fixa:
 | PROC-06 | P1: Processar como tarefa | T13, T26 | Implementing |
 | PROC-07 | P1: Processar como tarefa | T13, T26 | Implementing |
 | PROC-08 | P1: Processar como tarefa | T13, T26 | Implementing |
-| ALL-01 | P1: Processar tudo | T27 | In Tasks |
-| ALL-02 | P1: Processar tudo | T27 | In Tasks |
-| ALL-03 | P1: Processar tudo | T27 | In Tasks |
-| ALL-04 | P1: Processar tudo | T27 | In Tasks |
-| ALL-05 | P1: Processar tudo | T27 | In Tasks |
+| ALL-01 | P1: Processar tudo | T27 | Implementing |
+| ALL-02 | P1: Processar tudo | T27 | Implementing |
+| ALL-03 | P1: Processar tudo | T27 | Implementing |
+| ALL-04 | P1: Processar tudo | T27 | Implementing |
+| ALL-05 | P1: Processar tudo | T27 | Implementing |
 | ALL-06 | P1: Processar tudo | T14 | Implementing |
 | ALL-07 | P1: Processar tudo | T14 | Implementing |
-| ALL-08 | P1: Processar tudo | T27 | In Tasks |
+| ALL-08 | P1: Processar tudo | T27 | Implementing |
 | ALL-09 | P1: Processar tudo | T14 | Implementing |
 | REM-01 | P1: Lembrete | T13, T26 | Implementing |
 | REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |

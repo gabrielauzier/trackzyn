@@ -9,7 +9,7 @@ import { extractApiError } from '@/lib/api-errors'
 import { todayInTimezone } from '@/lib/date-utils'
 import { inboxAge, inboxOrigin } from '@/lib/inbox/age'
 import { parseTaskLine, targetColumn } from '@/lib/inbox/decision'
-import { sendRefusal } from '@/lib/inbox/errors'
+import { failedResponse, sendRefusal } from '@/lib/inbox/errors'
 import { useWritableLists } from '@/lib/inbox/use-writable-lists'
 import { cn } from '@/lib/utils'
 import { DURATION_ERROR_KEY, parseDuration, toDuration } from '@/components/board/estimate'
@@ -19,8 +19,10 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { DurationInput } from '@/components/ui/duration-input'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { Decision, InboxItem, Priority, TaskColumn } from '@/types'
+import { ReviewStep, type CommitRefusal } from '@/components/inbox/review-step'
+import type { Decision, InboxItem, InboxResponse, Priority, TaskColumn } from '@/types'
 
 type Kind = 'task' | 'reminder' | 'group'
 type GroupTask = { title: string; estimate_minutes: number | null }
@@ -45,9 +47,12 @@ interface FormState {
   tasks: GroupTask[]
 }
 
-/** The form as it opens (PROC-01): a task named after the text, with the list and the estimate of the row. */
-function initialForm(item: InboxItem): FormState {
-  return {
+/**
+ * The form as it opens (PROC-01): a task named after the text, with the list and the estimate of the row; or,
+ * from the review, the decision kept as a draft (ALL-05).
+ */
+function initialForm(item: InboxItem, draft: Decision | null = null): FormState {
+  const form: FormState = {
     kind: 'task',
     name: item.text.slice(0, MAX_NAME),
     listId: item.list_id ?? '',
@@ -59,6 +64,19 @@ function initialForm(item: InboxItem): FormState {
     notes: '',
     column: null,
     tasks: [],
+  }
+  if (!draft || draft.type === 'discard') return form
+  const named = { ...form, name: draft.name ?? form.name, listId: draft.list_id }
+  if (draft.type === 'done') return named
+  const planned = { ...named, priority: draft.priority ?? 'none', column: draft.column ?? null }
+  if (draft.type === 'group') return { ...planned, kind: 'group', dueOn: draft.due_on ?? '', tasks: draft.tasks.map((task) => ({ title: task.title, estimate_minutes: task.estimate_minutes ?? null })) }
+  const scheduled = { ...planned, scheduledOn: draft.scheduled_on ?? '', scheduledTime: draft.scheduled_time ?? '' }
+  if (draft.type === 'reminder') return { ...scheduled, kind: 'reminder' }
+  return {
+    ...scheduled,
+    dueOn: draft.due_on ?? '',
+    estimate: draft.estimate_minutes === undefined ? form.estimate : toDuration(draft.estimate_minutes),
+    notes: draft.notes ?? '',
   }
 }
 
@@ -124,16 +142,18 @@ export interface ProcessFormProps {
   onDiscard: () => void
   /** Offered in Processar tudo (ALL-03). */
   onSkip?: () => void
+  /** The draft kept by Processar tudo, opened again from the review (ALL-05). */
+  draft?: Decision | null
 }
 
 /**
  * The decision of one item (PROC-01 to PROC-07, REM-01, REM-02, GRP-02, GRP-03): a task, a reminder or a group,
  * with the list and the column it goes to; `Já fiz` and `Descartar` close it otherwise.
  */
-export function ProcessForm({ item, timeZone, error, pending, onSave, onDone, onDiscard, onSkip }: ProcessFormProps) {
+export function ProcessForm({ item, timeZone, error, pending, onSave, onDone, onDiscard, onSkip, draft = null }: ProcessFormProps) {
   const { t } = useTranslation()
   const lists = useWritableLists()
-  const [form, setForm] = useState(() => initialForm(item))
+  const [form, setForm] = useState(() => initialForm(item, draft))
   const [newTask, setNewTask] = useState('')
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((current) => ({ ...current, [key]: value }))
 
@@ -484,6 +504,113 @@ export function ProcessDialog({
           onDone={(decision) => send.mutate(decision)}
           onDiscard={() => discard.mutate()}
         />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+type Step = { kind: 'item'; id: string; fromReview: boolean } | { kind: 'review' }
+
+/** The reasons of a refused commit, by item (ALL-07). */
+function commitRefusals(error: unknown): Record<string, CommitRefusal> | null {
+  const failed = failedResponse(error)
+  if (failed?.status !== 409 || !Array.isArray(failed.data.items)) return null
+  return Object.fromEntries((failed.data.items as { item_id: string; reason: CommitRefusal }[]).map((entry) => [entry.item_id, entry.reason]))
+}
+
+/**
+ * Processar tudo (`?process=all`, ALL-01 to ALL-05, ALL-08): the items of Atuais without a draft, one after the
+ * other; saving keeps the decision as a draft and skipping keeps nothing, then the review sends every draft.
+ */
+export function ProcessAllDialog({ items, timeZone, onClose }: { items: InboxItem[]; timeZone: string | undefined; onClose: () => void }) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const lists = useWritableLists()
+  // The items still to decide, as the session opened: a draft kept before is not asked again (ALL-08).
+  const [pending] = useState(() => items.filter((item) => item.draft === null).map((item) => item.id))
+  const [step, setStep] = useState<Step>(() => (pending[0] ? { kind: 'item', id: pending[0], fromReview: false } : { kind: 'review' }))
+  const [error, setError] = useState<string | null>(null)
+  const [refusals, setRefusals] = useState<Record<string, CommitRefusal>>({})
+
+  const advance = () => {
+    setError(null)
+    if (step.kind !== 'item' || step.fromReview) return setStep({ kind: 'review' })
+    const next = pending[pending.indexOf(step.id) + 1]
+    setStep(next ? { kind: 'item', id: next, fromReview: false } : { kind: 'review' })
+  }
+
+  // A draft creates nothing on the board (ALL-02).
+  const keep = useMutation({
+    mutationFn: ({ id, draft }: { id: string; draft: Decision }) => inboxApi.update(id, { draft }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<InboxResponse>(['inbox', 'current'], (data) =>
+        data && { ...data, items: data.items.map((item) => (item.id === updated.id ? updated : item)) },
+      )
+      setRefusals((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== updated.id)))
+      advance()
+    },
+    onError: (failure) => setError(extractApiError(failure, t('inbox.actionFailed'))),
+  })
+  const commit = useMutation({
+    mutationFn: (ids: string[]) => inboxApi.commit(ids),
+    onSuccess: (_result, ids) => {
+      toast.success(t('process.review.sent', { count: ids.length }))
+      void queryClient.invalidateQueries({ queryKey: ['inbox'] })
+      void queryClient.invalidateQueries({ queryKey: ['lists'] })
+      onClose()
+    },
+    onError: (failure) => {
+      const reasons = commitRefusals(failure)
+      if (reasons) setRefusals(reasons)
+      else toast.error(extractApiError(failure, t('inbox.actionFailed')))
+    },
+  })
+
+  const current = step.kind === 'item' ? items.find((item) => item.id === step.id) : undefined
+  const save = (draft: Decision) => current && keep.mutate({ id: current.id, draft })
+  const position = current ? items.findIndex((item) => item.id === current.id) + 1 : 0
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent showCloseButton={false} className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+        <header className="flex flex-col gap-2 px-6 pt-5 pb-3">
+          <div className="flex items-center gap-3">
+            <DialogTitle className="text-base">
+              {current ? t('process.progress', { n: position, total: items.length }) : t('process.reviewHeading')}
+            </DialogTitle>
+            <DialogDescription className="sr-only">{t('process.review.hint')}</DialogDescription>
+            <span className="flex-1" />
+            <Button type="button" variant="ghost" size="icon-sm" aria-label={t('process.closeKeep')} onClick={onClose}>
+              <X />
+            </Button>
+          </div>
+          {current && <Progress value={(position / items.length) * 100} aria-label={t('process.progress', { n: position, total: items.length })} />}
+        </header>
+        {current ? (
+          <ProcessForm
+            key={current.id}
+            item={current}
+            draft={current.draft}
+            timeZone={timeZone}
+            error={error}
+            pending={keep.isPending}
+            onSave={save}
+            onDone={save}
+            onDiscard={() => save({ type: 'discard' })}
+            onSkip={step.kind === 'item' && !step.fromReview ? advance : undefined}
+          />
+        ) : (
+          <ReviewStep
+            items={items}
+            lists={lists}
+            timeZone={timeZone}
+            refusals={refusals}
+            pending={commit.isPending}
+            onEdit={(id) => setStep({ kind: 'item', id, fromReview: true })}
+            onConfirm={(ids) => commit.mutate(ids)}
+            onLater={onClose}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )

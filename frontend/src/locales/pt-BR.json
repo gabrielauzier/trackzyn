@@ -1216,7 +1216,8 @@
       "list_archived": "A lista foi arquivada. Escolha outra lista.",
       "list_read_only": "Você não escreve mais nessa lista. Escolha outra lista.",
       "already_processed": "Este item já foi processado."
-    }
+    },
+    "processAll": "Processar tudo"
   },
   "capture": {
     "title": "Capturar",
@@ -1266,6 +1267,40 @@
     "done": "Já fiz (menos de 2 min)",
     "skip": "Pular",
     "save": "Salvar e próximo",
-    "sent": "Enviado para {{list}} › {{column}}"
+    "sent": "Enviado para {{list}} › {{column}}",
+    "progress": "Processar · {{n}} de {{total}}",
+    "reviewHeading": "Processar · Revisão",
+    "closeKeep": "Fechar e guardar o rascunho",
+    "review": {
+      "title": "Confira antes de enviar",
+      "hint": "Nada saiu da caixa ainda. Clique num item para corrigir; ao confirmar, tudo é enviado de uma vez.",
+      "kind_task": "Tarefa",
+      "kind_reminder": "Lembrete",
+      "kind_group": "Grupo",
+      "kind_done": "Já feita",
+      "kind_discard": "Descartado",
+      "kind_skipped": "Pulado",
+      "trash": "Lixeira",
+      "staysInInbox": "Fica na caixa de entrada",
+      "edit": "Corrigir {{name}}",
+      "groupTasks_one": "1 tarefa",
+      "groupTasks_other": "{{count}} tarefas",
+      "byList": "Onde cada coisa entra",
+      "gains_one": "+1 item",
+      "gains_other": "+{{count}} itens",
+      "later": "Terminar depois",
+      "confirm_one": "Confirmar e enviar 1 item",
+      "confirm_other": "Confirmar e enviar {{count}} itens",
+      "refused": "Nenhum item foi enviado. Corrija os itens marcados.",
+      "sent_one": "1 item enviado",
+      "sent_other": "{{count}} itens enviados",
+      "reason": {
+        "list_archived": "Lista arquivada",
+        "list_read_only": "Sem permissão na lista",
+        "list_not_found": "Lista não encontrada",
+        "name_too_long": "Nome com mais de 255 caracteres",
+        "already_processed": "Já processado em outra janela"
+      }
+    }
   }
 }
