@@ -461,7 +461,7 @@ O que o código já fixa:
 | MODAL-03 | P1: Modal da tarefa | T22 | Implementing |
 | MODAL-04 | P1: Modal da tarefa | T7, T8, T22 | Implementing |
 | MODAL-05 | P1: Modal da tarefa | T22 | Implementing |
-| MODAL-06 | P1: Modal da tarefa | T22, T36, T38, T41 | Implementing |
+| MODAL-06 | P1: Modal da tarefa | T22, T36, T38, T41, T42 | Implementing |
 | API-01 | P2: API e MCP | T4, T6, T16 | Implementing |
 | API-02 | P2: API e MCP | T6 | Implementing |
 | API-03 | P2: API e MCP | T2, T6 | Implementing |

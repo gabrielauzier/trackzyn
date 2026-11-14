@@ -275,3 +275,46 @@ describe('POST /api/tasks/:id/duplicate with the caixa-de-entrada fields', () =>
     expect(copy.json()).toMatchObject({ kind: 'reminder', estimate_minutes: null })
   })
 })
+
+describe('MODAL-06 a reminder has no subtasks', () => {
+  it('creating a reminder with subtasks answers 422 reminder_field and creates nothing; a task with subtasks is created', async () => {
+    const { owner, workspaceId, listId, post } = await setup()
+    const refused = await post({ title: 'Pagar o DAS', kind: 'reminder', subtasks: ['Separar o boleto'] })
+    expect(refused.statusCode).toBe(422)
+    expect(refused.json()).toMatchObject({ code: 'reminder_field' })
+    const board = (await call('GET', `/api/lists/${listId}/board`, owner.token, workspaceId)).json()
+    expect((board.columns.this_week.tasks as Array<{ title: string }>).map((task) => task.title)).not.toContain('Pagar o DAS')
+
+    const created = await post({ title: 'Fechar o mês', subtasks: ['Separar o boleto'] })
+    expect(created.statusCode).toBe(201)
+    expect(created.json().subtasks).toMatchObject([{ title: 'Separar o boleto' }])
+  })
+
+  it('adding a subtask to a reminder answers 422 reminder_field and stores none; a task accepts it', async () => {
+    const { owner, workspaceId, otherId, post } = await setup()
+    const reminderId = (await post({ title: 'Pagar o DAS', kind: 'reminder' })).json().id as string
+
+    const refused = await call('POST', `/api/tasks/${reminderId}/subtasks`, owner.token, workspaceId, { title: 'Separar o boleto' })
+    expect(refused.statusCode).toBe(422)
+    expect(refused.json()).toMatchObject({ code: 'reminder_field' })
+    expect((await call('GET', `/api/tasks/${reminderId}`, owner.token, workspaceId)).json().subtasks).toEqual([])
+
+    const added = await call('POST', `/api/tasks/${otherId}/subtasks`, owner.token, workspaceId, { title: 'Separar o boleto' })
+    expect(added.statusCode).toBe(201)
+  })
+
+  it('turning a task with subtasks into a reminder answers 422 reminder_field and keeps it a task; without subtasks it turns', async () => {
+    const { owner, workspaceId, taskId, otherId } = await setup()
+    await call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, { estimate_minutes: null })
+    await call('POST', `/api/tasks/${taskId}/subtasks`, owner.token, workspaceId, { title: 'Separar o boleto' })
+
+    const refused = await call('PATCH', `/api/tasks/${taskId}`, owner.token, workspaceId, { kind: 'reminder' })
+    expect(refused.statusCode).toBe(422)
+    expect(refused.json()).toMatchObject({ code: 'reminder_field' })
+    expect((await call('GET', `/api/tasks/${taskId}`, owner.token, workspaceId)).json()).toMatchObject({ kind: 'task' })
+
+    const turned = await call('PATCH', `/api/tasks/${otherId}`, owner.token, workspaceId, { kind: 'reminder' })
+    expect(turned.statusCode).toBe(200)
+    expect(turned.json()).toMatchObject({ kind: 'reminder' })
+  })
+})

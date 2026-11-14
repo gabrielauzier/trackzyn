@@ -64,6 +64,16 @@ describe('the caixa-de-entrada fields in the MCP tools', () => {
     expect(refused.text).toContain('A reminder has no due day, flag, Aguardando or group')
   })
 
+  it('MODAL-06 add_subtask on a reminder is a tool error and stores none; on a task it adds the subtask', async () => {
+    const { client, listId, taskId, owner, workspaceId } = await setup()
+    const reminderId = (await callTool(client, 'create_task', { list_id: listId, title: 'Pagar o DAS', kind: 'reminder' })).json().id as string
+    const refused = await callTool(client, 'add_subtask', { task_id: reminderId, title: 'Separar o boleto' })
+    expect(refused.isError).toBe(true)
+    expect(refused.text).toContain('A reminder has no subtasks')
+    expect((await call('GET', `/api/tasks/${reminderId}`, owner.token, workspaceId)).json().subtasks).toEqual([])
+    expect((await callTool(client, 'add_subtask', { task_id: taskId, title: 'Separar o boleto' })).isError).toBe(false)
+  })
+
   it('API-03 update_task with priority urgent is a tool error with the 422 message and saves nothing', async () => {
     const { client, taskId, read } = await setup()
     const refused = await callTool(client, 'update_task', { task_id: taskId, priority: 'urgent', title: 'Changed' })

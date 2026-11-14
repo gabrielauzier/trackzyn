@@ -114,6 +114,7 @@ T38
 T39
 T40
 T41
+T42
 ```
 
 ---
@@ -1399,6 +1400,37 @@ T41
 
 ---
 
+### T42: Lembrete sem subtarefas na API
+
+**What**: A API responde 422 `reminder_field` ao criar um lembrete com subtarefas, ao adicionar uma subtarefa a um lembrete (rota e MCP `add_subtask`) e ao transformar em lembrete uma tarefa que tem subtarefas.
+**Where**: `backend-node/src/services/tasks.ts`
+**Depends on**: None
+**Reuses**: `fieldError`, `createSubtask`
+**Requirement**: MODAL-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `POST /api/tasks` de lembrete com `subtasks` → 422 `reminder_field` e nada criado; uma tarefa com subtarefas é criada (L-048)
+- [x] `POST /api/tasks/:id/subtasks` num lembrete → 422 e nenhuma subtarefa; numa tarefa → 201
+- [x] MCP `add_subtask` num lembrete → erro da ferramenta `A reminder has no subtasks`; numa tarefa, adiciona
+- [x] `PATCH {kind: "reminder"}` numa tarefa com subtarefa → 422 e continua tarefa; sem subtarefas, vira lembrete
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/src/services/subtasks.ts`, `backend-node/test/routes/tasks-fields.test.ts`, `backend-node/test/mcp/task-fields-tools.test.ts`
+**Status**: ✅ Done
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): refuse subtasks on reminders`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -1496,6 +1528,7 @@ Execution is strictly sequential: one task at a time, in order.
 | T39 | None | — | ✅ Match |
 | T40 | None | — | ✅ Match |
 | T41 | None | — | ✅ Match |
+| T42 | None | — | ✅ Match |
 
 Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem das fases); nenhuma tarefa depende de uma fase posterior.
 
@@ -1546,6 +1579,7 @@ Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem d
 | T39 | Componentes + hook | unit | unit | ✅ OK |
 | T40 | Rotas | integration | integration | ✅ OK |
 | T41 | Serviços + funções puras | integration | integration | ✅ OK |
+| T42 | Serviços | integration | integration | ✅ OK |
 
 ---
 

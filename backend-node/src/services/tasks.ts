@@ -76,6 +76,9 @@ export interface TaskFields {
 
 const fieldError = (message: string, code: string) => new HttpError(422, message, {}, { code })
 
+/** A reminder keeps no subtasks (MODAL-06): it is refused on creation, on a new subtask and on a change of kind. */
+export const reminderSubtasksError = () => fieldError('A reminder has no subtasks', 'reminder_field')
+
 /**
  * The fields `changes` leave on `current`, or 422. Unmarking Aguardando clears "de quem" (WAIT-05), taking the
  * flag off clears its reason (FLAG-04); a reminder has no estimate (REM-02) and no due day, flag, Aguardando
@@ -181,6 +184,7 @@ export async function createTask(
   },
   now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
+  if (input.kind === 'reminder' && input.subtasks?.length) throw reminderSubtasksError()
   const list = await getList(db, input.listId, workspaceId)
   const fields = await resolveFields(
     db,
@@ -241,6 +245,10 @@ export async function updateTask(
   now: Date = new Date(),
 ): Promise<TaskWithSubtasks> {
   const task = await findTask(db, taskId, workspaceId)
+  if (changes.kind === 'reminder' && task.kind !== 'reminder') {
+    const [child] = await db.select({ id: subtasks.id }).from(subtasks).where(eq(subtasks.taskId, task.id)).limit(1)
+    if (child) throw reminderSubtasksError()
+  }
   const fields = await resolveFields(db, task, changes)
   const given = Object.fromEntries(Object.entries({ ...changes, ...fields }).filter(([, value]) => value !== undefined))
   if (fields.groupId !== undefined && fields.groupId !== task.groupId) {
