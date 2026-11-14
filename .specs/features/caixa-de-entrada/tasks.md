@@ -1351,11 +1351,15 @@ T40
 
 **Done when**:
 
-- [ ] Tarefa de grupo em Hoje inicia foco e conta tempo gasto
-- [ ] Tarefa de grupo agendada aparece em `GET /api/agenda/scheduled`
-- [ ] Tarefa de grupo aparece nos candidatos do plano
-- [ ] Sessão numa tarefa de grupo entra no total dos relatórios
-- [ ] Gate check passes: Full (backend)
+- [x] Tarefa de grupo em Hoje inicia foco e conta tempo gasto
+- [x] Tarefa de grupo agendada aparece em `GET /api/agenda/scheduled`
+- [x] Tarefa de grupo aparece nos candidatos do plano
+- [x] Sessão numa tarefa de grupo entra no total dos relatórios
+- [x] Gate check passes: Full (backend)
+
+**Also touched**: nenhum; só o arquivo de teste novo, sem mudança de código.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

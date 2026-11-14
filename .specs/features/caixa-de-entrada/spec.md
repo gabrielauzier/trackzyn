@@ -429,7 +429,7 @@ O que o código já fixa:
 | GRP-08 | P1: Grupo de tarefas | T8, T21 | Implementing |
 | GRP-09 | P1: Grupo de tarefas | T9, T21 | Implementing |
 | GRP-10 | P1: Grupo de tarefas | T8, T21 | Implementing |
-| GRP-11 | P1: Grupo de tarefas | T8 | Implementing |
+| GRP-11 | P1: Grupo de tarefas | T8, T40 | Implementing |
 | PRI-01 | P1: Prioridade | T1, T2 | Implementing |
 | PRI-02 | P1: Prioridade | T17 | Implementing |
 | PRI-03 | P1: Prioridade | T17 | Implementing |
