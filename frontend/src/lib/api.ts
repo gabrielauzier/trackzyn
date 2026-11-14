@@ -20,7 +20,16 @@ import type {
   PasskeyOptionsResponse,
   AppSetting,
   Board,
+  CardField,
+  Decision,
   FileSettings,
+  GroupWithoutNextAction,
+  InboxCommitResult,
+  InboxItem,
+  InboxResponse,
+  InboxSendResult,
+  Priority,
+  TaskGroup,
   FocusState,
   ListsResponse,
   PlanBlockInput,
@@ -406,6 +415,8 @@ export const tasks = {
     scheduled_on?: string | null
     scheduled_time?: string | null
     notes?: string
+    /** Creates the task at the end of the group's block. */
+    group_id?: string
   }): Promise<Task> => {
     const { data } = await api.post('/tasks', payload)
     return data
@@ -427,6 +438,16 @@ export const tasks = {
       recurrence?: RecurrenceRule | null
       /** Only for an occurrence of a series (D16); the API takes `occurrence` when left out. */
       scope?: SeriesScope
+      priority?: Priority
+      due_on?: string | null
+      /** Turning it off clears `waiting_for` (WAIT-05). */
+      waiting?: boolean
+      waiting_for?: string | null
+      /** Turning it off clears `flag_reason` (FLAG-04). */
+      flagged?: boolean
+      flag_reason?: string | null
+      /** Puts the task at the end of the group's block; null takes it out (MODAL-04). */
+      group_id?: string | null
     },
   ): Promise<Task> => {
     const { data } = await api.patch(`/tasks/${id}`, payload)
@@ -442,8 +463,14 @@ export const tasks = {
     const { data } = await api.post(`/tasks/${id}/move-to-list`, { list_id: listId })
     return data
   },
-  /** Put the task in `column`, right before `beforeTaskId`, or at the end when null. */
-  move: async (id: string, payload: { column: TaskColumn; before_task_id: string | null }): Promise<Task> => {
+  /**
+   * Put the task in `column`, right before `beforeTaskId`, or at the end when null. `group_id` left out keeps
+   * the group, null takes the task out, an id puts it in (GRP-06..08).
+   */
+  move: async (
+    id: string,
+    payload: { column: TaskColumn; before_task_id: string | null; group_id?: string | null },
+  ): Promise<Task & { group_without_next_action?: GroupWithoutNextAction | null }> => {
     const { data } = await api.post(`/tasks/${id}/move`, payload)
     return data
   },
@@ -454,6 +481,76 @@ export const tasks = {
   /** Moves an occurrence of a series to the next day of its rule, keeping the time spent (D18). */
   skip: async (id: string): Promise<Task> => {
     const { data } = await api.post(`/tasks/${id}/skip`)
+    return data
+  },
+}
+
+// Groups of tasks of a list (GRP-01, GRP-09, MODAL-04)
+export const groups = {
+  list: async (listId: string): Promise<TaskGroup[]> => {
+    const { data } = await api.get(`/lists/${listId}/groups`)
+    return data
+  },
+  /** Moves every task of the group in `from` to `to`, in the same order, right before `before_task_id`. */
+  move: async (
+    id: string,
+    payload: { from: TaskColumn; to: TaskColumn; before_task_id: string | null },
+  ): Promise<{ tasks: Task[]; group_without_next_action: GroupWithoutNextAction | null }> => {
+    const { data } = await api.post(`/groups/${id}/move`, payload)
+    return data
+  },
+}
+
+// The card fields the logged-in user hides on a board (AD-011); an empty list shows them all
+export const cardFields = {
+  get: async (listId: string): Promise<{ hidden: CardField[] }> => {
+    const { data } = await api.get(`/lists/${listId}/card-fields`)
+    return data
+  },
+  set: async (listId: string, hidden: CardField[]): Promise<{ hidden: CardField[] }> => {
+    const { data } = await api.put(`/lists/${listId}/card-fields`, { hidden })
+    return data
+  },
+}
+
+// Inbox: the logged-in user's items in the current workspace, oldest first
+export const inbox = {
+  capture: async (payload: { text: string; source?: 'app' | 'desktop' }): Promise<InboxItem> => {
+    const { data } = await api.post('/inbox', payload)
+    return data
+  },
+  list: async (tab: 'current' | 'trash'): Promise<InboxResponse> => {
+    const { data } = await api.get('/inbox', { params: { tab } })
+    return data
+  },
+  count: async (): Promise<{ count: number }> => {
+    const { data } = await api.get('/inbox/count')
+    return data
+  },
+  /** Keeps the list, the estimate or the draft on the item; a field left out keeps its value. */
+  update: async (
+    id: string,
+    payload: { list_id?: string | null; estimate_minutes?: number | null; draft?: Decision | null },
+  ): Promise<InboxItem> => {
+    const { data } = await api.patch(`/inbox/${id}`, payload)
+    return data
+  },
+  discard: async (id: string): Promise<InboxItem> => {
+    const { data } = await api.post(`/inbox/${id}/discard`)
+    return data
+  },
+  restore: async (id: string): Promise<InboxItem> => {
+    const { data } = await api.post(`/inbox/${id}/restore`)
+    return data
+  },
+  /** Sends one item at once; 409 `{reason}` when the list is archived, read-only or the item is gone. */
+  send: async (id: string, decision: Decision): Promise<InboxSendResult> => {
+    const { data } = await api.post(`/inbox/${id}/send`, { decision })
+    return data
+  },
+  /** Sends the drafts of `itemIds` in one transaction; 409 `{detail, items}` and nothing sent when one fails. */
+  commit: async (itemIds?: string[]): Promise<InboxCommitResult> => {
+    const { data } = await api.post('/inbox/commit', itemIds === undefined ? {} : { item_ids: itemIds })
     return data
   },
 }

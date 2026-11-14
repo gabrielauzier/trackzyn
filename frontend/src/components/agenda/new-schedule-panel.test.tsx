@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { sessions, tasks } from '@/lib/api'
-import { i18n, renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { ListCard, RecentAgendaTask, Task } from '@/types'
 import { NewSchedulePanel } from './new-schedule-panel'
 
@@ -42,7 +42,7 @@ const found = (id: string, title: string, column: RecentAgendaTask['column'] = '
   updated_at: '2026-11-04T12:00:00.000Z',
 })
 
-const fullTask = (id: string, overrides: Partial<Task> = {}): Task => ({
+const fullTask = (id: string, overrides: Partial<Task> = {}): Task => ({ ...PLAIN_TASK_FIELDS,
   id,
   list_id: WORK,
   title: `Task ${id}`,

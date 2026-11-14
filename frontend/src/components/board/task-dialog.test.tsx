@@ -1,19 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 
 import { TaskDialog } from '@/components/board/task-dialog'
-import { tasks } from '@/lib/api'
-import { i18n, placeCaretAtEnd, renderWithProviders } from '@/test/utils'
+import { groups, tasks } from '@/lib/api'
+import { i18n, placeCaretAtEnd, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Task } from '@/types'
 
 vi.mock('@/lib/api', () => ({
   tasks: { get: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  groups: { list: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
 }))
 
 const TASK = '11111111-1111-4111-8111-111111111111'
 
-const task: Task = {
+const task: Task = { ...PLAIN_TASK_FIELDS,
   id: TASK,
   list_id: '99999999-9999-4999-8999-999999999999',
   title: 'Write the report',
@@ -35,6 +36,7 @@ beforeEach(() => {
   vi.mocked(tasks.get).mockResolvedValue(task)
   vi.mocked(tasks.update).mockResolvedValue(task)
   vi.mocked(tasks.remove).mockResolvedValue(undefined)
+  vi.mocked(groups.list).mockResolvedValue([])
 })
 
 async function renderDialog(canWrite = true) {
@@ -336,5 +338,198 @@ describe('TaskDialog: Agendamento (US-2)', () => {
     expect(screen.queryByRole('button', { name: 'Change' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Clear time' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remove schedule' })).not.toBeInTheDocument()
+  })
+})
+
+describe('TaskDialog: the new fields (MODAL-01..06)', () => {
+  const LIST = task.list_id
+  const PIPELINE = { id: '44444444-4444-4444-8444-444444444444', list_id: LIST, name: 'Pipeline', notes: null, priority: 'none' as const, due_on: null, created_at: '2026-11-01T00:00:00Z' }
+  const PORTAL = { ...PIPELINE, id: '55555555-5555-4555-8555-555555555555', name: 'Portal' }
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('pt-BR')
+    vi.mocked(groups.list).mockResolvedValue([PIPELINE, PORTAL])
+  })
+  afterEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+
+  async function open(overrides: Partial<Task> = {}) {
+    vi.mocked(tasks.get).mockResolvedValue({ ...task, ...overrides })
+    const onClose = vi.fn()
+    const rendered = renderWithProviders(<TaskDialog taskId={TASK} canWrite onClose={onClose} />)
+    await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue(overrides.title ?? 'Write the report'))
+    return { ...rendered, onClose }
+  }
+  const save = (user: Awaited<ReturnType<typeof open>>['user']) => user.click(screen.getByRole('button', { name: 'Salvar' }))
+  const follows = (first: Element, second: Element) => Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+  it('MODAL-01 shows Título, Flag, Prioridade and Estimativa, Prazo and Grupo, Aguardando, Anotações, the footer, Agendamento and Subtarefas, in this order', async () => {
+    await open()
+
+    const order = [
+      screen.getByLabelText('Título'),
+      screen.getByRole('button', { name: '+ Flag' }),
+      screen.getByRole('combobox', { name: 'Prioridade' }),
+      screen.getByLabelText('Estimativa'),
+      screen.getByLabelText('Prazo'),
+      screen.getByRole('combobox', { name: 'Grupo' }),
+      screen.getByRole('switch', { name: 'Aguardando outra pessoa' }),
+      screen.getByLabelText('Anotações'),
+      screen.getByRole('button', { name: 'Salvar' }),
+      screen.getByText('Agendamento'),
+      await screen.findByRole('checkbox', { name: 'Outline' }),
+    ]
+    order.slice(1).forEach((element, index) => expect(follows(order[index]!, element)).toBe(true))
+  })
+
+  it('MODAL-02 without a flag shows + Flag with its hint; a click opens the reason and Tirar flag, which closes it', async () => {
+    const { user } = await open()
+
+    expect(screen.getByText('Marca que a tarefa precisa de atenção, com um motivo opcional')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Motivo da flag')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '+ Flag' }))
+    expect(screen.getByLabelText('Motivo da flag')).toHaveValue('')
+    expect(screen.queryByRole('button', { name: '+ Flag' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Tirar flag' }))
+    expect(screen.queryByLabelText('Motivo da flag')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ Flag' })).toBeInTheDocument()
+  })
+
+  it('MODAL-02 a flagged task opens with the flag block and its reason', async () => {
+    await open({ flagged: true, flag_reason: 'Esperando acesso' })
+
+    expect(screen.getByLabelText('Motivo da flag')).toHaveValue('Esperando acesso')
+    expect(screen.getByRole('button', { name: 'Tirar flag' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '+ Flag' })).not.toBeInTheDocument()
+  })
+
+  it('MODAL-03 the Aguardando switch opens De quem', async () => {
+    const { user } = await open()
+
+    expect(screen.getByRole('switch', { name: 'Aguardando outra pessoa' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.queryByLabelText('De quem')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('switch', { name: 'Aguardando outra pessoa' }))
+    expect(screen.getByLabelText('De quem')).toHaveValue('')
+  })
+
+  it('MODAL-04 the Grupo select offers Sem grupo and the groups of the task\'s list', async () => {
+    const { user } = await open({ group_id: PIPELINE.id })
+
+    await waitFor(() => expect(groups.list).toHaveBeenCalledWith(LIST))
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Grupo' })).toHaveTextContent('Pipeline'))
+    await user.click(screen.getByRole('combobox', { name: 'Grupo' }))
+    expect((await screen.findAllByRole('option')).map((option) => option.textContent)).toEqual(['Sem grupo', 'Pipeline', 'Portal'])
+  })
+
+  it('MODAL-05 Salvar sends priority, due day, group, waiting and flag with the title, and only what changed', async () => {
+    const { user, onClose } = await open()
+
+    await user.clear(screen.getByLabelText('Título'))
+    await user.type(screen.getByLabelText('Título'), 'Bloqueada no deploy')
+    await user.click(screen.getByRole('button', { name: '+ Flag' }))
+    await user.type(screen.getByLabelText('Motivo da flag'), 'Bloqueada')
+    await user.click(screen.getByRole('combobox', { name: 'Prioridade' }))
+    await user.click(await screen.findByRole('option', { name: 'Média' }))
+    fireEvent.change(screen.getByLabelText('Prazo'), { target: { value: '2026-11-28' } })
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Grupo' })).toBeEnabled())
+    await user.click(screen.getByRole('combobox', { name: 'Grupo' }))
+    await user.click(await screen.findByRole('option', { name: 'Portal' }))
+    await user.click(screen.getByRole('switch', { name: 'Aguardando outra pessoa' }))
+    await user.type(screen.getByLabelText('De quem'), 'Fulano')
+    await save(user)
+
+    await waitFor(() =>
+      expect(tasks.update).toHaveBeenCalledWith(TASK, {
+        title: 'Bloqueada no deploy',
+        priority: 'medium',
+        due_on: '2026-11-28',
+        group_id: PORTAL.id,
+        waiting: true,
+        waiting_for: 'Fulano',
+        flagged: true,
+        flag_reason: 'Bloqueada',
+      }),
+    )
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+  })
+
+  it('MODAL-05 a flag without a reason and waiting without De quem send only the marks, with no empty text', async () => {
+    const { user } = await open()
+
+    await user.click(screen.getByRole('button', { name: '+ Flag' }))
+    await user.click(screen.getByRole('switch', { name: 'Aguardando outra pessoa' }))
+    await save(user)
+
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { waiting: true, flagged: true }))
+  })
+
+  it('MODAL-05 taking the flag, the waiting, the due day and the group off sends only those, without the texts the server clears', async () => {
+    const { user } = await open({ flagged: true, flag_reason: 'Esperando', waiting: true, waiting_for: 'QA', due_on: '2026-11-28', group_id: PIPELINE.id, priority: 'high' })
+
+    await user.click(screen.getByRole('button', { name: 'Tirar flag' }))
+    await user.click(screen.getByRole('switch', { name: 'Aguardando outra pessoa' }))
+    fireEvent.change(screen.getByLabelText('Prazo'), { target: { value: '' } })
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Grupo' })).toHaveTextContent('Pipeline'))
+    await user.click(screen.getByRole('combobox', { name: 'Grupo' }))
+    await user.click(await screen.findByRole('option', { name: 'Sem grupo' }))
+    await save(user)
+
+    await waitFor(() => expect(tasks.update).toHaveBeenCalledWith(TASK, { due_on: null, group_id: null, waiting: false, flagged: false }))
+  })
+
+  it('MODAL-05 a task opened and saved untouched sends nothing', async () => {
+    const { user, onClose } = await open({ flagged: true, flag_reason: 'Esperando', waiting: true, waiting_for: 'QA', due_on: '2026-11-28', group_id: PIPELINE.id, priority: 'high' })
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Grupo' })).toHaveTextContent('Pipeline'))
+
+    await save(user)
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(tasks.update).not.toHaveBeenCalled()
+  })
+
+  it('FLAG-01 refuses a reason over 200 characters, and WAIT-01 a De quem over 100, without saving', async () => {
+    const { user } = await open()
+
+    await user.click(screen.getByRole('button', { name: '+ Flag' }))
+    await user.click(screen.getByLabelText('Motivo da flag'))
+    await user.paste('m'.repeat(201))
+    await user.click(screen.getByRole('switch', { name: 'Aguardando outra pessoa' }))
+    await user.click(screen.getByLabelText('De quem'))
+    await user.paste('q'.repeat(101))
+    await save(user)
+
+    expect(await screen.findByText('Use no máximo 200 caracteres')).toBeInTheDocument()
+    expect(screen.getByText('Use no máximo 100 caracteres')).toBeInTheDocument()
+    expect(tasks.update).not.toHaveBeenCalled()
+  })
+
+  it('MODAL-06 a reminder has no Estimativa, Grupo, Subtarefas, Prazo, Flag or Aguardando, and keeps Prioridade and Agendamento', async () => {
+    await open({ kind: 'reminder', estimate_minutes: null })
+
+    expect(screen.queryByLabelText('Estimativa')).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Grupo' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('checkbox', { name: 'Outline' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Adicionar subtarefa' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '+ Flag' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Marca que a tarefa precisa de atenção, com um motivo opcional')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Prazo')).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Aguardando outra pessoa' })).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Prioridade' })).toBeInTheDocument()
+    expect(screen.getByText('Agendamento')).toBeInTheDocument()
+  })
+
+  it('MODAL-06 a task shows Estimativa, Grupo, Subtarefas, Prazo, Flag and Aguardando', async () => {
+    await open()
+
+    expect(screen.getByLabelText('Estimativa')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Grupo' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Adicionar subtarefa' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ Flag' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Prazo')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Aguardando outra pessoa' })).toBeInTheDocument()
   })
 })

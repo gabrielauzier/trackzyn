@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CalendarClock, CalendarX, Repeat, Trash2, X } from 'lucide-react'
-import { tasks as tasksApi } from '@/lib/api'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CalendarClock, CalendarX, Flag, Repeat, Trash2, UserRound, X } from 'lucide-react'
+import { groups as groupsApi, tasks as tasksApi } from '@/lib/api'
 import { extractApiError } from '@/lib/api-errors'
 import { DURATION_ERROR_KEY, parseDuration, toDuration } from '@/components/board/estimate'
 import { NoteEditor } from '@/components/board/note-editor'
+import { PrioritySelect } from '@/components/board/priority'
 import { SubtaskList } from '@/components/board/subtask-list'
 import { useTask } from '@/components/board/use-task'
 import { DeleteConfirmationDialog } from '@/components/delete-confirmation-dialog'
@@ -17,14 +18,23 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { DurationInput } from '@/components/ui/duration-input'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SchedulePicker } from '@/components/schedule/schedule-picker'
 import { SeriesScopeDialog } from '@/components/schedule/series-scope-dialog'
 import { asksSeriesScope, longDay, recurrenceSummary, type ScheduleChangeFields } from '@/lib/schedule'
-import type { SeriesScope, Task } from '@/types'
+import type { Priority, SeriesScope, Task } from '@/types'
 
 const NOTES_MAX = 10_000
+const FLAG_REASON_MAX = 200
+const WAITING_FOR_MAX = 100
+/** The `Sem grupo` option of the Grupo select. */
+const NO_GROUP = 'none'
+
+/** What `Salvar` sends: only the fields that changed (MODAL-05). */
+type TaskChanges = Parameters<typeof tasksApi.update>[1]
 
 
 interface TaskDialogProps {
@@ -65,7 +75,8 @@ function TaskDetails({ taskId, canWrite, onDone, timeZone }: { taskId: string; c
       {/* Keyed by id so the form starts from this task's saved values. */}
       <TaskForm key={task.id} task={task} canWrite={canWrite} onDone={onDone} />
       <ScheduleField task={task} canWrite={canWrite} timeZone={timeZone} />
-      <SubtaskList taskId={task.id} canWrite={canWrite} />
+      {/* A reminder has no subtasks (MODAL-06). */}
+      {task.kind !== 'reminder' && <SubtaskList taskId={task.id} canWrite={canWrite} />}
     </div>
   )
 }
@@ -84,6 +95,13 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
     notes: z
       .string()
       .max(NOTES_MAX, t('board.notesTooLong', { max: NOTES_MAX.toLocaleString(i18n.language) })),
+    priority: z.enum(['none', 'low', 'medium', 'high', 'ultra']),
+    due_on: z.string(),
+    group_id: z.string(),
+    waiting: z.boolean(),
+    waiting_for: z.string().max(WAITING_FOR_MAX, t('board.notesTooLong', { max: WAITING_FOR_MAX })),
+    flagged: z.boolean(),
+    flag_reason: z.string().max(FLAG_REASON_MAX, t('board.notesTooLong', { max: FLAG_REASON_MAX })),
   })
   type Values = z.infer<typeof schema>
   const form = useForm<Values>({
@@ -92,14 +110,29 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
       title: task.title,
       estimate: toDuration(task.estimate_minutes),
       notes: task.notes,
+      priority: task.priority,
+      due_on: task.due_on ?? '',
+      group_id: task.group_id ?? NO_GROUP,
+      waiting: task.waiting,
+      waiting_for: task.waiting_for ?? '',
+      flagged: task.flagged,
+      flag_reason: task.flag_reason ?? '',
     },
+  })
+  const reminder = task.kind === 'reminder'
+  const flagged = useWatch({ control: form.control, name: 'flagged' })
+  const waiting = useWatch({ control: form.control, name: 'waiting' })
+  // The groups of the task's list, for the Grupo select (MODAL-04).
+  const { data: listGroups } = useQuery({
+    queryKey: ['lists', task.list_id, 'groups'],
+    queryFn: () => groupsApi.list(task.list_id),
+    enabled: !reminder,
   })
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['lists'] })
 
   const save = useMutation({
-    mutationFn: (payload: { title?: string; estimate_minutes?: number | null; notes?: string }) =>
-      tasksApi.update(task.id, payload),
+    mutationFn: (payload: TaskChanges) => tasksApi.update(task.id, payload),
     onSuccess: () => {
       void refresh()
       onDone()
@@ -119,12 +152,24 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
 
   const onSubmit = (values: Values) => {
     // Only what changed goes to the server.
-    const payload: { title?: string; estimate_minutes?: number | null; notes?: string } = {}
+    const payload: TaskChanges = {}
     if (values.title !== task.title) payload.title = values.title
     const parsed = parseDuration(values.estimate)
     const estimate = 'minutes' in parsed ? parsed.minutes : task.estimate_minutes
-    if (estimate !== task.estimate_minutes) payload.estimate_minutes = estimate
+    if (!reminder && estimate !== task.estimate_minutes) payload.estimate_minutes = estimate
     if (values.notes !== task.notes) payload.notes = values.notes
+    if (values.priority !== task.priority) payload.priority = values.priority
+    const dueOn = values.due_on || null
+    if (dueOn !== task.due_on) payload.due_on = dueOn
+    const groupId = values.group_id === NO_GROUP ? null : values.group_id
+    if (!reminder && groupId !== task.group_id) payload.group_id = groupId
+    // Turning Aguardando or the flag off clears its text on the server (WAIT-05, FLAG-04).
+    if (values.waiting !== task.waiting) payload.waiting = values.waiting
+    const waitingFor = values.waiting_for.trim() || null
+    if (values.waiting && waitingFor !== task.waiting_for) payload.waiting_for = waitingFor
+    if (values.flagged !== task.flagged) payload.flagged = values.flagged
+    const flagReason = values.flag_reason.trim() || null
+    if (values.flagged && flagReason !== task.flag_reason) payload.flag_reason = flagReason
     if (Object.keys(payload).length === 0) onDone()
     else save.mutate(payload)
   }
@@ -147,20 +192,160 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="estimate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('board.estimate')}</FormLabel>
-              <FormControl>
-                <DurationInput variant="field" disabled={!canWrite} {...field} />
-              </FormControl>
-              <FormDescription>{t('board.estimateHint')}</FormDescription>
-              <FormMessage />
-            </FormItem>
+        {/* A reminder has no flag, due day or Aguardando (MODAL-06). */}
+        {reminder ? null : flagged ? (
+          <div className="space-y-2 rounded-lg border border-rose-600 p-3">
+            <div className="flex items-center gap-2">
+              <Flag size={14} aria-hidden className="fill-current text-rose-500" />
+              <span className="flex-1 text-sm font-medium">{t('board.flag')}</span>
+              {canWrite && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    form.setValue('flagged', false)
+                    form.setValue('flag_reason', '')
+                  }}
+                >
+                  {t('board.flagRemove')}
+                </Button>
+              )}
+            </div>
+            <FormField
+              control={form.control}
+              name="flag_reason"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="sr-only">{t('board.flagReason')}</FormLabel>
+                  <FormControl>
+                    <Input disabled={!canWrite} placeholder={t('board.flagReasonPlaceholder')} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2.5">
+            {canWrite && (
+              <Button type="button" variant="outline" size="sm" className="border-dashed" onClick={() => form.setValue('flagged', true)}>
+                <Flag size={14} aria-hidden className="text-rose-500" />
+                {t('board.flagAdd')}
+              </Button>
+            )}
+            <span className="text-xs text-muted-foreground">{t('board.flagHint')}</span>
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="priority"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('board.cardFields.priority')}</FormLabel>
+                <FormControl>
+                  <PrioritySelect
+                    aria-label={t('board.cardFields.priority')}
+                    value={field.value}
+                    onChange={(next: Priority) => field.onChange(next)}
+                    disabled={!canWrite}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          {!reminder && (
+            <FormField
+              control={form.control}
+              name="estimate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('board.estimate')}</FormLabel>
+                  <FormControl>
+                    <DurationInput variant="field" disabled={!canWrite} {...field} />
+                  </FormControl>
+                  <FormDescription>{t('board.estimateHint')}</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           )}
-        />
+          {!reminder && (
+            <FormField
+              control={form.control}
+              name="due_on"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('board.due')}</FormLabel>
+                  <FormControl>
+                    <Input type="date" disabled={!canWrite} {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
+          {!reminder && (
+            <FormField
+              control={form.control}
+              name="group_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('board.group')}</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={!canWrite || !listGroups}>
+                    <FormControl>
+                      <SelectTrigger aria-label={t('board.group')} className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={NO_GROUP}>{t('board.noGroup')}</SelectItem>
+                      {listGroups?.map((group) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+        {!reminder && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5">
+              <UserRound size={15} aria-hidden className="text-primary" />
+              <span id={`waiting-${task.id}`} className="flex-1 text-sm font-medium">
+                {t('board.waitingSwitch')}
+              </span>
+              <Switch
+                aria-labelledby={`waiting-${task.id}`}
+                checked={waiting}
+                disabled={!canWrite}
+                onCheckedChange={(on) => {
+                  form.setValue('waiting', on)
+                  if (!on) form.setValue('waiting_for', '')
+                }}
+              />
+            </div>
+            {waiting && (
+              <FormField
+                control={form.control}
+                name="waiting_for"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="sr-only">{t('board.waitingForField')}</FormLabel>
+                    <FormControl>
+                      <Input disabled={!canWrite} placeholder={t('board.waitingForPlaceholder')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+        )}
         <FormField
           control={form.control}
           name="notes"

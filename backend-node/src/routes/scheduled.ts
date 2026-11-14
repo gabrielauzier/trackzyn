@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
+import { TASK_KINDS } from '../db/schema.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { workspaceContext } from '../plugins/workspace.ts'
 import { listScheduled } from '../services/scheduled.ts'
@@ -21,6 +22,7 @@ const scheduledTaskSchema = z.object({
   scheduled_on: z.string(),
   scheduled_time: z.string().nullable(),
   series: seriesReadSchema.pick({ id: true, rule: true }).nullable(),
+  kind: z.enum(TASK_KINDS),
 })
 
 const projectedSchema = z.object({

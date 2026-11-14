@@ -3,13 +3,13 @@ import { screen, waitFor } from '@testing-library/react'
 
 import { WidgetNotes } from '@/components/focus/widget-notes'
 import type { TrackzynApi } from '@/lib/platform'
-import { placeCaretAtEnd, renderWithProviders, selectContents } from '@/test/utils'
+import { placeCaretAtEnd, renderWithProviders, selectContents, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Task } from '@/types'
 
 const api = vi.hoisted(() => ({ tasks: { get: vi.fn(), update: vi.fn() } }))
 vi.mock('@/lib/api', () => api)
 
-const TASK: Task = {
+const TASK: Task = { ...PLAIN_TASK_FIELDS,
   id: 'task-a',
   list_id: 'list-1',
   title: 'Write the report',

@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import type { CaptureShortcutSetting } from '../shared/ipc'
 
 type Config = Record<string, unknown>
 export interface Bounds {
@@ -10,6 +11,17 @@ export interface Bounds {
 }
 
 export type Mode = 'remote' | 'local'
+
+/** The global capture shortcut (AD-012): on or off, and the Electron accelerator it registers. */
+export type { CaptureShortcutSetting }
+
+export const DEFAULT_CAPTURE_SHORTCUT: CaptureShortcutSetting = { enabled: true, accelerator: 'CommandOrControl+Shift+Space' }
+
+function isCaptureShortcut(value: unknown): value is CaptureShortcutSetting {
+  if (value === null || typeof value !== 'object') return false
+  const candidate = value as Record<string, unknown>
+  return typeof candidate.enabled === 'boolean' && typeof candidate.accelerator === 'string' && candidate.accelerator !== ''
+}
 
 export function isBounds(value: unknown): value is Bounds {
   if (value === null || typeof value !== 'object') return false
@@ -26,7 +38,7 @@ function read(file: string): Config {
   }
 }
 
-/** `userData/config.json`: the mode, the server URL, the window bounds and the widget position. */
+/** `userData/config.json`: the mode, the server URL, the window bounds, the widget position and the capture shortcut. */
 export function createConfigStore(file: string) {
   function update(patch: Config) {
     const next = { ...read(file), ...patch }
@@ -71,6 +83,14 @@ export function createConfigStore(file: string) {
     },
     setWidgetBounds(bounds: Bounds) {
       update({ widgetBounds: bounds })
+    },
+    /** The capture shortcut (CAP-07, CAP-08); on with `CommandOrControl+Shift+Space` until changed. */
+    getCaptureShortcut(): CaptureShortcutSetting {
+      const value = read(file).captureShortcut
+      return isCaptureShortcut(value) ? { enabled: value.enabled, accelerator: value.accelerator } : { ...DEFAULT_CAPTURE_SHORTCUT }
+    },
+    setCaptureShortcut(setting: CaptureShortcutSetting) {
+      update({ captureShortcut: { enabled: setting.enabled, accelerator: setting.accelerator } })
     },
   }
 }

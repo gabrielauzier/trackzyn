@@ -82,6 +82,30 @@
 - **Date**: 2026-11-10
 - **Status**: active
 
+### AD-011
+- **Decision**: O card de tarefa do quadro mostra sempre só nome, estimativa e tempo registrado. Todo campo novo no card (prioridade, prazo, flag, aguardando e os que vierem) só aparece quando ligado na configuração do quadro: um popover aberto pela engrenagem da barra do quadro, no mesmo padrão do popover de Sons do foco (`components/focus/sound-settings.tsx`). Desligar esconde só no card; o dado continua salvo e editável.
+- **Reason**: Pedido do usuário em 2026-11-13: o card não deve crescer a cada feature; quem não usa um campo não o vê.
+- **Trade-off**: Toda feature que põe um campo no card precisa de uma entrada na configuração e de teste com o campo ligado e desligado.
+- **Scope**: `caixa-de-entrada` e toda feature futura que mexer no card do quadro; frontend `components/board/task-card.tsx`.
+- **Date**: 2026-11-13
+- **Status**: active
+
+### AD-012
+- **Decision**: O app desktop registra um único atalho global, o de captura (`CommandOrControl+Shift+Space` por padrão, ligável e trocável), e só em `desktop/src/main/capture-shortcut.ts`. Todo outro atalho, inclusive o do widget, continua só com a janela em foco (`before-input-event`, WIDGET-05).
+- **Reason**: Capturar com outro app na frente é o objetivo da janelinha de captura; o usuário aceitou a exceção ao WIDGET-05 só para isso em 2026-11-13.
+- **Trade-off**: O teste do WIDGET-05 passa a ter uma exceção nomeada; se o sistema recusar a combinação, o atalho fica desligado até o usuário escolher outra.
+- **Scope**: `caixa-de-entrada`, `widget-desktop`; `desktop/src/main`.
+- **Date**: 2026-11-13
+- **Status**: active
+
+### AD-013
+- **Decision**: As tarefas de um grupo de tarefas formam um bloco contíguo na ordem da coluna (`tasks.position`). Toda escrita que insere ou move tarefas numa coluna roda `normalizeBlocks`, que junta as tarefas de cada grupo na posição da primeira delas. O contêiner do quadro é desenhado a partir desses blocos; não existe uma ordem própria do grupo.
+- **Reason**: Uma ordem só para o quadro, o foco, o widget e o MCP. Escolha do usuário em 2026-11-13.
+- **Trade-off**: Toda escrita de posição precisa passar pela normalização, e uma tarefa não pode ficar "solta" no meio do bloco do próprio grupo.
+- **Scope**: `caixa-de-entrada` e toda feature que mover tarefas; backend `services/tasks.ts`, `services/groups.ts`; frontend `lib/board/blocks.ts`.
+- **Date**: 2026-11-13
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/contagem-de-horas` (#42)

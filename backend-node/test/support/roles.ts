@@ -36,7 +36,7 @@ export async function ownerViewerStranger(t: TestApp) {
 
 export const inWorkspace =
   (t: TestApp) =>
-  (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, token: string, workspaceId: string, payload?: unknown) =>
+  (method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE', url: string, token: string, workspaceId: string, payload?: unknown) =>
     t.app.inject({ method, url, headers: { ...bearer(token), 'x-workspace-id': workspaceId }, payload: payload as object })
 
 /** A new user invited to `workspaceId` with `role` (an editor can write). */

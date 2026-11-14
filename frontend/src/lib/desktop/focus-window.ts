@@ -7,7 +7,7 @@ export { isDesktop }
 /**
  * Which desktop window this page runs in. The browser has only one window, the main one (WIDGET-24).
  */
-export function windowRole(): 'main' | 'widget' {
+export function windowRole(): 'main' | 'widget' | 'capture' {
   return isDesktop() ? getDesktopApi().windowRole : 'main'
 }
 

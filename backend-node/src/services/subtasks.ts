@@ -3,7 +3,7 @@ import { and, asc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type Subtask, lists, subtasks, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
-import { findTask } from './tasks.ts'
+import { findTask, reminderSubtasksError } from './tasks.ts'
 
 /** The subtask `subtaskId` if its task's list belongs to `workspaceId`, or 404. */
 async function findSubtask(db: Database, subtaskId: string, workspaceId: string): Promise<Subtask> {
@@ -32,6 +32,7 @@ export async function createSubtask(
   now: Date = new Date(),
 ): Promise<Subtask> {
   const task = await findTask(db, taskId, workspaceId)
+  if (task.kind === 'reminder') throw reminderSubtasksError()
   const [last] = await db
     .select({ next: sql<number>`coalesce(max(${subtasks.position}) + 1, 0)::int` })
     .from(subtasks)

@@ -152,12 +152,12 @@ async function insertTaskSession(tx: Database, context: TransitionContext, task:
   })
 }
 
-/** The pending tasks of Today of the list, in board order. */
+/** The pending tasks of Today of the list, in board order; a reminder has no focus and is left out (REM-05). */
 async function todayTasks(tx: Database, listId: string): Promise<Task[]> {
   return tx
     .select()
     .from(tasks)
-    .where(and(eq(tasks.listId, listId), eq(tasks.column, 'today')))
+    .where(and(eq(tasks.listId, listId), eq(tasks.column, 'today'), eq(tasks.kind, 'task')))
     .orderBy(asc(tasks.position), asc(tasks.createdAt))
 }
 
@@ -195,6 +195,7 @@ export function startFocus(
 ): Promise<FocusState> {
   return applyAction(db, actor, input, now, async (tx, context) => {
     const task = await findTask(tx, payload.taskId, context.workspaceId)
+    if (task.kind === 'reminder') throw new HttpError(422, 'Reminders have no focus', {}, { code: 'reminder_focus' })
     if (task.column !== 'today') throw invalidTransition()
 
     const open = await openSession(tx, context.userId)

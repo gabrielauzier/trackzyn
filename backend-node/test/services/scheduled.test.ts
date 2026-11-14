@@ -92,6 +92,7 @@ describe('listScheduled: the scheduled tasks of a period (US-5, US-14, D9)', () 
         scheduled_on: '2026-11-13',
         scheduled_time: '14:00',
         series: null,
+        kind: 'task',
       },
     ])
   })

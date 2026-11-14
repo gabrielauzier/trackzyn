@@ -3,14 +3,14 @@ import { screen, waitFor } from '@testing-library/react'
 
 import { FocusNotes } from '@/components/focus/focus-notes'
 import i18n from '@/lib/i18n'
-import { renderWithProviders, selectContents } from '@/test/utils'
+import { renderWithProviders, selectContents, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Task } from '@/types'
 
 const api = vi.hoisted(() => ({ tasks: { get: vi.fn(), update: vi.fn() } }))
 vi.mock('@/lib/api', () => api)
 
 function taskWith(notes: string): Task {
-  return {
+  return { ...PLAIN_TASK_FIELDS,
     id: 'task-a',
     list_id: 'list-1',
     title: 'Write the report',

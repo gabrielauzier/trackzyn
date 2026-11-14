@@ -5,6 +5,7 @@ export const TOKEN_ROUTES: ReadonlyArray<{ method: string; url: string; scope: T
   { method: 'GET', url: '/api/lists', scope: 'lists:read' },
   { method: 'GET', url: '/api/lists/:list_id', scope: 'lists:read' },
   { method: 'GET', url: '/api/lists/:list_id/board', scope: 'tasks:read' },
+  { method: 'GET', url: '/api/lists/:list_id/groups', scope: 'tasks:read' },
   { method: 'GET', url: '/api/tasks/:task_id', scope: 'tasks:read' },
   { method: 'POST', url: '/api/tasks', scope: 'tasks:create' },
   { method: 'PATCH', url: '/api/tasks/:task_id', scope: 'tasks:write' },
@@ -17,6 +18,7 @@ export const TOKEN_ROUTES: ReadonlyArray<{ method: string; url: string; scope: T
   { method: 'POST', url: '/api/subtasks/:subtask_id/move', scope: 'tasks:write' },
   { method: 'DELETE', url: '/api/tasks/:task_id', scope: 'tasks:delete' },
   { method: 'DELETE', url: '/api/subtasks/:subtask_id', scope: 'tasks:delete' },
+  { method: 'POST', url: '/api/inbox', scope: 'inbox:create' },
 ]
 
 /** Open to any valid token: each tool checks its own scope (MCP-02), which is why they stay out of the table. */

@@ -96,7 +96,7 @@ describe('board service', () => {
       { id: randomUUID(), taskId: id, title: 'c', done: false, position: 2 },
     ])
     const [card] = (await board()).columns.today.tasks
-    expect(card).toEqual({ id, title: 'with subtasks', estimate_minutes: 87, spent_seconds: 0, position: expect.any(Number), subtasks: { done: 1, total: 3 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null })
+    expect(card).toEqual({ id, title: 'with subtasks', estimate_minutes: 87, spent_seconds: 0, position: expect.any(Number), subtasks: { done: 1, total: 3 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null, kind: 'task', priority: 'none', due_on: null, waiting: false, waiting_for: null, flagged: false, flag_reason: null, group_id: null })
   })
 
   const focusSession = (taskId: string, startedAt: string, minutes: number, open = false) =>
@@ -194,6 +194,7 @@ describe('board service', () => {
     expect(await board()).toEqual({
       list: { id: listId, name: 'Week', color: 4 },
       timezone: TZ,
+      groups: [],
       pending: { count: 0, estimate_minutes: 0 },
       columns: {
         backlog: { tasks: [], estimate_minutes: 0 },

@@ -269,6 +269,100 @@
       "maxLength": 8
     }
   ],
+  "inbox_items": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "text",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 500
+    },
+    {
+      "column": "source",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 8
+    },
+    {
+      "column": "created_via_token_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "list_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "estimate_minutes",
+      "type": "integer",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "draft",
+      "type": "json",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "discarded_at",
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "list_card_fields": [
+    {
+      "column": "user_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "list_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "hidden",
+      "type": "json",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
   "lists": [
     {
       "column": "id",
@@ -415,6 +509,56 @@
     {
       "column": "position",
       "type": "integer",
+      "nullable": false,
+      "maxLength": null
+    }
+  ],
+  "task_groups": [
+    {
+      "column": "id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "list_id",
+      "type": "uuid",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "name",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 255
+    },
+    {
+      "column": "notes",
+      "type": "text",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "priority",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 6
+    },
+    {
+      "column": "due_on",
+      "type": "date",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "updated_at",
+      "type": "timestamp with time zone",
       "nullable": false,
       "maxLength": null
     }
@@ -624,6 +768,54 @@
     },
     {
       "column": "series_id",
+      "type": "uuid",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "kind",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 8
+    },
+    {
+      "column": "priority",
+      "type": "character varying",
+      "nullable": false,
+      "maxLength": 6
+    },
+    {
+      "column": "due_on",
+      "type": "date",
+      "nullable": true,
+      "maxLength": null
+    },
+    {
+      "column": "waiting",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "waiting_for",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 100
+    },
+    {
+      "column": "flagged",
+      "type": "boolean",
+      "nullable": false,
+      "maxLength": null
+    },
+    {
+      "column": "flag_reason",
+      "type": "character varying",
+      "nullable": true,
+      "maxLength": 200
+    },
+    {
+      "column": "group_id",
       "type": "uuid",
       "nullable": true,
       "maxLength": null

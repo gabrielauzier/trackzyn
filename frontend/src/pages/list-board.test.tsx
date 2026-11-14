@@ -3,12 +3,12 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
 import ListBoardPage from '@/pages/list-board'
-import { focus, lists, tasks } from '@/lib/api'
+import { cardFields, focus, groups, lists, tasks } from '@/lib/api'
 import { deviceId } from '@/lib/focus/device-id'
 import type { QueuedAction } from '@/lib/focus/queue'
 import { play } from '@/lib/sounds/synth'
 import { toast } from 'sonner'
-import { i18n, renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import type { Board, FocusState, ListCard, Task, TaskCardView } from '@/types'
 
 const state = vi.hoisted(() => ({ canWrite: true }))
@@ -18,13 +18,15 @@ vi.mock('@/lib/api', () => ({
   tasks: { move: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), remove: vi.fn(), duplicate: vi.fn(), moveToList: vi.fn(), skip: vi.fn() },
   subtasks: { create: vi.fn(), update: vi.fn(), remove: vi.fn() },
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
+  cardFields: { get: vi.fn(), set: vi.fn() },
+  groups: { move: vi.fn() },
   authHeaders: () => ({}),
 }))
 vi.mock('@/lib/sounds/synth', () => ({ play: vi.fn() }))
 vi.mock('@/contexts/workspace-context', () => ({
   useWorkspace: () => ({ current: { id: 'ws', name: 'Synthetic workspace', timezone: null }, canWrite: state.canWrite }),
 }))
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }))
 
 const WEEK = '11111111-1111-4111-8111-111111111111'
 const WORK = '22222222-2222-4222-8222-222222222222'
@@ -34,11 +36,11 @@ const T2 = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const T3 = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
 
 function card(id: string, title: string, estimate: number | null = 60): TaskCardView {
-  return { id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
+  return { ...PLAIN_TASK_FIELDS, id, title, estimate_minutes: estimate, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null }
 }
 
 function boardOf(id: string, name: string): Board {
-  return {
+  return { groups: [],
     list: { id, name, color: 3 },
     timezone: 'America/Sao_Paulo',
     pending: { count: 1, estimate_minutes: 60 },
@@ -66,7 +68,7 @@ function listCard(id: string, name: string, position: number): ListCard {
   }
 }
 
-const fullTask: Task = {
+const fullTask: Task = { ...PLAIN_TASK_FIELDS,
   id: TODAY_TASK,
   list_id: WEEK,
   title: 'DEV-1725',
@@ -208,6 +210,7 @@ beforeEach(() => {
   })
   vi.mocked(tasks.move).mockResolvedValue(fullTask)
   vi.mocked(tasks.get).mockResolvedValue(fullTask)
+  vi.mocked(cardFields.get).mockResolvedValue({ hidden: [] })
 })
 
 afterEach(() => {
@@ -234,7 +237,7 @@ describe('ListBoardPage', () => {
   })
 
   it('shows an empty list as all clear in Portuguese', async () => {
-    vi.mocked(lists.board).mockResolvedValue({
+    vi.mocked(lists.board).mockResolvedValue({ groups: [],
       list: { id: WEEK, name: 'Week', color: 3 },
       timezone: 'America/Sao_Paulo',
       pending: { count: 0, estimate_minutes: 0 },
@@ -813,6 +816,46 @@ describe('ListBoardPage', () => {
     expect(screen.getByText('This list has 1 pending task, Est.: 1hr')).toBeInTheDocument()
   })
 
+  it('REM-05 a Today with only a reminder: no focus entry in its menu and Focus now disabled', async () => {
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      board.columns.today.tasks = [{ ...card(T2, 'Pagar o DAS', null), kind: 'reminder' }]
+      return board
+    })
+    const { user } = renderBoard()
+    await screen.findByText('Pagar o DAS')
+    const today = within(document.querySelector<HTMLElement>('[data-column="today"]')!)
+    expect(today.getByRole('button', { name: 'Focus now' })).toBeDisabled()
+
+    await user.click(within(document.querySelector<HTMLElement>(`[data-task-id="${T2}"]`)!).getByRole('button', { name: 'More actions' }))
+    const items = (await screen.findAllByRole('menuitem')).map((item) => item.textContent?.trim())
+    expect(items).toEqual(['Move left', 'Move right', 'Change list', 'Schedule', 'Duplicate', 'Delete task'])
+  })
+
+  it('WAIT-04 an estimate edited on the card leaves a waiting task out of the sums, before the refetch', async () => {
+    // The save never answers, so only the sums made on the client show.
+    vi.mocked(tasks.update).mockImplementation(() => new Promise(() => {}))
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      board.columns.today.tasks = [card(TODAY_TASK, 'DEV-1725'), { ...card(T2, 'Aguardando o deploy', 120), waiting: true }]
+      board.pending = { count: 2, estimate_minutes: 60 }
+      return board
+    })
+    const { user } = renderBoard()
+    await screen.findByText('DEV-1725')
+    const inCard = within(document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!)
+
+    await user.click(inCard.getByRole('button', { name: 'Edit estimate' }))
+    const field = inCard.getByRole('textbox', { name: 'Edit estimate' })
+    await user.clear(field)
+    await user.type(field, '0130{Enter}')
+
+    expect(await screen.findByText('This list has 2 pending tasks, Est.: 1hr 30min')).toBeInTheDocument()
+    const header = (column: string) => within(document.querySelector<HTMLElement>(`[data-column="${column}"]`)!).getByTitle('Pending estimate')
+    expect(header('today')).toHaveTextContent(/^1hr 30min$/)
+    expect(header('this_week')).toHaveTextContent(/^1hr 30min$/)
+  })
+
   it('saves an estimate edited on the card and updates the totals', async () => {
     // The server keeps the new estimate and sums it again.
     let saved = false
@@ -1084,5 +1127,205 @@ describe('ListBoardPage', () => {
     renderBoard()
 
     expect(await screen.findByText('Home page')).toBeInTheDocument()
+  })
+})
+
+describe('ListBoardPage card fields (FIELDS-02, FIELDS-04)', () => {
+  it('the gear of the board bar turns Prazo off: the due chips leave the board without reading it again', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      vi.mocked(lists.board).mockImplementation(async () => {
+        const board = boardOf(WEEK, 'Week')
+        board.columns.today.tasks = [{ ...card(TODAY_TASK, 'DEV-1725'), due_on: '2026-12-20', priority: 'high' }]
+        return board
+      })
+      vi.mocked(cardFields.set).mockResolvedValue({ hidden: ['due'] })
+      const { user } = renderBoard()
+      expect(await screen.findByText('Prazo 20 dez')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Campos do card' }))
+      const due = await screen.findByRole('switch', { name: 'Prazo' })
+      await waitFor(() => expect(due).toBeEnabled())
+      await user.click(due)
+
+      expect(cardFields.set).toHaveBeenCalledWith(WEEK, ['due'])
+      await waitFor(() => expect(screen.queryByText('Prazo 20 dez')).not.toBeInTheDocument())
+      // The other fields stay on, and the board was read only once.
+      expect(screen.getByRole('img', { name: 'Prioridade alta' })).toBeInTheDocument()
+      expect(lists.board).toHaveBeenCalledTimes(1)
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('FIELDS-04 the fields hidden on the server stay hidden on the cards of the list', async () => {
+    vi.mocked(cardFields.get).mockResolvedValue({ hidden: ['priority'] })
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      board.columns.today.tasks = [{ ...card(TODAY_TASK, 'DEV-1725'), priority: 'high', flagged: true, flag_reason: 'Blocked' }]
+      return board
+    })
+    renderBoard()
+
+    expect(await screen.findByText('Blocked')).toBeInTheDocument()
+    await waitFor(() => expect(cardFields.get).toHaveBeenCalledWith(WEEK))
+    await waitFor(() => expect(screen.queryByRole('img', { name: 'High priority' })).not.toBeInTheDocument())
+  })
+})
+
+describe('ListBoardPage group containers and their drags (GRP-04, GRP-06..10)', () => {
+  const G1 = '33333333-3333-4333-8333-333333333333'
+  const A1 = 'a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1'
+  const A2 = 'a2a2a2a2-a2a2-4a2a-8a2a-a2a2a2a2a2a2'
+  const LOOSE = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+  const PIPELINE = { id: G1, name: 'Pipeline', priority: 'none' as const, due_on: null }
+  // Today: the block of Pipeline (A1, A2), then a loose task.
+  const rows = [A1, A2, LOOSE]
+
+  function groupBoard(): Board {
+    const board = boardOf(WEEK, 'Week')
+    board.groups = [PIPELINE]
+    board.columns.today.tasks = [
+      { ...card(A1, 'Step 1'), group_id: G1 },
+      { ...card(A2, 'Step 2'), group_id: G1 },
+      card(LOOSE, 'Loose'),
+    ]
+    board.columns.done.days = []
+    return board
+  }
+
+  /** Columns in a row, Today's cards stacked, the container around its two cards and its title on top. */
+  function layOutGroupBoard() {
+    const columns = ['backlog', 'this_week', 'today', 'done']
+    const original = HTMLElement.prototype.getBoundingClientRect
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.dataset.column) return DOMRect.fromRect({ x: columns.indexOf(this.dataset.column) * 300, y: 0, width: 280, height: 600 })
+      if (this.dataset.groupTitle) return DOMRect.fromRect({ x: 610, y: 60, width: 260, height: 30 })
+      if (this.dataset.groupId) return DOMRect.fromRect({ x: 605, y: 60, width: 270, height: 230 })
+      const row = rows.indexOf(this.dataset.taskId ?? '')
+      if (row >= 0) return DOMRect.fromRect({ x: 610, y: 100 + row * 100, width: 260, height: 80 })
+      return original.call(this)
+    })
+  }
+
+  const focusCard = (id: string) => document.querySelector<HTMLElement>(`[data-task-id="${id}"]`)!.focus()
+
+  beforeEach(() => {
+    vi.mocked(lists.board).mockImplementation(async () => groupBoard())
+    vi.mocked(groups.move).mockResolvedValue({ tasks: [], group_without_next_action: null })
+  })
+
+  it('GRP-04 draws the group as a container with its count around its cards, the loose task outside', async () => {
+    renderBoard()
+
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+    expect(within(container).getByText('2 tasks')).toBeInTheDocument()
+    expect(within(container).getByRole('button', { name: 'Step 1' })).toBeInTheDocument()
+    expect(within(container).getByRole('button', { name: 'Step 2' })).toBeInTheDocument()
+    expect(within(container).queryByRole('button', { name: 'Loose' })).not.toBeInTheDocument()
+  })
+
+  it('GRP-06 a task dropped on a card of its own container keeps the group', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    focusCard(A1)
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(A1, { column: 'today', before_task_id: LOOSE, group_id: G1 }))
+  })
+
+  it('GRP-07 a task of the group dropped on a loose card leaves the group', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    focusCard(A2)
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(A2, { column: 'today', before_task_id: null, group_id: null }))
+  })
+
+  it('GRP-08 a loose task dropped on a card of the container enters the group, at that place', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    focusCard(LOOSE)
+    await user.keyboard(' ')
+    await user.keyboard('{ArrowUp}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalledWith(LOOSE, { column: 'today', before_task_id: A2, group_id: G1 }))
+  })
+
+  it('GRP-09 the title drags the whole container to another column', async () => {
+    layOutGroupBoard()
+    const { user } = renderBoard()
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    within(container).getByRole('button', { name: /^Pipeline/ }).focus()
+    await user.keyboard(' ')
+    // The first step lands on the Today column itself, the second on This week.
+    await user.keyboard('{ArrowLeft}{ArrowLeft}')
+    await user.keyboard(' ')
+
+    await waitFor(() => expect(groups.move).toHaveBeenCalledWith(G1, { from: 'today', to: 'this_week', before_task_id: null }))
+    expect(tasks.move).not.toHaveBeenCalled()
+  })
+
+  it('a viewer cannot drag the container', async () => {
+    state.canWrite = false
+    renderBoard()
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    expect(within(container).queryByRole('button', { name: /^Pipeline/ })).not.toBeInTheDocument()
+  })
+
+  it('GRP-10 a move that leaves the group without a next action says so, and Adicionar tarefa creates a task in it', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      vi.mocked(tasks.move).mockResolvedValue({ ...fullTask, group_without_next_action: { id: G1, name: 'Pipeline' } })
+      vi.mocked(tasks.create).mockResolvedValue({ ...fullTask, group_id: G1 })
+      const { user } = renderBoard()
+      const container = await screen.findByRole('group', { name: 'Grupo Pipeline' })
+
+      await user.click(within(container).getAllByRole('button', { name: 'Mais ações' })[0]!)
+      await user.click(await screen.findByRole('menuitem', { name: 'Mover para a direita' }))
+
+      await waitFor(() => expect(toast.info).toHaveBeenCalledTimes(1))
+      const [message, options] = vi.mocked(toast.info).mock.calls[0]!
+      expect(message).toBe('Pipeline está sem próxima ação')
+      const action = (options as { action: { label: string; onClick: () => void } }).action
+      expect(action.label).toBe('Adicionar tarefa')
+
+      act(() => action.onClick())
+      const dialog = await screen.findByRole('dialog', { name: 'Adicionar tarefa · Pipeline' })
+      await user.type(within(dialog).getByLabelText('Título'), 'Next step')
+      await user.click(within(dialog).getByRole('button', { name: 'Adicionar' }))
+
+      await waitFor(() =>
+        expect(tasks.create).toHaveBeenCalledWith({ list_id: WEEK, title: 'Next step', estimate_minutes: null, column: 'backlog', group_id: G1 }),
+      )
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Adicionar tarefa · Pipeline' })).not.toBeInTheDocument())
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('GRP-10 a move that leaves a next action shows no toast', async () => {
+    vi.mocked(tasks.move).mockResolvedValue({ ...fullTask, group_without_next_action: null })
+    const { user } = renderBoard()
+    const container = await screen.findByRole('group', { name: 'Group Pipeline' })
+
+    await moveFromMenu(user, within(within(container).getAllByRole('button', { name: 'Step 1' })[0]!.closest<HTMLElement>('[data-task-id]')!), 'Move right')
+
+    await waitFor(() => expect(tasks.move).toHaveBeenCalled())
+    expect(toast.info).not.toHaveBeenCalled()
   })
 })

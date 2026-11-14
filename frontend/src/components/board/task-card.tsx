@@ -1,8 +1,13 @@
 import { useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CalendarCheck, CalendarDays, Check, ChevronDown, Clock, FileText, ListChecks, Pencil, Plus, Repeat } from 'lucide-react'
+import { CalendarCheck, CalendarDays, Check, ChevronDown, Clock, FileText, Flag, Hourglass, ListChecks, Pencil, Plus, Repeat, UserRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { scheduleBadge, type ScheduleBadge } from '@/lib/schedule'
+import { scheduleBadge, shortDay, type ScheduleBadge } from '@/lib/schedule'
+import { todayInTimezone } from '@/lib/date-utils'
+import { dueState, type DueState } from '@/lib/board/due'
+import { ALL_CARD_FIELDS, type CardFieldsState } from '@/lib/board/card-fields'
+import { PriorityIcon } from '@/components/board/priority'
+import { ReminderCard } from '@/components/board/reminder-card'
 import { DURATION_ERROR_KEY, parseDuration, toDuration } from '@/components/board/estimate'
 import { formatDuration } from '@/components/board/format-duration'
 import { Button } from '@/components/ui/button'
@@ -33,22 +38,53 @@ interface TaskCardProps {
     /** The "more actions" menu, which also moves the card one column. */
     menu: ReactNode
   }
-  /** The workspace's timezone, which decides the day of the schedule badge. */
+  /** The workspace's timezone, which decides the day of the schedule badge and of the due chip. */
   timeZone?: string
+  /** The new fields the user shows on this board (AD-011); all on when left out (FIELDS-03). */
+  fields?: CardFieldsState
   className?: string
 }
 
-export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateChange, subtasks, notes, actions, timeZone, className }: TaskCardProps) {
+export function TaskCard(props: TaskCardProps) {
+  // A reminder has its compact card, whatever the fields (REM-03, FIELDS-06).
+  if (props.task.kind === 'reminder') return <ReminderCard {...props} fields={props.fields ?? ALL_CARD_FIELDS} />
+  return <PlainTaskCard {...props} />
+}
+
+function PlainTaskCard({
+  task,
+  column,
+  number,
+  canWrite,
+  onOpen,
+  onEstimateChange,
+  subtasks,
+  notes,
+  actions,
+  timeZone,
+  fields = ALL_CARD_FIELDS,
+  className,
+}: TaskCardProps) {
   const { t, i18n } = useTranslation()
   const badge = scheduleBadge(task, column, { now: new Date(), timeZone, t, language: i18n.language })
   const [expanded, setExpanded] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const done = column === 'done'
   const locale = i18n.language
+  // The red border belongs to a flagged task alone, and goes with the Flag field (FLAG-03, FIELDS-05).
+  const flagged = fields.flag && task.flagged
+  const due = fields.due && task.due_on !== null ? task.due_on : null
+  const waiting = fields.waiting && task.waiting
 
   return (
     // The accent border while pressed; the board keeps it on the card it selected (`className`).
-    <Card className={cn('group relative gap-2 px-3 py-2.5 shadow-none transition-colors active:border-primary', className)}>
+    <Card
+      className={cn(
+        'group relative gap-2 px-3 py-2.5 shadow-none transition-colors active:border-primary',
+        flagged && 'border-rose-600',
+        className,
+      )}
+    >
       {actions && (
         <div
           className={cn(
@@ -100,8 +136,33 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
         </button>
       </div>
 
+      {flagged && (
+        <div className="flex items-start gap-1.5 text-xs leading-snug">
+          <Flag size={13} aria-hidden className="mt-0.5 shrink-0 fill-current text-rose-500" />
+          <span className={cn('line-clamp-2 break-words', task.flag_reason ? 'text-rose-700 dark:text-rose-300' : 'text-muted-foreground')}>
+            {task.flag_reason || t('board.flagWithoutReason')}
+          </span>
+        </div>
+      )}
+
+      {(due !== null || waiting) && (
+        <div className="flex flex-wrap gap-1.5">
+          {due !== null && <DueChip day={due} column={column} today={todayInTimezone(timeZone, new Date())} />}
+          {waiting && (
+            <span
+              title={t('board.waiting')}
+              className="inline-flex min-w-0 items-center gap-1 rounded bg-primary/10 px-1.5 text-[11px] leading-5 whitespace-nowrap text-primary"
+            >
+              <UserRound size={11} aria-hidden className="shrink-0" />
+              <span className="truncate">{task.waiting_for ? t('board.waitingFor', { who: task.waiting_for }) : t('board.waiting')}</span>
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span className="flex min-w-0 items-center gap-1.5">
+          {fields.priority && <PriorityIcon priority={task.priority} />}
           {canWrite && onEstimateChange ? (
             <EstimateEditor task={task} onSave={(minutes) => onEstimateChange(task, minutes)} />
           ) : (
@@ -146,6 +207,29 @@ export function TaskCard({ task, column, number, canWrite, onOpen, onEstimateCha
       {expanded && subtasks}
       {notesOpen && notes?.(() => setNotesOpen(false))}
     </Card>
+  )
+}
+
+const DUE_TONES: Record<DueState, string> = {
+  neutral: 'bg-muted text-muted-foreground',
+  done: 'bg-muted text-muted-foreground',
+  soon: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  late: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+}
+
+/** The due chip: `Prazo <dia>`, `Prazo amanhã` or `Prazo hoje` in yellow, `Atrasada · <dia>` in red (DUE-02..05). */
+function DueChip({ day, column, today }: { day: string; column: TaskColumn; today: string }) {
+  const { t, i18n } = useTranslation()
+  const state = dueState(day, column, today)
+  const shown = shortDay(day, t, i18n.language)
+  let label = t('board.dueOn', { day: shown })
+  if (state === 'late') label = t('board.dueLate', { day: shown })
+  else if (state === 'soon') label = t(day === today ? 'board.dueToday' : 'board.dueTomorrow')
+  return (
+    <span title={t('board.due')} className={cn('inline-flex min-w-0 items-center gap-1 rounded px-1.5 text-[11px] leading-5 whitespace-nowrap', DUE_TONES[state])}>
+      <Hourglass size={11} aria-hidden className="shrink-0" />
+      <span className="truncate">{label}</span>
+    </span>
   )
 }
 

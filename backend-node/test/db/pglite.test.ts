@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 import { connectPglite, type Database } from '../../src/db/client.ts'
 import { applyMigrations } from '../../src/db/migrate.ts'
 
-const TABLES = ['app_settings', 'day_plan_blocks', 'day_plans', 'files', 'focus_actions', 'focus_sessions', 'lists', 'personal_access_tokens', 'subtasks', 'task_idempotency_keys', 'task_series', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
+const TABLES = ['app_settings', 'day_plan_blocks', 'day_plans', 'files', 'focus_actions', 'focus_sessions', 'inbox_items', 'list_card_fields', 'lists', 'personal_access_tokens', 'subtasks', 'task_groups', 'task_idempotency_keys', 'task_series', 'tasks', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
 
 async function rows<T>(db: Database, query: ReturnType<typeof sql>): Promise<T[]> {
   return ((await db.execute(query)) as unknown as { rows: T[] }).rows
@@ -35,7 +35,9 @@ describe('the Drizzle schema on PGlite', () => {
     // 2026-11-07 from the same catalog query on PGlite, as no PostgreSQL server was running; day_plan_blocks.started_at
     // (timestamptz, nullable) of 0015_planned_break_started on 2026-11-10, the same way. Read again on 2026-11-10 from a
     // PostgreSQL 16.15 through 0016_workspace_hours_count_mode, journal order: the only change was
-    // workspaces.hours_count_mode (character varying(5), not null) after merge_gap_minutes.
+    // workspaces.hours_count_mode (character varying(5), not null) after merge_gap_minutes. The tables inbox_items,
+    // list_card_fields and task_groups and the eight tasks columns after series_id of 0017_caixa_de_entrada were added on
+    // 2026-11-13 from the same catalog query on PGlite, as no PostgreSQL server was running.
     const expected = JSON.parse(readFileSync(join(import.meta.dirname, '../fixtures/pg-columns.json'), 'utf8')) as Record<
       string,
       Array<{ column: string; type: string; nullable: boolean; maxLength: number | null }>

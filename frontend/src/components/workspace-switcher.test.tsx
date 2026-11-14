@@ -60,6 +60,9 @@ function desktopApi(): TrackzynApi {
     onFocusChanged: vi.fn(() => () => {}),
     onWidgetState: vi.fn(() => () => {}),
     onWidgetHover: vi.fn(() => () => {}),
+    getCaptureShortcut: vi.fn(async () => ({ enabled: true, accelerator: 'CommandOrControl+Shift+Space' })),
+    setCaptureShortcut: vi.fn(async () => ({ ok: true as const })),
+    closeCapture: vi.fn(async () => undefined),
   }
 }
 

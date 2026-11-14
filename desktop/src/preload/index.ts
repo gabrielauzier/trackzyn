@@ -3,6 +3,7 @@ import { APP_VERSION_ARG, IPC, WINDOW_ROLE_ARG, type TrackzynApi } from '../shar
 
 const versionArg = process.argv.find((arg) => arg.startsWith(APP_VERSION_ARG))
 const isWidget = process.argv.includes(`${WINDOW_ROLE_ARG}widget`)
+const isCapture = process.argv.includes(`${WINDOW_ROLE_ARG}capture`)
 
 // The last cursor state the main process sent the widget (#34), kept from the start: the controls that
 // listen mount once the focus state was read, after the first report, and are told it at once.
@@ -55,7 +56,7 @@ const api: TrackzynApi = {
       ipcRenderer.removeListener(IPC.focusPauseRequest, listener)
     }
   },
-  windowRole: isWidget ? 'widget' : 'main',
+  windowRole: isWidget ? 'widget' : isCapture ? 'capture' : 'main',
   collapseFocus: () => ipcRenderer.invoke(IPC.focusCollapse),
   expandFocus: (reason) => ipcRenderer.invoke(IPC.focusExpand, reason),
   resizeWidget: (mode) => ipcRenderer.invoke(IPC.widgetResize, mode),
@@ -84,6 +85,9 @@ const api: TrackzynApi = {
       hoverListeners.delete(listener)
     }
   },
+  getCaptureShortcut: () => ipcRenderer.invoke(IPC.getCaptureShortcut),
+  setCaptureShortcut: (setting) => ipcRenderer.invoke(IPC.setCaptureShortcut, setting),
+  closeCapture: () => ipcRenderer.invoke(IPC.closeCapture),
 }
 
 contextBridge.exposeInMainWorld('trackzyn', api)

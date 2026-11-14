@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
+import { PRIORITIES, TASK_KINDS } from '../db/schema.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { workspaceContext } from '../plugins/workspace.ts'
 import { buildBoard } from '../services/board.ts'
@@ -20,6 +21,14 @@ const taskCard = z.object({
   scheduled_on: z.string().nullable(),
   scheduled_time: z.string().nullable(),
   series: seriesReadSchema.nullable(),
+  kind: z.enum(TASK_KINDS),
+  priority: z.enum(PRIORITIES),
+  due_on: z.string().nullable(),
+  waiting: z.boolean(),
+  waiting_for: z.string().nullable(),
+  flagged: z.boolean(),
+  flag_reason: z.string().nullable(),
+  group_id: z.string().nullable(),
 })
 const column = z.object({ tasks: z.array(taskCard), estimate_minutes: z.number() })
 const progressColumn = column.extend({ done: z.number(), total: z.number() })
@@ -27,6 +36,7 @@ const progressColumn = column.extend({ done: z.number(), total: z.number() })
 const boardSchema = z.object({
   list: z.object({ id: z.string(), name: z.string(), color: z.number() }),
   timezone: z.string(),
+  groups: z.array(z.object({ id: z.string(), name: z.string(), priority: z.enum(PRIORITIES), due_on: z.string().nullable() })),
   pending: z.object({ count: z.number(), estimate_minutes: z.number() }),
   columns: z.object({
     backlog: column,

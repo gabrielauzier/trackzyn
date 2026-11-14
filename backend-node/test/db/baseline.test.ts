@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { applyMigrations, MIGRATIONS_FOLDER } from '../../src/db/migrate.ts'
 
 const TABLES = ['app_settings', 'files', 'user_passkeys', 'users', 'workspace_members', 'workspaces']
-const NEW_TABLES = ['day_plan_blocks', 'day_plans', 'focus_actions', 'focus_sessions', 'lists', 'personal_access_tokens', 'subtasks', 'task_idempotency_keys', 'task_series', 'tasks']
+const NEW_TABLES = ['day_plan_blocks', 'day_plans', 'focus_actions', 'focus_sessions', 'inbox_items', 'list_card_fields', 'lists', 'personal_access_tokens', 'subtasks', 'task_groups', 'task_idempotency_keys', 'task_series', 'tasks']
 const ALL_TABLES = [...TABLES, ...NEW_TABLES].sort()
 const MIGRATIONS = readMigrationFiles({ migrationsFolder: MIGRATIONS_FOLDER })
 const ALEMBIC_DUMP = readFileSync(resolve(import.meta.dirname, '../fixtures/alembic-001.sql'), 'utf8')

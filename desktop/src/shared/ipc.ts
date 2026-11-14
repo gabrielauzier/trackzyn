@@ -21,13 +21,19 @@ export const IPC = {
   widgetResize: 'widget:resize',
   /** Main to the widget page: the cursor entered (`hovering: true`) or left the widget window (#34). */
   widgetHover: 'widget:hover',
+  /** The global capture shortcut as saved: on or off, and the combination (CAP-07). */
+  getCaptureShortcut: 'capture:get-shortcut',
+  /** Saves and applies the capture shortcut; answers `in_use` when the system refuses it (CAP-08). */
+  setCaptureShortcut: 'capture:set-shortcut',
+  /** Closes the capture window once the item is kept (CAP-06). */
+  closeCapture: 'capture:close',
 } as const
 
 export type SetServerUrlResult =
   | { ok: true; url: string }
   | { ok: false; reason: 'invalid-url' | 'insecure' | 'unreachable' }
 
-/** What the renderer sees as `window.trackzyn`. Exactly these twenty-three members. */
+/** What the renderer sees as `window.trackzyn`. Exactly these twenty-six members. */
 export interface TrackzynApi {
   isDesktop: true
   platform: string
@@ -51,7 +57,7 @@ export interface TrackzynApi {
   reportFocusState(state: { active: boolean; running: boolean }): void
   /** Runs `callback` when closing asks for the pause; the main process waits for it to settle. Returns an unsubscribe. */
   onPauseRequest(callback: () => Promise<void>): () => void
-  /** Which window this page runs in: the focus widget or the main window. */
+  /** Which window this page runs in: the focus widget, the capture window or the main window. */
   windowRole: WindowRole
   /** Opens the focus widget and minimizes the main window. */
   collapseFocus(): Promise<void>
@@ -67,10 +73,23 @@ export interface TrackzynApi {
   onWidgetState(callback: (state: { open: boolean }) => void): () => void
   /** In the widget: runs `callback` when the cursor enters or leaves the widget window, read by the main process. Returns an unsubscribe. */
   onWidgetHover(callback: (state: { hovering: boolean }) => void): () => void
+  /** The global capture shortcut of this computer (CAP-07). */
+  getCaptureShortcut(): Promise<CaptureShortcutSetting>
+  /** Turns the capture shortcut on or off, or changes it; `in_use` when the system refused it, which leaves it off (CAP-08). */
+  setCaptureShortcut(setting: CaptureShortcutSetting): Promise<SetCaptureShortcutResult>
+  /** In the capture window: closes it. */
+  closeCapture(): Promise<void>
 }
 
-export type WindowRole = 'main' | 'widget'
+export interface CaptureShortcutSetting {
+  enabled: boolean
+  accelerator: string
+}
+
+export type SetCaptureShortcutResult = { ok: true } | { ok: false; reason: 'in_use' }
+
+export type WindowRole = 'main' | 'widget' | 'capture'
 
 export const APP_VERSION_ARG = '--trackzyn-app-version='
-/** Present with `widget` on the widget window only; any other value, or none, is the main window. */
+/** `widget` on the widget window, `capture` on the capture window; any other value, or none, is the main window. */
 export const WINDOW_ROLE_ARG = '--trackzyn-window-role='

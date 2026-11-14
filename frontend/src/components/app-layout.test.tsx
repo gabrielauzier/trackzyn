@@ -20,6 +20,7 @@ import type { FocusState } from '@/types'
 const state = vi.hoisted(() => ({
   focus: { get: vi.fn(), send: vi.fn(), heartbeat: vi.fn() },
   lists: { list: vi.fn(async () => ({ timezone: 'America/Sao_Paulo', lists: [] })) },
+  inbox: { count: vi.fn(async () => ({ count: 0 })) },
   user: {
     email: 'synthetic@example.com',
     is_2fa_enabled: true,
@@ -75,6 +76,7 @@ vi.mock('@/lib/api', () => ({
   info: { get: async () => ({ features: {} }) },
   focus: state.focus,
   lists: state.lists,
+  inbox: state.inbox,
   authHeaders: () => ({ Authorization: 'Bearer token-123' }),
 }))
 vi.mock('@/lib/webauthn', () => ({
@@ -117,6 +119,9 @@ function installDesktopApi(platform: string) {
     onFocusChanged: vi.fn(() => () => {}),
     onWidgetState: vi.fn(() => () => {}),
     onWidgetHover: vi.fn(() => () => {}),
+    getCaptureShortcut: vi.fn(async () => ({ enabled: true, accelerator: 'CommandOrControl+Shift+Space' })),
+    setCaptureShortcut: vi.fn(async () => ({ ok: true as const })),
+    closeCapture: vi.fn(async () => undefined),
   }
   Object.defineProperty(window, 'trackzyn', { value: api, configurable: true })
 }
@@ -335,6 +340,69 @@ describe('app layout sidebar', () => {
     const nav = screen.getByRole('navigation')
     expect(within(nav).queryByRole('link', { name: 'Create new list' })).not.toBeInTheDocument()
     expect(within(nav).getByRole('link', { name: 'All my lists' })).toBeInTheDocument()
+  })
+})
+
+describe('app layout inbox (INBOX-01)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('pt-BR')
+  })
+  afterEach(async () => {
+    state.inbox.count.mockResolvedValue({ count: 0 })
+    await i18n.changeLanguage('en')
+  })
+
+  it('INBOX-01 shows Caixa de entrada with 6 when six items wait, leading to /inbox', async () => {
+    state.inbox.count.mockResolvedValue({ count: 6 })
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    const link = await within(screen.getByRole('navigation')).findByRole('link', { name: 'Caixa de entrada, 6 itens' })
+    expect(link).toHaveAttribute('href', '/inbox')
+    expect(link.querySelector('[data-inbox-badge]')).toHaveTextContent(/^6$/)
+  })
+
+  it('INBOX-01 shows no number when the inbox is empty', async () => {
+    state.inbox.count.mockResolvedValue({ count: 0 })
+    const { queryClient } = renderWithProviders(<AppLayout />, { route: '/' })
+
+    await waitFor(() => expect(queryClient.getQueryState(['inbox', 'count'])?.status).toBe('success'))
+    const link = within(screen.getByRole('navigation')).getByRole('link', { name: 'Caixa de entrada' })
+    expect(link).toHaveTextContent(/^Caixa de entrada$/)
+    expect(link.querySelector('[data-inbox-badge]')).toBeNull()
+  })
+
+  it('INBOX-01 offers the inbox to a viewer too', async () => {
+    state.canWrite = false
+    state.inbox.count.mockResolvedValue({ count: 1 })
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    expect(await within(screen.getByRole('navigation')).findByRole('link', { name: 'Caixa de entrada, 1 item' })).toHaveAttribute('href', '/inbox')
+  })
+})
+
+describe('app layout capture (CAP-04)', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+
+  it('CAP-04 the sidebar button Capturar opens the capture overlay with the field focused', async () => {
+    await i18n.changeLanguage('pt-BR')
+    const { user } = renderWithProviders(<AppLayout />, { route: '/' })
+
+    await user.click(screen.getByRole('button', { name: 'Capturar' }))
+
+    expect(await screen.findByRole('dialog', { name: 'Capturar' })).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Capturar na caixa de entrada' })).toHaveFocus())
+  })
+
+  it('CAP-04 the layout listens to ⌘⇧Space', async () => {
+    renderWithProviders(<AppLayout />, { route: '/' })
+
+    act(() => {
+      fireEvent.keyDown(document, { key: ' ', code: 'Space', metaKey: true, shiftKey: true })
+    })
+
+    expect(await screen.findByRole('dialog', { name: 'Capture' })).toBeInTheDocument()
   })
 })
 

@@ -45,7 +45,7 @@ export interface PasskeyOptionsResponse {
   options: Record<string, unknown>
 }
 
-export type AccessTokenScope = 'lists:read' | 'tasks:read' | 'tasks:create' | 'tasks:write' | 'tasks:delete'
+export type AccessTokenScope = 'lists:read' | 'tasks:read' | 'tasks:create' | 'tasks:write' | 'tasks:delete' | 'inbox:create'
 
 export interface AccessToken {
   id: string
@@ -195,7 +195,45 @@ export interface TaskSchedule {
   series: TaskSeries | null
 }
 
-export interface Task extends TaskSchedule {
+export type TaskKind = 'task' | 'reminder'
+export type Priority = 'none' | 'low' | 'medium' | 'high' | 'ultra'
+
+/** The fields a task gained with the inbox: kind, priority, due day, waiting, flag and group. */
+export interface TaskFields {
+  kind: TaskKind
+  priority: Priority
+  /** YYYY-MM-DD in the workspace's timezone, or null. */
+  due_on: string | null
+  waiting: boolean
+  /** Who the task waits for; only while `waiting`. */
+  waiting_for: string | null
+  flagged: boolean
+  /** Why the task is flagged; only while `flagged`. */
+  flag_reason: string | null
+  group_id: string | null
+}
+
+/** A field of the board card each user can hide per list (AD-011); name, estimate and time always show. */
+export type CardField = 'priority' | 'due' | 'flag' | 'waiting'
+
+/** A group of tasks of a list (GRP-01). */
+export interface TaskGroup {
+  id: string
+  list_id: string
+  name: string
+  notes: string | null
+  priority: Priority
+  due_on: string | null
+  created_at: string
+}
+
+/** A group that has no open task left, told after a move (GRP-10). */
+export interface GroupWithoutNextAction {
+  id: string
+  name: string
+}
+
+export interface Task extends TaskSchedule, TaskFields {
   id: string
   list_id: string
   title: string
@@ -210,7 +248,7 @@ export interface Task extends TaskSchedule {
   created_via: string | null
 }
 
-export interface TaskCardView extends TaskSchedule {
+export interface TaskCardView extends TaskSchedule, TaskFields {
   id: string
   title: string
   estimate_minutes: number | null
@@ -235,6 +273,8 @@ export interface BoardProgressColumnView extends BoardColumnView {
 export interface Board {
   list: { id: string; name: string; color: number }
   timezone: string
+  /** The groups of the list, oldest first. */
+  groups: { id: string; name: string; priority: Priority; due_on: string | null }[]
   pending: { count: number; estimate_minutes: number }
   columns: {
     backlog: BoardColumnView
@@ -415,6 +455,8 @@ export interface ScheduledTask {
   scheduled_on: string
   scheduled_time: string | null
   series: { id: string; rule: RecurrenceRule } | null
+  /** A reminder with a time is a marker on the Agenda, with no duration (REM-06); left out, a task. */
+  kind?: TaskKind
 }
 
 /** A future occurrence of a series, projected from its rule and never stored (US-11, D14). */
@@ -496,3 +538,69 @@ export type PlannedBlock = PlanBlock & { day: string }
 export type PlanBlockInput =
   | { kind: 'task'; task_id: string; start: string; minutes: number }
   | { kind: 'break'; id?: string; name: string; list_id: string; start: string; minutes: number }
+
+/** Where an inbox item came from (CAP-01, CAP-06, CAP-09). */
+export type InboxSource = 'app' | 'desktop' | 'mcp' | 'api'
+
+/** How an inbox item is processed: a task, a reminder, a group, done right away, or the trash. */
+interface PlannedDecision {
+  /** Left out, the name is the item's text. */
+  name?: string
+  list_id: string
+  priority?: Priority
+  due_on?: string | null
+  scheduled_on?: string | null
+  scheduled_time?: string | null
+  notes?: string
+  /** Overrides the column of the schedule (PROC-04). */
+  column?: TaskColumn
+}
+export type Decision =
+  | ({ type: 'task'; estimate_minutes?: number | null } & PlannedDecision)
+  | ({ type: 'reminder' } & PlannedDecision)
+  | {
+      type: 'group'
+      name?: string
+      list_id: string
+      priority?: Priority
+      due_on?: string | null
+      notes?: string
+      column?: TaskColumn
+      tasks: { title: string; estimate_minutes?: number | null }[]
+    }
+  | { type: 'done'; name?: string; list_id: string }
+  | { type: 'discard' }
+
+export interface InboxItem {
+  id: string
+  text: string
+  source: InboxSource
+  /** Name of the access token that captured the item; null otherwise. */
+  created_via: string | null
+  list_id: string | null
+  estimate_minutes: number | null
+  /** The decision kept by Processar tudo (ALL-02). */
+  draft: Decision | null
+  discarded_at: string | null
+  created_at: string
+}
+
+export interface InboxResponse {
+  timezone: string
+  items: InboxItem[]
+}
+
+/** Why a send or a commit was refused (QUICK-06, EDGE-01, ALL-07). */
+export type InboxRefusal = 'list_archived' | 'list_read_only' | 'already_processed'
+
+export interface InboxSendResult {
+  tasks: Task[]
+  group: TaskGroup | null
+}
+
+export interface InboxCommitResult {
+  tasks: Task[]
+  groups: TaskGroup[]
+  /** The ids of the items that went to the trash. */
+  discarded: string[]
+}

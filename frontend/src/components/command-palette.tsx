@@ -14,6 +14,7 @@ import {
   Upload,
   Settings,
   Shield,
+  Inbox,
 } from 'lucide-react'
 
 import { useAuth } from '@/contexts/auth-context'
@@ -32,7 +33,8 @@ type StaticItem = {
   labelKey: string
   icon: React.ElementType
   path?: string
-  onSelect?: (nav: (to: string) => void) => void
+  /** `actions` holds what the palette's host offers, as opening the capture overlay. */
+  onSelect?: (nav: (to: string) => void, actions: PaletteActions) => void
   keywords?: string[]
   /** Leads to a superuser-only screen: hidden from everyone else (#32). */
   admin?: boolean
@@ -56,7 +58,18 @@ function buildNavItems(isEnabled: (flag: string) => boolean, isAdmin: boolean): 
   return [...fromSidebar, ...settings]
 }
 
+/** What the host of the palette lets an action do besides navigating. */
+type PaletteActions = { capture: () => void }
+
 const QUICK_ACTIONS: StaticItem[] = [
+  {
+    // Opens the capture overlay (CAP-04).
+    id: 'action-capture',
+    labelKey: 'cmdk.actions.capture',
+    icon: Inbox,
+    onSelect: (_nav, actions) => actions.capture(),
+    keywords: ['capture', 'capturar', 'inbox', 'caixa de entrada'],
+  },
   {
     id: 'action-upload-file',
     labelKey: 'cmdk.actions.uploadFile',
@@ -139,9 +152,11 @@ function matchesQuery(query: string, haystacks: Array<string | undefined>): bool
 export interface CommandPaletteProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Opens the capture overlay, for the `Capturar` action. */
+  onCapture?: () => void
 }
 
-export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
+export function CommandPalette({ open, onOpenChange, onCapture }: CommandPaletteProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { confirmLeave } = useDraftGuard()
@@ -343,7 +358,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                             onSelect={() => {
                               if (a.onSelect) {
                                 handleOpenChange(false)
-                                setTimeout(() => a.onSelect!(go), 0)
+                                setTimeout(() => a.onSelect!(go, { capture: () => onCapture?.() }), 0)
                               }
                             }}
                             className={itemClasses()}
@@ -419,7 +434,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                             onSelect={() => {
                               if (a.onSelect) {
                                 handleOpenChange(false)
-                                setTimeout(() => a.onSelect!(go), 0)
+                                setTimeout(() => a.onSelect!(go, { capture: () => onCapture?.() }), 0)
                               }
                             }}
                             className={itemClasses()}

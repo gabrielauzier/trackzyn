@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 
 import { PX_PER_MINUTE } from '@/components/agenda/week-grid'
 import { agenda, focus, lists, plans, sessions, tasks } from '@/lib/api'
-import { i18n, renderWithProviders } from '@/test/utils'
+import { i18n, renderWithProviders, PLAIN_TASK_FIELDS } from '@/test/utils'
 import { useLocation } from 'react-router-dom'
 import type { AgendaSession, ListCard, PlannedBlock, ScheduledTask, Task } from '@/types'
 import AgendaPage from './agenda'
@@ -1316,7 +1316,7 @@ describe('AgendaPage: the scheduled tasks (US-5)', () => {
       untimed: [],
       projected: [],
     })
-    const plan: Task = {
+    const plan: Task = { ...PLAIN_TASK_FIELDS,
       id: 't9',
       list_id: WORK,
       title: 'Plan the sprint',
@@ -1378,7 +1378,7 @@ describe('AgendaPage: the Sem hora row (US-14)', () => {
       ],
       projected: [],
     })
-    vi.mocked(tasks.get).mockResolvedValue({
+    vi.mocked(tasks.get).mockResolvedValue({ ...PLAIN_TASK_FIELDS,
       id: 't8',
       list_id: WORK,
       title: 'Call the bank',
@@ -1520,7 +1520,7 @@ describe('AgendaPage: scheduling from the agenda (US-6, US-8, US-12, US-14)', ()
 
     it('schedules the task chosen in the window, its estimate from the window, and closes the panel', async () => {
       setWidth(1280)
-      vi.mocked(tasks.get).mockResolvedValue({
+      vi.mocked(tasks.get).mockResolvedValue({ ...PLAIN_TASK_FIELDS,
         id: 't1', list_id: WORK, title: 'Write the report', notes: '', estimate_minutes: null, column: 'today', position: 0,
         completed_at: null, created_at: '2026-11-01T00:00:00.000Z', subtasks: [], created_via: null, scheduled_on: null, scheduled_time: null, series: null,
       })

@@ -39,7 +39,7 @@ describe('GET /api/lists/:id/board', () => {
       },
     })
     expect(board.columns.today.tasks).toEqual([
-      { id: today.json().id, title: 'Focus', estimate_minutes: 30, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null },
+      { id: today.json().id, title: 'Focus', estimate_minutes: 30, spent_seconds: 0, position: 0, subtasks: { done: 0, total: 0 }, created_via: null, scheduled_on: null, scheduled_time: null, series: null, kind: 'task', priority: 'none', due_on: null, waiting: false, waiting_for: null, flagged: false, flag_reason: null, group_id: null },
     ])
     expect(board.columns.done.days).toHaveLength(1)
     expect(board.columns.done.days[0].tasks.map((task: { title: string }) => task.title)).toEqual(['Finished'])

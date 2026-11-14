@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { and, asc, count, eq, inArray, ne, notInArray } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { type User, type Workspace, type WorkspaceMember, files, users, workspaceMembers, workspaces } from '../db/schema.ts'
+import { type User, type Workspace, type WorkspaceMember, files, inboxItems, users, workspaceMembers, workspaces } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 
 export function personalWorkspaceName(language: string | null | undefined): string {
@@ -309,7 +309,11 @@ export async function removeMember(db: Database, workspaceId: string, userId: st
   if (member.role === 'owner' && (await ownerCount(db, workspaceId)) <= 1) {
     throw new HttpError(400, 'Cannot remove the sole owner')
   }
-  await db.delete(workspaceMembers).where(eq(workspaceMembers.id, member.id))
+  await db.transaction(async (tx) => {
+    await tx.delete(workspaceMembers).where(eq(workspaceMembers.id, member.id))
+    // The inbox is personal: what the member captured in this workspace leaves with them (EDGE-08).
+    await tx.delete(inboxItems).where(and(eq(inboxItems.workspaceId, workspaceId), eq(inboxItems.userId, userId)))
+  })
 }
 
 /** The Personal workspace role sync runs against: the oldest workspace the user created and belongs to. */

@@ -1,12 +1,13 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
-import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Menu, ChevronLeft, ChevronRight, Eye, EyeOff, Sun, Moon, Search, Plus } from 'lucide-react'
 import { useAuth } from '@/contexts/auth-context'
 import { useWorkspace } from '@/contexts/workspace-context'
 import { useSidebarState } from '@/contexts/sidebar-state-context'
-import { admin as adminApi } from '@/lib/api'
+import { admin as adminApi, inbox as inboxApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { APP_VERSION } from '@/lib/build-info'
 import { setThemeBasedOnSystem } from '@/lib/theme-utils'
@@ -22,8 +23,10 @@ import { TwoFactorSetup } from '@/components/two-factor-setup'
 import { PasskeyManagementDialog } from '@/components/passkey-management-dialog'
 import { AccessTokensDialog } from '@/components/access-tokens-dialog'
 import { CommandPalette } from '@/components/command-palette'
+import { CaptureOverlay } from '@/components/capture/capture-overlay'
 import { FocusGuard } from '@/components/focus/focus-guard'
 import { useCommandPaletteHotkey } from '@/hooks/use-command-palette-hotkey'
+import { useCaptureHotkey } from '@/hooks/use-capture-hotkey'
 import { usePrivacyMode } from '@/hooks/use-privacy-mode'
 import { useFeatureFlags } from '@/hooks/use-feature-flags'
 import { useLocalAuthEnabled } from '@/hooks/use-local-auth'
@@ -70,7 +73,17 @@ export function AppLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
+  // The capture overlay opens from any screen of the app (CAP-04).
+  const [captureOpen, setCaptureOpen] = useState(false)
+  const openCapture = useCallback(() => setCaptureOpen(true), [])
+  useCaptureHotkey(openCapture)
   const { isLoading: workspaceLoading, canWrite } = useWorkspace()
+  // How many items wait in the user's inbox, in the current workspace (INBOX-01, EDGE-07).
+  const { data: inboxCount = 0 } = useQuery({
+    queryKey: ['inbox', 'count'],
+    queryFn: () => inboxApi.count(),
+    select: (data) => data.count,
+  })
   const { user } = useAuth()
   const isSuperuser = !!user?.is_superuser
   const { isEnabled, updateCheckRepo } = useFeatureFlags()
@@ -225,8 +238,31 @@ export function AppLayout() {
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
 
-          {/* Command palette trigger */}
+          {/* Capture (CAP-04): the same overlay as Mod+Shift+Space. */}
           <div className={cn('px-3 pt-3', collapsed && 'lg:px-2')}>
+            <button
+              type="button"
+              onClick={() => {
+                setSidebarOpen(false)
+                openCapture()
+              }}
+              title={t('nav.capture')}
+              aria-label={t('nav.capture')}
+              className={cn(
+                'flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90',
+                collapsed && 'lg:px-0',
+              )}
+            >
+              <Plus size={16} strokeWidth={2.4} className="shrink-0" />
+              <span className={cn(collapsed && 'lg:hidden')}>{t('nav.capture')}</span>
+              <kbd aria-hidden className={cn('hidden font-mono text-[10px] opacity-70 lg:inline', collapsed && 'lg:hidden')}>
+                {isMac ? '⌘⇧Space' : 'Ctrl+Shift+Space'}
+              </kbd>
+            </button>
+          </div>
+
+          {/* Command palette trigger */}
+          <div className={cn('px-3 pt-2', collapsed && 'lg:px-2')}>
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
@@ -269,9 +305,12 @@ export function AppLayout() {
                     : location.pathname.startsWith(item.path)
                 const Icon = item.icon
                 // An admin link says so in its name and tip, which is all the collapsed sidebar shows (#32).
+                const count = item.badge === 'inbox' ? inboxCount : 0
                 const label = item.admin
                   ? t('nav.adminLink', { name: t(`nav.${item.key}`) })
-                  : t(`nav.${item.key}`)
+                  : count > 0
+                    ? t('nav.inboxCount', { count })
+                    : t(`nav.${item.key}`)
                 return (
                   <Link
                     key={item.key}
@@ -296,7 +335,20 @@ export function AppLayout() {
                         collapsed && 'lg:h-5 lg:w-5',
                       )}
                     />
-                    <span className={cn(item.admin && 'flex-1', collapsed && 'lg:hidden')}>{t(`nav.${item.key}`)}</span>
+                    <span className={cn((item.admin || item.badge) && 'flex-1', collapsed && 'lg:hidden')}>{t(`nav.${item.key}`)}</span>
+                    {/* Zero shows no number (INBOX-01). */}
+                    {count > 0 && (
+                      <span
+                        data-inbox-badge
+                        aria-hidden
+                        className={cn(
+                          'flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold tabular-nums text-primary-foreground',
+                          collapsed && 'lg:absolute lg:top-0.5 lg:right-0.5 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[9px]',
+                        )}
+                      >
+                        {count}
+                      </span>
+                    )}
                     {item.admin && (
                       <>
                         <span
@@ -387,7 +439,8 @@ export function AppLayout() {
       />
       <AccessTokensDialog open={accessTokensOpen} onClose={() => setAccessTokensOpen(false)} />
       <FocusGuard />
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onCapture={openCapture} />
+      <CaptureOverlay open={captureOpen} onOpenChange={setCaptureOpen} />
       <UpdateAvailableDialog
         open={updateDialogOpen}
         onClose={() => setUpdateDialogOpen(false)}

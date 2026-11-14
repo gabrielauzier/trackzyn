@@ -36,7 +36,7 @@ vi.mock('axios', async (importOriginal) => {
   return { ...actual, default: Object.assign(Object.create(axios) as typeof axios, { create }) }
 })
 
-const { agenda, focus, plans, reports, tasks, workspaces } = await import('@/lib/api')
+const { agenda, cardFields, focus, groups, inbox, plans, reports, tasks, workspaces } = await import('@/lib/api')
 
 const LIST = '6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b'
 const BASE = { occurred_at: '2026-10-24T13:00:00.000Z', device_id: 'device-1', list_id: LIST }
@@ -235,5 +235,112 @@ describe('workspaces.update (HOURS-07)', () => {
     expect(http.sent).toEqual([
       { method: 'patch', url: '/api/workspaces/ws-1', body: { hours_count_mode: 'net' }, authorization: 'Bearer token-123' },
     ])
+  })
+})
+
+describe('the inbox calls (API-01, CAP-01, INBOX-01..05, QUICK-02, QUICK-04, ALL-02, ALL-06)', () => {
+  const sent = (method: string, url: string, body?: unknown) => ({ method, url, body, authorization: 'Bearer token-123' })
+
+  it('captures with POST /api/inbox, the text and the source', async () => {
+    await inbox.capture({ text: 'Ligar para o contador', source: 'app' })
+
+    expect(http.sent).toEqual([sent('post', '/api/inbox', { text: 'Ligar para o contador', source: 'app' })])
+  })
+
+  it('reads a tab with GET /api/inbox?tab=<tab>', async () => {
+    await inbox.list('current')
+    await inbox.list('trash')
+
+    expect(http.sent).toEqual([sent('get', '/api/inbox?tab=current'), sent('get', '/api/inbox?tab=trash')])
+  })
+
+  it('counts with GET /api/inbox/count', async () => {
+    await inbox.count()
+
+    expect(http.sent).toEqual([sent('get', '/api/inbox/count')])
+  })
+
+  it('keeps the list, the estimate and the draft with PATCH /api/inbox/<id>, only what was given', async () => {
+    await inbox.update('item-1', { list_id: LIST, estimate_minutes: 90 })
+    await inbox.update('item-1', { draft: { type: 'discard' } })
+
+    expect(http.sent).toEqual([
+      sent('patch', '/api/inbox/item-1', { list_id: LIST, estimate_minutes: 90 }),
+      sent('patch', '/api/inbox/item-1', { draft: { type: 'discard' } }),
+    ])
+  })
+
+  it('discards and restores with POST /api/inbox/<id>/discard and /restore', async () => {
+    await inbox.discard('item-1')
+    await inbox.restore('item-1')
+
+    expect(http.sent).toEqual([sent('post', '/api/inbox/item-1/discard'), sent('post', '/api/inbox/item-1/restore')])
+  })
+
+  it('sends one item with POST /api/inbox/<id>/send and the decision', async () => {
+    const decision = { type: 'task' as const, list_id: LIST, priority: 'high' as const, estimate_minutes: 90, column: 'today' as const }
+    await inbox.send('item-1', decision)
+
+    expect(http.sent).toEqual([sent('post', '/api/inbox/item-1/send', { decision })])
+  })
+
+  it('commits the drafts with POST /api/inbox/commit and the ids of the review', async () => {
+    await inbox.commit(['item-1', 'item-2'])
+
+    expect(http.sent).toEqual([sent('post', '/api/inbox/commit', { item_ids: ['item-1', 'item-2'] })])
+  })
+})
+
+describe('the group and card field calls (MODAL-04, GRP-06..09, FIELDS-03, FIELDS-04)', () => {
+  const sent = (method: string, url: string, body?: unknown) => ({ method, url, body, authorization: 'Bearer token-123' })
+
+  it('reads the groups of a list with GET /api/lists/<id>/groups', async () => {
+    await groups.list(LIST)
+
+    expect(http.sent).toEqual([sent('get', `/api/lists/${LIST}/groups`)])
+  })
+
+  it('moves a whole group with POST /api/groups/<id>/move, from, to and before_task_id', async () => {
+    await groups.move('group-1', { from: 'this_week', to: 'today', before_task_id: 'task-9' })
+
+    expect(http.sent).toEqual([sent('post', '/api/groups/group-1/move', { from: 'this_week', to: 'today', before_task_id: 'task-9' })])
+  })
+
+  it('reads and saves the hidden card fields with GET and PUT /api/lists/<id>/card-fields', async () => {
+    await cardFields.get(LIST)
+    await cardFields.set(LIST, ['due'])
+
+    expect(http.sent).toEqual([sent('get', `/api/lists/${LIST}/card-fields`), sent('put', `/api/lists/${LIST}/card-fields`, { hidden: ['due'] })])
+  })
+})
+
+describe('tasks.move and tasks.update with the new fields (GRP-06..08, MODAL-05)', () => {
+  const sent = (method: string, url: string, body?: unknown) => ({ method, url, body, authorization: 'Bearer token-123' })
+
+  it('moves into a group, out of it, or keeps it when group_id is left out', async () => {
+    await tasks.move('task-1', { column: 'today', before_task_id: null, group_id: 'group-1' })
+    await tasks.move('task-1', { column: 'today', before_task_id: 'task-2', group_id: null })
+    await tasks.move('task-1', { column: 'done', before_task_id: null })
+
+    expect(http.sent).toEqual([
+      sent('post', '/api/tasks/task-1/move', { column: 'today', before_task_id: null, group_id: 'group-1' }),
+      sent('post', '/api/tasks/task-1/move', { column: 'today', before_task_id: 'task-2', group_id: null }),
+      sent('post', '/api/tasks/task-1/move', { column: 'done', before_task_id: null }),
+    ])
+  })
+
+  it('saves priority, due day, waiting, flag and group with PATCH /api/tasks/<id>', async () => {
+    const changes = {
+      priority: 'ultra' as const,
+      due_on: '2026-11-14',
+      waiting: true,
+      waiting_for: 'Fulano',
+      flagged: true,
+      flag_reason: 'Bloqueada',
+      group_id: null,
+    }
+    await tasks.update('task-1', changes)
+
+    expect(http.sent).toEqual([sent('patch', '/api/tasks/task-1', changes)])
   })
 })

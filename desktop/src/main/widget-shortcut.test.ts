@@ -116,6 +116,11 @@ describe('focus widget shortcut (WIDGET-04, WIDGET-05, WIDGET-20)', () => {
     const strip = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
     const files = readdirSync(__dirname).filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
     expect(files).toContain('widget-shortcut.ts')
-    for (const name of files) expect(strip(readFileSync(path.join(__dirname, name), 'utf8')), name).not.toMatch(/globalShortcut/)
+    // AD-012: the capture shortcut is the one global shortcut, and it lives only in this file.
+    const exception = 'capture-shortcut.ts'
+    expect(files).toContain(exception)
+    for (const name of files.filter((file) => file !== exception)) {
+      expect(strip(readFileSync(path.join(__dirname, name), 'utf8')), name).not.toMatch(/globalShortcut/)
+    }
   })
 })

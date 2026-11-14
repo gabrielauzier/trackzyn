@@ -73,3 +73,34 @@ describe('config store', () => {
     expect(createConfigStore(file).getMode()).toBeNull()
   })
 })
+
+describe('capture shortcut setting (CAP-07, CAP-08)', () => {
+  it('defaults to on with CommandOrControl+Shift+Space', () => {
+    expect(createConfigStore(path.join(dir, 'config.json')).getCaptureShortcut()).toEqual({
+      enabled: true,
+      accelerator: 'CommandOrControl+Shift+Space',
+    })
+  })
+
+  it('persists the switch and the combination, keeping the other keys', () => {
+    const file = path.join(dir, 'config.json')
+    createConfigStore(file).setServerUrl('https://srv.example.com')
+    createConfigStore(file).setCaptureShortcut({ enabled: false, accelerator: 'Alt+Space' })
+    expect(createConfigStore(file).getCaptureShortcut()).toEqual({ enabled: false, accelerator: 'Alt+Space' })
+    expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual({
+      serverUrl: 'https://srv.example.com',
+      captureShortcut: { enabled: false, accelerator: 'Alt+Space' },
+    })
+  })
+
+  it('falls back to the default when the saved value is malformed', () => {
+    const file = path.join(dir, 'config.json')
+    for (const captureShortcut of [null, 'Alt+Space', { enabled: 'yes', accelerator: 'Alt+Space' }, { enabled: true, accelerator: '' }]) {
+      writeFileSync(file, JSON.stringify({ captureShortcut }))
+      expect(createConfigStore(file).getCaptureShortcut(), JSON.stringify(captureShortcut)).toEqual({
+        enabled: true,
+        accelerator: 'CommandOrControl+Shift+Space',
+      })
+    }
+  })
+})

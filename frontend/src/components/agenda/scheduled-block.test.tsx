@@ -140,3 +140,32 @@ describe('ScheduledBlock: a series (US-11)', () => {
     expect(onOpen).toHaveBeenCalledExactlyOnceWith('open-1')
   })
 })
+
+describe('ScheduledBlock: a reminder (REM-06)', () => {
+  it('REM-06 a reminder at 10:00 is a marker with a bell on the line of 10:00, with no height of duration', async () => {
+    await i18n.changeLanguage('pt-BR')
+    try {
+      const reminder = task({ title: 'Pagar o DAS', kind: 'reminder', estimate_minutes: null, column: 'today' })
+      const { user } = show(ofTask(reminder))
+
+      const marker = screen.getByRole('button', { name: 'Pagar o DAS, Lembrete · 10:00' })
+      expect(marker).toHaveAttribute('data-reminder', 'true')
+      // The top is the line of 10:00 (600 min × 2 px); the height is the 1 px of the line, not the hour of a block.
+      expect([marker.style.top, marker.style.height]).toEqual(['1200px', '1px'])
+      expect(marker.querySelector('[data-slot="bell-icon"]')).not.toBeNull()
+      expect(marker.querySelector('[data-slot="clock-icon"]')).toBeNull()
+      expect(await tooltipLines(user)).toBe('Pagar o DASLembrete · 10:00Work · HojeClique para abrir · arraste para reagendar')
+    } finally {
+      await i18n.changeLanguage('en')
+    }
+  })
+
+  it('REM-06 a scheduled task with a time is still a block of its duration', () => {
+    show(ofTask(task({ kind: 'task' })))
+
+    const block = screen.getByRole('button', { name: 'Write the report, Scheduled · 10:00 – 11:30' })
+    expect(block).not.toHaveAttribute('data-reminder')
+    expect([block.style.top, block.style.height]).toEqual(['1200px', '180px'])
+    expect(block.querySelector('[data-slot="clock-icon"]')).not.toBeNull()
+  })
+})

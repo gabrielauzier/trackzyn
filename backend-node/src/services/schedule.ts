@@ -1,8 +1,9 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, asc, eq, isNull, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type TaskColumn, lists, taskSeries, tasks, workspaces } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { daySql, dayTimezone } from './day.ts'
+import { normalizeBlocks } from './groups.ts'
 import { type TaskWithSubtasks, findTask, getTask, lockList, moveTask } from './tasks.ts'
 
 /** A day (`YYYY-MM-DD`) and an optional start time (`HH:MM`), in the workspace's timezone; null clears it. */
@@ -112,7 +113,7 @@ export async function setSchedule(
  * is today or earlier in the workspace's timezone and whose schedule has not brought it to Today yet (US-4, D1).
  * They enter in order of day, time and position, keep their day and time, and get `schedule_applied_at = now`
  * (D21), so a task taken out of Today by hand does not come back. Tasks of archived lists stay where they are
- * until the list is restored (D25). Runs at the start of each read of the task
+ * until the list is restored (D25). A task of a group joins its group's block in Today (AD-013). Runs at the start of each read of the task
  * columns (AD-009); answers how many tasks it moved. Each list is locked and read again under the lock, so two
  * reads at once move a task only once, and its columns are renumbered in one statement each.
  */
@@ -151,6 +152,16 @@ export async function applyDueSchedules(db: Database, workspaceId: string, now: 
       )
       if (entered.length === 0) continue
       moved += entered.length
+      // A task of a group joins the block of its group in Today instead of splitting it (AD-013).
+      const today = await tx
+        .select({ id: tasks.id, groupId: tasks.groupId })
+        .from(tasks)
+        .where(and(eq(tasks.listId, listId), eq(tasks.column, 'today')))
+        .orderBy(asc(tasks.position), asc(tasks.createdAt))
+      const groupOf = new Map(today.map((task) => [task.id, task.groupId]))
+      for (const [position, id] of normalizeBlocks(today.map((task) => task.id), (id) => groupOf.get(id) ?? null).entries()) {
+        await tx.update(tasks).set({ position }).where(and(eq(tasks.id, id), sql`${tasks.position} <> ${position}`))
+      }
       for (const left of ['backlog', 'this_week'] as const) {
         await tx.execute(sql`UPDATE tasks AS target SET position = ordered.n - 1
           FROM (

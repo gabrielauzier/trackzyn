@@ -116,11 +116,13 @@ export async function readFocusState(
 ): Promise<FocusState> {
   const board = await buildBoard(tx, listId, workspace, userId, now)
   const today = board.columns.today
+  // A reminder has no focus (REM-05): the focus screen shows and walks only the tasks of Today.
+  const todayCards = today.tasks.filter((card) => card.kind === 'task')
   const session = await openSession(tx, userId)
 
   let task: FocusTaskView | null = null
-  const focusedId = session?.kind === 'task' ? session.taskId : (today.tasks[0]?.id ?? null)
-  const counts = await subtaskCounts(tx, [...new Set([...(focusedId ? [focusedId] : []), ...today.tasks.map((card) => card.id)])])
+  const focusedId = session?.kind === 'task' ? session.taskId : (todayCards[0]?.id ?? null)
+  const counts = await subtaskCounts(tx, [...new Set([...(focusedId ? [focusedId] : []), ...todayCards.map((card) => card.id)])])
   const countOf = (id: string) => counts.get(id) ?? { done: 0, total: 0 }
   if (focusedId !== null) {
     const [row] = await tx.select().from(tasks).where(eq(tasks.id, focusedId))
@@ -138,7 +140,7 @@ export async function readFocusState(
   }
 
   const todayTasks: FocusTodayTaskView[] = []
-  for (const card of today.tasks) {
+  for (const card of todayCards) {
     todayTasks.push({
       id: card.id,
       title: card.title,
@@ -155,7 +157,7 @@ export async function readFocusState(
     server_now: now.toISOString(),
     session: session ? toSessionView(session) : null,
     task,
-    today: { pending: today.tasks.length, done: today.done, estimate_minutes: today.estimate_minutes, tasks: todayTasks },
+    today: { pending: todayCards.length, done: today.done, estimate_minutes: today.estimate_minutes, tasks: todayTasks },
     stale:
       session && silentMs > STALE_AFTER_MS
         ? { session_id: session.id, last_seen_at: session.lastSeenAt.toISOString(), seconds: Math.floor(silentMs / 1000) }

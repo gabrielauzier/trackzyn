@@ -3,7 +3,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 import type { Database } from '../db/client.ts'
-import { SERIES_FREQS, type Subtask, TASK_COLUMNS } from '../db/schema.ts'
+import { PRIORITIES, type Priority, SERIES_FREQS, type Subtask, TASK_COLUMNS, TASK_KINDS, type TaskKind } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
 import { authGuards } from '../plugins/auth.ts'
 import { requireWrite, workspaceContext } from '../plugins/workspace.ts'
@@ -55,6 +55,14 @@ export const taskReadSchema = z.object({
   scheduled_on: z.string().nullable(),
   scheduled_time: z.string().nullable(),
   series: seriesReadSchema.nullable(),
+  kind: z.enum(TASK_KINDS),
+  priority: z.enum(PRIORITIES),
+  due_on: z.string().nullable(),
+  waiting: z.boolean(),
+  waiting_for: z.string().nullable(),
+  flagged: z.boolean(),
+  flag_reason: z.string().nullable(),
+  group_id: z.string().nullable(),
 })
 
 export const taskParams = z.object({ task_id: uuid })
@@ -76,6 +84,43 @@ export const createTaskBody = z.object({
 
 export const updateTaskBody = z.object({ title: title.optional(), estimate_minutes: estimateMinutes.optional(), notes: notes.optional() })
 
+/** The fields of caixa-de-entrada, on create and on update (PRI-01, DUE-01, WAIT-01, FLAG-01, REM-02); left out keeps the value. */
+export const taskFields = {
+  kind: z.enum(TASK_KINDS).optional(),
+  priority: z.enum(PRIORITIES).optional(),
+  due_on: z.iso.date('Input should be a valid date (YYYY-MM-DD)').nullable().optional(),
+  waiting: z.boolean().optional(),
+  waiting_for: withoutNul(z.string().max(100)).nullable().optional(),
+  flagged: z.boolean().optional(),
+  flag_reason: withoutNul(z.string().max(200)).nullable().optional(),
+  group_id: uuid.nullable().optional(),
+}
+
+export interface TaskFieldsBody {
+  kind?: TaskKind
+  priority?: Priority
+  due_on?: string | null
+  waiting?: boolean
+  waiting_for?: string | null
+  flagged?: boolean
+  flag_reason?: string | null
+  group_id?: string | null
+}
+
+/** `taskFields` as the services take them. */
+export function toTaskFields(body: TaskFieldsBody) {
+  return {
+    kind: body.kind,
+    priority: body.priority,
+    dueOn: body.due_on,
+    waiting: body.waiting,
+    waitingFor: body.waiting_for,
+    flagged: body.flagged,
+    flagReason: body.flag_reason,
+    groupId: body.group_id?.toLowerCase() ?? body.group_id,
+  }
+}
+
 /** The day (`YYYY-MM-DD`) and start time (`HH:MM`, any minute, D34) of a task, in the workspace's timezone (US-7). */
 export const scheduleFields = {
   scheduled_on: z.iso.date('Input should be a valid date (YYYY-MM-DD)').nullable().optional(),
@@ -88,7 +133,7 @@ export const scheduleFields = {
 const timeNeedsDay = { path: ['scheduled_time'], message: 'scheduled_time needs scheduled_on' }
 /** A new task has no day of its own: its time needs one in the same body. */
 const createTaskRouteBody = createTaskBody
-  .extend(scheduleFields)
+  .extend({ ...scheduleFields, ...taskFields })
   .refine((body) => body.scheduled_time == null || body.scheduled_on != null, timeNeedsDay)
 /** A recurrence rule as the API takes it (US-7, US-9): the checks of the task_series table. */
 export const recurrenceBody = z
@@ -124,9 +169,15 @@ const seriesScope = z.enum(['occurrence', 'series'])
  * with null, stops it (US-9).
  */
 const updateTaskRouteBody = updateTaskBody
-  .extend({ ...scheduleFields, recurrence: recurrenceBody.nullable().optional(), scope: seriesScope.optional() })
+  .extend({ ...scheduleFields, ...taskFields, recurrence: recurrenceBody.nullable().optional(), scope: seriesScope.optional() })
   .refine((body) => body.scheduled_time == null || body.scheduled_on !== null, timeNeedsDay)
 export const moveTaskBody = z.object({ column, before_task_id: uuid.nullable() })
+/** Left out keeps the group, null takes the task out of it, an id puts it in that group (GRP-06 to GRP-08). */
+const moveTaskRouteBody = moveTaskBody.extend({ group_id: uuid.nullable().optional() })
+/** The moved task and the group a completion left without a next action (GRP-10). */
+const moveTaskReadSchema = taskReadSchema.extend({
+  group_without_next_action: z.object({ id: z.string(), name: z.string() }).nullable(),
+})
 export const addSubtaskBody = z.object({ title })
 
 /** In the handler and not in the schema: with the session JWT the header is not even read (IDEM-08). */
@@ -159,11 +210,19 @@ export function toTaskRead(task: TaskWithSubtasks) {
     scheduled_on: task.scheduledOn,
     scheduled_time: task.scheduledTime?.slice(0, 5) ?? null,
     series: task.series === null ? null : seriesView(task.series, task.scheduledOn),
+    kind: task.kind,
+    priority: task.priority,
+    due_on: task.dueOn,
+    waiting: task.waiting,
+    waiting_for: task.waitingFor,
+    flagged: task.flagged,
+    flag_reason: task.flagReason,
+    group_id: task.groupId,
   }
 }
 
 /** What PATCH /api/tasks/:id and the update_task tool change: the fields, the schedule and the rule (US-7). */
-export interface TaskUpdate {
+export interface TaskUpdate extends TaskFieldsBody {
   title?: string
   estimate_minutes?: number | null
   notes?: string
@@ -176,7 +235,7 @@ export interface TaskUpdate {
 /** Applies a `TaskUpdate` in one transaction, so a refused schedule or rule changes nothing. */
 export async function updateTaskAndSchedule(db: Database, taskId: string, workspaceId: string, userId: string, body: TaskUpdate): Promise<TaskWithSubtasks> {
   const { title, estimate_minutes, notes, scheduled_on, scheduled_time, recurrence, scope } = body
-  const changes = { title, estimateMinutes: estimate_minutes, notes }
+  const changes = { title, estimateMinutes: estimate_minutes, notes, ...toTaskFields(body) }
   const scheduling = scheduled_on !== undefined || scheduled_time !== undefined
   if (!scheduling && recurrence === undefined) return updateTask(db, taskId, workspaceId, changes)
   return db.transaction(async (transaction) => {
@@ -218,13 +277,13 @@ export function taskRoutes(ctx: AppContext) {
       async (request, reply) => {
         const workspaceId = request.workspace.workspace.id
         const userId = request.workspace.user.id
-        const input = toTaskIntake(request.body)
+        const input = { ...toTaskIntake(request.body), fields: toTaskFields(request.body) }
         const { scheduledOn: on, scheduledTime: time } = input
         const principal = request.tokenPrincipal
         const create = async (db: typeof ctx.db) =>
           principal
             ? createTaskFromToken(db, workspaceId, principal, input, idempotencyKey(request))
-            : { task: await createTask(db, workspaceId, { ...input, userId }), replayed: false }
+            : { task: await createTask(db, workspaceId, { ...input, ...input.fields, userId }), replayed: false }
         const schedule: Schedule | null = on == null ? null : { on, time: time ?? null }
         // Created and scheduled in one transaction, so a refused schedule creates nothing. The rules of saving
         // take the new task from its column to This week or Today by its day (D3, D12, D21).
@@ -275,20 +334,21 @@ export function taskRoutes(ctx: AppContext) {
       {
         schema: {
           params: taskParams,
-          body: moveTaskBody,
-          response: { 200: taskReadSchema },
+          body: moveTaskRouteBody,
+          response: { 200: moveTaskReadSchema },
         },
         config: { tokenScope: 'tasks:write' },
         preValidation: writing,
       },
-      async (request) =>
-        toTaskRead(
-          await moveTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
-            column: request.body.column,
-            beforeTaskId: request.body.before_task_id?.toLowerCase() ?? null,
-            byUserId: request.workspace.user.id,
-          }),
-        ),
+      async (request) => {
+        const moved = await moveTask(ctx.db, request.params.task_id.toLowerCase(), request.workspace.workspace.id, {
+          column: request.body.column,
+          beforeTaskId: request.body.before_task_id?.toLowerCase() ?? null,
+          byUserId: request.workspace.user.id,
+          group: request.body.group_id?.toLowerCase() ?? request.body.group_id,
+        })
+        return { ...toTaskRead(moved), group_without_next_action: moved.groupWithoutNextAction }
+      },
     )
 
     typed.post(

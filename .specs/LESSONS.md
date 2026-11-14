@@ -20,6 +20,12 @@ Corroborated across multiple features. Safe to apply as guidance.
 - evidence: N2 frontend/src/pages/agenda.tsx:144 (ADJ-08) (frontend-pages) (+1 more)
 - last seen: 2026-11-10T18:48:14Z
 
+### L-056 - When an AC lists alternative triggers (A or B), test each trigger, not just one.
+- signal: `ac_gap` · recurrence: 2 feature(s) · scope: `frontend-pages` · harmful: 0
+- features: planejamento-diario, caixa-de-entrada
+- evidence: PLAN-13 frontend/src/pages/plan.tsx:180 (frontend-pages) (+1 more)
+- last seen: 2026-11-13T22:43:31Z
+
 ## Candidates (under observation - do NOT load as guidance yet)
 
 Seen once or not yet corroborated. Tracked, not trusted.
@@ -342,12 +348,6 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: PLAN-36 validation.md deviation (c) (frontend-routing) (+1 more)
 - last seen: 2026-11-07T23:21:34Z
 
-### L-056 - When an AC lists alternative triggers (A or B), test each trigger, not just one.
-- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend-pages` · harmful: 0
-- features: planejamento-diario
-- evidence: PLAN-13 frontend/src/pages/plan.tsx:180 (frontend-pages)
-- last seen: 2026-11-07T23:01:45Z
-
 ### L-057 - Specify the display format of compound and sub-hour durations when an AC quotes duration text.
 - signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
 - features: planejamento-diario
@@ -419,6 +419,72 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - features: contagem-de-horas
 - evidence: HOURS-02 backend-node/src/routes/workspaces.ts:94 (routes)
 - last seen: 2026-11-11T00:04:16Z
+
+### L-069 - Test a concurrency guard with the two writes interleaved past any pre-check, since an in-process database serializes requests and the pre-check answers first.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `backend/concurrency` · harmful: 0
+- features: caixa-de-entrada
+- evidence: M4 backend-node/src/services/inbox.ts:149 (EDGE-01) (backend/concurrency)
+- last seen: 2026-11-13T22:43:30Z
+
+### L-070 - Pin an age threshold with records just inside and just outside it, not a whole day on each side.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `boundaries` · harmful: 0
+- features: caixa-de-entrada
+- evidence: M2b backend-node/src/services/inbox.ts:22 (INBOX-06) (boundaries)
+- last seen: 2026-11-13T22:43:30Z
+
+### L-071 - Make an optimistic cache update apply the same inclusion rules as the server sums it replaces.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `frontend/optimistic` · harmful: 0
+- features: caixa-de-entrada
+- evidence: WAIT-04 frontend/src/pages/list-board.tsx:145 (frontend/optimistic)
+- last seen: 2026-11-13T22:43:30Z
+
+### L-072 - Test the owner check through every route that takes item ids, including batch routes.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `backend/scoping` · harmful: 0
+- features: caixa-de-entrada
+- evidence: INBOX-03 backend-node/src/services/inbox.ts:297 (backend/scoping)
+- last seen: 2026-11-13T22:43:30Z
+
+### L-073 - State where a date already past falls when a rule maps dates to columns.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: caixa-de-entrada
+- evidence: PROC-03 frontend/src/lib/inbox/decision.ts:13 (spec)
+- last seen: 2026-11-13T22:43:31Z
+
+### L-074 - State for each new field which entity kinds carry it, so editors do not offer a field the card never shows.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `spec` · harmful: 0
+- features: caixa-de-entrada
+- evidence: DUE-01 FLAG-02 frontend/src/components/board/reminder-card.tsx:51 (spec)
+- last seen: 2026-11-13T22:43:31Z
+
+### L-075 - When a rule is copied to the frontend for lack of a shared package, test both copies against the same boundary table.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `backend/shared-rules` · harmful: 0
+- features: caixa-de-entrada
+- evidence: T11 SPEC_DEVIATION backend-node/src/services/decision.ts:72 (backend/shared-rules)
+- last seen: 2026-11-13T22:43:31Z
+
+### L-076 - When a kind refuses a field, enforce the refusal on every write path that can set it, move and drag routes included.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tasks` · harmful: 0
+- features: caixa-de-entrada
+- evidence: MODAL-06 backend-node/src/services/tasks.ts:291 (tasks)
+- last seen: 2026-11-14T02:13:34Z
+
+### L-077 - Name the design token when the spec asks for a neutral colour, so the test asserts the token the spec chose.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: caixa-de-entrada
+- evidence: DUE-02 frontend/src/components/board/task-card.test.tsx:554 (frontend)
+- last seen: 2026-11-14T02:13:34Z
+
+### L-078 - State hover outcomes as the classes or tokens that produce them, since jsdom cannot render hover.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: caixa-de-entrada
+- evidence: QUICK-09 frontend/src/components/inbox/inbox-row.test.tsx:236 (frontend)
+- last seen: 2026-11-14T02:13:34Z
+
+### L-079 - When a kind refuses a field kept in a child table, guard the child's own create route and the change of kind too, not only the parent's field validation.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tasks` · harmful: 0
+- features: caixa-de-entrada
+- evidence: MODAL-06 backend-node/src/services/subtasks.ts:27 (tasks)
+- last seen: 2026-11-14T02:29:18Z
 
 ## Quarantined (failed when applied - ignore)
 

@@ -120,6 +120,13 @@
       "when": 1794352603606,
       "tag": "0016_workspace_hours_count_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794598499330,
+      "tag": "0017_caixa_de_entrada",
+      "breakpoints": true
     }
   ]
 }
