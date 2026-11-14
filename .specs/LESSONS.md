@@ -480,6 +480,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: QUICK-09 frontend/src/components/inbox/inbox-row.test.tsx:236 (frontend)
 - last seen: 2026-11-14T02:13:34Z
 
+### L-079 - When a kind refuses a field kept in a child table, guard the child's own create route and the change of kind too, not only the parent's field validation.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tasks` · harmful: 0
+- features: caixa-de-entrada
+- evidence: MODAL-06 backend-node/src/services/subtasks.ts:27 (tasks)
+- last seen: 2026-11-14T02:29:18Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

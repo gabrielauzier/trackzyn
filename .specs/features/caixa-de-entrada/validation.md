@@ -2,13 +2,22 @@
 
 ## Validation: caixa-de-entrada - FAIL
 
-**Iteration**: 2 (of at most 3)
+**Iteration**: 3 (of at most 3, so this goes to the user)
 **Date**: 2026-11-13
-**Spec**: `.specs/features/caixa-de-entrada/spec.md` (103 requirement IDs; PROC-03, MODAL-06, CAP-04, CAP-06 and INBOX-04 changed by the user on 2026-11-13, after iteration 1)
-**Diff ranges**: feature `7ad8c99..41b0188` (43 commits, 153 files, +14 781 / −526); fix batch of this iteration `d74f9c5..41b0188` (7 commits, T34–T40, 25 files, +674 / −124). The code did not change between the iteration-1 head `2858734` and `d74f9c5` (docs only), so iteration-1 citations in files outside the fix diff still hold.
+**Spec**: `.specs/features/caixa-de-entrada/spec.md` (103 requirement IDs; includes the user's decisions of 2026-11-13 on PROC-03, MODAL-06, CAP-04/CAP-06 and INBOX-04)
+**Diff ranges**: feature `7ad8c99..356c342` (45 commits, 153 files, +14 939 / −526); fix of this iteration `HEAD~1..HEAD` = `356c342` (T41, 6 files, +85 / −4)
 **Verifier**: independent sub-agent (author ≠ verifier). It ran read-only on the real tree. The mutations and the probe ran in a scratch `git worktree`.
 
-**Why FAIL:** one requirement is still contradicted by the code. In MODAL-06, the API must refuse a group on a reminder. `POST /api/tasks/:id/move` with `group_id` puts a reminder into a group and answers **200**. A scratch probe confirmed it. The reminder is then stuck: any later `PATCH`, even a plain rename, answers 422 `reminder_field`. The other 102 IDs match the spec outcome, and all 13 mutations were killed. Every gate is green.
+**Why FAIL:** T41 closes the move gap of iteration 2. Every write path now refuses a group, due day, flag or Aguardando on a reminder: create, PATCH, move, group block, inbox send and commit, the three MCP tools, duplicate and the board drop. All 10 new mutants were killed.
+
+One part of MODAL-06 is still not met: **Subtarefas**. The spec says "a API SHALL recusar com 422 esses campos num lembrete". The fields it lists are Estimativa, Grupo, Subtarefas, Prazo, Flag and Aguardando. The assumptions table repeats it: "Campos do lembrete … sem … grupo e subtarefas".
+
+No code refuses a subtask on a reminder. A scratch probe confirmed it:
+- create with `subtasks` → 201;
+- `POST /api/tasks/:id/subtasks` → 201;
+- `PATCH { kind: 'reminder' }` on a task that has a subtask → 200.
+
+Iteration 2 missed this: T36 listed only four of the six fields, and the estimate is already covered by REM-02. It is not a regression of T41.
 
 ---
 
@@ -16,37 +25,57 @@
 
 | Package | lint | typecheck | test | build |
 | --- | --- | --- | --- | --- |
-| backend-node | exit 0 | exit 0 | exit 0: 1244 passed, 9 skipped (96 files passed, 1 skipped) | n/a |
-| frontend | exit 0 | exit 0 | exit 0: 2214 passed, 0 skipped (192 files) | exit 0 (`vite build`) |
+| backend-node | exit 0 | exit 0 | exit 0: 1246 passed, 9 skipped (96 files passed, 1 skipped) | n/a |
+| frontend | exit 0 | exit 0 | exit 0 on rerun: 2215 passed (192 files); see note | exit 0 (`vite build`) |
 | desktop | exit 0 | exit 0 | exit 0: 281 passed, 4 skipped (38 files passed, 1 skipped) | n/a |
 
-- Test integrity: compared with iteration 1, backend went from 1225 to 1244 (+19) and frontend from 2199 to 2214 (+15); desktop is unchanged. Two assertions were inverted on purpose because the spec changed (MODAL-06): `BE/test/mcp/task-fields-tools.test.ts:63-64` and `FE/components/board/task-dialog.test.tsx:510-522`. No test was deleted.
-- Skipped tests (9 backend, 4 desktop) are in suites outside the diff, the same as in iteration 1.
-- **Known flaky test**: `frontend/src/pages/focus-widget.test.tsx` › "a second click on Notes closes the open notes for good, and saves what was written".
-  - It passed in the full gate run.
-  - Run alone at HEAD, it failed 4 times out of 5.
-  - Run alone in a scratch worktree at the base `d7e18fe`, with the same `node_modules` and no dependency changes in `d7e18fe..HEAD`, it failed 3 times out of 5.
-  - The feature range touches neither `focus-widget.test.tsx` nor `focus-widget.tsx` (last change `adf8cea`, 2026-11-06).
-  - **Classification: flaky, pre-existing, not caused by the feature.** Branches named `fix/focus-widget-notes-flaky-test` and `fix/focus-widget-notes-second-click` already exist in other worktrees.
+- **Frontend test note:** the first run executed in parallel with the backend and desktop suites, and it exited 1.
+  - Three tests failed: `components/admin-route.test.tsx` "files and components redirect a non-admin home", `pages/agenda.test.tsx` "AGENDA-02 …" and `pages/showcase/showcase.test.tsx` "renders every section of the catalogue".
+  - The errors were element-not-found waits and a 5000 ms timeout. That pattern fits CPU load, not an assertion mismatch.
+  - The full suite, run alone right after, exited 0 with 2215/2215.
+  - Neither `admin-route` nor `showcase` is in the feature diff. `agenda.test.tsx` changed 8 lines in the feature, and it passed on the rerun.
+  - Classification: load-induced timing failures, not a feature defect.
+  - `focus-widget.test.tsx`, the known flaky test, passed in both runs.
+- Test integrity: backend went from 1244 to 1246 (+2: T41's two move tests), frontend from 2214 to 2215 (+1: T41's drop test), and desktop is unchanged. No test was deleted or weakened.
+- Skipped tests (9 backend, 4 desktop) are in suites outside the diff, as in iterations 1 and 2.
 
 ---
 
 ## Task Completion
 
-T1–T40 are all `[x]` in tasks.md. Phase 7 (T34–T40) deviations:
+T1–T41 are all `[x]` in tasks.md. T41's Done-when items are met:
+- move 422 with a contrast case: `BE/test/routes/tasks-group-move.test.ts:207-222`;
+- a reminder without a group still moves: `:224-230`;
+- `dropTarget` keeps a reminder out of groups: `FE/components/board/drop-target.test.ts:130-143`.
 
-| Deviation | Effect |
-| --- | --- |
-| T36: "Fora do escopo: arrastar um lembrete para dentro de um contêiner (`moveTask`) ainda o põe no grupo." | **Contradicts MODAL-06** ("a API SHALL recusar com 422 esses campos num lembrete"). Confirmed by a probe; see gap 1. |
-| T38: no card, the task card included, has `Iniciar foco` in its menu; the L-048 contrast is made on `Focar agora` | Consistent with REM-05: the reminder offers no focus. Evidenced by `FE/pages/list-board.test.tsx:828,832`. |
-| T39: on desktop with the global shortcut on and bound to any combination, Mod+Shift+Space never opens the overlay | Consistent with CAP-04 as written ("no desktop com o atalho global desligado"). |
+---
+
+## MODAL-06 write-path table
+
+Fields: G = group, D = due day, F = flag, W = Aguardando, S = subtasks (E = estimate is REM-02, guarded by `BE/src/services/tasks.ts:91`).
+
+| Path | Entry | Guard | G/D/F/W refused? | Evidence |
+| --- | --- | --- | --- | --- |
+| Create | `POST /api/tasks` → `createTask` (`BE/src/services/tasks.ts:162`) | `resolveFields` `BE/src/services/tasks.ts:93-99` | ✅ 422 `reminder_field` | test `BE/test/routes/tasks-fields.test.ts:209-211`; probe: create with each of `due_on`, `flagged`, `waiting`, `group_id` → `[422, reminder_field]` |
+| PATCH | `PATCH /api/tasks/:id` → `updateTaskAndSchedule` → `updateTask` (`BE/src/services/tasks.ts:236-244`) | `resolveFields` (also catches `kind: 'reminder'` on a task that has G/D/F/W, since the current values are checked) | ✅ | `BE/test/routes/tasks-fields.test.ts:192-203`; mutants A4–A6 and iteration-2 N3a/N3b killed |
+| Move | `POST /api/tasks/:id/move` (`BE/src/routes/tasks.ts:344-348`) → `moveTask` | **new** `BE/src/services/tasks.ts:300-302` `groupId !== null && current.kind === 'reminder'` → 422; the move cannot set D/F/W, and entering done only clears the flag | ✅ | `BE/test/routes/tasks-group-move.test.ts:214-221` (422, still `backlog` and `group_id: null`, task → 200), `:224-230`; mutants A1–A3 killed |
+| Group block | `POST /api/groups/:id/move` → `moveGroupBlock` (`BE/src/services/groups.ts:84`) | selects only `tasks.groupId = group.id` (`:98`) and calls `moveTask` with no `group` (`:103-104`), so the group is kept, and a reminder never has one; the `moveTask` guard applies anyway | ✅ by construction | probe: a reminder in the source column stayed `this_week`, `group_id: null` after the block move (200) |
+| Inbox send | `POST /api/inbox/:id/send` → `applyDecision` (`BE/src/services/inbox.ts:173-221`) | the reminder schema allows no group, flag or Aguardando keys (`BE/src/services/decision.ts:39-47`), and `due_on` must be null (`:46`); `createTask` → `resolveFields` is the backstop | ✅ | `BE/test/routes/inbox-send.test.ts:151-153` (`due_on` → 422); iteration-2 N3c killed |
+| Inbox commit | `POST /api/inbox/commit` → `commitDrafts` (`BE/src/services/inbox.ts:287`) → `applyDecision` | drafts are parsed by the same `decisionSchema` on save (`BE/src/routes/inbox.ts:126`), and the same `applyDecision` runs | ✅ | same as send |
+| MCP `create_task` | `createTaskFromToken` → `createTask` (`BE/src/services/task-intake.ts:79`) | `resolveFields` | ✅ | `BE/test/mcp/task-fields-tools.test.ts:63-64` |
+| MCP `update_task` | `updateTaskAndSchedule` (`BE/src/mcp/tools.ts:169`) | `resolveFields` | ✅ | `BE/test/mcp/task-fields-tools.test.ts:63-64` |
+| MCP `move_task` | `BE/src/mcp/tools.ts:176-183`: `moveTaskBody` has no `group_id`, and `moveTask` is called without `group` | keeps the current group (null for a reminder); the `moveTask` guard applies anyway | ✅ by construction | code reading |
+| `duplicateTask` | `POST /api/tasks/:id/duplicate` (`BE/src/services/tasks.ts:351-403`) | copies the source's G/D/W and clears F; a reminder source has none of them, because every other path refuses them | ✅ by invariant | probe: duplicating a reminder → `[201, 'reminder', group_id null, due_on null, flagged false, waiting false]` |
+| Move to another list | `moveTaskToList` (`BE/src/services/tasks.ts:411`) | sets `groupId: null` | ✅ | `BE/test/routes/tasks-flag-group.test.ts:76-78` (EDGE-04) |
+| Frontend drop | `dropTarget` (`FE/components/board/drop-target.ts:82,91,95`) | `joins()` turns a group into `undefined` for a reminder, on a container and on a group card; a column drop gives `outside`, which is `undefined` for a loose reminder | ✅ | `FE/components/board/drop-target.test.ts:130-143`; mutants B1–B4 killed |
+| **Subtasks (S)** | create `subtasks: [...]` (`BE/src/services/tasks.ts:174,229-230`); `POST /api/tasks/:id/subtasks` → `createSubtask` (`BE/src/services/subtasks.ts:27-43`, no `kind` check); MCP `add_subtask` (`BE/src/mcp/tools.ts:186-195`, same service); `PATCH { kind: 'reminder' }` keeps existing subtasks | **none** | ❌ | probe: create → `[201, 1 subtask]`; add subtask → 201; kind change → `[200, 'reminder', 1]`. No test. |
 
 ---
 
 ## Spec-Anchored Acceptance Criteria
 
 Legend: ✅ the asserted value matches the spec outcome · ❌ the code contradicts the spec · ⚠️ spec-precision note (the spec gives no exact value).
-Paths: `BE/` = `backend-node/`, `FE/` = `frontend/src/`, `DT/` = `desktop/src/`. Line numbers are at `41b0188`.
+Paths: `BE/` = `backend-node/`, `FE/` = `frontend/src/`, `DT/` = `desktop/src/`. Line numbers are at `356c342`. The fix commit changed only `BE/src/services/tasks.ts` (3 lines added after line 299), `FE/components/board/drop-target.ts`, and appended or inserted new tests, so every iteration-2 citation outside those spots still holds.
 
 ### P1 Capturar
 
@@ -138,7 +167,7 @@ Paths: `BE/` = `backend-node/`, `FE/` = `frontend/src/`, `DT/` = `desktop/src/`.
 | GRP-05 | No container without tasks | `FE/components/board/board-column.test.tsx:384` | ✅ |
 | GRP-06 | Reorder in the group, across columns | `BE/test/routes/tasks-group-move.test.ts:57-61` `['a','g3','g1','b']` | ✅ |
 | GRP-07 | Out of the container → leaves the group | `BE/test/routes/tasks-group-move.test.ts:88-90`; `FE/pages/list-board.test.tsx:1251` | ✅ |
-| GRP-08 | Into the container → joins the group | `BE/test/routes/tasks-group-move.test.ts:105-108`; `FE/pages/list-board.test.tsx:1264` | ✅ (but see MODAL-06: a reminder joins too) |
+| GRP-08 | Into the container → joins the group | `BE/test/routes/tasks-group-move.test.ts:105-108`; `FE/pages/list-board.test.tsx:1264`; contrast for a task in the reminder test `BE/test/routes/tasks-group-move.test.ts:219-221` and `FE/components/board/drop-target.test.ts:142` | ✅ (a reminder no longer joins: see MODAL-06) |
 | GRP-09 | Container drag moves the column's group tasks in order | `BE/test/routes/groups.test.ts:108-116`; `FE/pages/list-board.test.tsx:1278-1279` | ✅ |
 | GRP-10 | Toast `<grupo> está sem próxima ação` + `Adicionar tarefa` | `FE/pages/list-board.test.tsx:1303,1305,1329` | ✅ |
 | GRP-11 | Group tasks behave like normal tasks in focus, Agenda, scheduling, planning and reports | `BE/test/routes/group-tasks.test.ts:51` focus session `{ kind: 'task', task_id }`, `:56-57` spent 600–660 s; `:66` agenda `timed` contains the task; `:76` plan candidate; `:86-88` report `task_seconds` and `by_list`; `BE/test/services/schedule.test.ts:335` scheduling | ✅ (iteration-1 gap closed) ⚠️ the spec still names no per-surface value |
@@ -183,7 +212,7 @@ Paths: `BE/` = `backend-node/`, `FE/` = `frontend/src/`, `DT/` = `desktop/src/`.
 | MODAL-03 | Aguardando switch → `De quem` | `FE/components/board/task-dialog.test.tsx:413-416` | ✅ |
 | MODAL-04 | Groups + `Sem grupo`; acts like a drag, task at the end of the group | `FE/components/board/task-dialog.test.tsx:425,450,481`; `BE/test/routes/tasks-group-move.test.ts:189-190,201-202` | ✅ |
 | MODAL-05 | Save writes the new fields | `FE/components/board/task-dialog.test.tsx:446-455` | ✅ |
-| MODAL-06 | A reminder hides Estimativa, Grupo, Subtarefas, Prazo, Flag and Aguardando; **the API refuses those fields on a reminder with 422** | UI: `FE/components/board/task-dialog.test.tsx:513-522` all six `not.toBeInTheDocument()`, `:528-533` the task shows them. API: `BE/test/routes/tasks-fields.test.ts:192-203` PATCH 422 `reminder_field` and nothing stored, `:209-211` create 422, `:217-222` a task accepts them; `BE/test/routes/inbox-send.test.ts:151-153` decision `due_on` 422; `BE/test/mcp/task-fields-tools.test.ts:63-64` | ❌ **`POST /api/tasks/:id/move` with `group_id` puts a reminder in a group (200).** `moveTask` (`BE/src/services/tasks.ts:278-334`, group resolved at `:291-299`) never checks `kind`, and the frontend drop (`FE/components/board/drop-target.ts`, `FE/pages/list-board.tsx`) has no reminder rule. Probe: the move answered `200 {kind: 'reminder', group_id: <group>}`, then `PATCH { title: 'Outro' }` answered `422 reminder_field`, so the reminder can no longer be edited until it is dragged out. No test covers this path. |
+| MODAL-06 | A reminder hides Estimativa, Grupo, Subtarefas, Prazo, Flag and Aguardando; **the API refuses those fields on a reminder with 422** | UI: `FE/components/board/task-dialog.test.tsx:513-522` all six `not.toBeInTheDocument()`, `:528-533` the task shows them. API, group/due/flag/Aguardando: `BE/test/routes/tasks-fields.test.ts:192-203` PATCH 422 `reminder_field`, nothing stored; `:209-211` create 422; `:217-222` a task accepts them; `BE/test/routes/inbox-send.test.ts:151-153`; `BE/test/mcp/task-fields-tools.test.ts:63-64`; **move (T41)** `BE/test/routes/tasks-group-move.test.ts:214-221` `statusCode).toBe(422)`, `code: 'reminder_field'`, `read('r')).toMatchObject({ column: 'backlog', group_id: null })`, a task → 200 in the group; `:224-230` a reminder still moves with no `group_id` or `null`; drop `FE/components/board/drop-target.test.ts:130-143` `group: undefined` on `group:`, `container:` and a group card. API, **Subtarefas: no guard, no test** | ❌ **Subtasks are not refused on a reminder.** Probe in scratch: `POST /api/tasks {kind:'reminder', subtasks:['s1']}` → **201 with 1 subtask**; `POST /api/tasks/:id/subtasks` on a reminder → **201**; `PATCH {kind:'reminder'}` on a task with a subtask → **200**, kind `reminder`, subtask kept. The group/due/flag/Aguardando part is now closed on every path (see the write-path table). |
 
 ### P2 API e MCP, and Edge cases
 
@@ -201,110 +230,101 @@ Paths: `BE/` = `backend-node/`, `FE/` = `frontend/src/`, `DT/` = `desktop/src/`.
 | EDGE-07 | Inbox and count per workspace | `BE/test/routes/inbox.test.ts:237-240` | ✅ |
 | EDGE-08 | Leaving the workspace deletes the items | `BE/test/routes/inbox-capture-tokens.test.ts:107-113` | ✅ |
 
-**Total: 102/103 IDs match the spec outcome.** One is ❌ (MODAL-06, the move path).
-
+**Total: 102/103 IDs match the spec outcome.** One is ❌: MODAL-06, now only for Subtarefas (the move path is fixed).
 ---
 
 ## Spec-precision gaps
 
-1. **DUE-02 / DUE-05**: "neutral colour" has no token. The tests pin `bg-muted`. Carried over from iteration 1.
+1. **DUE-02 / DUE-05**: "neutral colour" has no token. The tests pin `bg-muted`. Carried over.
 2. **QUICK-09**: hover can only be proved through CSS classes in jsdom. Carried over.
-3. **GRP-11**: the spec still states no observable value per surface. The new tests pick reasonable ones: a focus session `kind: 'task'`, the Agenda `timed` entry, a plan candidate, report `task_seconds`.
-4. **CAP-04 with the shortcut rebound** (new, minor): on desktop with the global shortcut on but bound to another combination, Mod+Shift+Space opens nothing inside the app (`FE/hooks/use-capture-hotkey.ts:17-22`). This matches the literal CAP-04, but the spec does not say whether that was intended.
-
-Iteration-1 precision gaps now resolved by the spec change: PROC-03 (past day → Hoje), ALL-09 vs PROC-07 (discard deletes the draft, INBOX-04), INBOX-03 on commit (now 404), and reminder Prazo/Flag (MODAL-06).
+3. **GRP-11**: the spec states no observable value per surface. The tests pick a focus session `kind: 'task'`, the Agenda `timed` entry, a plan candidate and report `task_seconds`. Carried over.
+4. **CAP-04 with the shortcut rebound**: on desktop with the global shortcut on but bound to another combination, Mod+Shift+Space opens nothing in the app (`FE/hooks/use-capture-hotkey.ts:17-22`). This matches the literal spec; whether it was intended is not stated. Carried over.
 
 ---
 
 ## Discrimination Sensor
 
-The scratch was `git worktree add --detach <scratchpad>/mut HEAD`, with `node_modules` symlinked. Each mutation was applied by exact-string replacement (one match required), the listed vitest files were run, and the file was restored with `git checkout` inside the scratch. The scratch was then removed with `git worktree remove --force` and `git worktree prune`. The real tree's `git status --porcelain` was empty before and after: the baseline matches.
+The scratch was `git worktree add --detach <scratchpad>/mut HEAD`, with `node_modules` symlinked. Each mutation was:
+- applied by exact-string replacement, with exactly one match required;
+- run against the listed vitest files;
+- reverted with `git checkout` inside the scratch.
 
-| # | File (mutated) | Mutation | Tests run | Outcome |
+The scratch was then removed with `git worktree remove --force` and `git worktree prune`. The real tree's `git status --porcelain` was empty before and after: the baseline matches.
+
+| # | File:line (mutated) | Mutation | Tests run | Outcome |
 | --- | --- | --- | --- | --- |
-| M4 (re-run) | `BE/src/services/inbox.ts:149` | `takeItem` without `if (!taken) throw conflict(...)` | inbox-send, inbox-commit | ✅ Killed (EDGE-01 interleaved test) |
-| M2b (re-run) | `BE/src/services/inbox.ts:22` | `TRASH_DAYS` 30 → 29.5 | inbox | ✅ Killed (fixed-clock 30-day test) |
-| M2c | `BE/src/services/inbox.ts:22` | `TRASH_DAYS` 30 → 30.5 | inbox | ✅ Killed |
-| N1 | `BE/src/services/inbox.ts:301` | commit ownership: `if (foreign) throw notFound()` removed | inbox-commit, inbox-send | ✅ Killed (INBOX-03 commit test) |
-| N2 | `BE/src/services/inbox.ts:110` | `discardItem` keeps the draft (`draft: null` removed) | inbox, inbox-commit, inbox-send | ✅ Killed (2 tests) |
-| N3a | `BE/src/services/tasks.ts:97` | `reminder_field` guard → `if (false)` | tasks-fields, task-fields-tools | ✅ Killed (3 tests) |
-| N3b | `BE/src/services/tasks.ts:97` | `groupId !== null` dropped from the guard | tasks-fields, task-fields-tools | ✅ Killed (2 tests) |
-| N3c | `BE/src/services/decision.ts:46` | reminder decision accepts `due_on` | inbox-send, decision | ✅ Killed |
-| N4 | `FE/pages/list-board.tsx:146` | optimistic `estimateOf` counts waiting tasks | list-board | ✅ Killed (WAIT-04) |
-| N5 | `FE/components/board/board-column.tsx:112` | `Focar agora` disabled on `empty` instead of `nothingToFocus` | board-column, list-board | ✅ Killed (2 tests) |
-| N6a | `FE/hooks/use-capture-hotkey.ts:21` | desktop opens the overlay whatever the setting | capture-overlay, command-palette | ✅ Killed (CAP-06) |
-| N6b | `FE/hooks/use-capture-hotkey.ts:17` | no desktop check: the overlay always opens | capture-overlay, command-palette | ✅ Killed |
-| N7 | `BE/src/services/decision.ts:77` | past day no longer → Hoje (`<=` → `===`) | decision, inbox-send | ✅ Killed |
+| A1 | `BE/src/services/tasks.ts:300` | the move guard removed (`if (false)`) | tasks-group-move, tasks-fields, task-fields-tools | ✅ Killed (1 test) |
+| A2 | `BE/src/services/tasks.ts:300` | `kind === 'reminder'` → `kind !== 'reminder'` | tasks-group-move | ✅ Killed (7 tests) |
+| A3 | `BE/src/services/tasks.ts:300` | guard on `target.group === null` instead of the resolved `groupId !== null` | tasks-group-move | ✅ Killed (2 tests) |
+| A4 | `BE/src/services/tasks.ts:97` | `flagged` dropped from the reminder guard | tasks-fields, task-fields-tools | ✅ Killed (2 tests) |
+| A5 | `BE/src/services/tasks.ts:97` | `waiting` dropped from the reminder guard | tasks-fields, task-fields-tools | ✅ Killed (2 tests) |
+| A6 | `BE/src/services/tasks.ts:97` | `dueOn !== null` dropped from the reminder guard | tasks-fields, task-fields-tools | ✅ Killed (3 tests) |
+| B1 | `FE/components/board/drop-target.ts:82` | `joins` always returns the group | drop-target, list-board | ✅ Killed (1 test) |
+| B2 | `FE/components/board/drop-target.ts:82` | `kind === 'reminder'` → `kind !== 'reminder'` | drop-target, list-board | ✅ Killed (11 tests) |
+| B3 | `FE/components/board/drop-target.ts:91` | container drop without `joins` | drop-target | ✅ Killed (1 test) |
+| B4 | `FE/components/board/drop-target.ts:95` | card drop without `joins` | drop-target | ✅ Killed (1 test) |
 
-**Sensor depth**: P0-full manual, with 13 mutations on the fix commits and the two iteration-1 survivors. **Killed: 13/13, survived: 0.**
+**Sensor depth**: P0-full manual on MODAL-06, with 10 mutations covering every branch of the new guards and the reminder clause of `resolveFields`. **Killed: 10/10, survived: 0.** Iteration 2's 13 mutants were all killed, and the code they target did not change.
 
-**Probe (not a mutation):** a throwaway test in the scratch moved a reminder into a group with `POST /api/tasks/:id/move { group_id }`. It answered `200` with `group_id` set, and a later `PATCH { title }` answered `422 reminder_field`. The probe file was deleted before the scratch was removed. This is the evidence for the MODAL-06 ❌.
+**Unguarded path, no mutant possible:** the subtask path has no guard to mutate. A probe stands in for it.
 
----
+**Probe (not a mutation):** a throwaway test in the scratch exercised a reminder through the following, and it was deleted before the scratch was removed:
+- create with each field;
+- `POST /subtasks`;
+- `PATCH kind`;
+- `duplicate`;
+- `POST /api/groups/:id/move`.
 
-## First-iteration gaps: status
-
-| # | Iteration-1 gap | Status | Evidence |
-| --- | --- | --- | --- |
-| 1 | WAIT-04 optimistic sums count waiting tasks | ✅ Closed | `FE/pages/list-board.tsx:146`; test `FE/pages/list-board.test.tsx:852-855`; N4 killed |
-| 2 | EDGE-01 survivor M4 | ✅ Closed | `BE/test/routes/inbox-send.test.ts:303-316`; M4 killed |
-| 3 | INBOX-03 commit answers 409 | ✅ Closed | `BE/src/services/inbox.ts:297-303`; `BE/test/routes/inbox-commit.test.ts:133-141`; N1 killed |
-| 4 | INBOX-06 survivor M2b | ✅ Closed | `BE/test/routes/inbox.test.ts:171-182`; M2b and M2c killed |
-| 5 | REM-05 UI and `Focar agora` with only reminders | ✅ Closed | `FE/components/board/board-column.tsx:86,112,124`; tests `board-column.test.tsx:110,116`, `list-board.test.tsx:828,832`; N5 killed |
-| 6 | PROC-05 / PROC-06 removal and end of column | ✅ Closed | `BE/test/routes/inbox-send.test.ts:106-109,205-207` |
-| 7 | REM-01 schedule column / REM-03 day variant | ✅ Closed | `BE/test/routes/inbox-send.test.ts:125,129,133`; `FE/components/board/task-card.test.tsx:647,651` |
-| 8 | CAP-04 palette focus / desktop hotkey conflict | ✅ Closed | `FE/components/command-palette.test.tsx:104-105`; `FE/hooks/use-capture-hotkey.ts:17-22`; N6a and N6b killed |
-| 9 | FIELDS-06 container / PRI-04 group priority | ✅ Closed | `FE/components/board/group-container.test.tsx:81-93`; `FE/components/inbox/process-dialog.test.tsx:289` |
-| 10 | Spec decisions (PROC-03, discard draft, reminder fields) | ✅ Closed by the spec change. MODAL-06 is implemented on create, update and send, but **not on move** (new gap 1) | see MODAL-06 |
-| (13) | GRP-11 had no tests for focus, Agenda, planning or reports | ✅ Closed | `BE/test/routes/group-tasks.test.ts:51-88` |
-
-**Closed 10 of 10** ranked gaps, and the 13 iteration-1 partials are all resolved. One new gap was found in the fix itself: the move path of MODAL-06, which T36 put out of scope.
+The results are quoted in the write-path table.
 
 ---
 
-## Code Quality (spot-check of the fix diff)
+## Code Quality (fix diff `356c342`)
 
 | Check | Status |
 | --- | --- |
-| Surgical changes | ✅ 6 source files, each tied to a T34–T39 criterion |
-| Spec-anchored outcome check | ❌ 102/103 (MODAL-06 move path) |
-| Per-layer coverage: routes cover 404, 409 and 422, with an L-048 contrast | ✅ for commit, discard and fields; ❌ no move test for a reminder |
-| Every new test maps to an ID | ✅ The test names carry the IDs |
-| Guidelines | `CONTRIBUTING.md`, vitest configs, lessons L-048, L-069 to L-072 (applied: interleaved race, minute-boundary trash, optimistic rule, commit owner check) |
+| Surgical changes | ✅ 2 source files, 3 + 4 lines, each tied to T41 |
+| Matches patterns | ✅ reuses `fieldError(..., 'reminder_field')` and the `outside`/`groupOf` drop logic |
+| Spec-anchored outcome check | ✅ for the move path (422 `reminder_field`, state unchanged); ❌ MODAL-06 Subtarefas is still open |
+| Per-layer coverage with an L-048 contrast | ✅ a reminder is refused while a task is accepted (backend and drop) |
+| Every new test maps to an ID | ✅ named `MODAL-06` |
+| Guidelines | `CONTRIBUTING.md`, vitest configs, lessons L-048, L-076 (applied to G/D/F/W, not to subtasks) |
 
 ---
 
-## Ranked gap list (fix tasks)
+## Ranked gap list
 
-1. **MODAL-06 (Major, code defect).** The API accepts a group on a reminder through the move route.
-   - **Where:** `backend-node/src/services/tasks.ts:278-299`. `moveTask` resolves `groupId` without checking `current.kind`. The frontend drop (`frontend/src/components/board/drop-target.ts`, `frontend/src/pages/list-board.tsx`) lets a reminder card into a container.
-   - **Consequence:** once a reminder is in a group, every later `PATCH`, even a rename, answers 422 `reminder_field` (`tasks.ts:93-99`). The modal hides Grupo for reminders, so the user can only recover by dragging the reminder out.
-   - **Fix:**
-     - In `moveTask`, answer 422 `reminder_field` when `current.kind === 'reminder'` and the resolved `groupId !== null`. Moving a reminder with `group_id: null`, or with the field left out, stays accepted.
-     - Optionally, keep reminders out of container drops in the frontend.
-     - Add a test: a reminder moved with `group_id` → 422 with `group_id` still null; the same move for a task → 200 (L-048).
+1. **MODAL-06, Subtarefas (Minor to Major, code defect; escalated because this is iteration 3 of 3).**
+   - **The gap:** the API accepts subtasks on a reminder.
+   - **Where:**
+     - `backend-node/src/services/tasks.ts:162-233`: `createTask` stores `input.subtasks` for any kind;
+     - `backend-node/src/services/subtasks.ts:27-43`: `createSubtask` has no `kind` check, and it serves both `POST /api/tasks/:id/subtasks` and MCP `add_subtask`;
+     - `resolveFields`, `BE/src/services/tasks.ts:84-120`: it lets `kind: 'reminder'` through on a task that has subtasks.
+   - **Consequence:** the reminder modal hides Subtarefas (`FE/components/board/task-dialog.test.tsx:513-522`), so subtasks created through the API or MCP become invisible data on a reminder.
+   - **Proposed fix:**
+     - answer 422 `reminder_field` in these three places: `createTask` with `kind: 'reminder'` and a non-empty `subtasks`; `createSubtask` on a reminder; and a kind change to `reminder` on a task that has subtasks;
+     - add tests for each, with the L-048 contrast of a task that accepts them.
+   - **Alternative:** the user narrows MODAL-06 so it no longer lists Subtarefas for the API.
 
-No other gaps remain. The spec-precision notes above are informational and need no code change.
+The spec-precision notes above are informational and need no code change.
 
 ---
 
 ## Requirement Traceability Update (proposed)
 
 - ✅ Verified: 102 IDs (every ID except MODAL-06).
-- ❌ Needs fix: MODAL-06 (move path).
+- ❌ Needs fix: MODAL-06 (Subtarefas through the API). The group, due day, flag and Aguardando part is verified on every write path.
 
 ## Summary
 
-**Overall**: ❌ Not ready (1 gap).
+**Overall**: ❌ Not ready (1 gap). This is the 3rd iteration, so the gap goes to the user.
 **Spec-anchored check**: 102/103 IDs matched the spec outcome; 4 spec-precision notes.
-**Sensor**: 13 mutations, 13 killed, 0 survived (M4 and M2b now killed).
+**MODAL-06 write paths**: 12/12 guarded for G/D/F/W; subtasks unguarded on 3 entries.
+**Sensor**: 10 mutations this iteration, 10 killed, 0 survived.
 **Gate**:
-- backend: 1244 passed, 9 skipped.
-- frontend: 2214 passed.
+- backend: 1246 passed, 9 skipped.
+- frontend: 2215 passed on the standalone rerun; the first, parallel run had 3 timing failures outside the feature.
 - desktop: 281 passed, 4 skipped.
 - lint, typecheck and build: ok.
-- The focus-widget test is flaky and pre-existing.
-
-**Next step**: a fix task for MODAL-06's move path, then iteration 3.
 
 **validate_state.py**: exit 1 (`validation.md verdict is FAIL`), as expected for a FAIL report.

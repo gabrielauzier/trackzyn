@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 79,
+  "next_id": 80,
   "lessons": [
     {
       "id": "L-001",
@@ -1416,6 +1416,24 @@
       ],
       "created": "2026-11-14T02:13:34Z",
       "last_seen": "2026-11-14T02:13:34Z"
+    },
+    {
+      "id": "L-079",
+      "key": "ac_gap::when a kind refuses a field kept in a child table guard the child s own create route and the change of kind too not only the parent s field validation",
+      "text": "When a kind refuses a field kept in a child table, guard the child's own create route and the change of kind too, not only the parent's field validation.",
+      "signal": "ac_gap",
+      "scope": "tasks",
+      "status": "candidate",
+      "features": [
+        "caixa-de-entrada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MODAL-06 backend-node/src/services/subtasks.ts:27 (tasks)"
+      ],
+      "created": "2026-11-14T02:29:18Z",
+      "last_seen": "2026-11-14T02:29:18Z"
     }
   ]
 }
