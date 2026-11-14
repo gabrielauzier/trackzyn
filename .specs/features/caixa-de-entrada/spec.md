@@ -398,10 +398,10 @@ O que o código já fixa:
 | QUICK-09 | P1: Enviar rápido | T24 | Implementing |
 | PROC-01 | P1: Processar como tarefa | T26 | Implementing |
 | PROC-02 | P1: Processar como tarefa | T26 | Implementing |
-| PROC-03 | P1: Processar como tarefa | T11, T26 | Implementing |
+| PROC-03 | P1: Processar como tarefa | T11, T26, T35 | Implementing |
 | PROC-04 | P1: Processar como tarefa | T11, T26 | Implementing |
-| PROC-05 | P1: Processar como tarefa | T13, T26 | Implementing |
-| PROC-06 | P1: Processar como tarefa | T13, T26 | Implementing |
+| PROC-05 | P1: Processar como tarefa | T13, T26, T35 | Implementing |
+| PROC-06 | P1: Processar como tarefa | T13, T26, T35 | Implementing |
 | PROC-07 | P1: Processar como tarefa | T13, T26 | Implementing |
 | PROC-08 | P1: Processar como tarefa | T13, T26 | Implementing |
 | ALL-01 | P1: Processar tudo | T27 | Implementing |
@@ -413,7 +413,7 @@ O que o código já fixa:
 | ALL-07 | P1: Processar tudo | T14 | Implementing |
 | ALL-08 | P1: Processar tudo | T27 | Implementing |
 | ALL-09 | P1: Processar tudo | T14 | Implementing |
-| REM-01 | P1: Lembrete | T13, T26 | Implementing |
+| REM-01 | P1: Lembrete | T13, T26, T35 | Implementing |
 | REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
 | REM-03 | P1: Lembrete | T18 | Implementing |
 | REM-04 | P1: Lembrete | T5 | Implementing |

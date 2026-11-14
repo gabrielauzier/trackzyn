@@ -19,6 +19,10 @@ describe('targetColumn (PROC-03, PROC-04)', () => {
     expect(targetColumn('2026-11-10', TODAY)).toBe('today')
   })
 
+  it('a day of a past week goes to Hoje too', () => {
+    expect(targetColumn('2026-11-06', TODAY)).toBe('today')
+  })
+
   it('another day of this week, up to Sunday, goes to Esta semana', () => {
     expect(targetColumn('2026-11-14', TODAY)).toBe('this_week')
     expect(targetColumn('2026-11-15', TODAY)).toBe('this_week')

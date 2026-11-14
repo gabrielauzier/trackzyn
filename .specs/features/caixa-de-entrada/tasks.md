@@ -1195,13 +1195,15 @@ T40
 
 **Done when**:
 
-- [ ] Envio avulso de tarefa: `GET /api/inbox` não lista mais o item e a tarefa tem a maior `position` da coluna, depois de uma tarefa que já estava lá
-- [ ] `done` (Já fiz): o item sai e a tarefa fica em Concluídas com `completed_by` do usuário
-- [ ] Lembrete agendado para hoje cai em Hoje; para outro dia ainda por vir da semana, em Esta semana; para a semana seguinte, em Backlog
-- [ ] Dia já passado da semana → Hoje em `backend-node/src/services/decision.ts` e em `frontend/src/lib/inbox/decision.ts`
-- [ ] Gate check passes: Full (backend) e Quick
+- [x] Envio avulso de tarefa: `GET /api/inbox` não lista mais o item e a tarefa tem a maior `position` da coluna, depois de uma tarefa que já estava lá
+- [x] `done` (Já fiz): o item sai e a tarefa fica em Concluídas com `completed_by` do usuário
+- [x] Lembrete agendado para hoje cai em Hoje; para outro dia ainda por vir da semana, em Esta semana; para a semana seguinte, em Backlog
+- [x] Dia já passado da semana → Hoje em `backend-node/src/services/decision.ts` e em `frontend/src/lib/inbox/decision.ts`
+- [x] Gate check passes: Full (backend) e Quick
 
-**Also touched**: `backend-node/test/services/decision.test.ts`, `frontend/src/lib/inbox/decision.test.ts`
+**Also touched**: `backend-node/test/services/decision.test.ts`, `frontend/src/lib/inbox/decision.test.ts`. Só testes: o código já seguia a regra. O lembrete agendado passa por `sendItem` com relógio fixo (quarta, 2026-11-11), porque a leitura do quadro levaria a Hoje um dia já vencido no relógio real.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

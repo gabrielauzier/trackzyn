@@ -93,6 +93,47 @@ describe('PROC-05, PROC-03, PROC-04 processing an item as a task', () => {
   })
 })
 
+describe('PROC-05 a task processed on its own', () => {
+  it('leaves the inbox and lands after the task already in its column, with the highest position', async () => {
+    const { owner, workspaceId, today, listId, capture, send, inbox, column } = await setup()
+    const before = (await call('POST', '/api/tasks', owner.token, workspaceId, { list_id: listId, title: 'Antes', column: 'today' })).json()
+    const id = await capture('dev 1701')
+
+    const reply = await send(id, { type: 'task', name: 'DEV-1701', list_id: listId, scheduled_on: today })
+
+    expect(reply.statusCode).toBe(200)
+    const cards = await column('today')
+    expect(cards.map((card) => card.title)).toEqual(['Antes', 'DEV-1701'])
+    expect(reply.json().tasks[0].position).toBeGreaterThan(before.position)
+    expect(reply.json().tasks[0].position).toBe(Math.max(...cards.map((card) => card.position as number)))
+    expect(await inbox()).toEqual([])
+  })
+})
+
+describe('REM-01 a scheduled reminder follows the column rules of PROC-03', () => {
+  // Wednesday 2026-11-11 in UTC: the week runs from Monday 2026-11-09 to Sunday 2026-11-15.
+  const now = new Date('2026-11-11T12:00:00Z')
+  const sendOn = async (scheduledOn: string) => {
+    const { owner, workspaceId, listId, capture } = await setup()
+    const id = await capture('Pagar o DAS')
+    const sender = { workspaceId, userId: owner.id, canWrite: true }
+    const sent = await sendItem(t.ctx.db, sender, id, { type: 'reminder', list_id: listId, priority: 'none', scheduled_on: scheduledOn, scheduled_time: '10:00' }, now)
+    return sent.tasks[0]!
+  }
+
+  it('today goes to Hoje', async () => {
+    expect(await sendOn('2026-11-11')).toMatchObject({ kind: 'reminder', column: 'today', scheduledOn: '2026-11-11', scheduledTime: '10:00:00' })
+  })
+
+  it('a day still ahead in this week goes to Esta semana', async () => {
+    expect(await sendOn('2026-11-15')).toMatchObject({ kind: 'reminder', column: 'this_week', scheduledOn: '2026-11-15' })
+  })
+
+  it('a day of the next week goes to Backlog', async () => {
+    expect(await sendOn('2026-11-16')).toMatchObject({ kind: 'reminder', column: 'backlog', scheduledOn: '2026-11-16' })
+  })
+})
+
 describe('REM-01 processing an item as a reminder', () => {
   it('creates a reminder without estimate, even when the row had one', async () => {
     const { listId, capture, send, column } = await setup()
@@ -146,6 +187,15 @@ describe('PROC-06 Já fiz', () => {
     const task = reply.json().tasks[0]
     expect(task).toMatchObject({ title: 'Responder o e-mail', column: 'done', completed_at: expect.any(String), estimate_minutes: null })
     expect(await completedBy(t, task.id)).toBe(owner.id)
+  })
+
+  it('takes the item out of the inbox, the task done by the user', async () => {
+    const { owner, listId, capture, send, inbox } = await setup()
+    const id = await capture('Responder o e-mail')
+    const reply = await send(id, { type: 'done', list_id: listId })
+    expect(reply.json().tasks[0]).toMatchObject({ title: 'Responder o e-mail', column: 'done' })
+    expect(await completedBy(t, reply.json().tasks[0].id)).toBe(owner.id)
+    expect(await inbox()).toEqual([])
   })
 })
 
