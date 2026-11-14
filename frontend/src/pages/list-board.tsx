@@ -142,7 +142,8 @@ function placeInDone(board: Board, taskId: string): Board {
   }
 }
 
-const estimateOf = (tasks: TaskCardView[]) => tasks.reduce((total, task) => total + (task.estimate_minutes ?? 0), 0)
+/** The sum the server makes: a task in Aguardando stays out (WAIT-04). */
+const estimateOf = (tasks: TaskCardView[]) => tasks.reduce((total, task) => total + (task.waiting ? 0 : (task.estimate_minutes ?? 0)), 0)
 
 /** The board with the estimate of `taskId` set to `minutes`, and the column and list totals that count it. */
 function withEstimate(board: Board, taskId: string, minutes: number | null): Board {

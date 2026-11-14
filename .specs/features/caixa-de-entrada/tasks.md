@@ -1258,8 +1258,12 @@ T40
 
 **Done when**:
 
-- [ ] Editar a estimativa de uma tarefa em Hoje com outra tarefa em Aguardando: o cabeçalho e o pendente mostram a soma sem a tarefa em Aguardando, antes do refetch
-- [ ] Gate check passes: Full (frontend)
+- [x] Editar a estimativa de uma tarefa em Hoje com outra tarefa em Aguardando: o cabeçalho e o pendente mostram a soma sem a tarefa em Aguardando, antes do refetch
+- [x] Gate check passes: Full (frontend)
+
+**Also touched**: `frontend/src/pages/list-board.test.tsx`.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

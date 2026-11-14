@@ -816,6 +816,30 @@ describe('ListBoardPage', () => {
     expect(screen.getByText('This list has 1 pending task, Est.: 1hr')).toBeInTheDocument()
   })
 
+  it('WAIT-04 an estimate edited on the card leaves a waiting task out of the sums, before the refetch', async () => {
+    // The save never answers, so only the sums made on the client show.
+    vi.mocked(tasks.update).mockImplementation(() => new Promise(() => {}))
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      board.columns.today.tasks = [card(TODAY_TASK, 'DEV-1725'), { ...card(T2, 'Aguardando o deploy', 120), waiting: true }]
+      board.pending = { count: 2, estimate_minutes: 60 }
+      return board
+    })
+    const { user } = renderBoard()
+    await screen.findByText('DEV-1725')
+    const inCard = within(document.querySelector<HTMLElement>(`[data-task-id="${TODAY_TASK}"]`)!)
+
+    await user.click(inCard.getByRole('button', { name: 'Edit estimate' }))
+    const field = inCard.getByRole('textbox', { name: 'Edit estimate' })
+    await user.clear(field)
+    await user.type(field, '0130{Enter}')
+
+    expect(await screen.findByText('This list has 2 pending tasks, Est.: 1hr 30min')).toBeInTheDocument()
+    const header = (column: string) => within(document.querySelector<HTMLElement>(`[data-column="${column}"]`)!).getByTitle('Pending estimate')
+    expect(header('today')).toHaveTextContent(/^1hr 30min$/)
+    expect(header('this_week')).toHaveTextContent(/^1hr 30min$/)
+  })
+
   it('saves an estimate edited on the card and updates the totals', async () => {
     // The server keeps the new estimate and sums it again.
     let saved = false

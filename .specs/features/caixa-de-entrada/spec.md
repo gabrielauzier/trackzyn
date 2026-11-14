@@ -442,7 +442,7 @@ O que o código já fixa:
 | WAIT-01 | P1: Aguardando | T1, T2 | Implementing |
 | WAIT-02 | P1: Aguardando | T18 | Implementing |
 | WAIT-03 | P1: Aguardando | T2 | Implementing |
-| WAIT-04 | P1: Aguardando | T4 | Implementing |
+| WAIT-04 | P1: Aguardando | T4, T37 | Implementing |
 | WAIT-05 | P1: Aguardando | T2 | Implementing |
 | FLAG-01 | P1: Flag | T1, T2 | Implementing |
 | FLAG-02 | P1: Flag | T18 | Implementing |
