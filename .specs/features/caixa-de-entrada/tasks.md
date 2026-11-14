@@ -1163,13 +1163,15 @@ T40
 
 **Done when**:
 
-- [ ] `POST /api/inbox/commit` com o id de um item de outro usuário → 404 e nada enviado; o mesmo pedido só com itens próprios continua funcionando (L-048)
-- [ ] Descartar um item com rascunho apaga o rascunho; restaurá-lo traz `draft: null`, e a próxima confirmação não o envia
-- [ ] Um teste chama `takeItem` (ou `sendItem` sem o pré-check) para um item já tirado e recebe 409 `already_processed`, matando a remoção do guarda `if (!taken)`
-- [ ] Item descartado há exatamente 30 dias continua; há 30 dias e 1 minuto some (mata `TRASH_DAYS` 29.5 e 30.5)
-- [ ] Gate check passes: Full (backend)
+- [x] `POST /api/inbox/commit` com o id de um item de outro usuário → 404 e nada enviado; o mesmo pedido só com itens próprios continua funcionando (L-048)
+- [x] Descartar um item com rascunho apaga o rascunho; restaurá-lo traz `draft: null`, e a próxima confirmação não o envia
+- [x] Um teste chama `takeItem` (ou `sendItem` sem o pré-check) para um item já tirado e recebe 409 `already_processed`, matando a remoção do guarda `if (!taken)`
+- [x] Item descartado há exatamente 30 dias continua; há 30 dias e 1 minuto some (mata `TRASH_DAYS` 29.5 e 30.5)
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/test/routes/inbox.test.ts`, `backend-node/test/routes/inbox-send.test.ts`, `backend-node/test/routes/inbox-commit.test.ts`
+**Also touched**: `backend-node/test/routes/inbox.test.ts`, `backend-node/test/routes/inbox-send.test.ts`, `backend-node/test/routes/inbox-commit.test.ts`. O teste da corrida passa por `sendItem` com um `db` cujo `transaction` deixa outro envio terminar antes (depois do pré-check), sem exportar `takeItem`. O limite de 30 dias chama `listItems` com relógio fixo. Mutantes conferidos numa cópia: sem o `if (!taken)`, `TRASH_DAYS` 29.5 e 30.5, cada um derruba um teste.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

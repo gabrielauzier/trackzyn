@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import type { Database } from '../../src/db/client.ts'
+import { sendItem } from '../../src/services/inbox.ts'
 import { completedBy, inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, bearer, createTestApp } from '../support/test-app.ts'
 
@@ -220,6 +222,38 @@ describe('EDGE-01 the same item sent twice at once', () => {
     expect(late.statusCode).toBe(409)
     expect(late.json()).toMatchObject({ reason: 'already_processed' })
     expect((await column('backlog')).map((card) => card.title)).toEqual(['DEV-1701'])
+  })
+})
+
+/** `db` whose transactions start only after `before` ran: another window acts between the pre-check and the take. */
+function raceBeforeTransaction(db: Database, before: () => Promise<unknown>): Database {
+  return new Proxy(db, {
+    get(target, property) {
+      if (property === 'transaction') {
+        return async (...args: Parameters<Database['transaction']>) => {
+          await before()
+          return target.transaction(...args)
+        }
+      }
+      const value = Reflect.get(target, property, target)
+      return typeof value === 'function' ? value.bind(target) : value
+    },
+  })
+}
+
+describe('EDGE-01 the item taken by another send after the pre-check', () => {
+  it('the second send answers 409 already_processed from the take itself, and only one task exists', async () => {
+    const { owner, workspaceId, listId, capture, column, inbox } = await setup()
+    const id = await capture('DEV-1701')
+    const sender = { workspaceId, userId: owner.id, canWrite: true }
+    const decision = { type: 'task' as const, list_id: listId, priority: 'none' as const }
+    const otherWindow = () => sendItem(t.ctx.db, sender, id, decision)
+
+    const late = sendItem(raceBeforeTransaction(t.ctx.db, otherWindow), sender, id, decision)
+
+    await expect(late).rejects.toMatchObject({ statusCode: 409, extra: { reason: 'already_processed' } })
+    expect((await column('backlog')).map((card) => card.title)).toEqual(['DEV-1701'])
+    expect(await inbox()).toEqual([])
   })
 })
 

@@ -382,10 +382,10 @@ O que o código já fixa:
 | CAP-10 | P1: Capturar | T15, T16 | Implementing |
 | INBOX-01 | P1: Ver e manter a caixa | T12, T23 | Implementing |
 | INBOX-02 | P1: Ver e manter a caixa | T12, T23 | Implementing |
-| INBOX-03 | P1: Ver e manter a caixa | T12 | Implementing |
-| INBOX-04 | P1: Ver e manter a caixa | T12, T23 | Implementing |
+| INBOX-03 | P1: Ver e manter a caixa | T12, T34 | Implementing |
+| INBOX-04 | P1: Ver e manter a caixa | T12, T23, T34 | Implementing |
 | INBOX-05 | P1: Ver e manter a caixa | T12, T23 | Implementing |
-| INBOX-06 | P1: Ver e manter a caixa | T12 | Implementing |
+| INBOX-06 | P1: Ver e manter a caixa | T12, T34 | Implementing |
 | INBOX-07 | P1: Ver e manter a caixa | T23 | Implementing |
 | QUICK-01 | P1: Enviar rápido | T24 | Implementing |
 | QUICK-02 | P1: Enviar rápido | T12, T24 | Implementing |
@@ -465,7 +465,7 @@ O que o código já fixa:
 | API-01 | P2: API e MCP | T4, T6, T16 | Implementing |
 | API-02 | P2: API e MCP | T6 | Implementing |
 | API-03 | P2: API e MCP | T2, T6 | Implementing |
-| EDGE-01 | Edge Cases | T13 | Implementing |
+| EDGE-01 | Edge Cases | T13, T34 | Implementing |
 | EDGE-02 | Edge Cases | T14 | Implementing |
 | EDGE-03 | Edge Cases | T12 | Implementing |
 | EDGE-04 | Edge Cases | T3 | Implementing |

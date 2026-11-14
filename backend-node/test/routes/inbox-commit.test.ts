@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { inWorkspace, ownerViewerStranger } from '../support/roles.ts'
+import { inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, createTestApp } from '../support/test-app.ts'
 
 let t: TestApp
@@ -118,5 +118,26 @@ describe('ALL-09 sending a drafted item on its own', () => {
     expect(reply.statusCode).toBe(200)
     expect(reply.json()).toEqual({ tasks: [], groups: [], discarded: [] })
     expect(await backlog()).toEqual(['Avulso'])
+  })
+})
+
+describe('INBOX-03 committing another user\'s item', () => {
+  it('answers 404 and sends nothing; the same commit with only the own item is sent', async () => {
+    const { owner, workspaceId, listId, capture, commit, inbox, backlog } = await setup()
+    const editor = await invite(t, owner.token, workspaceId, 'editor')
+    const mine = await capture('DEV-1701', { type: 'task', list_id: listId })
+    const theirs = await capture('Do editor', { type: 'task', list_id: listId }, editor.token)
+
+    const refused = await commit({ item_ids: [mine, theirs] })
+
+    expect(refused.statusCode).toBe(404)
+    expect(await backlog()).toEqual([])
+    expect(await inbox()).toEqual([expect.objectContaining({ id: mine, draft: expect.objectContaining({ type: 'task' }) })])
+    expect((await inbox('current', editor.token)).map((item) => item.id)).toEqual([theirs])
+
+    const sent = await commit({ item_ids: [mine] })
+    expect(sent.statusCode).toBe(200)
+    expect(await backlog()).toEqual(['DEV-1701'])
+    expect((await inbox('current', editor.token)).map((item) => item.id)).toEqual([theirs])
   })
 })

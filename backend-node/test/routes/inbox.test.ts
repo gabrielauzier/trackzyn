@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { inboxItems } from '../../src/db/schema.ts'
+import { listItems } from '../../src/services/inbox.ts'
 import { inWorkspace, invite, ownerViewerStranger } from '../support/roles.ts'
 import { type TestApp, createTestApp } from '../support/test-app.ts'
 
@@ -141,7 +142,46 @@ describe('INBOX-04, INBOX-05, EDGE-03 the trash', () => {
   })
 })
 
+describe('INBOX-04 discarding an item with a draft', () => {
+  it('deletes the draft: the trash and the restored item have none, and the next commit does not send it', async () => {
+    const { owner, workspaceId, listId, add, list } = await setup()
+    const id = await add('DEV-1701')
+    const draft = { type: 'task', list_id: listId, name: 'Do rascunho' }
+    expect((await call('PATCH', `/api/inbox/${id}`, owner.token, workspaceId, { draft })).json()).toMatchObject({ draft })
+
+    await call('POST', `/api/inbox/${id}/discard`, owner.token, workspaceId)
+    expect(await list('trash')).toEqual([expect.objectContaining({ id, draft: null })])
+    const restored = await call('POST', `/api/inbox/${id}/restore`, owner.token, workspaceId)
+
+    expect(restored.json()).toMatchObject({ id, draft: null, discarded_at: null })
+    expect((await call('POST', '/api/inbox/commit', owner.token, workspaceId)).json()).toEqual({ tasks: [], groups: [], discarded: [] })
+    expect((await list()).map((item) => item.id)).toEqual([id])
+  })
+
+  it('Descartar in Processar deletes the draft too', async () => {
+    const { owner, workspaceId, listId, add, list } = await setup()
+    const id = await add('DEV-1701')
+    await call('PATCH', `/api/inbox/${id}`, owner.token, workspaceId, { draft: { type: 'task', list_id: listId } })
+    expect((await call('POST', `/api/inbox/${id}/send`, owner.token, workspaceId, { decision: { type: 'discard' } })).statusCode).toBe(200)
+    expect(await list('trash')).toEqual([expect.objectContaining({ id, draft: null })])
+  })
+})
+
 describe('INBOX-06 the trash keeps an item 30 days', () => {
+  it('on a fixed clock, an item discarded exactly 30 days ago stays; one discarded 30 days and 1 minute ago is deleted', async () => {
+    const { owner, workspaceId, add, age } = await setup()
+    const now = new Date('2026-11-13T12:00:00Z')
+    const kept = await add('No limite')
+    const gone = await add('Passou do limite')
+    await age(kept, { discardedAt: new Date(now.getTime() - 30 * 86_400_000) })
+    await age(gone, { discardedAt: new Date(now.getTime() - 30 * 86_400_000 - 60_000) })
+
+    const trash = await listItems(t.ctx.db, { workspaceId, userId: owner.id }, 'trash', now)
+
+    expect(trash.map((item) => item.id)).toEqual([kept])
+    expect(await t.ctx.db.select().from(inboxItems).where(eq(inboxItems.id, gone))).toEqual([])
+  })
+
   it('an item discarded 31 days ago is deleted on the read; one discarded 29 days ago stays', async () => {
     const { owner, workspaceId, add, list, age } = await setup()
     const gone = await add('Velho')

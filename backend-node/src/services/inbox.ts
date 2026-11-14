@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, asc, count, desc, eq, isNotNull, isNull, lt } from 'drizzle-orm'
+import { and, asc, count, desc, eq, inArray, isNotNull, isNull, lt, not } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { type InboxItem, type InboxSource, type TaskGroup, inboxItems, personalAccessTokens, tasks } from '../db/schema.ts'
 import { HttpError } from '../http/http-error.ts'
@@ -104,10 +104,10 @@ export async function updateItem(
   return findItem(db, owner, item.id)
 }
 
-/** Sends the item to the trash, keeping its list, estimate and draft (INBOX-04, EDGE-03). */
+/** Sends the item to the trash, keeping its list and estimate and deleting its draft (INBOX-04, EDGE-03). */
 export async function discardItem(db: Database, owner: InboxOwner, itemId: string, now: Date = new Date()): Promise<InboxItemView> {
   const item = await findItem(db, owner, itemId)
-  if (item.discardedAt === null) await db.update(inboxItems).set({ discardedAt: now }).where(eq(inboxItems.id, item.id))
+  if (item.discardedAt === null) await db.update(inboxItems).set({ discardedAt: now, draft: null }).where(eq(inboxItems.id, item.id))
   return findItem(db, owner, item.id)
 }
 
@@ -294,9 +294,13 @@ export async function commitDrafts(db: Database, sender: InboxSender, itemIds?: 
       .orderBy(asc(inboxItems.createdAt), asc(inboxItems.id))
       .for('update')
     const chosen = itemIds === undefined ? drafted : drafted.filter((item) => itemIds.includes(item.id))
-    const refusals: CommitRefusal[] = (itemIds ?? [])
-      .filter((id) => !drafted.some((item) => item.id === id))
-      .map((id) => ({ item_id: id, reason: 'already_processed' }))
+    const missing = (itemIds ?? []).filter((id) => !drafted.some((item) => item.id === id))
+    // Another user's item answers 404 (INBOX-03); an id no inbox holds any more was sent elsewhere (ALL-07).
+    if (missing.length > 0) {
+      const [foreign] = await tx.select({ id: inboxItems.id }).from(inboxItems).where(and(inArray(inboxItems.id, missing), not(ofOwner(sender)!))).limit(1)
+      if (foreign) throw notFound()
+    }
+    const refusals: CommitRefusal[] = missing.map((id) => ({ item_id: id, reason: 'already_processed' }))
     for (const item of chosen) {
       const reason = await refusalOf(tx, sender, item, item.draft!)
       if (reason !== null) refusals.push({ item_id: item.id, reason })
