@@ -273,6 +273,22 @@ describe('ProcessDialog', () => {
     })
   })
 
+  it('PRI-04 a group takes the priority picked in the same select: Alta sends priority high', async () => {
+    const { user } = await renderDialog()
+    await waitFor(() => expect(listSelect()).toHaveTextContent('Work (ADSET)'))
+    await user.click(kind('Grupo'))
+    await user.clear(nameField())
+    await user.type(nameField(), 'Pipeline de scripts')
+    await user.type(within(dialog()).getByRole('textbox', { name: 'Nova tarefa do grupo' }), 'Mapear{Enter}')
+
+    await user.click(within(dialog()).getByRole('combobox', { name: 'Prioridade' }))
+    expect((await screen.findAllByRole('option')).map((option) => option.textContent)).toEqual(['Nenhuma', 'Baixa', 'Média', 'Alta', 'Ultra'])
+    await user.click(screen.getByRole('option', { name: 'Alta' }))
+    await user.click(saveButton())
+
+    expect(inbox.send).toHaveBeenCalledWith('item-1', expect.objectContaining({ type: 'group', name: 'Pipeline de scripts', priority: 'high' }))
+  })
+
   it('PROC-08 a refused send keeps the values and shows the reason in the form', async () => {
     vi.mocked(inbox.send).mockRejectedValue({ response: { status: 409, data: { detail: 'List archived', reason: 'list_archived' } } })
     const { user } = await renderDialog()

@@ -53,6 +53,42 @@ describe('CaptureOverlay', () => {
     await waitFor(() => expect(field()).toHaveFocus())
   })
 
+  describe('on desktop (CAP-04, CAP-06)', () => {
+    const asDesktop = (enabled: boolean) => {
+      const getCaptureShortcut = vi.fn(async () => ({ enabled, accelerator: 'CommandOrControl+Shift+Space' }))
+      window.trackzyn = { isDesktop: true, getCaptureShortcut } as unknown as typeof window.trackzyn
+      return getCaptureShortcut
+    }
+    afterEach(() => {
+      delete window.trackzyn
+    })
+    const press = () =>
+      act(() => {
+        fireEvent.keyDown(document, { key: ' ', code: 'Space', metaKey: true, shiftKey: true })
+      })
+
+    it('with the global shortcut on, ⌘⇧Space leaves the overlay closed: the capture window opens instead', async () => {
+      const getCaptureShortcut = asDesktop(true)
+      renderWithProviders(<Screen />)
+
+      press()
+
+      await waitFor(() => expect(getCaptureShortcut).toHaveBeenCalledTimes(1))
+      await act(async () => {})
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('with the global shortcut off, ⌘⇧Space opens the overlay with the field focused', async () => {
+      asDesktop(false)
+      renderWithProviders(<Screen />)
+
+      press()
+
+      expect(await screen.findByRole('dialog', { name: 'Capturar' })).toBeInTheDocument()
+      await waitFor(() => expect(field()).toHaveFocus())
+    })
+  })
+
   it('CAP-01 Enter keeps the text with the origin app and closes', async () => {
     vi.mocked(inbox.capture).mockResolvedValue({
       id: 'new',

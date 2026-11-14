@@ -373,9 +373,9 @@ O que o código já fixa:
 | CAP-01 | P1: Capturar | T12, T23 | Implementing |
 | CAP-02 | P1: Capturar | T12, T23 | Implementing |
 | CAP-03 | P1: Capturar | T12, T23 | Implementing |
-| CAP-04 | P1: Capturar | T25 | Implementing |
+| CAP-04 | P1: Capturar | T25, T39 | Implementing |
 | CAP-05 | P1: Capturar | T25 | Implementing |
-| CAP-06 | P1: Capturar | T30 | Implementing |
+| CAP-06 | P1: Capturar | T30, T39 | Implementing |
 | CAP-07 | P1: Capturar | T29, T31 | Implementing |
 | CAP-08 | P1: Capturar | T29, T31 | Implementing |
 | CAP-09 | P1: Capturar | T15 | Implementing |
@@ -433,7 +433,7 @@ O que o código já fixa:
 | PRI-01 | P1: Prioridade | T1, T2 | Implementing |
 | PRI-02 | P1: Prioridade | T17 | Implementing |
 | PRI-03 | P1: Prioridade | T17 | Implementing |
-| PRI-04 | P1: Prioridade | T17 | Implementing |
+| PRI-04 | P1: Prioridade | T17, T39 | Implementing |
 | DUE-01 | P1: Prazo | T1, T2 | Implementing |
 | DUE-02 | P1: Prazo | T17 | Implementing |
 | DUE-03 | P1: Prazo | T17 | Implementing |
@@ -455,7 +455,7 @@ O que o código já fixa:
 | FIELDS-03 | P1: Campos do card | T10 | Implementing |
 | FIELDS-04 | P1: Campos do card | T10, T19 | Implementing |
 | FIELDS-05 | P1: Campos do card | T18 | Implementing |
-| FIELDS-06 | P1: Campos do card | T18 | Implementing |
+| FIELDS-06 | P1: Campos do card | T18, T39 | Implementing |
 | MODAL-01 | P1: Modal da tarefa | T22 | Implementing |
 | MODAL-02 | P1: Modal da tarefa | T22 | Implementing |
 | MODAL-03 | P1: Modal da tarefa | T22 | Implementing |

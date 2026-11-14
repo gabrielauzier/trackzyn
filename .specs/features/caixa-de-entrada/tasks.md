@@ -1319,13 +1319,15 @@ T40
 
 **Done when**:
 
-- [ ] No desktop com o atalho global ligado, Mod+Shift+Space não abre o overlay; com ele desligado, abre; no web, abre
-- [ ] `Capturar` na paleta abre o overlay e o campo tem o foco
-- [ ] Contêiner com cada campo desligado: os cards dentro escondem o campo; o contêiner continua aparecendo
-- [ ] No Processar como grupo, escolher Alta envia `priority: "high"` na decisão
-- [ ] Gate check passes: Full (frontend)
+- [x] No desktop com o atalho global ligado, Mod+Shift+Space não abre o overlay; com ele desligado, abre; no web, abre
+- [x] `Capturar` na paleta abre o overlay e o campo tem o foco
+- [x] Contêiner com cada campo desligado: os cards dentro escondem o campo; o contêiner continua aparecendo
+- [x] No Processar como grupo, escolher Alta envia `priority: "high"` na decisão
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/components/command-palette.test.tsx`, `frontend/src/components/board/group-container.test.tsx`, `frontend/src/components/inbox/process-dialog.test.tsx`
+**Also touched**: `frontend/src/components/capture/capture-overlay.test.tsx` (o teste do hook), `frontend/src/components/command-palette.test.tsx` (a paleta ligada ao overlay como o layout liga), `frontend/src/components/board/group-container.test.tsx`, `frontend/src/components/inbox/process-dialog.test.tsx`. O hook lê `getCaptureShortcut()` a cada toque, porque o atalho pode mudar nas preferências (CAP-07); ligado com qualquer combinação, o overlay não abre por Mod+Shift+Space, como diz CAP-04.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full
