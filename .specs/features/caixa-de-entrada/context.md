@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-11-13
 **Spec:** `.specs/features/caixa-de-entrada/spec.md`
-**Status:** Spec aprovada (2026-11-13) · design em revisão
+**Status:** Implementada e verificada (2026-11-14)
 
 ---
 

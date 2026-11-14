@@ -370,111 +370,111 @@ O que o código já fixa:
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| CAP-01 | P1: Capturar | T12, T23 | Implementing |
-| CAP-02 | P1: Capturar | T12, T23 | Implementing |
-| CAP-03 | P1: Capturar | T12, T23 | Implementing |
-| CAP-04 | P1: Capturar | T25, T39 | Implementing |
-| CAP-05 | P1: Capturar | T25 | Implementing |
-| CAP-06 | P1: Capturar | T30, T39 | Implementing |
-| CAP-07 | P1: Capturar | T29, T31 | Implementing |
-| CAP-08 | P1: Capturar | T29, T31 | Implementing |
-| CAP-09 | P1: Capturar | T15 | Implementing |
-| CAP-10 | P1: Capturar | T15, T16 | Implementing |
-| INBOX-01 | P1: Ver e manter a caixa | T12, T23 | Implementing |
-| INBOX-02 | P1: Ver e manter a caixa | T12, T23 | Implementing |
-| INBOX-03 | P1: Ver e manter a caixa | T12, T34 | Implementing |
-| INBOX-04 | P1: Ver e manter a caixa | T12, T23, T34 | Implementing |
-| INBOX-05 | P1: Ver e manter a caixa | T12, T23 | Implementing |
-| INBOX-06 | P1: Ver e manter a caixa | T12, T34 | Implementing |
-| INBOX-07 | P1: Ver e manter a caixa | T23 | Implementing |
-| QUICK-01 | P1: Enviar rápido | T24 | Implementing |
-| QUICK-02 | P1: Enviar rápido | T12, T24 | Implementing |
-| QUICK-03 | P1: Enviar rápido | T24 | Implementing |
-| QUICK-04 | P1: Enviar rápido | T13, T24 | Implementing |
-| QUICK-05 | P1: Enviar rápido | T12, T24 | Implementing |
-| QUICK-06 | P1: Enviar rápido | T13, T24 | Implementing |
-| QUICK-07 | P1: Enviar rápido | T13, T24 | Implementing |
-| QUICK-08 | P1: Enviar rápido | T24 | Implementing |
-| QUICK-09 | P1: Enviar rápido | T24 | Implementing |
-| PROC-01 | P1: Processar como tarefa | T26 | Implementing |
-| PROC-02 | P1: Processar como tarefa | T26 | Implementing |
-| PROC-03 | P1: Processar como tarefa | T11, T26, T35 | Implementing |
-| PROC-04 | P1: Processar como tarefa | T11, T26 | Implementing |
-| PROC-05 | P1: Processar como tarefa | T13, T26, T35 | Implementing |
-| PROC-06 | P1: Processar como tarefa | T13, T26, T35 | Implementing |
-| PROC-07 | P1: Processar como tarefa | T13, T26 | Implementing |
-| PROC-08 | P1: Processar como tarefa | T13, T26 | Implementing |
-| ALL-01 | P1: Processar tudo | T27 | Implementing |
-| ALL-02 | P1: Processar tudo | T27 | Implementing |
-| ALL-03 | P1: Processar tudo | T27 | Implementing |
-| ALL-04 | P1: Processar tudo | T27 | Implementing |
-| ALL-05 | P1: Processar tudo | T27 | Implementing |
-| ALL-06 | P1: Processar tudo | T14 | Implementing |
-| ALL-07 | P1: Processar tudo | T14 | Implementing |
-| ALL-08 | P1: Processar tudo | T27 | Implementing |
-| ALL-09 | P1: Processar tudo | T14 | Implementing |
-| REM-01 | P1: Lembrete | T13, T26, T35 | Implementing |
-| REM-02 | P1: Lembrete | T1, T2, T11, T26, T36 | Implementing |
-| REM-03 | P1: Lembrete | T18, T38 | Implementing |
-| REM-04 | P1: Lembrete | T5 | Implementing |
-| REM-05 | P1: Lembrete | T5, T32, T38 | Implementing |
-| REM-06 | P1: Lembrete | T5, T28 | Implementing |
-| GRP-01 | P1: Grupo de tarefas | T7, T13 | Implementing |
-| GRP-02 | P1: Grupo de tarefas | T11, T26 | Implementing |
-| GRP-03 | P1: Grupo de tarefas | T11, T26 | Implementing |
-| GRP-04 | P1: Grupo de tarefas | T7, T20, T33 | Implementing |
-| GRP-05 | P1: Grupo de tarefas | T20 | Implementing |
-| GRP-06 | P1: Grupo de tarefas | T8, T21 | Implementing |
-| GRP-07 | P1: Grupo de tarefas | T8, T21 | Implementing |
-| GRP-08 | P1: Grupo de tarefas | T8, T21 | Implementing |
-| GRP-09 | P1: Grupo de tarefas | T9, T21 | Implementing |
-| GRP-10 | P1: Grupo de tarefas | T8, T21 | Implementing |
-| GRP-11 | P1: Grupo de tarefas | T8, T40 | Implementing |
-| PRI-01 | P1: Prioridade | T1, T2 | Implementing |
-| PRI-02 | P1: Prioridade | T17 | Implementing |
-| PRI-03 | P1: Prioridade | T17 | Implementing |
-| PRI-04 | P1: Prioridade | T17, T39 | Implementing |
-| DUE-01 | P1: Prazo | T1, T2 | Implementing |
-| DUE-02 | P1: Prazo | T17 | Implementing |
-| DUE-03 | P1: Prazo | T17 | Implementing |
-| DUE-04 | P1: Prazo | T17 | Implementing |
-| DUE-05 | P1: Prazo | T17 | Implementing |
-| WAIT-01 | P1: Aguardando | T1, T2 | Implementing |
-| WAIT-02 | P1: Aguardando | T18 | Implementing |
-| WAIT-03 | P1: Aguardando | T2 | Implementing |
-| WAIT-04 | P1: Aguardando | T4, T37 | Implementing |
-| WAIT-05 | P1: Aguardando | T2 | Implementing |
-| FLAG-01 | P1: Flag | T1, T2 | Implementing |
-| FLAG-02 | P1: Flag | T18 | Implementing |
-| FLAG-03 | P1: Flag | T18 | Implementing |
-| FLAG-04 | P1: Flag | T2 | Implementing |
-| FLAG-05 | P1: Flag | T3 | Implementing |
-| FLAG-06 | P1: Flag | T2 | Implementing |
-| FIELDS-01 | P1: Campos do card | T18 | Implementing |
-| FIELDS-02 | P1: Campos do card | T19 | Implementing |
-| FIELDS-03 | P1: Campos do card | T10 | Implementing |
-| FIELDS-04 | P1: Campos do card | T10, T19 | Implementing |
-| FIELDS-05 | P1: Campos do card | T18 | Implementing |
-| FIELDS-06 | P1: Campos do card | T18, T39 | Implementing |
-| MODAL-01 | P1: Modal da tarefa | T22 | Implementing |
-| MODAL-02 | P1: Modal da tarefa | T22 | Implementing |
-| MODAL-03 | P1: Modal da tarefa | T22 | Implementing |
-| MODAL-04 | P1: Modal da tarefa | T7, T8, T22 | Implementing |
-| MODAL-05 | P1: Modal da tarefa | T22 | Implementing |
-| MODAL-06 | P1: Modal da tarefa | T22, T36, T38, T41, T42 | Implementing |
-| API-01 | P2: API e MCP | T4, T6, T16 | Implementing |
-| API-02 | P2: API e MCP | T6 | Implementing |
-| API-03 | P2: API e MCP | T2, T6 | Implementing |
-| EDGE-01 | Edge Cases | T13, T34 | Implementing |
-| EDGE-02 | Edge Cases | T14 | Implementing |
-| EDGE-03 | Edge Cases | T12 | Implementing |
-| EDGE-04 | Edge Cases | T3 | Implementing |
-| EDGE-05 | Edge Cases | T20 | Implementing |
-| EDGE-06 | Edge Cases | T18 | Implementing |
-| EDGE-07 | Edge Cases | T12 | Implementing |
-| EDGE-08 | Edge Cases | T15 | Implementing |
+| CAP-01 | P1: Capturar | T12, T23 | Verified |
+| CAP-02 | P1: Capturar | T12, T23 | Verified |
+| CAP-03 | P1: Capturar | T12, T23 | Verified |
+| CAP-04 | P1: Capturar | T25, T39 | Verified |
+| CAP-05 | P1: Capturar | T25 | Verified |
+| CAP-06 | P1: Capturar | T30, T39 | Verified |
+| CAP-07 | P1: Capturar | T29, T31 | Verified |
+| CAP-08 | P1: Capturar | T29, T31 | Verified |
+| CAP-09 | P1: Capturar | T15 | Verified |
+| CAP-10 | P1: Capturar | T15, T16 | Verified |
+| INBOX-01 | P1: Ver e manter a caixa | T12, T23 | Verified |
+| INBOX-02 | P1: Ver e manter a caixa | T12, T23 | Verified |
+| INBOX-03 | P1: Ver e manter a caixa | T12, T34 | Verified |
+| INBOX-04 | P1: Ver e manter a caixa | T12, T23, T34 | Verified |
+| INBOX-05 | P1: Ver e manter a caixa | T12, T23 | Verified |
+| INBOX-06 | P1: Ver e manter a caixa | T12, T34 | Verified |
+| INBOX-07 | P1: Ver e manter a caixa | T23 | Verified |
+| QUICK-01 | P1: Enviar rápido | T24 | Verified |
+| QUICK-02 | P1: Enviar rápido | T12, T24 | Verified |
+| QUICK-03 | P1: Enviar rápido | T24 | Verified |
+| QUICK-04 | P1: Enviar rápido | T13, T24 | Verified |
+| QUICK-05 | P1: Enviar rápido | T12, T24 | Verified |
+| QUICK-06 | P1: Enviar rápido | T13, T24 | Verified |
+| QUICK-07 | P1: Enviar rápido | T13, T24 | Verified |
+| QUICK-08 | P1: Enviar rápido | T24 | Verified |
+| QUICK-09 | P1: Enviar rápido | T24 | Verified |
+| PROC-01 | P1: Processar como tarefa | T26 | Verified |
+| PROC-02 | P1: Processar como tarefa | T26 | Verified |
+| PROC-03 | P1: Processar como tarefa | T11, T26, T35 | Verified |
+| PROC-04 | P1: Processar como tarefa | T11, T26 | Verified |
+| PROC-05 | P1: Processar como tarefa | T13, T26, T35 | Verified |
+| PROC-06 | P1: Processar como tarefa | T13, T26, T35 | Verified |
+| PROC-07 | P1: Processar como tarefa | T13, T26 | Verified |
+| PROC-08 | P1: Processar como tarefa | T13, T26 | Verified |
+| ALL-01 | P1: Processar tudo | T27 | Verified |
+| ALL-02 | P1: Processar tudo | T27 | Verified |
+| ALL-03 | P1: Processar tudo | T27 | Verified |
+| ALL-04 | P1: Processar tudo | T27 | Verified |
+| ALL-05 | P1: Processar tudo | T27 | Verified |
+| ALL-06 | P1: Processar tudo | T14 | Verified |
+| ALL-07 | P1: Processar tudo | T14 | Verified |
+| ALL-08 | P1: Processar tudo | T27 | Verified |
+| ALL-09 | P1: Processar tudo | T14 | Verified |
+| REM-01 | P1: Lembrete | T13, T26, T35 | Verified |
+| REM-02 | P1: Lembrete | T1, T2, T11, T26, T36 | Verified |
+| REM-03 | P1: Lembrete | T18, T38 | Verified |
+| REM-04 | P1: Lembrete | T5 | Verified |
+| REM-05 | P1: Lembrete | T5, T32, T38 | Verified |
+| REM-06 | P1: Lembrete | T5, T28 | Verified |
+| GRP-01 | P1: Grupo de tarefas | T7, T13 | Verified |
+| GRP-02 | P1: Grupo de tarefas | T11, T26 | Verified |
+| GRP-03 | P1: Grupo de tarefas | T11, T26 | Verified |
+| GRP-04 | P1: Grupo de tarefas | T7, T20, T33 | Verified |
+| GRP-05 | P1: Grupo de tarefas | T20 | Verified |
+| GRP-06 | P1: Grupo de tarefas | T8, T21 | Verified |
+| GRP-07 | P1: Grupo de tarefas | T8, T21 | Verified |
+| GRP-08 | P1: Grupo de tarefas | T8, T21 | Verified |
+| GRP-09 | P1: Grupo de tarefas | T9, T21 | Verified |
+| GRP-10 | P1: Grupo de tarefas | T8, T21 | Verified |
+| GRP-11 | P1: Grupo de tarefas | T8, T40 | Verified |
+| PRI-01 | P1: Prioridade | T1, T2 | Verified |
+| PRI-02 | P1: Prioridade | T17 | Verified |
+| PRI-03 | P1: Prioridade | T17 | Verified |
+| PRI-04 | P1: Prioridade | T17, T39 | Verified |
+| DUE-01 | P1: Prazo | T1, T2 | Verified |
+| DUE-02 | P1: Prazo | T17 | Verified |
+| DUE-03 | P1: Prazo | T17 | Verified |
+| DUE-04 | P1: Prazo | T17 | Verified |
+| DUE-05 | P1: Prazo | T17 | Verified |
+| WAIT-01 | P1: Aguardando | T1, T2 | Verified |
+| WAIT-02 | P1: Aguardando | T18 | Verified |
+| WAIT-03 | P1: Aguardando | T2 | Verified |
+| WAIT-04 | P1: Aguardando | T4, T37 | Verified |
+| WAIT-05 | P1: Aguardando | T2 | Verified |
+| FLAG-01 | P1: Flag | T1, T2 | Verified |
+| FLAG-02 | P1: Flag | T18 | Verified |
+| FLAG-03 | P1: Flag | T18 | Verified |
+| FLAG-04 | P1: Flag | T2 | Verified |
+| FLAG-05 | P1: Flag | T3 | Verified |
+| FLAG-06 | P1: Flag | T2 | Verified |
+| FIELDS-01 | P1: Campos do card | T18 | Verified |
+| FIELDS-02 | P1: Campos do card | T19 | Verified |
+| FIELDS-03 | P1: Campos do card | T10 | Verified |
+| FIELDS-04 | P1: Campos do card | T10, T19 | Verified |
+| FIELDS-05 | P1: Campos do card | T18 | Verified |
+| FIELDS-06 | P1: Campos do card | T18, T39 | Verified |
+| MODAL-01 | P1: Modal da tarefa | T22 | Verified |
+| MODAL-02 | P1: Modal da tarefa | T22 | Verified |
+| MODAL-03 | P1: Modal da tarefa | T22 | Verified |
+| MODAL-04 | P1: Modal da tarefa | T7, T8, T22 | Verified |
+| MODAL-05 | P1: Modal da tarefa | T22 | Verified |
+| MODAL-06 | P1: Modal da tarefa | T22, T36, T38, T41, T42 | Verified |
+| API-01 | P2: API e MCP | T4, T6, T16 | Verified |
+| API-02 | P2: API e MCP | T6 | Verified |
+| API-03 | P2: API e MCP | T2, T6 | Verified |
+| EDGE-01 | Edge Cases | T13, T34 | Verified |
+| EDGE-02 | Edge Cases | T14 | Verified |
+| EDGE-03 | Edge Cases | T12 | Verified |
+| EDGE-04 | Edge Cases | T3 | Verified |
+| EDGE-05 | Edge Cases | T20 | Verified |
+| EDGE-06 | Edge Cases | T18 | Verified |
+| EDGE-07 | Edge Cases | T12 | Verified |
+| EDGE-08 | Edge Cases | T15 | Verified |
 
-**Coverage:** 103 total, 103 mapped to tasks, 0 unmapped.
+**Coverage:** 103 total, 103 mapped to tasks, 103 verified (`validation.md`, PASS).
 
 ---
 

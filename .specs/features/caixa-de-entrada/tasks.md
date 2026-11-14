@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/caixa-de-entrada/design.md`
-**Status**: Draft
+**Status**: Done (Verifier PASS, `validation.md`)
 **Base**: `main` (`d7e18fe`), branch `claude/gtd-capture-system-440984`.
 
 ---
