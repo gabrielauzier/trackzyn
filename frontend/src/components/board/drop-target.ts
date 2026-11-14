@@ -78,6 +78,8 @@ export function dropTarget(board: Board, activeId: string, overId: string): Drop
   // Out of every container: a task of a group leaves it (GRP-07); a loose task stays loose.
   const outside = active?.group_id ? null : undefined
 
+  // A reminder lands where it is dropped but never joins a group (MODAL-06).
+  const joins = (group: string | null | undefined) => (active?.kind === 'reminder' ? undefined : group)
   const container = containerOf(overId)
   if (container) {
     // Its title is the start of the block; its area, the end of it (GRP-06, GRP-08).
@@ -86,11 +88,11 @@ export function dropTarget(board: Board, activeId: string, overId: string): Drop
     const first = inGroup.indexOf(true)
     const last = inGroup.lastIndexOf(true)
     const before = container.kind === 'container' ? (others[first]?.id ?? null) : last < 0 ? null : (others[last + 1]?.id ?? null)
-    return { column: to, before, group: container.group }
+    return { column: to, before, group: joins(container.group) }
   }
   if (overId.startsWith(COLUMN_PREFIX)) return { column: to, before: null, group: outside }
   // Dropped on a card: the group of that card, or out of any (GRP-06..08).
-  const group = groupOf(overId) ?? outside
+  const group = joins(groupOf(overId) ?? outside)
   if (from !== to) return { column: to, before: overId, group }
   if (activeId === overId) return null
   const ids = tasks.map((task) => task.id)

@@ -268,7 +268,7 @@ export interface GroupWithoutNextAction {
  * Puts the task in `column`, right before `beforeTaskId` (or at the end for null), joins the blocks of each
  * group there (AD-013) and renumbers the columns it left and entered from 0 to n-1. `group` left out keeps
  * the task's group, null takes it out of its group (GRP-07), an id puts it in that group of the same list
- * (GRP-06, GRP-08), or 422. Entering `done` records `completed_at = now` and
+ * (GRP-06, GRP-08), or 422; a reminder never takes a group (MODAL-06). Entering `done` records `completed_at = now` and
  * `completed_by_user_id = byUserId` (AD-006) and takes the flag off (FLAG-05); leaving it clears both, and
  * moving inside `done` keeps them.
  * A task that is not in `today` afterwards loses its open focus session, ended at `now` (FOCUS-15).
@@ -297,6 +297,9 @@ export async function moveTask(
             .from(taskGroups)
             .where(and(eq(taskGroups.id, groupId), eq(taskGroups.listId, current.listId)))
     if (groupId !== null && !group) throw fieldError('The group is not of the list of the task', 'group_of_another_list')
+    if (groupId !== null && current.kind === 'reminder') {
+      throw fieldError('A reminder has no due day, flag, Aguardando or group', 'reminder_field')
+    }
 
     const rows = await columnTasks(tx as Database, current.listId, target.column)
     const groupOf = new Map(rows.map((row) => [row.id, row.groupId]))

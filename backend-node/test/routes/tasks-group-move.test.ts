@@ -202,3 +202,31 @@ describe('MODAL-04 changing the group in PATCH', () => {
     expect(await order('today')).toEqual(['g1', 'g3', 'g2', 'a'])
   })
 })
+
+describe('MODAL-06 a reminder never joins a group', () => {
+  it('moving a reminder with a group id answers 422 reminder_field and keeps it loose; a task makes the same move', async () => {
+    const { group, add, move, read, order } = await setup()
+    await add('g1', 'today', { group_id: group.id })
+    await add('r', 'backlog', { kind: 'reminder' })
+    await add('x', 'backlog')
+
+    const refused = await move('r', 'today', 'g1', { group_id: group.id })
+
+    expect(refused.statusCode).toBe(422)
+    expect(refused.json()).toMatchObject({ code: 'reminder_field' })
+    expect(await read('r')).toMatchObject({ column: 'backlog', group_id: null })
+    expect(await order('today')).toEqual(['g1'])
+    const moved = await move('x', 'today', 'g1', { group_id: group.id })
+    expect(moved.statusCode).toBe(200)
+    expect(moved.json()).toMatchObject({ group_id: group.id })
+  })
+
+  it('a reminder still moves between columns without a group id or with group_id null', async () => {
+    const { add, move, read } = await setup()
+    await add('r', 'backlog', { kind: 'reminder' })
+
+    expect((await move('r', 'today', null)).statusCode).toBe(200)
+    expect((await move('r', 'this_week', null, { group_id: null })).statusCode).toBe(200)
+    expect(await read('r')).toMatchObject({ column: 'this_week', group_id: null })
+  })
+})

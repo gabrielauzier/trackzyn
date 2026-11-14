@@ -113,6 +113,7 @@ T37
 T38
 T39
 T40
+T41
 ```
 
 ---
@@ -1368,6 +1369,36 @@ T40
 
 ---
 
+### T41: Lembrete não entra em grupo pelo arraste
+
+**What**: `moveTask` responde 422 `reminder_field` quando um lembrete terminaria num grupo, e `dropTarget` deixa o lembrete solto ao cair num contêiner ou num card de grupo.
+**Where**: `backend-node/src/services/tasks.ts`
+**Depends on**: None
+**Reuses**: `fieldError('…', 'reminder_field')` de T36
+**Requirement**: MODAL-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [x] `POST /api/tasks/:id/move` de um lembrete com `group_id` → 422 `reminder_field`, e o lembrete continua na coluna e sem grupo; a mesma jogada com uma tarefa → 200 no grupo (L-048)
+- [x] Lembrete sem `group_id` ou com `group_id: null` continua mudando de coluna
+- [x] `dropTarget` de um lembrete sobre `group:`, `container:` ou um card do grupo devolve `group: undefined`; uma tarefa no mesmo lugar entra no grupo
+- [x] Gate check passes: Full (backend) e Full (frontend)
+
+**Also touched**: `frontend/src/components/board/drop-target.ts`, `backend-node/test/routes/tasks-group-move.test.ts`, `frontend/src/components/board/drop-target.test.ts`
+**Status**: ✅ Done
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): keep reminders out of groups when they are moved`
+
+---
+
 ## Phase Execution Map
 
 ```
@@ -1464,6 +1495,7 @@ Execution is strictly sequential: one task at a time, in order.
 | T38 | None | — | ✅ Match |
 | T39 | None | — | ✅ Match |
 | T40 | None | — | ✅ Match |
+| T41 | None | — | ✅ Match |
 
 Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem das fases); nenhuma tarefa depende de uma fase posterior.
 
@@ -1513,6 +1545,7 @@ Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem d
 | T38 | Componentes | unit | unit | ✅ OK |
 | T39 | Componentes + hook | unit | unit | ✅ OK |
 | T40 | Rotas | integration | integration | ✅ OK |
+| T41 | Serviços + funções puras | integration | integration | ✅ OK |
 
 ---
 

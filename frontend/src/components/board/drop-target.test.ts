@@ -127,6 +127,21 @@ describe('dropTarget with groups (GRP-06, GRP-07, GRP-08)', () => {
     expect(dropTarget(grouped, 'a3', 'group:g1:today')).toEqual({ column: 'today', before: 't2', group: 'g1' })
   })
 
+  it('MODAL-06 a reminder dropped in a container or on a card of a group lands there but stays out of the group', () => {
+    const reminderBoard: Board = {
+      ...grouped,
+      columns: {
+        ...grouped.columns,
+        this_week: { ...grouped.columns.this_week, tasks: [{ ...inGroup('r1', 0, null), kind: 'reminder' }, inGroup('a3', 1, 'g1')] },
+      },
+    }
+    expect(dropTarget(reminderBoard, 'r1', 'group:g1:today')).toEqual({ column: 'today', before: 't2', group: undefined })
+    expect(dropTarget(reminderBoard, 'r1', 'container:g1:today')).toEqual({ column: 'today', before: 'a1', group: undefined })
+    expect(dropTarget(reminderBoard, 'r1', 'a2')).toEqual({ column: 'today', before: 'a2', group: undefined })
+    // A task in the same place does join the group (GRP-08).
+    expect(dropTarget(reminderBoard, 'a3', 'b1')).toEqual({ column: 'backlog', before: 'b1', group: 'g2' })
+  })
+
   it('GRP-08 a drop on the title of a container, container:<id>:<col>, goes to the start of its block', () => {
     expect(dropTarget(grouped, 'w1', 'container:g1:today')).toEqual({ column: 'today', before: 'a1', group: 'g1' })
   })
