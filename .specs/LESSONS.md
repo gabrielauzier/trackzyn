@@ -462,6 +462,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: T11 SPEC_DEVIATION backend-node/src/services/decision.ts:72 (backend/shared-rules)
 - last seen: 2026-11-13T22:43:31Z
 
+### L-076 - When a kind refuses a field, enforce the refusal on every write path that can set it, move and drag routes included.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `tasks` · harmful: 0
+- features: caixa-de-entrada
+- evidence: MODAL-06 backend-node/src/services/tasks.ts:291 (tasks)
+- last seen: 2026-11-14T02:13:34Z
+
+### L-077 - Name the design token when the spec asks for a neutral colour, so the test asserts the token the spec chose.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: caixa-de-entrada
+- evidence: DUE-02 frontend/src/components/board/task-card.test.tsx:554 (frontend)
+- last seen: 2026-11-14T02:13:34Z
+
+### L-078 - State hover outcomes as the classes or tokens that produce them, since jsdom cannot render hover.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `frontend` · harmful: 0
+- features: caixa-de-entrada
+- evidence: QUICK-09 frontend/src/components/inbox/inbox-row.test.tsx:236 (frontend)
+- last seen: 2026-11-14T02:13:34Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 76,
+  "next_id": 79,
   "lessons": [
     {
       "id": "L-001",
@@ -1362,6 +1362,60 @@
       ],
       "created": "2026-11-13T22:43:31Z",
       "last_seen": "2026-11-13T22:43:31Z"
+    },
+    {
+      "id": "L-076",
+      "key": "ac_gap::when a kind refuses a field enforce the refusal on every write path that can set it move and drag routes included",
+      "text": "When a kind refuses a field, enforce the refusal on every write path that can set it, move and drag routes included.",
+      "signal": "ac_gap",
+      "scope": "tasks",
+      "status": "candidate",
+      "features": [
+        "caixa-de-entrada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "MODAL-06 backend-node/src/services/tasks.ts:291 (tasks)"
+      ],
+      "created": "2026-11-14T02:13:34Z",
+      "last_seen": "2026-11-14T02:13:34Z"
+    },
+    {
+      "id": "L-077",
+      "key": "spec_precision_gap::name the design token when the spec asks for a neutral colour so the test asserts the token the spec chose",
+      "text": "Name the design token when the spec asks for a neutral colour, so the test asserts the token the spec chose.",
+      "signal": "spec_precision_gap",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "caixa-de-entrada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "DUE-02 frontend/src/components/board/task-card.test.tsx:554 (frontend)"
+      ],
+      "created": "2026-11-14T02:13:34Z",
+      "last_seen": "2026-11-14T02:13:34Z"
+    },
+    {
+      "id": "L-078",
+      "key": "spec_precision_gap::state hover outcomes as the classes or tokens that produce them since jsdom cannot render hover",
+      "text": "State hover outcomes as the classes or tokens that produce them, since jsdom cannot render hover.",
+      "signal": "spec_precision_gap",
+      "scope": "frontend",
+      "status": "candidate",
+      "features": [
+        "caixa-de-entrada"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "QUICK-09 frontend/src/components/inbox/inbox-row.test.tsx:236 (frontend)"
+      ],
+      "created": "2026-11-14T02:13:34Z",
+      "last_seen": "2026-11-14T02:13:34Z"
     }
   ]
 }
