@@ -414,7 +414,7 @@ O que o código já fixa:
 | ALL-08 | P1: Processar tudo | T27 | Implementing |
 | ALL-09 | P1: Processar tudo | T14 | Implementing |
 | REM-01 | P1: Lembrete | T13, T26, T35 | Implementing |
-| REM-02 | P1: Lembrete | T1, T2, T11, T26 | Implementing |
+| REM-02 | P1: Lembrete | T1, T2, T11, T26, T36 | Implementing |
 | REM-03 | P1: Lembrete | T18 | Implementing |
 | REM-04 | P1: Lembrete | T5 | Implementing |
 | REM-05 | P1: Lembrete | T5, T32 | Implementing |
@@ -461,7 +461,7 @@ O que o código já fixa:
 | MODAL-03 | P1: Modal da tarefa | T22 | Implementing |
 | MODAL-04 | P1: Modal da tarefa | T7, T8, T22 | Implementing |
 | MODAL-05 | P1: Modal da tarefa | T22 | Implementing |
-| MODAL-06 | P1: Modal da tarefa | T22 | Implementing |
+| MODAL-06 | P1: Modal da tarefa | T22, T36 | Implementing |
 | API-01 | P2: API e MCP | T4, T6, T16 | Implementing |
 | API-02 | P2: API e MCP | T6 | Implementing |
 | API-03 | P2: API e MCP | T2, T6 | Implementing |

@@ -53,12 +53,15 @@ describe('the caixa-de-entrada fields in the MCP tools', () => {
     expect(card((await callTool(client, 'get_board', { list_id: listId })).json(), taskId)).toMatchObject(expected)
   })
 
-  it('API-02 create_task creates a reminder with priority and due day', async () => {
+  it('API-02 create_task creates a reminder with priority; MODAL-06 a due day on it is a tool error', async () => {
     const { client, listId, owner, workspaceId } = await setup()
-    const created = await callTool(client, 'create_task', { list_id: listId, title: 'Pagar o DAS', kind: 'reminder', priority: 'ultra', due_on: '2026-11-20' })
+    const created = await callTool(client, 'create_task', { list_id: listId, title: 'Pagar o DAS', kind: 'reminder', priority: 'ultra' })
     expect(created.isError).toBe(false)
     const read = await call('GET', `/api/tasks/${created.json().id as string}`, owner.token, workspaceId)
-    expect(read.json()).toMatchObject({ kind: 'reminder', priority: 'ultra', due_on: '2026-11-20', estimate_minutes: null })
+    expect(read.json()).toMatchObject({ kind: 'reminder', priority: 'ultra', due_on: null, estimate_minutes: null })
+    const refused = await callTool(client, 'create_task', { list_id: listId, title: 'Pagar o IPVA', kind: 'reminder', due_on: '2026-11-20' })
+    expect(refused.isError).toBe(true)
+    expect(refused.text).toContain('A reminder has no due day, flag, Aguardando or group')
   })
 
   it('API-03 update_task with priority urgent is a tool error with the 422 message and saves nothing', async () => {

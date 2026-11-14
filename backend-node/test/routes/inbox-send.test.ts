@@ -144,6 +144,15 @@ describe('REM-01 processing an item as a reminder', () => {
     expect((await column('backlog')).map((card) => card.kind)).toEqual(['reminder'])
   })
 
+  it('MODAL-06 a reminder with a due day answers 422, as a send and as a draft, and keeps the item', async () => {
+    const { owner, workspaceId, listId, capture, send, inbox } = await setup()
+    const id = await capture('Pagar o DAS')
+    const decision = { type: 'reminder', list_id: listId, due_on: '2099-01-01' }
+    expect((await send(id, decision)).statusCode).toBe(422)
+    expect((await call('PATCH', `/api/inbox/${id}`, owner.token, workspaceId, { draft: decision })).statusCode).toBe(422)
+    expect(await inbox()).toEqual([expect.objectContaining({ id, draft: null })])
+  })
+
   it('a reminder with an estimate answers 422 and keeps the item', async () => {
     const { listId, capture, send, inbox } = await setup()
     const id = await capture('Pagar o DAS')

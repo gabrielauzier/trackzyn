@@ -1227,12 +1227,14 @@ T40
 
 **Done when**:
 
-- [ ] `PATCH` de um lembrete com cada um dos quatro campos → 422 com `code: reminder_field` e nada gravado
-- [ ] Uma tarefa comum aceita os mesmos campos (L-048)
-- [ ] Decisão `reminder` com `due_on` → 422
-- [ ] Gate check passes: Full (backend)
+- [x] `PATCH` de um lembrete com cada um dos quatro campos → 422 com `code: reminder_field` e nada gravado
+- [x] Uma tarefa comum aceita os mesmos campos (L-048)
+- [x] Decisão `reminder` com `due_on` → 422
+- [x] Gate check passes: Full (backend)
 
-**Also touched**: `backend-node/src/services/decision.ts`
+**Also touched**: `backend-node/src/services/decision.ts` (a decisão `reminder` recusa `due_on` como já recusava a estimativa; vale no envio e no rascunho), `backend-node/test/routes/tasks-fields.test.ts`, `backend-node/test/routes/inbox-send.test.ts`, `backend-node/test/mcp/task-fields-tools.test.ts` (o teste que criava um lembrete com prazo pelo MCP passou a esperar o erro: MODAL-06 mudou em 2026-11-13). A regra olha o valor final: limpar os campos num lembrete (`due_on: null`, `flagged: false`) continua aceito. Fora do escopo: arrastar um lembrete para dentro de um contêiner (`moveTask`) ainda o põe no grupo.
+
+**Status**: ✅ Done
 
 **Tests**: integration
 **Gate**: full

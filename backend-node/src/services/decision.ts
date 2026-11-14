@@ -15,7 +15,7 @@ const day = z.iso.date('Input should be a valid date (YYYY-MM-DD)')
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Input should be a time (HH:MM)')
 const timeNeedsDay = { path: ['scheduled_time'], message: 'scheduled_time needs scheduled_on' }
 
-/** What a task and a reminder share: name, list, priority, due day, schedule, notes and the column chosen in `Vai para`. */
+/** What a task and a reminder share: name, list, priority, due day (a reminder refuses it), schedule, notes and the column chosen in `Vai para`. */
 const plannedFields = {
   name,
   list_id: uuid,
@@ -42,6 +42,8 @@ export const decisionSchema = z.discriminatedUnion('type', [
       ...plannedFields,
       /** A reminder has no estimate: any value is refused (REM-02). */
       estimate_minutes: z.null({ error: 'A reminder has no estimate' }).optional(),
+      /** Nor a due day (MODAL-06). */
+      due_on: z.null({ error: 'A reminder has no due day' }).optional(),
     })
     .refine((decision) => decision.scheduled_time == null || decision.scheduled_on != null, timeNeedsDay),
   z.object({

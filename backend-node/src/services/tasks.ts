@@ -78,18 +78,26 @@ const fieldError = (message: string, code: string) => new HttpError(422, message
 
 /**
  * The fields `changes` leave on `current`, or 422. Unmarking Aguardando clears "de quem" (WAIT-05), taking the
- * flag off clears its reason (FLAG-04); a reminder has no estimate (REM-02), a completed task has no flag
- * (FLAG-05) and the group must be one of the task's list.
+ * flag off clears its reason (FLAG-04); a reminder has no estimate (REM-02) and no due day, flag, Aguardando
+ * or group (MODAL-06), a completed task has no flag (FLAG-05) and the group must be one of the task's list.
  */
 async function resolveFields(
   db: Database,
-  current: Pick<Task, 'listId' | 'column' | 'kind' | 'estimateMinutes' | 'waiting' | 'flagged'>,
+  current: Pick<Task, 'listId' | 'column' | 'kind' | 'estimateMinutes' | 'dueOn' | 'waiting' | 'flagged' | 'groupId'>,
   changes: TaskFields & { estimateMinutes?: number | null },
 ): Promise<TaskFields> {
   const kind = changes.kind ?? current.kind
   const estimate = changes.estimateMinutes !== undefined ? changes.estimateMinutes : current.estimateMinutes
   if (kind === 'reminder' && estimate !== null) throw fieldError('A reminder has no estimate', 'reminder_estimate')
   const waiting = changes.waiting ?? current.waiting
+  if (kind === 'reminder') {
+    const dueOn = changes.dueOn !== undefined ? changes.dueOn : current.dueOn
+    const groupId = changes.groupId !== undefined ? changes.groupId : current.groupId
+    const flagged = changes.flagged ?? current.flagged
+    if (dueOn !== null || flagged || waiting || groupId !== null) {
+      throw fieldError('A reminder has no due day, flag, Aguardando or group', 'reminder_field')
+    }
+  }
   if (!waiting && changes.waitingFor != null) throw fieldError('waiting_for needs waiting', 'waiting_for_needs_waiting')
   const flagged = changes.flagged ?? current.flagged
   if (!flagged && changes.flagReason != null) throw fieldError('flag_reason needs flagged', 'flag_reason_needs_flag')
@@ -176,7 +184,7 @@ export async function createTask(
   const list = await getList(db, input.listId, workspaceId)
   const fields = await resolveFields(
     db,
-    { listId: list.id, column: input.column, kind: 'task', estimateMinutes: null, waiting: false, flagged: false },
+    { listId: list.id, column: input.column, kind: 'task', estimateMinutes: null, dueOn: null, waiting: false, flagged: false, groupId: null },
     input,
   )
   return db.transaction(async (tx) => {

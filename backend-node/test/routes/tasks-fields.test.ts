@@ -186,6 +186,44 @@ describe('PATCH /api/tasks/:id with the caixa-de-entrada fields', () => {
     expect(reply.json()).toMatchObject({ code: 'reminder_estimate' })
   })
 
+  it('MODAL-06 answers 422 reminder_field for a due day, a flag, Aguardando or a group on a reminder, and stores nothing', async () => {
+    const { owner, workspaceId, groupId, post } = await setup()
+    const id = (await post({ title: 'Pagar o DAS', kind: 'reminder' })).json().id as string
+    for (const change of [{ due_on: '2026-11-20' }, { flagged: true }, { waiting: true }, { group_id: groupId }]) {
+      const reply = await call('PATCH', `/api/tasks/${id}`, owner.token, workspaceId, change)
+      expect(reply.statusCode, JSON.stringify(change)).toBe(422)
+      expect(reply.json()).toMatchObject({ code: 'reminder_field' })
+    }
+    expect((await call('GET', `/api/tasks/${id}`, owner.token, workspaceId)).json()).toMatchObject({
+      kind: 'reminder',
+      due_on: null,
+      flagged: false,
+      waiting: false,
+      group_id: null,
+    })
+  })
+
+  it('MODAL-06 answers 422 reminder_field for those fields on the creation of a reminder', async () => {
+    const { groupId, post } = await setup()
+    for (const fields of [{ due_on: '2026-11-20' }, { flagged: true }, { waiting: true }, { group_id: groupId }]) {
+      const reply = await post({ title: 'Pagar o DAS', kind: 'reminder', ...fields })
+      expect(reply.statusCode, JSON.stringify(fields)).toBe(422)
+      expect(reply.json()).toMatchObject({ code: 'reminder_field' })
+    }
+  })
+
+  it('MODAL-06 a task accepts each of those fields, and a reminder accepts them cleared', async () => {
+    const { owner, workspaceId, otherId, groupId, post } = await setup()
+    for (const change of [{ due_on: '2026-11-20' }, { flagged: true }, { waiting: true }, { group_id: groupId }]) {
+      const reply = await call('PATCH', `/api/tasks/${otherId}`, owner.token, workspaceId, change)
+      expect(reply.statusCode, JSON.stringify(change)).toBe(200)
+      expect(reply.json()).toMatchObject(change)
+    }
+    const reminder = (await post({ title: 'Pagar o DAS', kind: 'reminder' })).json().id as string
+    const cleared = await call('PATCH', `/api/tasks/${reminder}`, owner.token, workspaceId, { due_on: null, flagged: false, waiting: false, group_id: null })
+    expect(cleared.statusCode).toBe(200)
+  })
+
   it('API-02 POST /api/tasks creates a task with the new fields', async () => {
     const { groupId, post } = await setup()
     const created = await post({ title: 'Deploy', priority: 'low', due_on: '2026-11-30', waiting: true, waiting_for: 'Ana', flagged: true, flag_reason: 'Sem acesso', group_id: groupId })
