@@ -101,6 +101,20 @@ T29 → T30
 T30 → T31
 ```
 
+
+### Phase 7: Correções da verificação
+
+Gaps do Verifier (`validation.md`, 1ª rodada) e decisões do usuário de 2026-11-13 sobre PROC-03, MODAL-06, CAP-04/CAP-06 e INBOX-04.
+
+```
+T34 → T35
+T36
+T37
+T38
+T39
+T40
+```
+
 ---
 
 ## Task Breakdown
@@ -1134,10 +1148,212 @@ T30 → T31
 
 ---
 
+### T34: Dono, rascunho, corrida e limite de 30 dias na caixa
+
+**What**: `commitDrafts` responde 404 a um id de item de outro usuário; descartar apaga o rascunho; teste da corrida real em `takeItem`; testes do limite de 30 dias.
+**Where**: `backend-node/src/services/inbox.ts`
+**Depends on**: None
+**Reuses**: `findItem`, `takeItem`
+**Requirement**: INBOX-03, INBOX-04, INBOX-06, EDGE-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `POST /api/inbox/commit` com o id de um item de outro usuário → 404 e nada enviado; o mesmo pedido só com itens próprios continua funcionando (L-048)
+- [ ] Descartar um item com rascunho apaga o rascunho; restaurá-lo traz `draft: null`, e a próxima confirmação não o envia
+- [ ] Um teste chama `takeItem` (ou `sendItem` sem o pré-check) para um item já tirado e recebe 409 `already_processed`, matando a remoção do guarda `if (!taken)`
+- [ ] Item descartado há exatamente 30 dias continua; há 30 dias e 1 minuto some (mata `TRASH_DAYS` 29.5 e 30.5)
+- [ ] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/test/routes/inbox.test.ts`, `backend-node/test/routes/inbox-send.test.ts`, `backend-node/test/routes/inbox-commit.test.ts`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): guard the inbox commit, discard drafts and pin the trash window`
+
+---
+
+### T35: Envio: item sai, tarefa no fim, lembrete e dia passado
+
+**What**: Testes de envio que provam que o item sai da caixa e a tarefa entra no fim da coluna, o lembrete com agendamento segue a regra de coluna, e o dia já passado da semana vai para Hoje nas duas cópias de `targetColumn`.
+**Where**: `backend-node/test/routes/inbox-send.test.ts`
+**Depends on**: T34
+**Reuses**: fixtures de `inbox-send.test.ts`
+**Requirement**: PROC-03, PROC-05, PROC-06, REM-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Envio avulso de tarefa: `GET /api/inbox` não lista mais o item e a tarefa tem a maior `position` da coluna, depois de uma tarefa que já estava lá
+- [ ] `done` (Já fiz): o item sai e a tarefa fica em Concluídas com `completed_by` do usuário
+- [ ] Lembrete agendado para hoje cai em Hoje; para outro dia ainda por vir da semana, em Esta semana; para a semana seguinte, em Backlog
+- [ ] Dia já passado da semana → Hoje em `backend-node/src/services/decision.ts` e em `frontend/src/lib/inbox/decision.ts`
+- [ ] Gate check passes: Full (backend) e Quick
+
+**Also touched**: `backend-node/test/services/decision.test.ts`, `frontend/src/lib/inbox/decision.test.ts`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): prove where processed items land`
+
+---
+
+### T36: API recusa prazo, flag, Aguardando e grupo em lembrete
+
+**What**: `resolveFields` responde 422 quando um lembrete recebe `due_on`, `flagged`, `waiting` ou `group_id`, na criação, na edição e no envio da caixa.
+**Where**: `backend-node/src/services/tasks.ts`
+**Depends on**: None
+**Reuses**: `resolveFields`
+**Requirement**: MODAL-06, REM-02
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] `PATCH` de um lembrete com cada um dos quatro campos → 422 com `code: reminder_field` e nada gravado
+- [ ] Uma tarefa comum aceita os mesmos campos (L-048)
+- [ ] Decisão `reminder` com `due_on` → 422
+- [ ] Gate check passes: Full (backend)
+
+**Also touched**: `backend-node/src/services/decision.ts`
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `fix(backend): keep reminders to name, priority and schedule`
+
+---
+
+### T37: Soma otimista ignora tarefas em Aguardando
+
+**What**: `estimateOf` em `list-board.tsx` deixa de somar tarefas em Aguardando na coluna e no pendente de Hoje ao editar a estimativa na hora.
+**Where**: `frontend/src/pages/list-board.tsx`
+**Depends on**: None
+**Reuses**: regra do `sum` do backend (WAIT-04)
+**Requirement**: WAIT-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Editar a estimativa de uma tarefa em Hoje com outra tarefa em Aguardando: o cabeçalho e o pendente mostram a soma sem a tarefa em Aguardando, antes do refetch
+- [ ] Gate check passes: Full (frontend)
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(frontend): leave waiting tasks out of the optimistic column sums`
+
+---
+
+### T38: Lembrete sem foco, sem campos extras e com dia no card
+
+**What**: O card de lembrete não oferece `Iniciar foco`; `Focar agora` fica desabilitado quando Hoje só tem lembretes; o modal do lembrete esconde Prazo, Flag e Aguardando; teste do card só com dia.
+**Where**: `frontend/src/components/board/reminder-card.tsx`
+**Depends on**: None
+**Reuses**: `board-column.tsx`, `task-dialog.tsx`
+**Requirement**: REM-03, REM-05, MODAL-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] O menu do card de lembrete não tem `Iniciar foco`; o de uma tarefa em Hoje tem (L-048)
+- [ ] Hoje só com lembretes: `Focar agora` desabilitado; com uma tarefa, habilitado
+- [ ] Modal de lembrete sem Prazo, Flag, Aguardando, Estimativa, Grupo e Subtarefas; o de tarefa mostra todos
+- [ ] Lembrete só com dia mostra o dia; com dia e hora, a hora
+- [ ] Gate check passes: Full (frontend)
+
+**Also touched**: `frontend/src/components/board/board-column.tsx`, `frontend/src/components/board/task-dialog.tsx`, `frontend/src/components/board/task-card-menu.tsx`
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(frontend): keep reminders out of focus and trim their dialog`
+
+---
+
+### T39: Atalho no desktop, paleta, grupo e campos do card
+
+**What**: No desktop com o atalho global ligado, o hook do overlay não reage a Mod+Shift+Space (a janelinha abre); testes: a paleta abre o overlay com o campo focado, o contêiner do grupo respeita Campos do card e o grupo do Processar aceita prioridade.
+**Where**: `frontend/src/hooks/use-capture-hotkey.ts`
+**Depends on**: None
+**Reuses**: `isDesktop`, `getDesktopApi().getCaptureShortcut`
+**Requirement**: CAP-04, CAP-06, FIELDS-06, PRI-04
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] No desktop com o atalho global ligado, Mod+Shift+Space não abre o overlay; com ele desligado, abre; no web, abre
+- [ ] `Capturar` na paleta abre o overlay e o campo tem o foco
+- [ ] Contêiner com cada campo desligado: os cards dentro escondem o campo; o contêiner continua aparecendo
+- [ ] No Processar como grupo, escolher Alta envia `priority: "high"` na decisão
+- [ ] Gate check passes: Full (frontend)
+
+**Also touched**: `frontend/src/components/command-palette.test.tsx`, `frontend/src/components/board/group-container.test.tsx`, `frontend/src/components/inbox/process-dialog.test.tsx`
+
+**Tests**: unit
+**Gate**: full
+
+**Commit**: `fix(frontend): let the desktop shortcut own capture and cover group fields`
+
+---
+
+### T40: Tarefas do grupo valem como tarefas comuns
+
+**What**: Testes que provam que uma tarefa de grupo entra no foco, na Agenda agendada, nos candidatos do planejamento e nos relatórios como qualquer tarefa.
+**Where**: `backend-node/test/routes/group-tasks.test.ts`
+**Depends on**: None
+**Reuses**: fixtures de foco, Agenda, plano e relatórios
+**Requirement**: GRP-11
+
+**Tools**:
+
+- MCP: NONE
+- Skill: NONE
+
+**Done when**:
+
+- [ ] Tarefa de grupo em Hoje inicia foco e conta tempo gasto
+- [ ] Tarefa de grupo agendada aparece em `GET /api/agenda/scheduled`
+- [ ] Tarefa de grupo aparece nos candidatos do plano
+- [ ] Sessão numa tarefa de grupo entra no total dos relatórios
+- [ ] Gate check passes: Full (backend)
+
+**Tests**: integration
+**Gate**: full
+
+**Commit**: `test(backend): treat group tasks as ordinary tasks`
+
+---
+
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
 ```
 
 As dependências de cada fase estão nos diagramas do Execution Plan.
@@ -1223,6 +1439,13 @@ Execution is strictly sequential: one task at a time, in order.
 | T29 | None | — | ✅ Match |
 | T30 | T29 | T29 → T30 | ✅ Match |
 | T31 | T30 | T30 → T31 | ✅ Match |
+| T34 | None | — | ✅ Match |
+| T35 | T34 | T34 → T35 | ✅ Match |
+| T36 | None | — | ✅ Match |
+| T37 | None | — | ✅ Match |
+| T38 | None | — | ✅ Match |
+| T39 | None | — | ✅ Match |
+| T40 | None | — | ✅ Match |
 
 Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem das fases); nenhuma tarefa depende de uma fase posterior.
 
@@ -1265,6 +1488,13 @@ Fases anteriores são pré-requisito implícito de toda fase seguinte (a ordem d
 | T29 | Processo principal do desktop | unit | unit | ✅ OK |
 | T30 | Processo principal do desktop + página | unit | unit | ✅ OK |
 | T31 | Componentes | unit | unit | ✅ OK |
+| T34 | Serviços + rotas | integration | integration | ✅ OK |
+| T35 | Rotas + funções puras | integration | integration | ✅ OK |
+| T36 | Serviços | integration | integration | ✅ OK |
+| T37 | Páginas | unit | unit | ✅ OK |
+| T38 | Componentes | unit | unit | ✅ OK |
+| T39 | Componentes + hook | unit | unit | ✅ OK |
+| T40 | Rotas | integration | integration | ✅ OK |
 
 ---
 

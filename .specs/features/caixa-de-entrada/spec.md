@@ -58,7 +58,10 @@ O que o código já fixa:
 | Lixeira | Guarda o item 30 dias; restaurar volta para Atuais; depois de 30 dias o item é apagado na próxima leitura da caixa | Sem worker no modo local (AD-001) | y |
 | Atalho de captura dentro do app | `⌘⇧Space` / `Ctrl+Shift+Space` com o app em foco, a entrada `Capturar` da paleta de comandos e o botão `Capturar` da barra lateral | Escolha do agente (context.md, Agent's Discretion) | y |
 | Ordem da caixa | Mais antigo primeiro | GTD processa em ordem de chegada | y |
-| Coluna de destino ao processar | Sem agendamento → Backlog; agendada para hoje → Hoje; para outro dia desta semana → Esta semana; para depois → Backlog; o usuário pode trocar antes de salvar | Pedido do usuário (2026-11-13) + regra do agendamento | y |
+| Coluna de destino ao processar | Sem agendamento → Backlog; agendada para hoje ou para um dia que já passou → Hoje; para outro dia desta semana → Esta semana; para depois → Backlog; o usuário pode trocar antes de salvar | Pedido do usuário (2026-11-13) + regra do agendamento | y |
+| Campos do lembrete | Só nome, lista, prioridade, dia e hora e notas; sem estimativa, prazo, flag, Aguardando, grupo e subtarefas | Decisão do usuário (2026-11-13), depois da verificação | y |
+| Atalho no desktop com o Trackzyn em foco | Abre a janelinha de captura, como com outro app na frente; o overlay continua pela paleta e pelo botão da barra lateral | Decisão do usuário (2026-11-13), depois da verificação | y |
+| Descartar um item com rascunho | Apaga o rascunho; restaurar traz o item sem decisão | Decisão do usuário (2026-11-13), depois da verificação | y |
 | "Já fiz" (regra dos 2 minutos) | Cria uma tarefa já em Concluídas, sem estimativa, concluída agora pelo usuário | Regra do GTD | y |
 | Rascunho do Processar tudo | Fica no servidor, por usuário, até ser enviado; não expira | Sobrevive a fechar a janela e vale no web e no desktop | y |
 | Origem do item | `app`, `desktop`, `mcp` ou `api`, mais o token quando houver | Mesma lógica do "via" da tarefa | y |
@@ -84,9 +87,9 @@ O que o código já fixa:
 1. WHEN o usuário envia um texto de 1 a 500 caracteres (depois de tirar os espaços das pontas) pelo campo do topo da caixa, pelo overlay de captura ou pela paleta de comandos THEN o sistema SHALL criar um item na caixa dele, no workspace atual, com esse texto, a data e hora de chegada e a origem `app`, e limpar o campo. (CAP-01)
 2. IF o texto está vazio depois de tirar os espaços THEN o sistema SHALL não criar item e manter o campo com o foco. (CAP-02)
 3. IF o texto passa de 500 caracteres THEN o sistema SHALL recusar com 422 e a interface SHALL mostrar `Até 500 caracteres` sem apagar o texto. (CAP-03)
-4. WHEN o usuário aperta `⌘⇧Space` (macOS) ou `Ctrl+Shift+Space` (Windows, Linux) com o app em foco, ou escolhe `Capturar` na paleta ou na barra lateral THEN o sistema SHALL abrir o overlay de captura com o campo focado. (CAP-04)
+4. WHEN o usuário aperta `⌘⇧Space` (macOS) ou `Ctrl+Shift+Space` (Windows, Linux) com o app web em foco, ou no desktop com o atalho global desligado, ou escolhe `Capturar` na paleta ou na barra lateral THEN o sistema SHALL abrir o overlay de captura com o campo focado. (CAP-04)
 5. WHEN o usuário aperta Esc no overlay THEN o sistema SHALL fechar o overlay sem criar item. (CAP-05)
-6. WHERE o app desktop tem o atalho de captura ligado, WHEN o usuário aperta o atalho com outro app na frente THEN o desktop SHALL abrir a janelinha de captura acima das outras janelas, e o item criado por ela SHALL ter a origem `desktop`. (CAP-06)
+6. WHERE o app desktop tem o atalho de captura ligado, WHEN o usuário aperta o atalho, com outro app ou com o próprio Trackzyn na frente, THEN o desktop SHALL abrir a janelinha de captura acima das outras janelas, e o item criado por ela SHALL ter a origem `desktop`. (CAP-06)
 7. WHEN o usuário desliga ou troca o atalho de captura nas preferências do desktop THEN o desktop SHALL liberar a combinação anterior na hora. (CAP-07)
 8. IF o sistema operacional recusa a combinação (já usada por outro app) THEN o desktop SHALL mostrar `Esse atalho já está em uso` nas preferências e manter o atalho desligado. (CAP-08)
 9. WHEN um cliente com token de escopo `inbox:create` chama a ferramenta MCP `capture` ou `POST /api/inbox` com um texto THEN o sistema SHALL criar o item na caixa do dono do token, no workspace do token, com a origem `mcp` ou `api` e o token. (CAP-09)
@@ -107,7 +110,7 @@ O que o código já fixa:
 1. The system SHALL mostrar na barra lateral o item `Caixa de entrada` com a quantidade de itens em Atuais do usuário no workspace atual, e sem número quando for zero. (INBOX-01)
 2. The system SHALL listar em Atuais só os itens do usuário logado no workspace atual, do mais antigo para o mais novo, cada um com o texto, a idade (`hoje, 09:12`, `ontem`, `há 3 dias`) e a origem. (INBOX-02)
 3. The system SHALL nunca mostrar, contar ou deixar processar um item de outro usuário; IF um usuário pede um item de outro pela API THEN o sistema SHALL responder 404. (INBOX-03)
-4. WHEN o usuário descarta um item THEN o sistema SHALL tirá-lo de Atuais e mostrá-lo na aba Lixeira, com a data do descarte. (INBOX-04)
+4. WHEN o usuário descarta um item THEN o sistema SHALL tirá-lo de Atuais e mostrá-lo na aba Lixeira, com a data do descarte, e apagar o rascunho do Processar tudo que o item tiver. (INBOX-04)
 5. WHEN o usuário restaura um item da Lixeira THEN o sistema SHALL devolvê-lo a Atuais na posição da data de chegada. (INBOX-05)
 6. WHEN a caixa é lida THEN o sistema SHALL apagar os itens descartados há mais de 30 dias. (INBOX-06)
 7. WHILE Atuais está vazia the system SHALL mostrar `Nada na caixa. Capture o que estiver na cabeça.` no lugar da lista. (INBOX-07)
@@ -148,7 +151,7 @@ O que o código já fixa:
 
 1. WHEN o Processar abre THEN o sistema SHALL mostrar o texto capturado, com a origem e a idade, o tipo `Tarefa` selecionado, o nome igual ao texto (até 255 caracteres) e a lista e a estimativa guardadas na linha. (PROC-01)
 2. IF o nome está vazio ou a lista não foi escolhida THEN o sistema SHALL desabilitar `Salvar e próximo` e marcar o campo que falta. (PROC-02)
-3. The system SHALL calcular a coluna de destino pelo agendamento: sem dia → Backlog; dia de hoje → Hoje; outro dia da semana atual (seg–dom, fuso do workspace) → Esta semana; depois → Backlog; e mostrar `Vai para <lista> › <coluna>`. (PROC-03)
+3. The system SHALL calcular a coluna de destino pelo agendamento: sem dia → Backlog; dia de hoje ou um dia que já passou → Hoje; outro dia ainda por vir da semana atual (seg–dom, fuso do workspace) → Esta semana; depois → Backlog; e mostrar `Vai para <lista> › <coluna>`. (PROC-03)
 4. WHEN o usuário escolhe outra coluna no `Vai para` THEN o sistema SHALL usar essa coluna no envio. (PROC-04)
 5. WHEN o usuário salva um item avulso THEN o sistema SHALL criar a tarefa no fim da coluna de destino com nome, lista, prioridade, prazo, estimativa, agendamento e notas, e tirar o item da caixa, numa só transação. (PROC-05)
 6. WHEN o usuário clica em `Já fiz (menos de 2 min)` THEN o sistema SHALL criar a tarefa em Concluídas, concluída agora pelo usuário, e tirar o item da caixa. (PROC-06)
@@ -328,7 +331,7 @@ O que o código já fixa:
 3. WHEN o usuário liga o switch Aguardando THEN o modal SHALL mostrar o campo `De quem`. (MODAL-03)
 4. The system SHALL oferecer no select Grupo os grupos da lista da tarefa e `Sem grupo`; WHEN o usuário troca o grupo e salva THEN o sistema SHALL ter o mesmo efeito de arrastar para dentro ou para fora do contêiner (GRP-07, GRP-08), colocando a tarefa no fim do grupo. (MODAL-04)
 5. WHEN o usuário clica em `Salvar` THEN o sistema SHALL gravar prioridade, prazo, grupo, Aguardando e flag junto com título, estimativa e anotações. (MODAL-05)
-6. WHERE a tarefa é um lembrete, the system SHALL esconder Estimativa, Grupo e Subtarefas no modal. (MODAL-06)
+6. WHERE a tarefa é um lembrete, the system SHALL esconder Estimativa, Grupo, Subtarefas, Prazo, Flag e Aguardando no modal, e a API SHALL recusar com 422 esses campos num lembrete. (MODAL-06)
 
 **Independent Test**: Abrir uma tarefa sem flag, clicar `+ Flag`, digitar `Bloqueada`, mudar prioridade para Média, Salvar: o card mostra borda vermelha, `Bloqueada` e o ícone de Média.
 
