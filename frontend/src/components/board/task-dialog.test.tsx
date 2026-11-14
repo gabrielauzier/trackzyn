@@ -507,17 +507,29 @@ describe('TaskDialog: the new fields (MODAL-01..06)', () => {
     expect(tasks.update).not.toHaveBeenCalled()
   })
 
-  it('MODAL-06 a reminder has no Estimativa, Grupo or Subtarefas, and keeps the other fields', async () => {
+  it('MODAL-06 a reminder has no Estimativa, Grupo, Subtarefas, Prazo, Flag or Aguardando, and keeps Prioridade and Agendamento', async () => {
     await open({ kind: 'reminder', estimate_minutes: null })
 
     expect(screen.queryByLabelText('Estimativa')).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Grupo' })).not.toBeInTheDocument()
     expect(screen.queryByRole('checkbox', { name: 'Outline' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Adicionar subtarefa' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '+ Flag' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '+ Flag' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Marca que a tarefa precisa de atenção, com um motivo opcional')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Prazo')).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Aguardando outra pessoa' })).not.toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Prioridade' })).toBeInTheDocument()
+    expect(screen.getByText('Agendamento')).toBeInTheDocument()
+  })
+
+  it('MODAL-06 a task shows Estimativa, Grupo, Subtarefas, Prazo, Flag and Aguardando', async () => {
+    await open()
+
+    expect(screen.getByLabelText('Estimativa')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Grupo' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Adicionar subtarefa' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ Flag' })).toBeInTheDocument()
     expect(screen.getByLabelText('Prazo')).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Aguardando outra pessoa' })).toBeInTheDocument()
-    expect(screen.getByText('Agendamento')).toBeInTheDocument()
   })
 })

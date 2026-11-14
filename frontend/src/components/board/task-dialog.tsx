@@ -192,7 +192,8 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
             </FormItem>
           )}
         />
-        {flagged ? (
+        {/* A reminder has no flag, due day or Aguardando (MODAL-06). */}
+        {reminder ? null : flagged ? (
           <div className="space-y-2 rounded-lg border border-rose-600 p-3">
             <div className="flex items-center gap-2">
               <Flag size={14} aria-hidden className="fill-current text-rose-500" />
@@ -270,18 +271,20 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
               )}
             />
           )}
-          <FormField
-            control={form.control}
-            name="due_on"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('board.due')}</FormLabel>
-                <FormControl>
-                  <Input type="date" disabled={!canWrite} {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          {!reminder && (
+            <FormField
+              control={form.control}
+              name="due_on"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('board.due')}</FormLabel>
+                  <FormControl>
+                    <Input type="date" disabled={!canWrite} {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
           {!reminder && (
             <FormField
               control={form.control}
@@ -309,38 +312,40 @@ function TaskForm({ task, canWrite, onDone }: { task: Task; canWrite: boolean; o
             />
           )}
         </div>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2.5">
-            <UserRound size={15} aria-hidden className="text-primary" />
-            <span id={`waiting-${task.id}`} className="flex-1 text-sm font-medium">
-              {t('board.waitingSwitch')}
-            </span>
-            <Switch
-              aria-labelledby={`waiting-${task.id}`}
-              checked={waiting}
-              disabled={!canWrite}
-              onCheckedChange={(on) => {
-                form.setValue('waiting', on)
-                if (!on) form.setValue('waiting_for', '')
-              }}
-            />
+        {!reminder && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5">
+              <UserRound size={15} aria-hidden className="text-primary" />
+              <span id={`waiting-${task.id}`} className="flex-1 text-sm font-medium">
+                {t('board.waitingSwitch')}
+              </span>
+              <Switch
+                aria-labelledby={`waiting-${task.id}`}
+                checked={waiting}
+                disabled={!canWrite}
+                onCheckedChange={(on) => {
+                  form.setValue('waiting', on)
+                  if (!on) form.setValue('waiting_for', '')
+                }}
+              />
+            </div>
+            {waiting && (
+              <FormField
+                control={form.control}
+                name="waiting_for"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="sr-only">{t('board.waitingForField')}</FormLabel>
+                    <FormControl>
+                      <Input disabled={!canWrite} placeholder={t('board.waitingForPlaceholder')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
-          {waiting && (
-            <FormField
-              control={form.control}
-              name="waiting_for"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="sr-only">{t('board.waitingForField')}</FormLabel>
-                  <FormControl>
-                    <Input disabled={!canWrite} placeholder={t('board.waitingForPlaceholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-        </div>
+        )}
         <FormField
           control={form.control}
           name="notes"

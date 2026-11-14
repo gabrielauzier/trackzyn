@@ -82,6 +82,8 @@ export function BoardColumn({
   const total = view.total ?? 0
   const percent = total > 0 ? Math.round((done / total) * 100) : 0
   const empty = view.tasks.length === 0
+  // A reminder has no focus (REM-05): a Today with only reminders has nothing to focus on.
+  const nothingToFocus = !view.tasks.some((task) => task.kind !== 'reminder')
 
   return (
     <section className={cn(shell, column === 'today' && 'border-primary/60', className)}>
@@ -107,7 +109,7 @@ export function BoardColumn({
           className="sticky top-14 z-10 -mx-4 bg-background lg:top-0"
         >
           <div className="flex items-center gap-2 bg-card/50 px-4 py-2">
-            <Button className="flex-1" variant="outline" disabled={!canWrite || empty} onClick={onFocusNow}>
+            <Button className="flex-1" variant="outline" disabled={!canWrite || nothingToFocus} onClick={onFocusNow}>
               <Rocket size={16} /> {t('board.focusNow')}
             </Button>
             {isDesktop() && (
@@ -119,7 +121,7 @@ export function BoardColumn({
                       size="icon"
                       className="size-9"
                       aria-label={t('board.openFocus')}
-                      disabled={!canWrite || empty}
+                      disabled={!canWrite || nothingToFocus}
                       onClick={onOpenFocus}
                     >
                       <Eye size={16} />

@@ -1287,13 +1287,15 @@ T40
 
 **Done when**:
 
-- [ ] O menu do card de lembrete não tem `Iniciar foco`; o de uma tarefa em Hoje tem (L-048)
-- [ ] Hoje só com lembretes: `Focar agora` desabilitado; com uma tarefa, habilitado
-- [ ] Modal de lembrete sem Prazo, Flag, Aguardando, Estimativa, Grupo e Subtarefas; o de tarefa mostra todos
-- [ ] Lembrete só com dia mostra o dia; com dia e hora, a hora
-- [ ] Gate check passes: Full (frontend)
+- [x] O menu do card de lembrete não tem `Iniciar foco`; o de uma tarefa em Hoje tem (L-048)
+- [x] Hoje só com lembretes: `Focar agora` desabilitado; com uma tarefa, habilitado
+- [x] Modal de lembrete sem Prazo, Flag, Aguardando, Estimativa, Grupo e Subtarefas; o de tarefa mostra todos
+- [x] Lembrete só com dia mostra o dia; com dia e hora, a hora
+- [x] Gate check passes: Full (frontend)
 
-**Also touched**: `frontend/src/components/board/board-column.tsx`, `frontend/src/components/board/task-dialog.tsx`, `frontend/src/components/board/task-card-menu.tsx`
+**Also touched**: `frontend/src/components/board/board-column.tsx` (`Focar agora` e o botão de abrir o foco ficam desabilitados quando Hoje não tem uma tarefa que não seja lembrete), `frontend/src/components/board/task-dialog.tsx` (lembrete sem Prazo, Flag e Aguardando), `frontend/src/components/board/board-column.test.tsx`, `frontend/src/components/board/task-dialog.test.tsx` (o teste MODAL-06 que esperava Prazo, Flag e Aguardando num lembrete passou a esperar o contrário: a spec mudou em 2026-11-13), `frontend/src/components/board/task-card.test.tsx`, `frontend/src/pages/list-board.test.tsx`. `reminder-card.tsx` e `task-card-menu.tsx` não mudaram. Desvio: nenhum card, nem o de tarefa, tem `Iniciar foco` no menu; o foco começa por `Focar agora` e pela tela do foco, que já ignora lembretes (T32). Por isso o contraste do L-048 é feito em `Focar agora` (desabilitado só com lembretes, habilitado com uma tarefa), e o teste do menu confere a lista exata de itens do lembrete.
+
+**Status**: ✅ Done
 
 **Tests**: unit
 **Gate**: full

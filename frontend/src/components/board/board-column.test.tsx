@@ -102,6 +102,20 @@ describe('BoardColumn', () => {
     expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
   })
 
+  it('REM-05 disables Focus now when Today has only reminders, and enables it with one task among them', () => {
+    const reminder = { ...card('r', 'Pagar o DAS', null), kind: 'reminder' as const }
+    const { unmount } = renderWithProviders(
+      <BoardColumn column="today" view={progressView({ tasks: [reminder], total: 1 })} listId={LIST} canWrite renderTask={renderTask} />,
+    )
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeDisabled()
+    unmount()
+
+    renderWithProviders(
+      <BoardColumn column="today" view={progressView({ tasks: [reminder, card('a', 'DEV-1725')], total: 2 })} listId={LIST} canWrite renderTask={renderTask} />,
+    )
+    expect(screen.getByRole('button', { name: 'Focus now' })).toBeEnabled()
+  })
+
   it('has Focus now only in Today', () => {
     renderWithProviders(
       <BoardColumn

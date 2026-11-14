@@ -639,6 +639,18 @@ describe('TaskCard of a reminder (REM-03, FIELDS-06)', () => {
     expect(screen.queryByRole('img', { name: 'Prioridade alta' })).not.toBeInTheDocument()
   })
 
+  it('REM-03 a reminder with only a day shows the day; with a day and a time, the time', () => {
+    // Wednesday 2026-11-11; Friday 2026-11-13 is two days ahead, in Esta semana.
+    const { unmount } = renderWithProviders(
+      <TaskCard task={task({ ...REMINDER, scheduled_on: '2026-11-13', scheduled_time: null })} column="this_week" timeZone={TZ} fields={ALL} canWrite {...noop} />,
+    )
+    expect(screen.getByTitle('Sex, 13 nov')).toHaveTextContent(/^Sex$/)
+    unmount()
+
+    renderWithProviders(<TaskCard task={task({ ...REMINDER, scheduled_on: '2026-11-13', scheduled_time: '10:00' })} column="this_week" timeZone={TZ} fields={ALL} canWrite {...noop} />)
+    expect(screen.getByText('Sex 10:00')).toBeInTheDocument()
+  })
+
   it('in Concluídas it has no check icon either, and the title is struck through', () => {
     renderWithProviders(<TaskCard task={task(REMINDER)} column="done" timeZone={TZ} fields={ALL} canWrite {...noop} />)
 

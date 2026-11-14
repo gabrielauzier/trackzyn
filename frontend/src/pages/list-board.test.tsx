@@ -816,6 +816,22 @@ describe('ListBoardPage', () => {
     expect(screen.getByText('This list has 1 pending task, Est.: 1hr')).toBeInTheDocument()
   })
 
+  it('REM-05 a Today with only a reminder: no focus entry in its menu and Focus now disabled', async () => {
+    vi.mocked(lists.board).mockImplementation(async () => {
+      const board = boardOf(WEEK, 'Week')
+      board.columns.today.tasks = [{ ...card(T2, 'Pagar o DAS', null), kind: 'reminder' }]
+      return board
+    })
+    const { user } = renderBoard()
+    await screen.findByText('Pagar o DAS')
+    const today = within(document.querySelector<HTMLElement>('[data-column="today"]')!)
+    expect(today.getByRole('button', { name: 'Focus now' })).toBeDisabled()
+
+    await user.click(within(document.querySelector<HTMLElement>(`[data-task-id="${T2}"]`)!).getByRole('button', { name: 'More actions' }))
+    const items = (await screen.findAllByRole('menuitem')).map((item) => item.textContent?.trim())
+    expect(items).toEqual(['Move left', 'Move right', 'Change list', 'Schedule', 'Duplicate', 'Delete task'])
+  })
+
   it('WAIT-04 an estimate edited on the card leaves a waiting task out of the sums, before the refetch', async () => {
     // The save never answers, so only the sums made on the client show.
     vi.mocked(tasks.update).mockImplementation(() => new Promise(() => {}))
