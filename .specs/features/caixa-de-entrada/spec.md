@@ -1,6 +1,6 @@
 # Caixa de entrada Specification
 
-Início: 2026-11-13 · Branch: `claude/gtd-capture-system-440984` · Base: `main` (`d7e18fe`)
+Início: 2026-11-13 · Branch: `feat/caixa-de-entrada` · Base: `main` (`d7e18fe`)
 
 **Design aprovado (2026-11-13):** https://claude.ai/artifact/9tSNQBRo9GTbUMJ9WZgrgo · Decisões de refinamento: `context.md` desta pasta.
 
